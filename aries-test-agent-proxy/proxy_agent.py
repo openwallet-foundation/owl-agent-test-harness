@@ -13,6 +13,12 @@ from prompt_toolkit.eventloop.defaults import use_asyncio_event_loop
 from prompt_toolkit.patch_stdout import patch_stdout
 from timeit import default_timer
 
+import pygments
+from pygments.filter import Filter
+from pygments.lexer import Lexer
+from pygments.lexers.data import JsonLdLexer
+from prompt_toolkit.formatted_text import FormattedText, PygmentsTokens
+
 from aiohttp import (
     web,
     ClientSession,
@@ -21,6 +27,8 @@ from aiohttp import (
     ClientError,
     ClientTimeout,
 )
+
+from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
 
 
 LOGGER = logging.getLogger(__name__)
@@ -50,19 +58,6 @@ elif RUN_MODE == "pwd":
     DEFAULT_PYTHON_PATH = "."
 
 
-def require_indy():
-    try:
-        from indy.libindy import _cdll
-
-        _cdll()
-    except ImportError:
-        print("python3-indy module not installed")
-        sys.exit(1)
-    except OSError:
-        print("libindy shared library could not be loaded")
-        sys.exit(1)
-
-
 async def default_genesis_txns():
     genesis = None
     try:
@@ -82,59 +77,6 @@ async def default_genesis_txns():
     except Exception:
         LOGGER.exception("Error loading genesis transactions:")
     return genesis
-
-
-def output_reader(handle, callback, *args, **kwargs):
-    for line in iter(handle.readline, b""):
-        if not line:
-            break
-        run_in_terminal(functools.partial(callback, line, *args))
-
-
-def log_msg(*msg, color="fg:ansimagenta", **kwargs):
-    run_in_terminal(lambda: print_ext(*msg, color=color, **kwargs))
-
-
-def log_json(data, **kwargs):
-    run_in_terminal(lambda: print_json(data, **kwargs))
-
-
-def log_status(status: str, **kwargs):
-    log_msg(f"\n{status}", color="bold", **kwargs)
-
-
-def flatten(args):
-    for arg in args:
-        if isinstance(arg, (list, tuple)):
-            yield from flatten(arg)
-        else:
-            yield arg
-
-
-def prompt_init():
-    if hasattr(prompt_init, "_called"):
-        return
-    prompt_init._called = True
-    use_asyncio_event_loop()
-
-
-async def prompt(*args, **kwargs):
-    prompt_init()
-    with patch_stdout():
-        try:
-            while True:
-                tmp = await prompt_toolkit.prompt(*args, async_=True, **kwargs)
-                if tmp:
-                    break
-            return tmp
-        except EOFError:
-            return None
-
-
-async def prompt_loop(*args, **kwargs):
-    while True:
-        option = await prompt(*args, **kwargs)
-        yield option
 
 
 class ProxyAgent:
@@ -179,11 +121,38 @@ class ProxyAgent:
         """ 
         Setup the routes to allow the test harness to send commands to and get replies
         from the Agent under test.
+
+        Expected topics include:
+
+            schema                 GET to return a list and POST to create/update
+            credential-definition  GET to return a list and POST to create/update
+            message                POST to send message
+            connection             GET to return a list or single; POST to create/update*
+            credential             GET to return a list or single; POST to create/update*
+            proof                  GET to return a list or single; POST to create/update*
+
+        GET with no parameters returns all
+        GET with an "id" parameter will return a single record
+        POST will submit a JSON payload
+        POST* will contain an "operation" element within the payload to define the operation
+        POST operations on existing records must contain an "id" element
+        POST operations will contain a "data" element which is the payload to pass through to the agent
+
+        Operations for each topic are:
+
+            connection    create-invitation, receive-invitation, accept-connection, accept-request, remove, start-introduction, send-ping
+            credential    send-offer, send-request, issue, problem-report, remove
+            proof         send-request, send-proposal, send-presentation, verify-presentation, remove
+
+        E.g.:  POST to /agent/command/issue_credential { "operation":"send-proposal", "data":"{...}"}
+        E.g.:  POST to /agent/command/issue_credential { "operation":"issue", "id":"<cred exch id>", "data":"{...}"}
         """
         app = web.Application()
         app.add_routes([web.post("/agent/command/{topic}/", self._post_command_backchannel)])
         app.add_routes([web.get("/agent/command/{topic}/", self._get_command_backchannel)])
+        app.add_routes([web.get("/agent/command/{topic}/{id}", self._get_command_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}/", self._get_response_backchannel)])
+        app.add_routes([web.get("/agent/response/{topic}/{id}", self._get_response_backchannel)])
         app.add_routes([web.post("/agent/reply/{topic}/", self._post_reply_backchannel)])
         runner = web.AppRunner(app)
         await runner.setup()
@@ -195,13 +164,51 @@ class ProxyAgent:
         """
         Post a POST command to the agent.
         """
-        return web.Response(text="")
+        topic = request.match_info["topic"]
+        payload = await request.json()
+
+        if topic == "connection" and "operation" in payload and "data" in payload:
+            operation = payload["operation"]
+            data = payload["data"]
+            if (operation == "create-invitation" 
+                or operation == "receive-invitation"
+            ):
+                agent_operation = "/connections/" + operation
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+                return web.Response(text=resp_text, status=resp_status)
+
+            elif (operation == "accept-connection" 
+                or operation == "accept-request"
+                or operation == "remove"
+                or operation == "start-introduction"
+                or operation == "send-ping"
+            ) and "id" in payload:
+                connection_id = payload["id"]
+                agent_operation = "/connections/" + operation + "/" + connection_id
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+                return web.Response(text=resp_text, status=resp_status)
+
+        return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
 
     async def _get_command_backchannel(self, request: ClientRequest):
         """
         Post a GET command to the agent.
         """
-        return web.Response(text="")
+        topic = request.match_info["topic"]
+
+        if topic == "connection":
+            if "id" in request.match_info:
+                connection_id = request.match_info["id"]
+                agent_operation = "/connections/" + connection_id
+            else:
+                agent_operation = "/connections"
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            
+            return web.Response(text=resp_text, status=resp_status)
+
+        return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
 
     async def _get_response_backchannel(self, request: ClientRequest):
         """
@@ -252,23 +259,16 @@ class ProxyAgent:
 
     async def make_admin_request(
         self, method, path, data=None, text=False, params=None
-    ) -> ClientResponse:
+    ) -> (int, str):
         params = {k: v for (k, v) in (params or {}).items() if v is not None}
         async with self.client_session.request(
             method, self.admin_url + path, json=data, params=params
         ) as resp:
-            resp.raise_for_status()
+            resp_status = resp.status
             resp_text = await resp.text()
-            if not resp_text and not text:
-                return None
-            if not text:
-                try:
-                    return json.loads(resp_text)
-                except json.JSONDecodeError as e:
-                    raise Exception(f"Error decoding JSON: {resp_text}") from e
-            return resp_text
+            return (resp_status, resp_text)
 
-    async def admin_GET(self, path, text=False, params=None) -> ClientResponse:
+    async def admin_GET(self, path, text=False, params=None) -> (int, str):
         try:
             return await self.make_admin_request("GET", path, None, text, params)
         except ClientError as e:
@@ -277,7 +277,7 @@ class ProxyAgent:
 
     async def admin_POST(
         self, path, data=None, text=False, params=None
-    ) -> ClientResponse:
+    ) -> (int, str):
         try:
             return await self.make_admin_request("POST", path, data, text, params)
         except ClientError as e:
