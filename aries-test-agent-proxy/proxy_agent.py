@@ -36,7 +36,7 @@ LOGGER = logging.getLogger(__name__)
 DEFAULT_POSTGRES = bool(os.getenv("POSTGRES"))
 DEFAULT_INTERNAL_HOST = "127.0.0.1"
 DEFAULT_EXTERNAL_HOST = "localhost"
-DEFAULT_BIN_PATH = "./venv/bin"
+DEFAULT_BIN_PATH = "../venv/bin"
 DEFAULT_PYTHON_PATH = ".."
 
 START_TIMEOUT = float(os.getenv("START_TIMEOUT", 30.0))
@@ -205,7 +205,7 @@ class ProxyAgent:
             else:
                 agent_operation = "/connections"
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            
+
             return web.Response(text=resp_text, status=resp_status)
 
         return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
