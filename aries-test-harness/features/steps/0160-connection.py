@@ -38,5 +38,21 @@ def step_impl(context):
 def step_impl(context):
     (resp_status, resp_text) = agent_proxy_GET("http://localhost:8020/agent/command/", "connection")
     assert resp_status == 200
-    print(resp_test)
+
+
+@given('Alice and Bob have an existing connection')
+def step_impl(context):
+    context.execute_steps(u'''
+        When Alice generates a connection invitation
+         And Bob accepts the connection invitation
+        Then Alice and Bob have a connection
+    ''')
+
+@when('Alice sends a trust ping to Bob')
+def step_impl(context):
+    pass
+
+@then('Bob receives a trust ping from Alice')
+def step_impl(context):
+    pass
 

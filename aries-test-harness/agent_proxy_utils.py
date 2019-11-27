@@ -56,9 +56,7 @@ def agent_proxy_GET(url, topic, operation=None, id=None, data=None) -> (int, str
     agent_url = url + topic + "/"
     if id:
         agent_url = agent_url + id + "/"
-    print("GET", agent_url)
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_proxy_request, "GET", agent_url)
-    print("--> returns", resp_status, resp_text)
     return (resp_status, resp_text)
 
 
@@ -69,8 +67,6 @@ def agent_proxy_POST(url, topic, operation=None, id=None, data=None) -> (int, st
         payload["operation"] = operation
     if id:
         payload["id"] = id
-    print("POST", agent_url, payload)
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_proxy_request, "POST", agent_url, data=payload)
-    print("--> returns", resp_status, resp_text)
     return (resp_status, resp_text)
 
