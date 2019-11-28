@@ -1,9 +1,4 @@
-Feature: showing off behave
-
-  Scenario: run a simple test
-     Given we have behave installed
-      When we implement a test
-      Then behave will test it for us!
+Feature: Aries agent connection functions
 
   Scenario: establish a connection between two agents
      Given we have two agents Alice and Bob

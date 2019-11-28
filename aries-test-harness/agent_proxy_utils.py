@@ -62,7 +62,9 @@ def agent_proxy_GET(url, topic, operation=None, id=None, data=None) -> (int, str
 
 def agent_proxy_POST(url, topic, operation=None, id=None, data=None) -> (int, str):
     agent_url = url + topic + "/"
-    payload = {"data": data}
+    payload = {}
+    if data:
+        payload["data"] = data
     if operation:
         payload["operation"] = operation
     if id:

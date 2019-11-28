@@ -2,6 +2,9 @@ import functools
 import json
 import os
 import sys
+import io
+import csv
+
 from timeit import default_timer
 
 import prompt_toolkit
@@ -245,3 +248,28 @@ def require_indy():
     except OSError:
         print("libindy shared library could not be loaded")
         sys.exit(1)
+
+
+def pipe_parser(str_data):
+    data = io.StringIO(str_data)
+    csv.register_dialect('piper', delimiter='|', quoting=csv.QUOTE_NONE, skipinitialspace=True)
+    reader = csv.reader(data, dialect='piper')
+    return [[x.strip() for x in row] for row in reader]
+
+def read_operations(str_data):
+    operations_list = pipe_parser(str_data)
+    operations = []
+    headers = None
+    for row in operations_list:
+        if 0 < len(row):
+            if not headers:
+                headers = row
+            elif len(row) == len(headers):
+                op = {}
+                for i in range(len(headers)):
+                    op[headers[i]] = row[i]
+                operations.append(op)
+    return operations
+
+
+

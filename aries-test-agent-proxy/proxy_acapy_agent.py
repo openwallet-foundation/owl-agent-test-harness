@@ -149,14 +149,49 @@ class ProxyAcaPyAgent(ProxyAgent):
             raise
 
     async def make_agent_GET_request(
-        self, method, path, text=False, params=None
+        self, op, rec_id=None, text=False, params=None
     ) -> (int, str):
-        return self.admin_GET(path, text=text, params=params)
+        if op["topic"] == "connection":
+            if rec_id:
+                connection_id = rec_id
+                agent_operation = "/connections/" + connection_id
+            else:
+                agent_operation = "/connections"
+            
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+
+            return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
 
     async def make_agent_POST_request(
-        self, method, path, data=None, text=False, params=None
+        self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
-        return self.admin_POST(path, data=data, text=text, params=params)
+        if op["topic"] == "connection":
+            operation = op["operation"]
+            if (operation == "create-invitation" 
+                or operation == "receive-invitation"
+            ):
+                agent_operation = "/connections/" + operation
+
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, data=data)
+
+                return (resp_status, resp_text)
+
+            elif (operation == "accept-connection" 
+                or operation == "accept-request"
+                or operation == "remove"
+                or operation == "start-introduction"
+                or operation == "send-ping"
+            ):
+                connection_id = rec_id
+                agent_operation = "/connections/" + operation + "/" + connection_id
+
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+                return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
 
     def _process(self, args, env, loop):
         proc = subprocess.Popen(

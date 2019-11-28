@@ -28,7 +28,7 @@ from aiohttp import (
     ClientTimeout,
 )
 
-from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
+from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, read_operations
 
 
 LOGGER = logging.getLogger(__name__)
@@ -125,7 +125,6 @@ class ProxyAgent:
 
             schema                 GET to return a list and POST to create/update
             credential-definition  GET to return a list and POST to create/update
-            message                POST to send message
             connection             GET to return a list or single; POST to create/update*
             credential             GET to return a list or single; POST to create/update*
             proof                  GET to return a list or single; POST to create/update*
@@ -137,15 +136,54 @@ class ProxyAgent:
         POST operations on existing records must contain an "id" element
         POST operations will contain a "data" element which is the payload to pass through to the agent
 
-        Operations for each topic are:
-
-            connection    create-invitation, receive-invitation, accept-connection, accept-request, remove, start-introduction, send-ping
-            credential    send-offer, send-request, issue, problem-report, remove
-            proof         send-request, send-proposal, send-presentation, verify-presentation, remove
-
         E.g.:  POST to /agent/command/issue_credential { "operation":"send-proposal", "data":"{...}"}
         E.g.:  POST to /agent/command/issue_credential { "operation":"issue", "id":"<cred exch id>", "data":"{...}"}
+
+        Operations for each topic are:
         """
+        operations_str = """
+        topic                 | method | operation          | id  | data  | description 
+        schema                |  GET   |                    |  Y  |       | Fetch a specific schema by ID
+        schema                |  POST  |                    |     |   Y   | Register a schema on the ledger
+        credential-definition |  GET   |                    |  Y  |       | Fetch a specific cred def by ID
+        credential-definition |  POST  |                    |     |   Y   | Register a cred def on the ledger
+        connection            |  GET   |                    |     |       | Get a list of all connections from the agent
+        connection            |  GET   |                    |  Y  |       | Get a specific connection from the agent by ID
+        connection            |  POST  | create-invitation  |     |       | Create a new invitation
+        connection            |  POST  | receive-invitation |     |   Y   | Receive an invitation
+        connection            |  POST  | accept-invitation  |  Y  |   Y   | Accept an invitation
+        connection            |  POST  | accept-request     |  Y  |   Y   | Accept a connection request
+        connection            |  POST  | establish-inbound  |  Y* |       | ???
+        connection            |  POST  | remove             |  Y  |       | Remove a connection
+        connection            |  POST  | start-introduction |  Y  |   Y   | Start an introcution between two agents
+        connection            |  POST  | send-message       |  Y  |   Y   | Send a basic message
+        connection            |  POST  | expire-message     |  Y* |       | Expire a basic message
+        connection            |  POST  | send-ping          |  Y  |       | Send a trust ping
+        credential            |  GET   | records            |     |       | Fetch all credential exchange records
+        credential            |  GET   | records            |  Y  |       | Fetch a specific credential exchange record
+        credential            |  GET   | mime-types         |  Y  |       | Get mime types associated with a credential's attributes
+        credential            |  POST  | send               |     |   Y   | Send a credential, automating the entire flow
+        credential            |  POST  | send-proposal      |     |   Y   | Send a credential proposal
+        credential            |  POST  | send-offer         |     |   Y   | Send a credential offer
+        credential            |  POST  | send-offer         |  Y  |   Y   | Send a credential offer associated with a proposal
+        credential            |  POST  | send-request       |  Y  |   Y   | Send a credential request
+        credential            |  POST  | issue              |  Y  |   Y   | Issue a credential in response to a request
+        credential            |  POST  | store              |  Y  |   Y   | Store a credential
+        credential            |  POST  | problem-report     |  Y  |   Y   | Raise a problem report for a credential exchange
+        credential            |  POST  | remove             |  Y  |       | Remove an existing credential exchange record
+        proof                 |  GET   | records            |     |       | Fetch all proof exchange records
+        proof                 |  GET   | records            |  Y  |       | Fetch a specific proof exchange record
+        proof                 |  GET   | credentials        |  Y  |       | Fetch credentials from the wallet for a specific proof exchange
+        proof                 |  GET   | referent           |  Y* |       | Fetch credentials from the wallet for a specific proof exchange/referent
+        proof                 |  POST  | send-proposal      |     |   Y   | Send a proof proposal
+        proof                 |  POST  | send-request       |     |   Y   | Send a proof request not bound to a proposal
+        proof                 |  POST  | send-request       |  Y  |   Y   | Send a proof request in reference to a proposal
+        proof                 |  POST  | send-presentation  |  Y  |   Y   | Send a proof presentation
+        proof                 |  POST  | verify-presentation|  Y  |   Y   | Verify a received proof presentation
+        proof                 |  POST  | remove             |  Y  |       | Remove an existing proof exchange record          
+        """
+        self.operations = read_operations(operations_str)
+
         app = web.Application()
         app.add_routes([web.post("/agent/command/{topic}/", self._post_command_backchannel)])
         app.add_routes([web.get("/agent/command/{topic}/", self._get_command_backchannel)])
@@ -159,6 +197,29 @@ class ProxyAgent:
         await self.backchannel_site.start()
         print("Listening to backchannel on port", backchannel_port)
 
+    def match_operation(self, topic, method, payload=None, rec_id=None):
+        """
+        Determine which agent operation we are trying to invoke
+        """
+        data = None
+        operation = None
+        if payload:
+            if "id" in payload:
+                rec_id = payload["id"]
+            if "operation" in payload:
+                operation = payload["operation"]
+            if "data" in payload:
+                data = payload["data"]
+        for op in self.operations:
+            if (op["topic"] == topic and op["method"] == method and
+                ((rec_id and op["id"] == "Y") or (rec_id is None)) and
+                ((method == "GET") or (operation and op["operation"] == operation) or (operation is None)) and
+                ((data and op["data"] == "Y") or (data is None))
+            ):
+                return op
+
+        return None
+
     async def _post_command_backchannel(self, request: ClientRequest):
         """
         Post a POST command to the agent.
@@ -166,28 +227,20 @@ class ProxyAgent:
         topic = request.match_info["topic"]
         payload = await request.json()
 
-        if topic == "connection" and "operation" in payload and "data" in payload:
-            operation = payload["operation"]
-            data = payload["data"]
-            if (operation == "create-invitation" 
-                or operation == "receive-invitation"
-            ):
-                agent_operation = "/connections/" + operation
-                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        operation = self.match_operation(topic, "POST", payload=payload)
+        if operation:
+            if "data" in payload:
+                data = payload["data"]
+            else:
+                data = None
+            if "id" in payload:
+                rec_id = payload["id"]
+            else:
+                rec_id = None
 
-                return web.Response(text=resp_text, status=resp_status)
+            (resp_status, resp_text) = await self.make_agent_POST_request(operation, rec_id=rec_id, data=data)
 
-            elif (operation == "accept-connection" 
-                or operation == "accept-request"
-                or operation == "remove"
-                or operation == "start-introduction"
-                or operation == "send-ping"
-            ) and "id" in payload:
-                connection_id = payload["id"]
-                agent_operation = "/connections/" + operation + "/" + connection_id
-                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-
-                return web.Response(text=resp_text, status=resp_status)
+            return web.Response(text=resp_text, status=resp_status)
 
         return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
 
@@ -196,14 +249,14 @@ class ProxyAgent:
         Post a GET command to the agent.
         """
         topic = request.match_info["topic"]
+        if "id" in request.match_info:
+            rec_id = request.match_info["id"]
+        else:
+            rec_id = None
 
-        if topic == "connection":
-            if "id" in request.match_info:
-                connection_id = request.match_info["id"]
-                agent_operation = "/connections/" + connection_id
-            else:
-                agent_operation = "/connections"
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+        operation = self.match_operation(topic, "GET", rec_id=rec_id)
+        if operation:
+            (resp_status, resp_text) = await self.make_agent_GET_request(operation, rec_id=rec_id)
 
             return web.Response(text=resp_text, status=resp_status)
 
@@ -222,7 +275,7 @@ class ProxyAgent:
         return web.Response(text="")
 
     async def make_agent_GET_request(
-        self, method, path, text=False, params=None
+        self, op, rec_id=None, text=False, params=None
     ) -> (int, str):
         """
         Override with agent-specific behaviour
@@ -230,7 +283,7 @@ class ProxyAgent:
         raise NotImplementedError
 
     async def make_agent_POST_request(
-        self, method, path, data=None, text=False, params=None
+        self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
         """
         Override with agent-specific behaviour
