@@ -1,0 +1,245 @@
+import asyncio
+import asyncpg
+import functools
+import json
+import logging
+import os
+import random
+import subprocess
+import sys
+from timeit import default_timer
+from ctypes import cdll
+from time import sleep
+
+from aiohttp import (
+    web,
+    ClientSession,
+    ClientRequest,
+    ClientResponse,
+    ClientError,
+    ClientTimeout,
+)
+
+from proxy_agent import ProxyAgent, default_genesis_txns, RUN_MODE, START_TIMEOUT
+from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
+from storage import store_resource, get_resource, delete_resource
+
+from vcx.api.connection import Connection
+from vcx.api.credential_def import CredentialDef
+from vcx.api.issuer_credential import IssuerCredential
+from vcx.api.proof import Proof
+from vcx.api.schema import Schema
+from vcx.api.utils import vcx_agent_provision
+from vcx.api.vcx_init import vcx_init_with_config
+from vcx.state import State, ProofState
+
+
+LOGGER = logging.getLogger(__name__)
+
+DEFAULT_BIN_PATH = "../venv/bin"
+DEFAULT_PYTHON_PATH = ".."
+
+if RUN_MODE == "docker":
+    DEFAULT_BIN_PATH = "./bin"
+    DEFAULT_PYTHON_PATH = "."
+elif RUN_MODE == "pwd":
+    DEFAULT_BIN_PATH = "./bin"
+    DEFAULT_PYTHON_PATH = "."
+
+
+# 'agency_url': URL of the agency
+# 'agency_did':  public DID of the agency
+# 'agency_verkey': public verkey of the agency
+# 'wallet_name': name for newly created encrypted wallet
+# 'wallet_key': encryption key for encoding wallet
+# 'payment_method': method that will be used for payments
+provisionConfig = {
+    'agency_url': 'http://localhost:9090',
+    'agency_did': 'VsKV7grR1BUE29mG2Fm2kX',
+    'agency_verkey': 'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR',
+    'wallet_name': 'faber_wallet',
+    'wallet_key': '123',
+    'payment_method': 'null',
+    'enterprise_seed': '000000000000000000000000Trustee1',
+    'protocol_type': '2.0',
+    'communication_method': 'aries'
+}
+
+
+class ProxyVCXAgent(ProxyAgent):
+    def __init__(
+        self, 
+        ident: str,
+        http_port: int,
+        admin_port: int,
+        genesis_data: str = None,
+        params: dict = {}
+    ):
+        super().__init__(
+            ident,
+            http_port,
+            admin_port,
+            genesis_data,
+            params
+        )
+
+    async def start_vcx(self):
+        payment_plugin = cdll.LoadLibrary('libnullpay' + file_ext())
+        payment_plugin.nullpay_init()
+
+        print("Provision an agent and wallet, get back configuration details")
+        config = await vcx_agent_provision(json.dumps(provisionConfig))
+        config = json.loads(config)
+        # Set some additional configuration options specific to faber
+        config['institution_name'] = 'Faber'
+        config['institution_logo_url'] = 'http://robohash.org/234'
+        config['genesis_path'] = 'local-genesis.txt'
+
+        print("Initialize libvcx with new configuration")
+        await vcx_init_with_config(json.dumps(config))
+
+        pass
+
+    async def make_agent_GET_request(
+        self, op, rec_id=None, text=False, params=None
+    ) -> (int, str):
+        if op["topic"] == "connection":
+            if rec_id:
+                connection_id = rec_id
+                # TODO
+                pass
+            else:
+                # TODO
+                pass
+            
+            (resp_status, resp_text) = (200, json.dumps({})) # TODO
+
+            return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
+
+    async def make_agent_POST_request(
+        self, op, rec_id=None, data=None, text=False, params=None
+    ) -> (int, str):
+        if op["topic"] == "connection":
+            operation = op["operation"]
+            if operation == "create-invitation":
+                connection_id = create_uuid()
+                log_msg("connection_id", connection_id)
+
+                connection = await Connection.create(connection_id)
+                await connection.connect('{"use_public_did": true}')
+                await connection.update_state()
+                invitation = await connection.invite_details(False)
+
+                store_resource(connection_id, "connection", connection)
+
+                resp_status = 200
+                resp_text = json.dumps(invitation)
+                log_msg(resp_status, resp_text)
+
+                return (resp_status, resp_text)
+
+            elif operation == "receive-invitation":
+                connection_id = create_uuid()
+                log_msg("connection_id", connection_id)
+
+                log_msg("data", data)
+                connection = await Connection.create_with_details(connection_id, json.dumps(data))
+                log_msg("connecting ...")
+                await connection.connect('{"use_public_did": true}')
+                connection_state = await connection.update_state()
+                log_msg("connection_state", connection_state)
+                while connection_state != State.Accepted:
+                    sleep(1)
+                    await connection.update_state()
+                    connection_state = await connection.get_state()
+                    log_msg("connection_state", connection_state)
+
+                store_resource(connection_id, "connection", connection)
+
+                resp_status = 200
+                resp_text = json_dumps({"success": True})
+
+                return (resp_status, resp_text)
+
+            elif (operation == "accept-connection" 
+                or operation == "accept-request"
+                or operation == "remove"
+                or operation == "start-introduction"
+                or operation == "send-ping"
+            ):
+                connection_id = rec_id
+                # TODO
+
+                (resp_status, resp_text) = (200, json.dumps({})) # TODO
+
+                return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
+
+
+async def main(start_port: int, show_timing: bool = False):
+
+    genesis = await default_genesis_txns()
+    if not genesis:
+        print("Error retrieving ledger genesis transactions")
+        sys.exit(1)
+
+    agent = None
+
+    try:
+        agent = ProxyVCXAgent(
+            "vcx", start_port+1, start_port+2, genesis_data=genesis
+        )
+
+        # start backchannel (common across all types of agents)
+        await agent.listen_backchannel(start_port)
+
+        # TODO start VCX agent sub-process 
+        await agent.register_did()
+
+        await agent.start_vcx()
+
+        # now wait ...
+        async for option in prompt_loop(
+            "(X) Exit? [X] "
+        ):
+            if option is None or option in "xX":
+                break
+
+    finally:
+        terminated = True
+        try:
+            if agent:
+                await agent.terminate()
+        except Exception:
+            LOGGER.exception("Error terminating agent:")
+            terminated = False
+
+    await asyncio.sleep(0.1)
+
+    if not terminated:
+        os._exit(1)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Runs a Faber demo agent.")
+    parser.add_argument(
+        "-p",
+        "--port",
+        type=int,
+        default=8040,
+        metavar=("<port>"),
+        help="Choose the starting port number to listen on",
+    )
+    args = parser.parse_args()
+
+    require_indy()
+
+    try:
+        asyncio.get_event_loop().run_until_complete(main(args.port))
+    except KeyboardInterrupt:
+        os._exit(1)

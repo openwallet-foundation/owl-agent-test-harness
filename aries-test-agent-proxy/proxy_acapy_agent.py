@@ -169,9 +169,18 @@ class ProxyAcaPyAgent(ProxyAgent):
     ) -> (int, str):
         if op["topic"] == "connection":
             operation = op["operation"]
-            if (operation == "create-invitation" 
-                or operation == "receive-invitation"
-            ):
+            if operation == "create-invitation":
+                agent_operation = "/connections/" + operation
+
+                (resp_status, resp_text) = await self.admin_POST(agent_operation)
+
+                # extract invitation from the agent's response
+                invitation_resp = json.loads(resp_text)
+                resp_text = json.dumps(invitation_resp["invitation"])
+
+                return (resp_status, resp_text)
+
+            elif operation == "receive-invitation":
                 agent_operation = "/connections/" + operation
 
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data=data)

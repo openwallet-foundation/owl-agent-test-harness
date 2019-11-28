@@ -16,9 +16,8 @@ def step_impl(context):
 
 @when('Bob accepts the connection invitation')
 def step_impl(context):
-    alice_invitation = json.loads(context.alice_invitation)
-    data = alice_invitation["invitation"]
-    (resp_status, resp_text) = agent_proxy_POST("http://localhost:8020/agent/command/", "connection", operation="receive-invitation", data=data)
+    alice_invitation = context.alice_invitation
+    (resp_status, resp_text) = agent_proxy_POST("http://localhost:8020/agent/command/", "connection", operation="receive-invitation", data=alice_invitation)
     assert resp_status == 200
 
 @then('Alice and Bob have a connection')

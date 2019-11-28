@@ -4,6 +4,8 @@ import os
 import sys
 import io
 import csv
+import platform
+import uuid
 
 from timeit import default_timer
 
@@ -271,5 +273,15 @@ def read_operations(str_data):
                 operations.append(op)
     return operations
 
+
+EXTENSION = {"darwin": ".dylib", "linux": ".so", "win32": ".dll", 'windows': '.dll'}
+
+
+def file_ext():
+    your_platform = platform.system().lower()
+    return EXTENSION[your_platform] if (your_platform in EXTENSION) else '.so'
+
+def create_uuid():
+    return str(uuid.uuid4())
 
 

@@ -4,3 +4,5 @@ pygments
 git+https://github.com/webpy/webpy.git#egg=web.py
 python3-indy
 aries-cloudagent
+#python3-wrapper-vcx
+/Users/icostanzo/Projects/indy-sdk/vcx/wrappers/python3/
