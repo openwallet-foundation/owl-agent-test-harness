@@ -3,42 +3,60 @@ import json
 from agent_proxy_utils import agent_proxy_GET, agent_proxy_POST
 
 
-@given('we have two agents Alice and Bob')
-def step_impl(context):
-    pass
+@given('we have two agents "{inviter}" and "{invitee}"')
+def step_impl(context, inviter, invitee):
+    print(inviter, invitee)
+    inviter_url = context.config.userdata.get(inviter)
+    invitee_url = context.config.userdata.get(invitee)
+    print(inviter_url, invitee_url)
+    assert inviter_url is not None and 0 < len(inviter_url)
+    assert invitee_url is not None and 0 < len(invitee_url)
 
-@when('Alice generates a connection invitation')
-def step_impl(context):
-    (resp_status, resp_text) = agent_proxy_POST("http://localhost:8020/agent/command/", "connection", operation="create-invitation")
+@when('"{inviter}" generates a connection invitation')
+def step_impl(context, inviter):
+    inviter_url = context.config.userdata.get(inviter)
+
+    (resp_status, resp_text) = agent_proxy_POST(inviter_url + "/agent/command/", "connection", operation="create-invitation")
 
     assert resp_status == 200
     context.alice_invitation = resp_text
 
-@when('Bob accepts the connection invitation')
-def step_impl(context):
-    alice_invitation = context.alice_invitation
-    (resp_status, resp_text) = agent_proxy_POST("http://localhost:8020/agent/command/", "connection", operation="receive-invitation", data=alice_invitation)
+@when('"{invitee}" accepts the connection invitation')
+def step_impl(context, invitee):
+    invitee_url = context.config.userdata.get(invitee)
+
+    alice_invitation = json.loads(context.alice_invitation)
+    data = alice_invitation["invitation"]
+    (resp_status, resp_text) = agent_proxy_POST(invitee_url + "/agent/command/", "connection", operation="receive-invitation", data=data)
     assert resp_status == 200
 
-@then('Alice and Bob have a connection')
-def step_impl(context):
-    (resp_status, resp_text) = agent_proxy_GET("http://localhost:8020/agent/command/", "connection")
+@then('"{inviter}" and "{invitee}" have a connection')
+def step_impl(context, inviter, invitee):
+    inviter_url = context.config.userdata.get(inviter)
+    invitee_url = context.config.userdata.get(invitee)
+
+    (resp_status, resp_text) = agent_proxy_GET(inviter_url + "/agent/command/", "connection")
+    assert resp_status == 200
+
+    (resp_status, resp_text) = agent_proxy_GET(invitee_url + "/agent/command/", "connection")
     assert resp_status == 200
 
 
-@given('Alice and Bob have an existing connection')
-def step_impl(context):
+@given('"{sender}" and "{receiver}" have an existing connection')
+def step_impl(context, sender, receiver):
+    print(sender, receiver)
     context.execute_steps(u'''
-        When Alice generates a connection invitation
-         And Bob accepts the connection invitation
-        Then Alice and Bob have a connection
+       Given we have two agents "''' + sender + '''" and "''' + receiver + '''"
+        When "''' + sender + '''" generates a connection invitation
+         And "''' + receiver + '''" accepts the connection invitation
+        Then "''' + sender + '''" and "''' + receiver + '''" have a connection
     ''')
 
-@when('Alice sends a trust ping to Bob')
-def step_impl(context):
+@when('"{sender}" sends a trust ping to "{receiver}"')
+def step_impl(context, sender, receiver):
     pass
 
-@then('Bob receives a trust ping from Alice')
-def step_impl(context):
+@then('"{receiver}" receives a trust ping from "{sender}"')
+def step_impl(context, sender, receiver):
     pass
 

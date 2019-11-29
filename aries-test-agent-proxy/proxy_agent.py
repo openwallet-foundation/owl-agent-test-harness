@@ -266,13 +266,29 @@ class ProxyAgent:
         """
         Get a response from the (remote) agent.
         """
-        return web.Response(text="")
+        topic = request.match_info["topic"]
+        if "id" in request.match_info:
+            rec_id = request.match_info["id"]
+        else:
+            rec_id = None
+
+        (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
+
+        return web.Response(text=resp_text, status=resp_status)
 
     async def _post_reply_backchannel(self, request: ClientRequest):
         """
         Reply to a response from the (remote) agent.
         """
         return web.Response(text="")
+
+    async def make_agent_POST_request(
+        self, op, rec_id=None, data=None, text=False, params=None
+    ) -> (int, str):
+        """
+        Override with agent-specific behaviour
+        """
+        raise NotImplementedError
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
@@ -282,8 +298,8 @@ class ProxyAgent:
         """
         raise NotImplementedError
 
-    async def make_agent_POST_request(
-        self, op, rec_id=None, data=None, text=False, params=None
+    async def make_agent_GET_request_response(
+        self, topic, rec_id=None, text=False, params=None
     ) -> (int, str):
         """
         Override with agent-specific behaviour

@@ -8,6 +8,7 @@ import random
 import subprocess
 import sys
 from timeit import default_timer
+from time import sleep
 
 from aiohttp import (
     web,
@@ -20,9 +21,12 @@ from aiohttp import (
 
 from proxy_agent import ProxyAgent, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
+from storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
 
 
 LOGGER = logging.getLogger(__name__)
+
+MAX_TIMEOUT = 5
 
 DEFAULT_BIN_PATH = "../venv/bin"
 DEFAULT_PYTHON_PATH = ".."
@@ -56,6 +60,8 @@ class ProxyAcaPyAgent(ProxyAgent):
             ("--endpoint", self.endpoint),
             ("--label", self.label),
             "--auto-ping-connection",
+            "--auto-accept-invites", 
+            "--auto-accept-requests", 
             "--auto-respond-messages",
             ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
             ("--outbound-transport", "http"),
@@ -106,6 +112,7 @@ class ProxyAcaPyAgent(ProxyAgent):
         topic = request.match_info["topic"]
         payload = await request.json()
         await self.handle_webhook(topic, payload)
+        # TODO web hooks don't require a response???
         return web.Response(text="")
 
     async def handle_webhook(self, topic: str, payload):
@@ -120,6 +127,15 @@ class ProxyAcaPyAgent(ProxyAgent):
                     f"has no method {handler} "
                     f"to handle webhook on topic {topic}"
                 )
+
+    async def handle_connections(self, message):
+        connection_id = message["connection_id"]
+        push_resource(connection_id, "connection-msg", message)
+
+        log_msg("received connection webhook", connection_id)
+
+        # TODO wait here to determine the response to the web hook?????
+        pass
 
     async def make_admin_request(
         self, method, path, data=None, text=False, params=None
@@ -148,22 +164,6 @@ class ProxyAcaPyAgent(ProxyAgent):
             self.log(f"Error during POST {path}: {str(e)}")
             raise
 
-    async def make_agent_GET_request(
-        self, op, rec_id=None, text=False, params=None
-    ) -> (int, str):
-        if op["topic"] == "connection":
-            if rec_id:
-                connection_id = rec_id
-                agent_operation = "/connections/" + connection_id
-            else:
-                agent_operation = "/connections"
-            
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-
-            return (resp_status, resp_text)
-
-        return (404, '404: Not Found\n\n'.encode('utf8'))
-
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
@@ -176,7 +176,7 @@ class ProxyAcaPyAgent(ProxyAgent):
 
                 # extract invitation from the agent's response
                 invitation_resp = json.loads(resp_text)
-                resp_text = json.dumps(invitation_resp["invitation"])
+                resp_text = json.dumps(invitation_resp)
 
                 return (resp_status, resp_text)
 
@@ -199,6 +199,48 @@ class ProxyAcaPyAgent(ProxyAgent):
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
                 return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
+
+    async def make_agent_GET_request(
+        self, op, rec_id=None, text=False, params=None
+    ) -> (int, str):
+        if op["topic"] == "connection":
+            if rec_id:
+                connection_id = rec_id
+                agent_operation = "/connections/" + connection_id
+            else:
+                agent_operation = "/connections"
+            
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+
+            return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
+
+    async def make_agent_GET_request_response(
+        self, topic, rec_id=None, text=False, params=None
+    ) -> (int, str):
+        if topic == "connection" and rec_id:
+            log_msg("pop record", rec_id)
+            connection_msg = pop_resource(rec_id, "connection-msg")
+            log_msg(get_resource(rec_id, "connection-msg"), connection_msg)
+            i = 0
+            while connection_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                connection_msg = pop_resource(rec_id, "connection-msg")
+                i = i + 1
+
+            log_msg("Now set status")
+            resp_status = 200
+            if connection_msg:
+                resp_text = json.dumps(connection_msg)
+            else:
+                resp_text = "{}"
+
+            log_msg(resp_status, resp_text)
+
+            return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
 

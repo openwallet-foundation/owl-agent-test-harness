@@ -22,7 +22,7 @@ from aiohttp import (
 
 from proxy_agent import ProxyAgent, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
-from storage import store_resource, get_resource, delete_resource
+from storage import store_resource, get_resource, delete_resource, pop_resource
 
 from vcx.api.connection import Connection
 from vcx.api.credential_def import CredentialDef
@@ -35,6 +35,8 @@ from vcx.state import State, ProofState
 
 
 LOGGER = logging.getLogger(__name__)
+
+MAX_TIMEOUT = 5
 
 DEFAULT_BIN_PATH = "../venv/bin"
 DEFAULT_PYTHON_PATH = ".."
@@ -100,24 +102,6 @@ class ProxyVCXAgent(ProxyAgent):
 
         pass
 
-    async def make_agent_GET_request(
-        self, op, rec_id=None, text=False, params=None
-    ) -> (int, str):
-        if op["topic"] == "connection":
-            if rec_id:
-                connection_id = rec_id
-                # TODO
-                pass
-            else:
-                # TODO
-                pass
-            
-            (resp_status, resp_text) = (200, json.dumps({})) # TODO
-
-            return (resp_status, resp_text)
-
-        return (404, '404: Not Found\n\n'.encode('utf8'))
-
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
@@ -125,7 +109,6 @@ class ProxyVCXAgent(ProxyAgent):
             operation = op["operation"]
             if operation == "create-invitation":
                 connection_id = create_uuid()
-                log_msg("connection_id", connection_id)
 
                 connection = await Connection.create(connection_id)
                 await connection.connect('{"use_public_did": true}')
@@ -133,33 +116,25 @@ class ProxyVCXAgent(ProxyAgent):
                 invitation = await connection.invite_details(False)
 
                 store_resource(connection_id, "connection", connection)
+                connection_dict = await connection.serialize()
 
                 resp_status = 200
-                resp_text = json.dumps(invitation)
-                log_msg(resp_status, resp_text)
+                resp_text = json.dumps({"connection_id": connection_id, "invitation": invitation, "connection": connection_dict})
 
                 return (resp_status, resp_text)
 
             elif operation == "receive-invitation":
                 connection_id = create_uuid()
-                log_msg("connection_id", connection_id)
 
-                log_msg("data", data)
                 connection = await Connection.create_with_details(connection_id, json.dumps(data))
-                log_msg("connecting ...")
                 await connection.connect('{"use_public_did": true}')
                 connection_state = await connection.update_state()
-                log_msg("connection_state", connection_state)
-                while connection_state != State.Accepted:
-                    sleep(1)
-                    await connection.update_state()
-                    connection_state = await connection.get_state()
-                    log_msg("connection_state", connection_state)
 
                 store_resource(connection_id, "connection", connection)
+                connection_dict = await connection.serialize()
 
                 resp_status = 200
-                resp_text = json_dumps({"success": True})
+                resp_text = json.dumps({"connection_id": connection_id, "invitation": data, "connection": connection_dict})
 
                 return (resp_status, resp_text)
 
@@ -175,6 +150,45 @@ class ProxyVCXAgent(ProxyAgent):
                 (resp_status, resp_text) = (200, json.dumps({})) # TODO
 
                 return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
+
+    async def make_agent_GET_request(
+        self, op, rec_id=None, text=False, params=None
+    ) -> (int, str):
+        if op["topic"] == "connection":
+            if rec_id:
+                connection = get_resource(rec_id, "connection")
+
+                if connection:
+                    resp_status = 200
+                    connection_dict = await connection.serialize()
+                    resp_text = json.dumps({"connection_id": rec_id, "connection": connection_dict})
+
+                    return (resp_status, resp_text)
+
+        return (404, '404: Not Found\n\n'.encode('utf8'))
+
+    async def make_agent_GET_request_response(
+        self, topic, rec_id=None, text=False, params=None
+    ) -> (int, str):
+        if topic == "connection" and rec_id:
+            connection = get_resource(rec_id, "connection")
+            connection_state = await connection.update_state()
+            i = 0
+            while connection_state != State.Accepted and i < MAX_TIMEOUT:
+                sleep(1)
+                await connection.update_state()
+                connection_state = await connection.get_state()
+                i = i + 1
+
+            store_resource(rec_id, "connection", connection)
+            connection_dict = await connection.serialize()
+
+            resp_status = 200
+            resp_text = json.dumps({"connection_id": rec_id, "connection": connection_dict})
+
+            return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
 
