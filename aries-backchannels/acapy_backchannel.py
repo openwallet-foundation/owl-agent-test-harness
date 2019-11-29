@@ -19,7 +19,7 @@ from aiohttp import (
     ClientTimeout,
 )
 
-from proxy_agent import ProxyAgent, default_genesis_txns, RUN_MODE, START_TIMEOUT
+from agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
 from storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
 
@@ -38,7 +38,7 @@ elif RUN_MODE == "pwd":
     DEFAULT_BIN_PATH = "./bin"
     DEFAULT_PYTHON_PATH = "."
 
-class ProxyAcaPyAgent(ProxyAgent):
+class AcaPyAgentBackchannel(AgentBackchannel):
     def __init__(
         self, 
         ident: str,
@@ -356,7 +356,7 @@ async def main(start_port: int, show_timing: bool = False):
     agent = None
 
     try:
-        agent = ProxyAcaPyAgent(
+        agent = AcaPyAgentBackchannel(
             "aca-py", start_port+1, start_port+2, genesis_data=genesis
         )
 

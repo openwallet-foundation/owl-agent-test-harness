@@ -20,7 +20,7 @@ from aiohttp import (
     ClientTimeout,
 )
 
-from proxy_agent import ProxyAgent, default_genesis_txns, RUN_MODE, START_TIMEOUT
+from agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
 from storage import store_resource, get_resource, delete_resource, pop_resource
 
@@ -68,7 +68,7 @@ provisionConfig = {
 }
 
 
-class ProxyVCXAgent(ProxyAgent):
+class VCXAgentBackchannel(AgentBackchannel):
     def __init__(
         self, 
         ident: str,
@@ -203,7 +203,7 @@ async def main(start_port: int, show_timing: bool = False):
     agent = None
 
     try:
-        agent = ProxyVCXAgent(
+        agent = VCXAgentBackchannel(
             "vcx", start_port+1, start_port+2, genesis_data=genesis
         )
 

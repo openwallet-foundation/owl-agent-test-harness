@@ -38,7 +38,7 @@ def run_coroutine_with_kwargs(coroutine, *args, **kwargs):
         loop.close()
 
 
-async def make_agent_proxy_request(
+async def make_agent_backchannel_request(
     method, path, data=None, text=False, params=None
 ) -> (int, str):
     params = {k: v for (k, v) in (params or {}).items() if v is not None}
@@ -52,15 +52,15 @@ async def make_agent_proxy_request(
         return (resp_status, resp_text)
 
 
-def agent_proxy_GET(url, topic, operation=None, id=None, data=None) -> (int, str):
+def agent_backchannel_GET(url, topic, operation=None, id=None, data=None) -> (int, str):
     agent_url = url + topic + "/"
     if id:
         agent_url = agent_url + id + "/"
-    (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_proxy_request, "GET", agent_url)
+    (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "GET", agent_url)
     return (resp_status, resp_text)
 
 
-def agent_proxy_POST(url, topic, operation=None, id=None, data=None) -> (int, str):
+def agent_backchannel_POST(url, topic, operation=None, id=None, data=None) -> (int, str):
     agent_url = url + topic + "/"
     payload = {}
     if data:
@@ -69,6 +69,6 @@ def agent_proxy_POST(url, topic, operation=None, id=None, data=None) -> (int, st
         payload["operation"] = operation
     if id:
         payload["id"] = id
-    (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_proxy_request, "POST", agent_url, data=payload)
+    (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "POST", agent_url, data=payload)
     return (resp_status, resp_text)
 

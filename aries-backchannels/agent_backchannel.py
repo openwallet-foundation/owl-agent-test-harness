@@ -72,9 +72,9 @@ async def default_genesis_txns():
     return genesis
 
 
-class ProxyAgent:
+class AgentBackchannel:
     """
-    Base class for building Aries agent proxies for integration into the interoperability test suite.
+    Base class for building Aries agent backchannel adapters for integration into the interoperability test suite.
 
     Extend this base class and implement hooks to communicate with a specific agent.
     """
