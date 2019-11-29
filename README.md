@@ -80,11 +80,22 @@ cd aries-agent-test-harness/aries-test-harness
 behave
 ```
 
-The agents are configured in `behave.ini`.  If you want to run the tests using different agents, you can run:
+The agents are configured in `behave.ini`.  
 
 ```
-behave -d Alice=http://localhost:8070 -d Bob=http://localhost:8020
+# -- FILE: behave.ini
+[behave.userdata]
+Alice = http://localhost:8020
+Bob  = http://localhost:8070
 ```
+
+If you want to run the tests using different agents, you can run:
+
+```
+behave -D Alice=http://localhost:8070 -D Bob=http://localhost:8020
+```
+
+This is the revers of the default configuration in `behave.ini`, and reverses the roles that the Alice and Bob agents will play in the test scenarios.
 
 ... or use any ports that you like!!!
 
