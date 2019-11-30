@@ -77,15 +77,17 @@ def agent_backchannel_POST(url, topic, operation=None, id=None, data=None) -> (i
 
 def connection_status(agent_url, connection_id, status_txt):
     sleep(0.2)
+    state = "None"
+    if type(status_txt) != list:
+        status_txt = [status_txt]
     for i in range(5):
-        print(agent_url + "/agent/command/", "connection", connection_id)
         (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "connection", id=connection_id)
-        print(resp_status, resp_text)
         if resp_status == 200:
             resp_json = json.loads(resp_text)
             state = resp_json["state"]
-            if state == status_txt:
+            if state in status_txt:
                 return True
         sleep(0.2)
+    print("From", agent_url, "Expected state", status_txt, "but received", state)
     return False
 

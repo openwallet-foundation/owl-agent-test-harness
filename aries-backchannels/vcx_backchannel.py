@@ -68,6 +68,18 @@ provisionConfig = {
 }
 
 
+def state_text(connection_state):
+    if connection_state == State.OfferSent:
+        return "invitation"
+    elif connection_state == State.RequestReceived:
+        return "request"
+    elif connection_state == State.Unfulfilled:
+        return "response"
+    elif connection_state == State.Accepted:
+        return "active"
+    return str(connection_state)
+
+
 class VCXAgentBackchannel(AgentBackchannel):
     def __init__(
         self, 
@@ -112,7 +124,6 @@ class VCXAgentBackchannel(AgentBackchannel):
 
                 connection = await Connection.create(connection_id)
                 await connection.connect('{"use_public_did": true}')
-                await connection.update_state()
                 invitation = await connection.invite_details(False)
 
                 store_resource(connection_id, "connection", connection)
@@ -129,7 +140,6 @@ class VCXAgentBackchannel(AgentBackchannel):
                 connection = await Connection.create_with_details(connection_id, json.dumps(data))
                 await connection.connect('{"use_public_did": true}')
                 connection_state = await connection.update_state()
-
                 store_resource(connection_id, "connection", connection)
                 connection_dict = await connection.serialize()
 
@@ -138,18 +148,24 @@ class VCXAgentBackchannel(AgentBackchannel):
 
                 return (resp_status, resp_text)
 
-            elif (operation == "accept-connection" 
+            elif (operation == "accept-invitation" 
                 or operation == "accept-request"
                 or operation == "remove"
                 or operation == "start-introduction"
                 or operation == "send-ping"
             ):
                 connection_id = rec_id
-                # TODO
+                connection = get_resource(rec_id, "connection")
+                if connection:
+                    # make sure we have latest & greatest connection state
+                    await connection.update_state()
+                    store_resource(connection_id, "connection", connection)
+                    connection_dict = await connection.serialize()
+                    connection_state = await connection.get_state()
 
-                (resp_status, resp_text) = (200, json.dumps({})) # TODO
-
-                return (resp_status, resp_text)
+                    resp_status = 200
+                    resp_text = json.dumps({"connection_id": rec_id, "state": state_text(connection_state), "connection": connection_dict})
+                    return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
 
@@ -161,10 +177,11 @@ class VCXAgentBackchannel(AgentBackchannel):
                 connection = get_resource(rec_id, "connection")
 
                 if connection:
-                    resp_status = 200
                     connection_dict = await connection.serialize()
-                    resp_text = json.dumps({"connection_id": rec_id, "connection": connection_dict})
+                    connection_state = await connection.get_state()
 
+                    resp_status = 200
+                    resp_text = json.dumps({"connection_id": rec_id, "state": state_text(connection_state), "connection": connection_dict})
                     return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
@@ -175,17 +192,10 @@ class VCXAgentBackchannel(AgentBackchannel):
         if topic == "connection" and rec_id:
             connection = get_resource(rec_id, "connection")
             connection_state = await connection.update_state()
-            i = 0
-            while connection_state != State.Accepted and i < MAX_TIMEOUT:
-                sleep(1)
-                await connection.update_state()
-                connection_state = await connection.get_state()
-                i = i + 1
-
             store_resource(rec_id, "connection", connection)
-            connection_dict = await connection.serialize()
 
             resp_status = 200
+            connection_dict = await connection.serialize()
             resp_text = json.dumps({"connection_id": rec_id, "connection": connection_dict})
 
             return (resp_status, resp_text)

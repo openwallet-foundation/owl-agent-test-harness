@@ -7,6 +7,7 @@ Feature: Aries agent connection functions RFC 0160
        And "Bob" sends a connection response
        And "Alice" accepts the connection response
        And "Bob" sends a response ping
+       And "Alice" receives the response ping
       Then "Alice" and "Bob" have a connection
 
   Scenario: send a trust ping between two agents

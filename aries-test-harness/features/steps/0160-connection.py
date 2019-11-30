@@ -36,7 +36,7 @@ def step_impl(context, invitee):
     context.invitee_connection_id = resp_json["connection_id"]
 
     # get connection and verify status
-    assert connection_status(invitee_url, context.invitee_connection_id, "invitation")
+    assert connection_status(invitee_url, context.invitee_connection_id, ["invitation", "request"])
 
 @when('"{invitee}" sends a connection response')
 def step_impl(context, invitee):
@@ -44,7 +44,7 @@ def step_impl(context, invitee):
     invitee_connection_id = context.invitee_connection_id
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, "invitation")
+    assert connection_status(invitee_url, invitee_connection_id, ["invitation", "request"])
 
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="accept-invitation", id=invitee_connection_id)
     assert resp_status == 200
@@ -58,7 +58,7 @@ def step_impl(context, inviter):
     inviter_connection_id = context.inviter_connection_id
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, "request")
+    assert connection_status(inviter_url, inviter_connection_id, ["invitation", "request"])
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
     assert resp_status == 200
@@ -72,13 +72,25 @@ def step_impl(context, invitee):
     invitee_connection_id = context.invitee_connection_id
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, "response")
+    assert connection_status(invitee_url, invitee_connection_id, ["request", "response"])
 
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="send-ping", id=invitee_connection_id)
     assert resp_status == 200
 
     # get connection and verify status
     assert connection_status(invitee_url, invitee_connection_id, "active")
+
+@when('"{inviter}" receives the response ping')
+def step_impl(context, inviter):
+    # extra step to force status to 'active' for VCX
+    inviter_url = context.config.userdata.get(inviter)
+    inviter_connection_id = context.inviter_connection_id
+
+    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="send-ping", id=inviter_connection_id)
+    assert resp_status == 200
+
+    # get connection and verify status
+    assert connection_status(inviter_url, inviter_connection_id, "active")
 
 @then('"{inviter}" and "{invitee}" have a connection')
 def step_impl(context, inviter, invitee):
@@ -103,6 +115,7 @@ def step_impl(context, sender, receiver):
          And "''' + receiver + '''" sends a connection response
          And "''' + sender + '''" accepts the connection response
          And "''' + receiver + '''" sends a response ping
+         And "''' + sender + '''" receives the response ping
         Then "''' + sender + '''" and "''' + receiver + '''" have a connection
     ''')
 

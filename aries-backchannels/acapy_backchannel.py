@@ -211,7 +211,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 agent_operation = "/connections"
             
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
 
+            resp_json = json.loads(resp_text)
+            connection_info = {"connection_id": resp_json["connection_id"], "state": resp_json["state"], "connection": resp_json}
+            resp_text = json.dumps(connection_info)
             return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
