@@ -132,8 +132,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         connection_id = message["connection_id"]
         push_resource(connection_id, "connection-msg", message)
 
-        log_msg("received connection webhook", connection_id)
-
         # TODO wait here to determine the response to the web hook?????
         pass
 
@@ -141,13 +139,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         self, method, path, data=None, text=False, params=None
     ) -> (int, str):
         params = {k: v for (k, v) in (params or {}).items() if v is not None}
-        log_msg(method, self.admin_url + path)
         async with self.client_session.request(
             method, self.admin_url + path, json=data, params=params
         ) as resp:
             resp_status = resp.status
             resp_text = await resp.text()
-            log_msg(resp_status)
             return (resp_status, resp_text)
 
     async def admin_GET(self, path, text=False, params=None) -> (int, str):
@@ -224,23 +220,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         self, topic, rec_id=None, text=False, params=None
     ) -> (int, str):
         if topic == "connection" and rec_id:
-            log_msg("pop record", rec_id)
             connection_msg = pop_resource(rec_id, "connection-msg")
-            log_msg(get_resource(rec_id, "connection-msg"), connection_msg)
             i = 0
             while connection_msg is None and i < MAX_TIMEOUT:
                 sleep(1)
                 connection_msg = pop_resource(rec_id, "connection-msg")
                 i = i + 1
 
-            log_msg("Now set status")
             resp_status = 200
             if connection_msg:
                 resp_text = json.dumps(connection_msg)
             else:
                 resp_text = "{}"
-
-            log_msg(resp_status, resp_text)
 
             return (resp_status, resp_text)
 

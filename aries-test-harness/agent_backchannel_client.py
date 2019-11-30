@@ -7,6 +7,8 @@ from aiohttp import (
     ClientError,
     ClientTimeout,
 )
+import json
+from time import sleep
 
 
 ######################################################################
@@ -55,7 +57,7 @@ async def make_agent_backchannel_request(
 def agent_backchannel_GET(url, topic, operation=None, id=None, data=None) -> (int, str):
     agent_url = url + topic + "/"
     if id:
-        agent_url = agent_url + id + "/"
+        agent_url = agent_url + id
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "GET", agent_url)
     return (resp_status, resp_text)
 
@@ -71,4 +73,19 @@ def agent_backchannel_POST(url, topic, operation=None, id=None, data=None) -> (i
         payload["id"] = id
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "POST", agent_url, data=payload)
     return (resp_status, resp_text)
+
+
+def connection_status(agent_url, connection_id, status_txt):
+    sleep(0.2)
+    for i in range(5):
+        print(agent_url + "/agent/command/", "connection", connection_id)
+        (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "connection", id=connection_id)
+        print(resp_status, resp_text)
+        if resp_status == 200:
+            resp_json = json.loads(resp_text)
+            state = resp_json["state"]
+            if state == status_txt:
+                return True
+        sleep(0.2)
+    return False
 
