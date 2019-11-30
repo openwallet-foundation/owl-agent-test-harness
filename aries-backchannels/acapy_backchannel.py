@@ -59,10 +59,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         result = [
             ("--endpoint", self.endpoint),
             ("--label", self.label),
-            "--auto-ping-connection",
-            "--auto-accept-invites", 
-            "--auto-accept-requests", 
-            "--auto-respond-messages",
+            #"--auto-ping-connection",
+            #"--auto-accept-invites", 
+            #"--auto-accept-requests", 
+            #"--auto-respond-messages",
             ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
             ("--outbound-transport", "http"),
             ("--admin", "0.0.0.0", str(self.admin_port)),
@@ -141,11 +141,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         self, method, path, data=None, text=False, params=None
     ) -> (int, str):
         params = {k: v for (k, v) in (params or {}).items() if v is not None}
+        log_msg(method, self.admin_url + path)
         async with self.client_session.request(
             method, self.admin_url + path, json=data, params=params
         ) as resp:
             resp_status = resp.status
             resp_text = await resp.text()
+            log_msg(resp_status)
             return (resp_status, resp_text)
 
     async def admin_GET(self, path, text=False, params=None) -> (int, str):
@@ -187,14 +189,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 return (resp_status, resp_text)
 
-            elif (operation == "accept-connection" 
+            elif (operation == "accept-invitation" 
                 or operation == "accept-request"
                 or operation == "remove"
                 or operation == "start-introduction"
                 or operation == "send-ping"
             ):
                 connection_id = rec_id
-                agent_operation = "/connections/" + operation + "/" + connection_id
+                agent_operation = "/connections/" + connection_id + "/" + operation
 
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
