@@ -215,8 +215,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 return (resp_status, resp_text)
 
             resp_json = json.loads(resp_text)
-            connection_info = {"connection_id": resp_json["connection_id"], "state": resp_json["state"], "connection": resp_json}
-            resp_text = json.dumps(connection_info)
+            if rec_id:
+                connection_info = {"connection_id": resp_json["connection_id"], "state": resp_json["state"], "connection": resp_json}
+                resp_text = json.dumps(connection_info)
+            else:
+                resp_json = resp_json["results"]
+                connection_infos = []
+                for connection in resp_json:
+                    connection_info = {"connection_id": connection["connection_id"], "state": connection["state"], "connection": connection}
+                    connection_infos.append(connection_info)
+                resp_text = json.dumps(connection_infos)
             return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))

@@ -22,7 +22,7 @@ from aiohttp import (
 
 from agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
-from storage import store_resource, get_resource, delete_resource, pop_resource
+from storage import store_resource, get_resource, delete_resource, pop_resource, get_resources
 
 from vcx.api.connection import Connection
 from vcx.api.credential_def import CredentialDef
@@ -174,6 +174,7 @@ class VCXAgentBackchannel(AgentBackchannel):
     ) -> (int, str):
         if op["topic"] == "connection":
             if rec_id:
+                log_msg("Getting connection for", rec_id)
                 connection = get_resource(rec_id, "connection")
 
                 if connection:
@@ -183,6 +184,24 @@ class VCXAgentBackchannel(AgentBackchannel):
                     resp_status = 200
                     resp_text = json.dumps({"connection_id": rec_id, "state": state_text(connection_state), "connection": connection_dict})
                     return (resp_status, resp_text)
+
+            else:
+                log_msg("Getting connections")
+                connections = get_resources("connection")
+                log_msg(connections)
+                ret_connections = []
+                for connection_id in connections:
+                    connection = connections[connection_id]
+                    connection_dict = await connection.serialize()
+                    connection_state = await connection.get_state()
+                    ret_connections.append({"connection_id": connection_id, "state": state_text(connection_state), "connection": connection_dict})
+
+                resp_status = 200
+                resp_text = json.dumps(ret_connections)
+                log_msg(resp_status, resp_text)
+                return (resp_status, resp_text)
+
+        log_msg("Returning 404")
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
 

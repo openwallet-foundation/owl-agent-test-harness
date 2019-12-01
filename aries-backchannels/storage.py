@@ -27,6 +27,18 @@ def get_resource(data_id, data_type):
         storage_lock.release()
 
 
+def get_resources(data_type):
+    storage_lock.acquire()
+    try:
+        data_items = {}
+        for data_id in storage:
+            if data_type in storage[data_id]:
+                data_items[data_id] = storage[data_id][data_type]
+        return data_items
+    finally:
+        storage_lock.release()
+
+
 def delete_resource(data_id, data_type):
     storage_lock.acquire()
     try:
