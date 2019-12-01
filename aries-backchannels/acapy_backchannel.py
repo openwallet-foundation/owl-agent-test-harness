@@ -290,18 +290,24 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     await asyncio.sleep(0.5)
             return text
 
-        swagger_url = self.admin_url + "/api/docs/swagger.json"
-        text = await fetch_swagger(swagger_url, START_TIMEOUT)
+        swagger_url = self.admin_url + "/status"
+        status_text = await fetch_swagger(swagger_url, START_TIMEOUT)
         print("Agent running with admin url", self.admin_url)
 
-        if not text:
+        if not status_text:
             raise Exception(
                 "Timed out waiting for agent process to start. "
-                + f"Admin URL: {swagger_url}"
+                + f"Admin URL: {status_url}"
             )
-        if "Aries Cloud Agent" not in text:
+        ok = False
+        try:
+            status = json.loads(status_text)
+            ok = isinstance(status, dict) and "version" in status
+        except json.JSONDecodeError:
+            pass
+        if not ok:
             raise Exception(
-                f"Unexpected response from agent process. Admin URL: {swagger_url}"
+                f"Unexpected response from agent process. Admin URL: {status_url}"
             )
 
     async def start_process(

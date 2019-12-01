@@ -158,7 +158,7 @@ class AgentBackchannel:
         connection            |  POST  | start-introduction |  Y  |   Y   | Start an introcution between two agents
         connection            |  POST  | send-message       |  Y  |   Y   | Send a basic message
         connection            |  POST  | expire-message     |  Y* |       | Expire a basic message
-        connection            |  POST  | send-ping          |  Y  |       | Send a trust ping
+        connection            |  POST  | send-ping          |  Y  |   Y   | Send a trust ping
         credential            |  GET   | records            |     |       | Fetch all credential exchange records
         credential            |  GET   | records            |  Y  |       | Fetch a specific credential exchange record
         credential            |  GET   | mime-types         |  Y  |       | Get mime types associated with a credential's attributes

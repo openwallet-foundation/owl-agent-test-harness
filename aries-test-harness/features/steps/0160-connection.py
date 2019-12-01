@@ -74,7 +74,8 @@ def step_impl(context, invitee):
     # get connection and verify status
     assert connection_status(invitee_url, invitee_connection_id, ["request", "response"])
 
-    (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="send-ping", id=invitee_connection_id)
+    data = {"comment": "Hello from " + invitee}
+    (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="send-ping", id=invitee_connection_id, data=data)
     assert resp_status == 200
 
     # get connection and verify status
@@ -86,7 +87,8 @@ def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
     inviter_connection_id = context.inviter_connection_id
 
-    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="send-ping", id=inviter_connection_id)
+    data = {"comment": "Hello from " + inviter}
+    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="send-ping", id=inviter_connection_id, data=data)
     assert resp_status == 200
 
     # get connection and verify status
@@ -127,7 +129,8 @@ def step_impl(context, sender):
     # get connection and verify status
     assert connection_status(sender_url, sender_connection_id, "active")
 
-    (resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id)
+    data = {"comment": "Hello from " + sender}
+    (resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
     assert resp_status == 200
 
     # get connection and verify status
