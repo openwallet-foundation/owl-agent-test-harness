@@ -157,6 +157,8 @@ class VCXAgentBackchannel(AgentBackchannel):
                 connection_id = rec_id
                 connection = get_resource(rec_id, "connection")
                 if connection:
+                    # wait for a small period just in case ...
+                    await asyncio.sleep(0.1)
                     # make sure we have latest & greatest connection state
                     await connection.update_state()
                     store_resource(connection_id, "connection", connection)
