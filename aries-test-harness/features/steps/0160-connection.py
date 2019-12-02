@@ -64,7 +64,7 @@ def step_impl(context, inviter):
     assert resp_status == 200
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, "response")
+    assert connection_status(inviter_url, inviter_connection_id, ["request", "response"])
 
 @when('"{invitee}" sends a response ping')
 def step_impl(context, invitee):

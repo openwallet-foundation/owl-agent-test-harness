@@ -193,9 +193,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ):
                 connection_id = rec_id
                 agent_operation = "/connections/" + connection_id + "/" + operation
+                log_msg(agent_operation, data)
 
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
+                log_msg(resp_status, resp_text)
                 return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
