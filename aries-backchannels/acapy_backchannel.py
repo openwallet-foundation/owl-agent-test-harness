@@ -300,8 +300,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     await asyncio.sleep(0.5)
             return text
 
-        swagger_url = self.admin_url + "/status"
-        status_text = await fetch_swagger(swagger_url, START_TIMEOUT)
+        status_url = self.admin_url + "/status"
+        status_text = await fetch_swagger(status_url, START_TIMEOUT)
         print("Agent running with admin url", self.admin_url)
 
         if not status_text:
