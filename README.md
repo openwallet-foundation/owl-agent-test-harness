@@ -50,6 +50,14 @@ You will open additional shells to run the agents.
 For ACA-PY:
 
 ```
+# install the pre-requisites:
+cd aries-agent-test-harness/aries-backchannels
+pip install -r requirements.txt
+```
+
+Note that this installs the aca-py and vcx python libraries from `ianco` forks of the gitub repositories.
+
+```
 cd aries-agent-test-harness/aries-backchannels
 LEDGER_URL=http://localhost:9000 python acapy_backchannel.py -p 8020
 ```
@@ -59,13 +67,21 @@ LEDGER_URL=http://localhost:9000 python acapy_backchannel.py -p 8020
 For VCX:
 
 ```
+# install the pre-requisites:
+cd aries-agent-test-harness/aries-backchannels
+pip install -r requirements-vcx.txt
+```
+
+```
 cd aries-agent-test-harness/aries-backchannels
 LEDGER_URL=http://localhost:9000 python vcx_backchannel.py -p 8030
 ```
 
 Note that you can run multiple instances of these agents.
 
-Note also for VCX you need to install the Indy dependencies locally - libindy, libvcx, lubnulpay - and you also need to run a `dummy-cloud-agent` server.  See the instructions in the indy-sdk for more details.
+Note also for VCX you need to install the Indy dependencies locally - libindy, libvcx, lubnulpay - and you also need to run a `dummy-cloud-agent` server.  You need to install these from `ianco`'s fork and branch of the indy-sdk:  https://github.com/ianco/indy-sdk/tree/vcx-aries-support
+
+See the instructions in the indy-sdk for more details.
 
 ## Aries Test Framework
 
@@ -74,6 +90,12 @@ The test framework is implemented using Behave (https://behave.readthedocs.io/en
 This test framework is in the "./aries-test-harness" folder.  The steps are implemented in Python and communicate to the agent backchannels using client functions in "./aries-test-harness/agent_backchannel_client.py"
 
 To run the test harness:
+
+```
+# install the pre-requisites:
+cd aries-agent-test-harness/aries-test-harness
+pip install -r requirements.txt
+```
 
 ```
 cd aries-agent-test-harness/aries-test-harness
