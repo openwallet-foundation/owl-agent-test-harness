@@ -1,10 +1,21 @@
-from behave import *
+# -----------------------------------------------------------
+# Behave Step Definitions for the Connection Protocol 0160
+# used to establish connections between Aries Agents.
+# 0160 connection-protocol RFC: 
+# https://github.com/hyperledger/aries-rfcs/tree/9b0aaa39df7e8bd434126c4b33c097aae78d65bf/features/0160-connection-protocol#0160-connection-protocol
+#
+# Current AIP version level of test coverage: 1.0
+#  
+# -----------------------------------------------------------
+
+from behave import given, when, then
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, connection_status
 
 
 @given('we have two agents "{inviter}" and "{invitee}"')
 def step_impl(context, inviter, invitee):
+    """Determine there are 2 agents running based on data in the Behave input file behave.ini."""
     inviter_url = context.config.userdata.get(inviter)
     invitee_url = context.config.userdata.get(invitee)
     assert inviter_url is not None and 0 < len(inviter_url)
@@ -140,4 +151,13 @@ def step_impl(context, sender):
 def step_impl(context, receiver):
     # TODO
     pass
+
+@when(u'"Bob" sends a connection request')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: When "Bob" sends a connection request')
+
+
+@when(u'"Alice" accepts the connection request by sending a connection response')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: When "Alice" accepts the connection request by sending a connection response')
 
