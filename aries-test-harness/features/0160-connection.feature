@@ -16,7 +16,8 @@ Feature: Aries agent connection functions RFC 0160
       When "Alice" generates a connection invitation
       And "Bob" receives the connection invitation
       And "Bob" sends a connection request
-      And "Alice" accepts the connection request by sending a connection response
+      And "Alice" receives the connection request
+      And "Alice" sends a connection response
       Then "Alice" and "Bob" have a connection
 
    Scenario: send a trust ping between two agents

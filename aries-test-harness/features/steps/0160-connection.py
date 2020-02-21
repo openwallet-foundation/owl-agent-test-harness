@@ -20,6 +20,7 @@ def step_impl(context, inviter, invitee):
     invitee_url = context.config.userdata.get(invitee)
     assert inviter_url is not None and 0 < len(inviter_url)
     assert invitee_url is not None and 0 < len(invitee_url)
+    # TODO need to assert if the URLs are up (200) before continuing with the test, and message if they are not (404?).
 
 @when('"{inviter}" generates a connection invitation')
 def step_impl(context, inviter):
@@ -49,7 +50,7 @@ def step_impl(context, invitee):
     # get connection and verify status
     assert connection_status(invitee_url, context.invitee_connection_id, ["invitation", "request"])
 
-@when('"{invitee}" sends a connection response')
+""" @when('"{invitee}" sends a connection response')
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.invitee_connection_id
@@ -61,7 +62,52 @@ def step_impl(context, invitee):
     assert resp_status == 200
 
     # get connection and verify status
+    assert connection_status(invitee_url, invitee_connection_id, "request") """
+
+# Replaced the function above because according to the RFC the invitee does not send a connection response, the inviter does.
+@when('"{inviter}" sends a connection response')
+def step_impl(context, inviter):
+    inviter_url = context.config.userdata.get(inviter)
+    inviter_connection_id = context.inviter_connection_id
+
+    # get connection and verify status
+    assert connection_status(inviter_url, inviter_connection_id, ["request", "response"])
+
+    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
+    assert resp_status == 200
+
+    # get connection and verify status
+    assert connection_status(inviter_url, inviter_connection_id, "response")
+
+@when('"{invitee}" sends a connection request')
+def step_impl(context, invitee):
+    invitee_url = context.config.userdata.get(invitee)
+    invitee_connection_id = context.invitee_connection_id
+
+    # get connection and verify status
+    assert connection_status(invitee_url, invitee_connection_id, ["invitation", "request"])
+
+    # TODO There doesn't seem to be an operation/event for send connection request
+    (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="accept-invitation", id=invitee_connection_id)
+    assert resp_status == 200
+
+    # get connection and verify status
+    # TODO request should be requested according to the RFC
     assert connection_status(invitee_url, invitee_connection_id, "request")
+
+@when('"{inviter}" receives the connection request')
+def step_impl(context, inviter):
+    inviter_url = context.config.userdata.get(inviter)
+    inviter_connection_id = context.inviter_connection_id
+
+    # get connection and verify status
+    assert connection_status(inviter_url, inviter_connection_id, ["invitation", "request"])
+
+    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
+    assert resp_status == 200
+
+    # get connection and verify status
+    assert connection_status(inviter_url, inviter_connection_id, ["request", "response"])
 
 @when('"{inviter}" accepts the connection response')
 def step_impl(context, inviter):
@@ -151,13 +197,4 @@ def step_impl(context, sender):
 def step_impl(context, receiver):
     # TODO
     pass
-
-@when(u'"Bob" sends a connection request')
-def step_impl(context):
-    raise NotImplementedError(u'STEP: When "Bob" sends a connection request')
-
-
-@when(u'"Alice" accepts the connection request by sending a connection response')
-def step_impl(context):
-    raise NotImplementedError(u'STEP: When "Alice" accepts the connection request by sending a connection response')
 
