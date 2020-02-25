@@ -20,6 +20,26 @@ Feature: Aries agent connection functions RFC 0160
       And "Alice" sends a connection response
       Then "Alice" and "Bob" have a connection
 
+   @P1 @AcceptanceTest @NeedsReview
+   Scenario Outline: Connection established between two agents and inviter gets a preceding message
+      Given we have two agents
+         | name  | role    |
+         | Alice | inviter |
+         | Bob   | invitee |
+      And "Bob" has sent a connection request to "Alice"
+      And "Alice" has accepted the connection request by sending a connection response
+      And "Bob" is in the state of complete
+      And "Alice" is in the state of responded
+      When "Bob" sends <message> to "Alice"
+      Then "Alice" is in the state of complete
+
+      Examples:
+         | message   |
+         | acks      |
+         | trustping |
+
+
+
    Scenario: send a trust ping between two agents
       Given "Alice" and "Bob" have an existing connection
       When "Alice" sends a trust ping
