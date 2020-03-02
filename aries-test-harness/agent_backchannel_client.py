@@ -89,7 +89,6 @@ def connection_status(agent_url, connection_id, status_txt):
                 return True
         sleep(0.2)
     # TODO only loop if the status is 200. Are we expectin the state to change in the loop? 
-    # TODO if we get a 404 above report that instead of the message below.
-    print("From", agent_url, "Expected state", status_txt, "but received", state)
+    print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
     return False
 

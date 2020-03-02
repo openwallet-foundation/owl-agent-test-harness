@@ -159,7 +159,8 @@ def step_impl(context, inviter, invitee):
     invitee_connection_id = context.invitee_connection_id
 
     # get connection and verify status for inviter
-    assert connection_status(inviter_url, inviter_connection_id, "response")
+    #assert connection_status(inviter_url, inviter_connection_id, "response")
+    assert connection_status(inviter_url, inviter_connection_id, "active")
 
     # get connection and verify status for invitee
     assert connection_status(invitee_url, invitee_connection_id, "active")
@@ -198,41 +199,18 @@ def step_impl(context, receiver):
     # TODO
     pass
 
-# Attempt to use Data tables coming in from the feature file
-# Will contain agent name and role
-@given(u'we have two agents')
-def step_impl(context):
-    """Determine there are at least 2 agents running based on data in the Behave input file behave.ini."""
-    
-    for row in context.table:
-        if row['role'] == 'inviter':
-            context.inviter_url = context.config.userdata.get(row['name'])
-            context.inviter_name = context.config.userdata.get(row['name'])
-            assert context.inviter_url is not None and 0 < len(context.inviter_url)
-        elif row['role'] == 'invitee':
-            context.invitee_url = context.config.userdata.get(row['name'])
-            context.invitee_name = context.config.userdata.get(row['name'])
-            assert context.invitee_url is not None and 0 < len(context.invitee_url)
-        else:
-            print("Data table in step contains an unrecognized role, must be inviter or invitee")
-
 
 @given('"{invitee}" has sent a connection request to "{inviter}"')
 def step_impl(context, invitee, inviter):
     context.execute_steps('''
-        When "''' + invitee + '''" generates a connection invitation
-         And "''' + inviter + '''" receives the connection invitation
-         And "''' + inviter + '''" sends a connection request
+        When "''' + inviter + '''" generates a connection invitation
+         And "''' + invitee + '''" receives the connection invitation
+         And "''' + invitee + '''" sends a connection request
     ''')
-
 
 @given('"{inviter}" has accepted the connection request by sending a connection response')
 def step_impl(context, inviter):
     context.execute_steps('''When "''' + inviter + '''" accepts the connection response''')
-    #context.execute_steps('''And Alice acceptss the connection response''')
-    #context.execute_steps('''
-    #    And {inviter} accepts the connection response
-    #'''.format(inviter=inviter))
 
 
 @given(u'"{invitee}" is in the state of complete')
@@ -267,16 +245,16 @@ def step_impl(context, sender):
     assert connection_status(receiver_url, receiver_connection_id, "response")
 
     data = {"comment": "acknowledgement from " + sender}
-    (resp_status, resp_text) = agent_backchannel_POST(receiver_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
+    #(resp_status, resp_text) = agent_backchannel_POST(receiver_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
     # ack not yet implemented. Use line below when it is and remove the upper send-ping call
-    #(resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="ack", id=sender_connection_id, data=data)
+    (resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="ack", id=sender_connection_id, data=data)
     assert resp_status == 200
 
     # get connection and verify status
     assert connection_status(receiver_url, receiver_connection_id, "active")
 
-@when(u'"{sender}" sends trustping to "{reciever}"')
-def step_impl(context, sender):
+@when(u'"{sender}" sends trustping to "{receiver}"')
+def step_impl(context, sender, receiver):
     receiver_url = context.config.userdata.get(receiver)
     receiver_connection_id = context.inviter_connection_id
     sender_connection_id = context.invitee_connection_id
@@ -285,7 +263,7 @@ def step_impl(context, sender):
     assert connection_status(receiver_url, receiver_connection_id, "response")
 
     data = {"comment": "acknowledgement from " + sender}
-    (resp_status, resp_text) = agent_backchannel_POST(receiver_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
+    (resp_status, resp_text) = agent_backchannel_POST(receiver_url + "/agent/command/", "connection", operation="send-ping", id=receiver_connection_id, data=data)
     assert resp_status == 200
 
     # get connection and verify status
@@ -297,3 +275,108 @@ def step_impl(context, inviter):
     # TODO this status should be complete, change in client backchannel to map complete to active
     assert connection_status(context.config.userdata.get(inviter), context.inviter_connection_id, "active")
 
+@given(u'we have {n} agents')
+def step_impl(context, n):
+    """Determine there are at least 2 agents running based on data in the Behave input file behave.ini."""
+    
+    for row in context.table:
+        if row['role'] == 'inviter':
+            context.inviter_url = context.config.userdata.get(row['name'])
+            context.inviter_name = row['name']
+            assert context.inviter_url is not None and 0 < len(context.inviter_url)
+        elif row['role'] == 'invitee':
+            context.invitee_url = context.config.userdata.get(row['name'])
+            context.invitee_name = row['name']
+            assert context.invitee_url is not None and 0 < len(context.invitee_url)
+        elif row['role'] == 'inviteinterceptor':
+            context.inviteinterceptor_url = context.config.userdata.get(row['name'])
+            context.inviteinterceptor_name = row['name']
+        else:
+            print("Data table in step contains an unrecognized role, must be inviter or invitee")
+
+
+@given(u'"{inviter}" generated a single-use connection invitation')
+def step_impl(context, inviter):
+    context.execute_steps('''
+        When "''' + inviter + '''" generates a connection invitation
+    ''')
+
+
+@given(u'"{invitee}" received the connection invitation')
+def step_impl(context, invitee):
+    context.execute_steps('''
+        When "''' + invitee + '''" receives the connection invitation
+    ''')
+
+
+@given(u'"{invitee}" sent a connection request')
+def step_impl(context, invitee):
+    context.execute_steps('''
+        When "''' + invitee + '''" sends a connection request
+    ''')
+
+
+@given(u'"{inviter}" accepts the connection request by sending a connection response')
+def step_impl(context, inviter):
+    context.execute_steps('''
+        When "''' + inviter + '''" receives the connection request
+        And "''' + inviter + '''" sends a connection response
+    ''')
+
+
+@given(u'"{inviter}" and "{invitee}" have a connection')
+def step_impl(context, inviter, invitee):
+    context.execute_steps('''
+        When "''' + invitee + '''" sends trustping to "''' + inviter + '''"
+        Then "''' + inviter + '''" and "''' + invitee + '''" have a connection
+        ''')
+        #When "''' + invitee + '''" sends trustping to "''' + inviter + '''"
+
+
+@when(u'"{inviteinterceptor}" sends a connection request to "{inviter}" based on the connection invitation')
+def step_impl(context, inviteinterceptor, inviter):
+        context.execute_steps('''
+        When "''' + inviteinterceptor + '''" receives the connection invitation
+        And "''' + inviteinterceptor + '''" sends a connection request
+    ''')
+
+@then(u'"{inviter}" sends a request_not_accepted error')
+def step_impl(context, inviter):
+    inviter_url = context.config.userdata.get(inviter)
+    inviter_connection_id = context.inviter_connection_id
+
+    # TODO It is expected that accept-request should send a request not accepted error, not a 500
+    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
+    assert resp_status == 500
+
+    # Invitee should still be active based on the inviter connection id.
+    assert connection_status(inviter_url, inviter_connection_id, ["active"])
+
+@given(u'"Alice" generated a multi-use connection invitation')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: Given "Alice" generated a multi-use connection invitation')
+
+
+@given(u'"Alice" sent a connection response to "Bob"')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: Given "Alice" sent a connection response to "Bob"')
+
+
+@when(u'"Mallory" sends a connection request based on the connection invitation')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: When "Mallory" sends a connection request based on the connection invitation')
+
+
+@then(u'"Alice" sent a connection response to "Mallory"')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: Then "Alice" sent a connection response to "Mallory"')
+
+
+@when(u'"Bob" and "Alice" complete the connection process')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: When "Bob" and "Alice" complete the connection process')
+
+
+@then(u'"Alice" and "Bob" have another connection')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: Then "Alice" and "Bob" have another connection')

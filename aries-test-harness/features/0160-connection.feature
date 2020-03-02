@@ -22,7 +22,7 @@ Feature: Aries agent connection functions RFC 0160
 
    @P1 @AcceptanceTest @NeedsReview
    Scenario Outline: Connection established between two agents and inviter gets a preceding message
-      Given we have two agents
+      Given we have "2" agents
          | name  | role    |
          | Alice | inviter |
          | Bob   | invitee |
@@ -39,6 +39,58 @@ Feature: Aries agent connection functions RFC 0160
          | trustping |
 
 
+   @SingleUseInvite @P2 @ExceptionTest @NeedsReview
+   Scenario: Inviter Sends invitation for one agent second agent tries after connection
+      Given we have "3" agents
+         | name    | role              |
+         | Alice   | inviter           |
+         | Bob     | invitee           |
+         | Mallory | inviteinterceptor |
+      And "Alice" generated a single-use connection invitation
+      And "Bob" received the connection invitation
+      And "Bob" sent a connection request
+      And "Alice" accepts the connection request by sending a connection response
+      And "Alice" and "Bob" have a connection
+      When "Mallory" sends a connection request to "Alice" based on the connection invitation
+      Then "Alice" sends a request_not_accepted error
+
+   @SingleUseInvite @P2 @ExceptionTest @NeedsReview
+   Scenario: Inviter Sends invitation for one agent second agent tries during first share phase
+      Given we have "3" agents
+         | name    | role              |
+         | Alice   | inviter           |
+         | Bob     | invitee           |
+         | Mallory | inviteinterceptor |
+      And "Alice" generated a single-use connection invitation
+      And "Bob" received the connection invitation
+      And "Bob" sent a connection request
+      When "Mallory" sends a connection request to "Alice" based on the connection invitation
+      Then "Alice" sends a request_not_accepted error
+
+   @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview**
+   Scenario: Inviter Sends invitation for multiple agents
+      Given we have "3" agents
+         | name    | role              |
+         | Alice   | inviter           |
+         | Bob     | invitee           |
+         | Mallory | inviteinterceptor |
+      And "Alice" generated a multi-use connection invitation
+      And "Bob" received the connection invitation
+      And "Bob" sent a connection request
+      And "Alice" sent a connection response to "Bob"
+      When "Mallory" sends a connection request based on the connection invitation
+      Then "Alice" sent a connection response to "Mallory"
+
+   @P4 @DerivedFunctionalTest @NeedsReview
+   Scenario: Establish a connection between two agents who already have a connection initiated from invitee
+      Given we have "2" agents
+         | name  | role    |
+         | Alice | inviter |
+         | Bob   | invitee |
+      And "Alice" and "Bob" have an existing connection
+      When "Bob" generates a connection invitation
+      And "Bob" and "Alice" complete the connection process
+      Then "Alice" and "Bob" have another connection
 
    Scenario: send a trust ping between two agents
       Given "Alice" and "Bob" have an existing connection
