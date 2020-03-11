@@ -16,7 +16,7 @@ cd von-network
 ./manage start --logs
 ```
 
-# Determine the Ledger Browser IP to use in the URL for the Aca-py Agent in the next section
+### Determine the Ledger Browser IP to use in the URL for the Aca-py Agent in the next section
 in another shell...
 Make sure there is a von_von network
 ```
