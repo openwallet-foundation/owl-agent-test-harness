@@ -88,6 +88,7 @@ def connection_status(agent_url, connection_id, status_txt):
             if state in status_txt:
                 return True
         sleep(0.2)
-    print("From", agent_url, "Expected state", status_txt, "but received", state)
+    # TODO only loop if the status is 200. Are we expectin the state to change in the loop? 
+    print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
     return False
 

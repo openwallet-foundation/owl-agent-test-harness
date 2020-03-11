@@ -275,11 +275,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         return proc
 
     def get_process_args(self, bin_path: str = None):
+        #TODO aca-py needs to be in the path so no need to give it a cmd_path
         cmd_path = "aca-py"
         if bin_path is None:
             bin_path = DEFAULT_BIN_PATH
         if bin_path:
             cmd_path = os.path.join(bin_path, cmd_path)
+        print (cmd_path)
         return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
