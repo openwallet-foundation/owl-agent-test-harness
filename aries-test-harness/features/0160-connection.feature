@@ -10,7 +10,7 @@ Feature: Aries agent connection functions RFC 0160
       And "Alice" receives the response ping
       Then "Alice" and "Bob" have a connection
 
-   @P1 @AcceptanceTest @NeedsReview
+   @T001-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
    Scenario: establish a connection between two agents
       Given we have two agents "Alice" and "Bob"
       When "Alice" generates a connection invitation
@@ -20,7 +20,7 @@ Feature: Aries agent connection functions RFC 0160
       And "Alice" sends a connection response
       Then "Alice" and "Bob" have a connection
 
-   @P1 @AcceptanceTest @NeedsReview
+   @T002-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
    Scenario Outline: Connection established between two agents and inviter gets a preceding message
       Given we have "2" agents
          | name  | role    |
@@ -39,7 +39,7 @@ Feature: Aries agent connection functions RFC 0160
          | trustping |
 
 
-   @SingleUseInvite @P2 @ExceptionTest @NeedsReview
+   @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview
    Scenario: Inviter Sends invitation for one agent second agent tries after connection
       Given we have "3" agents
          | name    | role              |
@@ -54,7 +54,7 @@ Feature: Aries agent connection functions RFC 0160
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a request_not_accepted error
 
-   @SingleUseInvite @P2 @ExceptionTest @NeedsReview
+   @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview
    Scenario: Inviter Sends invitation for one agent second agent tries during first share phase
       Given we have "3" agents
          | name    | role              |
@@ -67,7 +67,7 @@ Feature: Aries agent connection functions RFC 0160
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a request_not_accepted error
 
-   @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview**
+   @T005-API10-RFC0160 @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview**
    Scenario: Inviter Sends invitation for multiple agents
       Given we have "3" agents
          | name    | role              |
@@ -81,7 +81,7 @@ Feature: Aries agent connection functions RFC 0160
       When "Mallory" sends a connection request based on the connection invitation
       Then "Alice" sent a connection response to "Mallory"
 
-   @P4 @DerivedFunctionalTest @NeedsReview
+   @T006-API10-RFC0160 @P4 @DerivedFunctionalTest @NeedsReview
    Scenario: Establish a connection between two agents who already have a connection initiated from invitee
       Given we have "2" agents
          | name  | role    |

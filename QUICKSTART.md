@@ -10,10 +10,10 @@ This guide quickly gets the Aca-py Agent BDD tests up and running. It utilizes s
 In one shell...
 ```
 git clone https://github.com/hyperledger/indy-sdk.git
-git clone von network stuff
+git clone https://github.com/bcgov/von-network
 cd von-network
 ./manage build
-./manage start
+./manage start --logs
 ```
 
 # Determine the Ledger Browser IP to use in the URL for the Aca-py Agent in the next section
@@ -84,23 +84,23 @@ At the command line, anywhere after the image name of aries-agent-tests any of t
 
 ## Test Tags
 The test harness has utilized tags in the feature files to be able to narrow down a test set to be executed. The general tags currently utilized are as follows:
-@AcceptanceTest - Tests based on requirements specifically stated in the RFC
-@DerivedFunctionalTest - Tests derived on requirements but not specifically stated in the RFC.
-@P1 - Test Priority
-@P2 - Test Priority
-@P3 - Test Priority
-@P4 - Test Priority
-@NegativeTest - Test that attempts to break the software. ie. change workflow order, use invalid data, etc.
-@ExceptionTest - Tests that are based on requirements that suggest exception cases.
-@SmokeTest - Tests that can be used as a builds smoke or sanity tests.
-@NeedsReview - Tests that have not been reviewed or approved.
-@ReviewedApproved - obvious
-@wip - Tests that are a work in progress and incomplete
-@Done - Finished tests that are expected to Pass if executed against an Agent.
-@AIP10 - Aries Interop Profile version the tests are written for
-@T01-API10-RFC0160 - Test Unique Identifier
+- @AcceptanceTest - Tests based on requirements specifically stated in the RFC
+- @DerivedFunctionalTest - Tests derived on requirements but not specifically stated in the RFC.
+- @P1 - Test Priority
+- @P2 - Test Priority
+- @P3 - Test Priority
+- @P4 - Test Priority
+- @NegativeTest - Test that attempts to break the software. ie. change workflow order, use invalid data, etc.
+- @ExceptionTest - Tests that are based on requirements that suggest exception cases.
+- @SmokeTest - Tests that can be used as a builds smoke or sanity tests.
+- @NeedsReview - Tests that have not been reviewed or approved.
+- @ReviewedApproved - obvious
+- @wip - Tests that are a work in progress and incomplete
+- @Done - Finished tests that are expected to Pass if executed against an Agent.
+- @AIP10 - Aries Interop Profile version the tests are written for
+- @T01-API10-RFC0160 - Test Unique Identifier
 
 Proprosed Connecton Protocol Tags
-@MultiUseInvite - Test utilizes a multi-use invite. Not using this tag and the test expects the invite to be single use.
-@SingleTryOnException
-@RetryableOnException
+- @MultiUseInvite - Test utilizes a multi-use invite. Not using this tag and the test expects the invite to be single use.
+- @SingleTryOnException
+- @RetryableOnException
