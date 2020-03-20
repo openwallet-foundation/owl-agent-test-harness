@@ -119,6 +119,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if topic != "webhook":  # would recurse
             handler = f"handle_{topic}"
             method = getattr(self, handler, None)
+            # put a log message here
             if method:
                 await method(payload)
             else:
@@ -131,7 +132,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
         push_resource(connection_id, "connection-msg", message)
-
+        # put a log message here (all the handle_ )
         # TODO wait here to determine the response to the web hook?????
         pass
 
