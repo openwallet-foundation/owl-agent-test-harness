@@ -3,5 +3,4 @@ prompt_toolkit~=2.0.9
 pygments
 git+https://github.com/webpy/webpy.git#egg=web.py
 python3-indy
-#/Users/icostanzo/Projects/aries-cloudagent-python/
-git+https://github.com/ianco/aries-cloudagent-python.git@aries-interop-test#egg=aries-cloudagent
+aries-cloudagent==0.4.5
