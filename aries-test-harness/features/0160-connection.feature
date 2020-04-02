@@ -1,11 +1,11 @@
 Feature: Aries agent connection functions RFC 0160
 
-   Scenario: establish a connection between two agents
+   Scenario: establish a connection between two agents OLD
       Given we have two agents "Alice" and "Bob"
       When "Alice" generates a connection invitation
       And "Bob" receives the connection invitation
-      And "Bob" sends a connection response
-      And "Alice" accepts the connection response
+      And "Bob" sends a connection request
+      And "Alice" accepts the connection request
       And "Bob" sends a response ping
       And "Alice" receives the response ping
       Then "Alice" and "Bob" have a connection
@@ -17,7 +17,8 @@ Feature: Aries agent connection functions RFC 0160
       And "Bob" receives the connection invitation
       And "Bob" sends a connection request
       And "Alice" receives the connection request
-      And "Alice" sends a connection response
+      And "Bob" sends a response ping
+      And "Alice" receives the response ping
       Then "Alice" and "Bob" have a connection
 
    @T002-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
