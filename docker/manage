@@ -195,11 +195,11 @@ runTests() {
   docker stop alice_agent >/dev/null
   printf "Done\n"
 
-  printf "    - Bob"
+  printf "    - Bob: "
   docker stop bob_agent >/dev/null  
   printf "Done\n"
 
-  printf "    - Mallory"
+  printf "    - Mallory: "
   docker stop mallory_agent >/dev/null  
   printf "Done\n"
 }
