@@ -49,8 +49,8 @@ def step_impl(context, invitee):
 
     # get connection and verify status
     assert connection_status(invitee_url, context.invitee_connection_id, ["invitation", "request"])
-
-""" @when('"{invitee}" sends a connection response')
+"""
+@when('"{invitee}" sends a connection response')
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.invitee_connection_id
@@ -62,13 +62,15 @@ def step_impl(context, invitee):
     assert resp_status == 200
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, "request") """
-
+    assert connection_status(invitee_url, invitee_connection_id, "request")
+"""
 # Replaced the function above because according to the RFC the invitee does not send a connection response, the inviter does.
 @when('"{inviter}" sends a connection response')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
     inviter_connection_id = context.inviter_connection_id
+
+    print(inviter, inviter_url, inviter_connection_id)
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, ["request", "response"])
@@ -172,7 +174,7 @@ def step_impl(context, sender, receiver):
        Given we have two agents "''' + sender + '''" and "''' + receiver + '''"
         When "''' + sender + '''" generates a connection invitation
          And "''' + receiver + '''" receives the connection invitation
-         And "''' + receiver + '''" sends a connection response
+         And "''' + receiver + '''" sends a connection request
          And "''' + sender + '''" accepts the connection response
          And "''' + receiver + '''" sends a response ping
          And "''' + sender + '''" receives the response ping
