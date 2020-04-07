@@ -21,6 +21,28 @@ Feature: Aries agent connection functions RFC 0160
          | acks      |
          | trustping |
 
+   @T001.2-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
+   Scenario Outline: establish a connection between two agents with role reversal
+      #Given we have two agents "Alice" and "Bob"
+      Given we have "2" agents
+         | name  | role    |
+         | Alice | invitee |
+         | Bob   | inviter |
+      When "Bob" generates a connection invitation
+      And "Alice" receives the connection invitation
+      And "Alice" sends a connection request to "Bob"
+      And "Bob" receives the connection request
+      And "Bob" sends a connection response to "Alice"
+      And "Alice" receives the connection response
+      And "Alice" sends <message> to "Bob"
+      Then "Bob" and "Alice" have a connection
+
+      Examples:
+         | message   |
+         | acks      |
+         | trustping |
+
+
    @T002-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
    Scenario Outline: Connection established between two agents but inviter sends next message to establish full connection state
       Given we have "2" agents
@@ -42,7 +64,7 @@ Feature: Aries agent connection functions RFC 0160
          | trustping |
 
 
-   @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview
+   @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @OutstandingBug
    Scenario: Inviter Sends invitation for one agent second agent tries after connection
       Given we have "3" agents
          | name    | role              |
@@ -51,13 +73,15 @@ Feature: Aries agent connection functions RFC 0160
          | Mallory | inviteinterceptor |
       And "Alice" generated a single-use connection invitation
       And "Bob" received the connection invitation
-      And "Bob" sent a connection request
-      And "Alice" accepts the connection request by sending a connection response
+      And "Bob" sent a connection request to "Alice"
+      And "Alice" receives the connection request
+      And "Alice" sends a connection response to "Bob"
+      And "Bob" receives the connection response
       And "Alice" and "Bob" have a connection
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a request_not_accepted error
 
-   @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview
+   @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @OutstandingBug
    Scenario: Inviter Sends invitation for one agent second agent tries during first share phase
       Given we have "3" agents
          | name    | role              |
@@ -66,11 +90,11 @@ Feature: Aries agent connection functions RFC 0160
          | Mallory | inviteinterceptor |
       And "Alice" generated a single-use connection invitation
       And "Bob" received the connection invitation
-      And "Bob" sent a connection request
+      And "Bob" sent a connection request to "Alice"
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a request_not_accepted error
 
-   @T005-API10-RFC0160 @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview**
+   @T005-API10-RFC0160 @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview
    Scenario: Inviter Sends invitation for multiple agents
       Given we have "3" agents
          | name    | role              |
@@ -94,8 +118,3 @@ Feature: Aries agent connection functions RFC 0160
       When "Bob" generates a connection invitation
       And "Bob" and "Alice" complete the connection process
       Then "Alice" and "Bob" have another connection
-
-   Scenario: send a trust ping between two agents
-      Given "Alice" and "Bob" have an existing connection
-      When "Alice" sends a trust ping
-      Then "Bob" receives the trust ping

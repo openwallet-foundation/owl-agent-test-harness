@@ -120,6 +120,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             handler = f"handle_{topic}"
             method = getattr(self, handler, None)
             # put a log message here
+            log_msg('Passing payload to handler ' + handler + ' payload is: ' + payload)
             if method:
                 await method(payload)
             else:
@@ -128,6 +129,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     f"has no method {handler} "
                     f"to handle webhook on topic {topic}"
                 )
+        else:
+            log_msg('in webhook, topic is: ' + topic + ' payload is: ' + payload)
 
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
@@ -194,7 +197,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ):
                 connection_id = rec_id
                 agent_operation = "/connections/" + connection_id + "/" + operation
-                log_msg(agent_operation, data)
+                log_msg('POST Request: ', agent_operation, data)
 
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -238,9 +241,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             else:
                 agent_operation = "/connections"
             
+            log_msg('GET Request agent operation: ', agent_operation)
+
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:
                 return (resp_status, resp_text)
+
+            log_msg('GET Request response details: ', resp_status, resp_text)
 
             resp_json = json.loads(resp_text)
             if rec_id:
@@ -348,7 +355,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             bin_path = DEFAULT_BIN_PATH
         if bin_path:
             cmd_path = os.path.join(bin_path, cmd_path)
-        print (cmd_path)
+        print ('Location of ACA-Py: ' + cmd_path)
         return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
@@ -401,6 +408,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         # start agent sub-process
         self.log(f"Starting agent sub-process ...")
+        self.log(f"agent starting with params: ")
+        self.log(agent_args)
         loop = asyncio.get_event_loop()
         self.proc = await loop.run_in_executor(
             None, self._process, agent_args, my_env, loop

@@ -13,6 +13,28 @@ import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, connection_status
 
 
+@given(u'we have {n} agents')
+def step_impl(context, n):
+    """Determine there are at least 2 agents running based on data in the Behave input file behave.ini."""
+    
+    for row in context.table:
+        if row['role'] == 'inviter':
+            context.inviter_url = context.config.userdata.get(row['name'])
+            context.inviter_name = row['name']
+            assert context.inviter_url is not None and 0 < len(context.inviter_url)
+        elif row['role'] == 'invitee':
+            context.invitee_url = context.config.userdata.get(row['name'])
+            context.invitee_name = row['name']
+            assert context.invitee_url is not None and 0 < len(context.invitee_url)
+        elif row['role'] == 'inviteinterceptor':
+            context.inviteinterceptor_url = context.config.userdata.get(row['name'])
+            context.inviteinterceptor_name = row['name']
+            assert context.inviteinterceptor_url is not None and 0 < len(context.inviteinterceptor_url)
+        else:
+            print("Data table in step contains an unrecognized role, must be inviter, invitee, or inviteinterceptor")
+
+
+
 @when('"{inviter}" generates a connection invitation')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
@@ -45,6 +67,7 @@ def step_impl(context, invitee):
     assert connection_status(invitee_url, context.connection_id_dict[invitee], "invitation")
 
 @when('"{inviter}" sends a connection response to "{invitee}"')
+@given('"{inviter}" sends a connection response to "{invitee}"')
 def step_impl(context, inviter, invitee):
     inviter_url = context.config.userdata.get(inviter)
     inviter_connection_id = context.connection_id_dict[inviter]
@@ -62,6 +85,7 @@ def step_impl(context, inviter, invitee):
     assert connection_status(inviter_url, inviter_connection_id, "response")
 
 @when('"{invitee}" receives the connection response')
+@given('"{invitee}" receives the connection response')
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.connection_id_dict[invitee]
@@ -90,6 +114,7 @@ def step_impl(context, invitee, inviter):
 
 
 @when('"{inviter}" receives the connection request')
+@given('"{inviter}" receives the connection request')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
     inviter_connection_id = context.connection_id_dict[inviter]
@@ -281,26 +306,6 @@ def step_impl(context, inviter):
     # TODO this status should be complete, change in client backchannel to map complete to active
     assert connection_status(context.config.userdata.get(inviter), context.connection_id_dict[inviter], "active")
 
-@given(u'we have {n} agents')
-def step_impl(context, n):
-    """Determine there are at least 2 agents running based on data in the Behave input file behave.ini."""
-    
-    for row in context.table:
-        if row['role'] == 'inviter':
-            context.inviter_url = context.config.userdata.get(row['name'])
-            context.inviter_name = row['name']
-            assert context.inviter_url is not None and 0 < len(context.inviter_url)
-        elif row['role'] == 'invitee':
-            context.invitee_url = context.config.userdata.get(row['name'])
-            context.invitee_name = row['name']
-            assert context.invitee_url is not None and 0 < len(context.invitee_url)
-        elif row['role'] == 'inviteinterceptor':
-            context.inviteinterceptor_url = context.config.userdata.get(row['name'])
-            context.inviteinterceptor_name = row['name']
-            assert context.inviteinterceptor_url is not None and 0 < len(context.inviteinterceptor_url)
-        else:
-            print("Data table in step contains an unrecognized role, must be inviter or invitee")
-
 
 @given(u'"{inviter}" generated a single-use connection invitation')
 def step_impl(context, inviter):
@@ -316,18 +321,10 @@ def step_impl(context, invitee):
     ''')
 
 
-@given(u'"{invitee}" sent a connection request')
-def step_impl(context, invitee):
+@given(u'"{invitee}" sent a connection request to "{inviter}"')
+def step_impl(context, invitee, inviter):
     context.execute_steps('''
-        When "''' + invitee + '''" sends a connection request
-    ''')
-
-
-@given(u'"{inviter}" accepts the connection request by sending a connection response')
-def step_impl(context, inviter):
-    context.execute_steps('''
-        When "''' + inviter + '''" receives the connection request
-        And "''' + inviter + '''" sends a connection response
+        When "''' + invitee + '''" sends a connection request to "''' + inviter + '''"
     ''')
 
 
@@ -337,15 +334,30 @@ def step_impl(context, inviter, invitee):
         When "''' + invitee + '''" sends trustping to "''' + inviter + '''"
         Then "''' + inviter + '''" and "''' + invitee + '''" have a connection
         ''')
-        #When "''' + invitee + '''" sends trustping to "''' + inviter + '''"
 
 
 @when(u'"{inviteinterceptor}" sends a connection request to "{inviter}" based on the connection invitation')
 def step_impl(context, inviteinterceptor, inviter):
-        context.execute_steps('''
+    #     context.execute_steps('''
+    #     When "''' + inviteinterceptor + '''" receives the connection invitation
+    #     And "''' + inviteinterceptor + '''" sends a connection request to "''' + inviter + '''"
+    # ''')
+    context.execute_steps('''
         When "''' + inviteinterceptor + '''" receives the connection invitation
-        And "''' + inviteinterceptor + '''" sends a connection request
     ''')
+    inviteinterceptor_url = context.config.userdata.get(inviteinterceptor)
+    inviteinterceptor_connection_id = context.connection_id_dict[inviteinterceptor]
+    inviter_url = context.config.userdata.get(inviter)
+    inviter_connection_id = context.connection_id_dict[inviter]
+
+    # get connection and verify status before call
+    assert connection_status(inviteinterceptor_url, inviteinterceptor_connection_id, ["invitation"])
+
+    (resp_status, resp_text) = agent_backchannel_POST(inviteinterceptor_url + "/agent/command/", "connection", operation="accept-invitation", id=inviteinterceptor_connection_id)
+    assert resp_status == 200
+
+    # get connection and verify status
+    assert connection_status(inviteinterceptor_url, inviteinterceptor_connection_id, "request")
 
 @then(u'"{inviter}" sends a request_not_accepted error')
 def step_impl(context, inviter):
@@ -354,10 +366,13 @@ def step_impl(context, inviter):
 
     # TODO It is expected that accept-request should send a request not accepted error, not a 500
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
-    assert resp_status == 500
+    # TODO once bug 418 has been fixed change this assert to the proper response code. 
+    # bug reference URL: https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/hyperledger/aries-cloudagent-python/418
+    assert resp_status == 406
+    #assert resp_status == 500
 
     # Invitee should still be active based on the inviter connection id.
-    assert connection_status(inviter_url, inviter_connection_id, ["active"])
+    #assert connection_status(inviter_url, inviter_connection_id, ["active"])
 
 @given(u'"Alice" generated a multi-use connection invitation')
 def step_impl(context):
