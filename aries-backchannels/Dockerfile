@@ -21,4 +21,5 @@ ENV RUNMODE=docker
 RUN mkdir -p ./bin
 RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
 
-ENTRYPOINT ["python", "-m", "ptvsd", "--host", "0.0.0.0", "--port", "5678", "--wait", "acapy_backchannel.py"]
+#ENTRYPOINT ["python", "-m", "ptvsd", "--host", "0.0.0.0", "--port", "5678", "--wait", "acapy_backchannel.py"]
+ENTRYPOINT ["python", "acapy_backchannel.py"]
