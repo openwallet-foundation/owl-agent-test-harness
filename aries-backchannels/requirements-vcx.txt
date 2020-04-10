@@ -1,3 +1,2 @@
 #python3-wrapper-vcx
-#/Users/icostanzo/Projects/indy-sdk/vcx/wrappers/python3/
-git+https://github.com/ianco/indy-sdk.git@vcx-aries-support#egg=python3-wrapper-vcx&subdirectory=vcx/wrappers/python3
+git+https://github.com/hyperledger/indy-sdk.git#egg=python3-wrapper-vcx&subdirectory=vcx/wrappers/python3

@@ -372,7 +372,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             await self.webhook_site.stop()
 
 
-async def main(start_port: int, show_timing: bool = False):
+async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
 
     genesis = await default_genesis_txns()
     if not genesis:
@@ -396,11 +396,16 @@ async def main(start_port: int, show_timing: bool = False):
         await agent.start_process()
 
         # now wait ...
-        async for option in prompt_loop(
-            "(X) Exit? [X] "
-        ):
-            if option is None or option in "xX":
-                break
+        if interactive:
+            async for option in prompt_loop(
+                "(X) Exit? [X] "
+            ):
+                if option is None or option in "xX":
+                    break
+        else:
+            print("Press Ctrl-C to exit ...")
+            remaining_tasks = asyncio.Task.all_tasks()
+            await asyncio.gather(*remaining_tasks)
 
     finally:
         terminated = True
@@ -416,6 +421,15 @@ async def main(start_port: int, show_timing: bool = False):
     if not terminated:
         os._exit(1)
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 if __name__ == "__main__":
     import argparse
@@ -429,11 +443,19 @@ if __name__ == "__main__":
         metavar=("<port>"),
         help="Choose the starting port number to listen on",
     )
+    parser.add_argument(
+        "-i",
+        "--interactive",
+        type=str2bool,
+        default=True,
+        metavar=("<interactive>"),
+        help="Start agent interactively",
+    )
     args = parser.parse_args()
 
     require_indy()
 
     try:
-        asyncio.get_event_loop().run_until_complete(main(args.port))
+        asyncio.get_event_loop().run_until_complete(main(start_port=args.port, interactive=args.interactive))
     except KeyboardInterrupt:
         os._exit(1)

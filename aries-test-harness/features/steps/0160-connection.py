@@ -74,6 +74,8 @@ def step_impl(context, inviter, invitee):
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.connection_id_dict[invitee]
 
+    print(inviter, inviter_url, inviter_connection_id)
+
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, "request")
     assert connection_status(invitee_url, invitee_connection_id, "request")
@@ -202,7 +204,7 @@ def step_impl(context, sender, receiver):
        Given we have two agents "''' + sender + '''" and "''' + receiver + '''"
         When "''' + sender + '''" generates a connection invitation
          And "''' + receiver + '''" receives the connection invitation
-         And "''' + receiver + '''" sends a connection response
+         And "''' + receiver + '''" sends a connection request
          And "''' + sender + '''" accepts the connection response
          And "''' + receiver + '''" sends a response ping
          And "''' + sender + '''" receives the response ping
