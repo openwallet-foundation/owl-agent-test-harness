@@ -64,7 +64,7 @@ Feature: Aries agent connection functions RFC 0160
          | trustping |
 
 
-   @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @OutstandingBug
+   @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
    Scenario: Inviter Sends invitation for one agent second agent tries after connection
       Given we have "3" agents
          | name    | role              |
@@ -81,7 +81,7 @@ Feature: Aries agent connection functions RFC 0160
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a request_not_accepted error
 
-   @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @OutstandingBug
+   @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
    Scenario: Inviter Sends invitation for one agent second agent tries during first share phase
       Given we have "3" agents
          | name    | role              |
@@ -94,7 +94,7 @@ Feature: Aries agent connection functions RFC 0160
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a request_not_accepted error
 
-   @T005-API10-RFC0160 @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview
+   @T005-API10-RFC0160 @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview @wip
    Scenario: Inviter Sends invitation for multiple agents
       Given we have "3" agents
          | name    | role              |
