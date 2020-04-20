@@ -124,14 +124,14 @@ buildImages() {
     ${args} \
     $(initDockerBuildArgs) \
     -t 'acapy-agent-backchannel' \
-    -f '../aries-backchannels/Dockerfile' '../aries-backchannels/'
+    -f '../aries-backchannels/Dockerfile.acapy' '../aries-backchannels/'
 
   echo "Building aries-test-harness ..."
   docker build \
     ${args} \
     $(initDockerBuildArgs) \
     -t 'aries-test-harness' \
-    -f '../aries-test-harness/Dockerfile' '../aries-test-harness/'
+    -f '../aries-test-harness/Dockerfile.harness' '../aries-test-harness/'
 }
 
 pingAgent(){
