@@ -126,6 +126,13 @@ buildImages() {
     -t 'acapy-agent-backchannel' \
     -f '../aries-backchannels/Dockerfile.acapy' '../aries-backchannels/'
 
+  echo "Building  vcx-agent-backchannel ..."
+  docker build \
+    ${args} \
+    $(initDockerBuildArgs) \
+    -t 'vcx-agent-backchannel' \
+    -f '../aries-backchannels/Dockerfile.vcx' '../aries-backchannels/'
+
   echo "Building aries-test-harness ..."
   docker build \
     ${args} \
@@ -138,7 +145,8 @@ pingAgent(){
   name=${1}
   port=${2}
 
-  rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:${port}/)
+  # ping agent using a backchannel-exposed api
+  rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:${port}/agent/command/status/)
   if (( ${rtnCd} == 200 )); then
     return 0
   else
@@ -178,11 +186,14 @@ runTests() {
   docker run -d --rm --name bob_agent --expose 8030-8033 -p 8030-8033:8030-8033 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" acapy-agent-backchannel -p 8030 -i false >/dev/null
   echo "Starting Mallory Agent ..."
   docker run -d --rm --name mallory_agent --expose 8040-8043 -p 8040-8043:8040-8043 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" acapy-agent-backchannel -p 8040  -i false >/dev/null
+  echo "Starting Victor Agent ..."
+  docker run -d --rm --name victor_agent --expose 8050-8053 -p 8050-8053:8050-8053 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" vcx-agent-backchannel -p 8050  -i false >/dev/null
 
   echo
-  waitForAgent Alice 8021
-  waitForAgent Bob 8031
-  waitForAgent Mallory 8041
+  waitForAgent Alice 8020
+  waitForAgent Bob 8030
+  waitForAgent Mallory 8040
+  waitForAgent Victor 8050
 
   echo
   echo
@@ -201,6 +212,10 @@ runTests() {
 
   printf "    - Mallory: "
   docker stop mallory_agent >/dev/null  
+  printf "Done\n"
+
+  printf "    - Victor: "
+  docker stop victor_agent >/dev/null
   printf "Done\n"
 }
 # =================================================================================================================

@@ -87,6 +87,8 @@ class AgentBackchannel:
         genesis_data: str = None,
         params: dict = {}
     ):
+        self.ACTIVE = False
+
         self.ident = ident
         self.http_port = http_port
         self.admin_port = admin_port
@@ -116,6 +118,9 @@ class AgentBackchannel:
 
         self.client_session: ClientSession = ClientSession()
 
+    def activate(self, active: bool = True):
+        self.ACTIVE = active
+
     async def listen_backchannel(self, backchannel_port):
         """ 
         Setup the routes to allow the test harness to send commands to and get replies
@@ -143,6 +148,7 @@ class AgentBackchannel:
         """
         operations_str = """
         topic                 | method | operation          | id  | data  | description 
+        status                |  GET   |                    |     |       | Return agent status 200 if Active or 418 if Inactive
         schema                |  GET   |                    |  Y  |       | Fetch a specific schema by ID
         schema                |  POST  |                    |     |   Y   | Register a schema on the ledger
         credential-definition |  GET   |                    |  Y  |       | Fetch a specific cred def by ID

@@ -205,7 +205,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
     ) -> (int, str):
-        if op["topic"] == "connection":
+        if op["topic"] == "status":
+            status = 200 if self.ACTIVE else 418
+            status_msg = "Active" if self.ACTIVE else "Inactive"
+            return (status, json.dumps({"status": status_msg}))
+
+        elif op["topic"] == "connection":
             if rec_id:
                 connection_id = rec_id
                 agent_operation = "/connections/" + connection_id
@@ -384,6 +389,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
         await agent.register_did()
 
         await agent.start_process()
+        agent.activate()
 
         # now wait ...
         if interactive:

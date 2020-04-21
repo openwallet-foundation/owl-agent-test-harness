@@ -1,8 +1,7 @@
 FROM python:3.7-buster
-COPY . /aries-backchannels
+
+RUN mkdir -p /aries-backchannels/bin
 WORKDIR /aries-backchannels
-RUN pip install -r requirements.txt
-RUN pip install -r requirements-vcx.txt
 
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
    && apt-get update \
@@ -16,8 +15,6 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
    && apt-get install -y indy-cli
 
 # jump through some hoops to get a dummy cloud agent
-RUN mkdir -p ./bin
-
 RUN apt-get update -y
 RUN apt-get install -y --no-install-recommends \
         automake \
@@ -68,7 +65,10 @@ RUN cd ./indy-sdk/indy-sdk*/vcx/dummy-cloud-agent && \
     $HOME/.cargo/bin/cargo build ${indy_build_flags} && \
     mv target/*/indy-dummy-agent "/aries-backchannels/bin/" 
 
+COPY . /aries-backchannels
+RUN pip install -r requirements.txt
+RUN pip install -r requirements-vcx.txt
+
 ENV RUNMODE=docker
 
-#aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
-RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
+ENTRYPOINT ["python", "vcx_backchannel.py"]
