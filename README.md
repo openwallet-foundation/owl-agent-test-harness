@@ -9,7 +9,7 @@ This repository contains:
 
 The background for this test harness design is in the following Google doc:  https://docs.google.com/presentation/d/17iEhjs9xv3JRpcvXn6eu_12uEhOlwxyL_Tgt584wJmg/edit?usp=sharing
 
-Note that this code is a Proof of Concept to illistrate this test harness approach, and to stimulate discussion.
+Note that this code is in active development.
 
 
 ## Aries Agent Backchannels
@@ -93,7 +93,7 @@ Cleanup:
 
 By default, the `Alice`, `Bob` and `Mallory` agents all run using aca-py.  (Another agent named `Victor` runs using VCX - `Victor` does not participate in any of the test scenarios, but shows how different agents can be implemented under a standard backchannel framework.)
 
-To use a different agent for any of the test roles (`Alice`, `Bob` or `Mallory`) by specifying the agent type in an appropriate environment variable (`ALICE_AGENT`, `BOB_AGENT` or `MALLORY_AGENT`), for example:
+To use a different agent for any of the test roles (`Alice`, `Bob` or `Mallory`), specify the agent type in an appropriate environment variable (`ALICE_AGENT`, `BOB_AGENT` or `MALLORY_AGENT` respectively), for example:
 
 ```bash
 BOB_AGENT=vcx-agent-backchannel ./manage run
@@ -124,7 +124,7 @@ https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels
 
 https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/agent_backchannel.py#L150
 
-Additional protocols may be added in the future, but extending the list of parameters with additional `topics`.
+Additional protocols may be added in the future, by extending the list of parameters with additional `topics`.
 
 
 #### 2. Backchannel/Agent Interaction
@@ -265,7 +265,7 @@ If you want to run the tests using different agents, you can run:
 behave -D Alice=http://localhost:8070 -D Bob=http://localhost:8020
 ```
 
-This is the revers of the default configuration in `behave.ini`, and reverses the roles that the Alice and Bob agents will play in the test scenarios.
+This is the reverse of the default configuration in `behave.ini`, and reverses the roles that the Alice and Bob agents will play in the test scenarios.
 
 ... or use any ports that you like!!!
 
