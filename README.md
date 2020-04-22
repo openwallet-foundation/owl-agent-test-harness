@@ -9,13 +9,161 @@ This repository contains:
 
 The background for this test harness design is in the following Google doc:  https://docs.google.com/presentation/d/17iEhjs9xv3JRpcvXn6eu_12uEhOlwxyL_Tgt584wJmg/edit?usp=sharing
 
-Note that this code is a Proof of Concept to illistrate this test harness approach, and to stimulate discussion.
+Note that this code is in active development.
+
 
 ## Aries Agent Backchannels
 
 There are two sample backchannels in this repository, for the ACA-PY (https://github.com/hyperledger/aries-cloudagent-python) and VCX (https://github.com/hyperledger/indy-sdk/tree/master/vcx) Aries agents.
 
 Both are built on a common set of base code (./aries-backchannels/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching.  The ACA-PY (./aries-backchannels/acapy_backchannel.py) and VCX (./aries-backchannels/vcx_backchannel.py) implementations extend this base to add support for their respective agents.
+
+
+### Running the Backchannels using Docker
+
+There is a single `manage` script that handles building and running the agents and test framework using Docker.
+
+You must first start up a local set of Indy nodes - open up a bash shell and run the following commands:
+
+```bash
+git clone https://github.com/bcgov/vonnetwork.git
+cd von-network
+./manage build
+./manage start --logs
+```
+
+Wait until the nodes are started and synchronized, you will see a message similar to the following:
+
+```
+webserver_1  | 2020-04-21 20:57:10,174|DEBUG|anchor.py|Finished resync
+```
+
+Open a separate bash shell and run the following:
+
+```bash
+git clone https://github.com/bcgov/aries-agent-test-harness.git
+cd aries-agent-test-harness/docker
+./manage build
+./manage run
+```
+
+That's it!  Just sit back and enjoy the show, eventually you will see a test report showing how many of the tests passed and failed:
+
+```
+$ ./manage run
+Starting Alice Agent ...
+Starting Bob Agent ...
+Starting Mallory Agent ...
+Starting Victor Agent ...
+
+waiting for Alice agent to start...
+waiting for Bob agent to start...
+waiting for Mallory agent to start
+waiting for Victor agent to start......
+
+...
+
+Failing scenarios:
+  features/0160-connection.feature:3  establish a connection between two agents OLD
+  features/0160-connection.feature:39  Connection established between two agents and inviter gets a preceding message -- @1.1 
+  features/0160-connection.feature:40  Connection established between two agents and inviter gets a preceding message -- @1.2 
+  features/0160-connection.feature:59  Inviter Sends invitation for one agent second agent tries during first share phase
+  features/0160-connection.feature:72  Inviter Sends invitation for multiple agents
+  features/0160-connection.feature:86  Establish a connection between two agents who already have a connection initiated from invitee
+
+1 feature passed, 1 failed, 0 skipped
+4 scenarios passed, 6 failed, 0 skipped
+45 steps passed, 5 failed, 15 skipped, 1 undefined
+Took 0m22.558s
+
+You can implement step definitions for undefined steps with these snippets:
+
+@when(u'"Alice" accepts the connection request')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: When "Alice" accepts the connection request')
+
+
+Cleanup:
+  - Shutting down agents ...
+    - Alice: Done
+    - Bob: Done
+    - Mallory: Done
+    - Victor: Done
+```
+
+By default, the `Alice`, `Bob` and `Mallory` agents all run using aca-py.  (Another agent named `Victor` runs using VCX - `Victor` does not participate in any of the test scenarios, but shows how different agents can be implemented under a standard backchannel framework.)
+
+To use a different agent for any of the test roles (`Alice`, `Bob` or `Mallory`), specify the agent type in an appropriate environment variable (`ALICE_AGENT`, `BOB_AGENT` or `MALLORY_AGENT` respectively), for example:
+
+```bash
+BOB_AGENT=vcx-agent-backchannel ./manage run
+```
+
+... runs `Bob` using the VCX agent (`Alice` and `Mallory` run using the defauly agent, which is aca-py).
+
+
+### Writing a new Backchannel for a new Agent
+
+If you are writing a backchannel using Python, you're in luck!  Just use either the `aca-py` or `VCX` backchannels as a model.  They sub-class from a common base class, which implements the common backchannel features.
+
+If you are implementing from scratch, you need to implement a backchannel which:
+
+- implements the standard backchannel web service interface
+- starts an agent instance, and forwards commands from the test harness to the agent
+- provides a Docker script to build a Docker image for the backchannel (and agent)
+- plugs into the common `./manage` script to allow the new backchannel/agent to be included in the standard test scenarios
+
+
+#### 1. Standard Backchannel API
+
+The test harness interacts with each backchannel using a standard set of web services, the url's are mapped here:
+
+https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/agent_backchannel.py#L190
+
+... and you can see a full set of the expected parameters here:
+
+https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/agent_backchannel.py#L150
+
+Additional protocols may be added in the future, by extending the list of parameters with additional `topics`.
+
+
+#### 2. Backchannel/Agent Interaction
+
+The test harness interacts with each published backchannel API using the following common functions:
+
+https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-test-harness/agent_backchannel_client.py
+
+
+#### 3. Docker Build Script
+
+Each backchannel should provide a Docker script that builds a self-contained Docker image for the backchannel and agent.
+
+Examples are provided for aca-py (`Dockerfile.acapy`) and VCX (`Dockerfile.vcx`).
+
+
+#### 4. `./manage` Script Integration
+
+The manage script builds an image for each backchannel:
+
+https://github.com/bcgov/aries-agent-test-harness/blob/master/docker/manage#L119
+
+
+... and the image is started using a standard set of parameters, for example for `Alice`:
+
+```
+docker run -d --rm --name alice_agent --expose 8020-8023 -p 8020-8023:8020-8023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ALICE_AGENT} -p 8020 -i false >/dev/null  
+```
+
+Important things to note:
+
+- each backchannel is provided a range of ports, which are mapped to localhost (aca-py and vcx each use 4 ports)
+- environment variables provide the Docker host IP (`DOCKERHOST`) and a url to the ledger genesis transactions (`LEDGER_URL`)
+- parameters are passed to the backchannel to specify the base port number (`-p port`) and to specify non-interactive mode (`-i false`)
+
+
+### Running the Backchannels Locally (bare metal)
+
+Note this is not recommended, however it may be desirable if you want to run outside of Docker containers.
 
 To run each agent, install the appropriate pre-requisites (the VCX adapter requires a local install of indy-sdk and VCX) and then run as follows.
 
@@ -117,7 +265,7 @@ If you want to run the tests using different agents, you can run:
 behave -D Alice=http://localhost:8070 -D Bob=http://localhost:8020
 ```
 
-This is the revers of the default configuration in `behave.ini`, and reverses the roles that the Alice and Bob agents will play in the test scenarios.
+This is the reverse of the default configuration in `behave.ini`, and reverses the roles that the Alice and Bob agents will play in the test scenarios.
 
 ... or use any ports that you like!!!
 
