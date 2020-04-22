@@ -26,7 +26,7 @@ There is a single `manage` script that handles building and running the agents a
 You must first start up a local set of Indy nodes - open up a bash shell and run the following commands:
 
 ```bash
-git clone https://github.com/bcgov/vonnetwork.git
+git clone https://github.com/bcgov/von-network.git
 cd von-network
 ./manage build
 ./manage start --logs
