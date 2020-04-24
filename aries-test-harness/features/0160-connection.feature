@@ -1,8 +1,7 @@
 Feature: Aries agent connection functions RFC 0160
 
-   @T001-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
+   @T001-API10-RFC0160 @P1 @AcceptanceTest
    Scenario Outline: establish a connection between two agents
-      #Given we have two agents "Alice" and "Bob"
       Given we have "2" agents
          | name  | role    |
          | Alice | inviter |
@@ -21,9 +20,8 @@ Feature: Aries agent connection functions RFC 0160
          | acks      |
          | trustping |
 
-   @T001.2-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
+   @T001.2-API10-RFC0160 @P1 @AcceptanceTest
    Scenario Outline: establish a connection between two agents with role reversal
-      #Given we have two agents "Alice" and "Bob"
       Given we have "2" agents
          | name  | role    |
          | Alice | invitee |
@@ -43,7 +41,7 @@ Feature: Aries agent connection functions RFC 0160
          | trustping |
 
 
-   @T002-API10-RFC0160 @P1 @AcceptanceTest @NeedsReview
+   @T002-API10-RFC0160 @P1 @AcceptanceTest
    Scenario Outline: Connection established between two agents but inviter sends next message to establish full connection state
       Given we have "2" agents
          | name  | role    |
@@ -64,7 +62,7 @@ Feature: Aries agent connection functions RFC 0160
          | trustping |
 
 
-   @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
+   @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
    Scenario: Inviter Sends invitation for one agent second agent tries after connection
       Given we have "3" agents
          | name    | role              |
@@ -81,7 +79,7 @@ Feature: Aries agent connection functions RFC 0160
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a request_not_accepted error
 
-   @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @NeedsReview @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
+   @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
    Scenario: Inviter Sends invitation for one agent second agent tries during first share phase
       Given we have "3" agents
          | name    | role              |
@@ -102,13 +100,16 @@ Feature: Aries agent connection functions RFC 0160
          | Bob     | invitee           |
          | Mallory | inviteinterceptor |
       And "Alice" generated a multi-use connection invitation
-      And "Bob" received the connection invitation
-      And "Bob" sent a connection request
-      And "Alice" sent a connection response to "Bob"
-      When "Mallory" sends a connection request based on the connection invitation
-      Then "Alice" sent a connection response to "Mallory"
+      And "Bob" receives the connection invitation
+      And "Bob" sends a connection request to "Alice"
+      And "Alice" receives the connection request
+      And "Alice" sends a connection response to "Bob"
+      When "Mallory" sends a connection request to "Alice" based on the connection invitation
+      Then "Alice" sends a connection response to "Mallory"
+      #And "Alice" and "Bob" are able to complete the connection
+      #And "Alice" and "Mallory" are able to complete the connection
 
-   @T006-API10-RFC0160 @P4 @DerivedFunctionalTest @NeedsReview
+   @T006-API10-RFC0160 @P4 @DerivedFunctionalTest
    Scenario: Establish a connection between two agents who already have a connection initiated from invitee
       Given we have "2" agents
          | name  | role    |
@@ -118,3 +119,22 @@ Feature: Aries agent connection functions RFC 0160
       When "Bob" generates a connection invitation
       And "Bob" and "Alice" complete the connection process
       Then "Alice" and "Bob" have another connection
+
+@T007-API10-RFC0160 @P2 @ExceptionTest @SingleTryOnException @NeedsReview @wip
+Scenario Outline: Establish a connection between two agents but gets a request not accepted report problem message
+      Given we have "2" agents
+         | name  | role    |
+         | Alice | inviter |
+         | Bob   | invitee |
+And "Bob" has <problem>
+When "Alice" generates a connection invitation
+And "Bob" receives the connection invitation
+And "Bob" sends a connection request to "Alice"
+Then "Alice" sends an request not accepted error
+And the state of "Alice" is reset to Null
+And the state of "Bob" is reset to Null
+
+Examples:
+| problem |
+| Invalid DID Method |
+| unknown endpoint protocols |

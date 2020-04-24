@@ -51,6 +51,7 @@ def step_impl(context, inviter):
     #assert connection_status(inviter_url, context.inviter_connection_id, "invitation")
     assert connection_status(inviter_url, context.connection_id_dict[inviter], "invitation")
 
+@given('"{invitee}" receives the connection invitation')
 @when('"{invitee}" receives the connection invitation')
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
@@ -68,11 +69,14 @@ def step_impl(context, invitee):
 
 @when('"{inviter}" sends a connection response to "{invitee}"')
 @given('"{inviter}" sends a connection response to "{invitee}"')
+@then('"{inviter}" sends a connection response to "{invitee}"')
 def step_impl(context, inviter, invitee):
     inviter_url = context.config.userdata.get(inviter)
     inviter_connection_id = context.connection_id_dict[inviter]
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.connection_id_dict[invitee]
+
+    print(inviter, inviter_url, inviter_connection_id)
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, "request")
@@ -93,6 +97,7 @@ def step_impl(context, invitee):
     # invitee already recieved the connection response in the accept-request call so get connection and verify status=response.
     assert connection_status(invitee_url, invitee_connection_id, "response")
 
+@given('"{invitee}" sends a connection request to "{inviter}"')
 @when('"{invitee}" sends a connection request to "{inviter}"')
 def step_impl(context, invitee, inviter):
     invitee_url = context.config.userdata.get(invitee)
@@ -199,13 +204,13 @@ def step_impl(context, inviter, invitee):
 @given('"{sender}" and "{receiver}" have an existing connection')
 def step_impl(context, sender, receiver):
     context.execute_steps(u'''
-       Given we have two agents "''' + sender + '''" and "''' + receiver + '''"
         When "''' + sender + '''" generates a connection invitation
          And "''' + receiver + '''" receives the connection invitation
-         And "''' + receiver + '''" sends a connection response
-         And "''' + sender + '''" accepts the connection response
-         And "''' + receiver + '''" sends a response ping
-         And "''' + sender + '''" receives the response ping
+         And "''' + receiver + '''" sends a connection request to "''' + sender + '''"
+         And "''' + sender + '''" receives the connection request
+         And "''' + sender + '''" sends a connection response to "''' + receiver + '''"
+         And "''' + receiver + '''" receives the connection response
+         And "''' + receiver + '''" sends trustping to "''' + sender + '''"
         Then "''' + sender + '''" and "''' + receiver + '''" have a connection
     ''')
 
@@ -283,7 +288,7 @@ def step_impl(context, sender, reciever):
     # no need to do this here, an acks may be called at any point, can't check for state.
     # assert connection_status(sender_url, sender_connection_id, "active")
 
-@when(u'"{sender}" sends trustping to "{receiver}"')
+@when('"{sender}" sends trustping to "{receiver}"')
 def step_impl(context, sender, receiver):
     sender_url = context.config.userdata.get(sender)
     sender_connection_id = context.connection_id_dict[sender]
@@ -374,31 +379,56 @@ def step_impl(context, inviter):
     # Invitee should still be active based on the inviter connection id.
     #assert connection_status(inviter_url, inviter_connection_id, ["active"])
 
-@given(u'"Alice" generated a multi-use connection invitation')
+@given(u'"{inviter}" generated a multi-use connection invitation')
+def step_impl(context, inviter):
+    context.execute_steps('''
+        When "''' + inviter + '''" generates a connection invitation
+    ''')
+
+
+@when(u'"{sender}" and "{receiver}" complete the connection process')
+def step_impl(context, sender, receiver):
+    context.execute_steps(u'''
+         When "''' + receiver + '''" receives the connection invitation
+         And "''' + receiver + '''" sends a connection request to "''' + sender + '''"
+         And "''' + sender + '''" receives the connection request
+         And "''' + sender + '''" sends a connection response to "''' + receiver + '''"
+         And "''' + receiver + '''" receives the connection response
+         And "''' + receiver + '''" sends trustping to "''' + sender + '''"
+    ''')
+
+@then('"{inviter}" and "{invitee}" are able to complete the connection')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Given "Alice" generated a multi-use connection invitation')
+    raise NotImplementedError('STEP: Then "Alice" and "Bob" are able to complete the connection')
 
 
-@given(u'"Alice" sent a connection response to "Bob"')
+@then(u'"{receiver}" and "{sender}" have another connection')
+def step_impl(context, receiver, sender):
+    context.execute_steps(u'''
+        Then "''' + sender + '''" and "''' + receiver + '''" have a connection
+    ''')
+
+
+@given(u'"Bob" has Invalid DID Method')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Given "Alice" sent a connection response to "Bob"')
+    raise NotImplementedError(u'STEP: Given "Bob" has Invalid DID Method')
 
 
-@when(u'"Mallory" sends a connection request based on the connection invitation')
+@then(u'"Alice" sends an request not accepted error')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: When "Mallory" sends a connection request based on the connection invitation')
+    raise NotImplementedError(u'STEP: Then "Alice" sends an request not accepted error')
 
 
-@then(u'"Alice" sent a connection response to "Mallory"')
+@then(u'the state of "Alice" is reset to Null')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Then "Alice" sent a connection response to "Mallory"')
+    raise NotImplementedError(u'STEP: Then the state of "Alice" is reset to Null')
 
 
-@when(u'"Bob" and "Alice" complete the connection process')
+@then(u'the state of "Bob" is reset to Null')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: When "Bob" and "Alice" complete the connection process')
+    raise NotImplementedError(u'STEP: Then the state of "Bob" is reset to Null')
 
 
-@then(u'"Alice" and "Bob" have another connection')
+@given(u'"Bob" has unknown endpoint protocols')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Then "Alice" and "Bob" have another connection')
+    raise NotImplementedError(u'STEP: Given "Bob" has unknown endpoint protocols')
