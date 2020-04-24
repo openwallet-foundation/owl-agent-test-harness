@@ -7,7 +7,9 @@ This repository contains:
 - A test framework, implemented using Behave, that can run RFC compliance tests across multiple Agents (with compatible backchannel adaptors)
 - Sample backchannel adapters for ACA-PY and VCX Aries agents
 
-The background for this test harness design is in the following Google doc:  https://docs.google.com/presentation/d/17iEhjs9xv3JRpcvXn6eu_12uEhOlwxyL_Tgt584wJmg/edit?usp=sharing
+The background for this test harness design is in the following Google doc:  https://docs.google.com/presentation/d/17iEhjs9xv3JRpcvXn6eu_12uEhOlwxyL_Tgt584wJmg
+
+Test scenarios for each RFC are documented in the following Google sheet:  https://bit.ly/AriesTestHarnessScenarios
 
 Note that this code is in active development.
 
