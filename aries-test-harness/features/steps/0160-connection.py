@@ -49,21 +49,7 @@ def step_impl(context, invitee):
 
     # get connection and verify status
     assert connection_status(invitee_url, context.invitee_connection_id, ["invitation", "request"])
-"""
-@when('"{invitee}" sends a connection response')
-def step_impl(context, invitee):
-    invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.invitee_connection_id
 
-    # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, ["invitation", "request"])
-
-    (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="accept-invitation", id=invitee_connection_id)
-    assert resp_status == 200
-
-    # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, "request")
-"""
 # Replaced the function above because according to the RFC the invitee does not send a connection response, the inviter does.
 @when('"{inviter}" sends a connection response')
 def step_impl(context, inviter):
@@ -337,7 +323,7 @@ def step_impl(context, inviter, invitee):
 
 @when(u'"{inviteinterceptor}" sends a connection request to "{inviter}" based on the connection invitation')
 def step_impl(context, inviteinterceptor, inviter):
-        context.execute_steps('''
+    context.execute_steps('''
         When "''' + inviteinterceptor + '''" receives the connection invitation
         And "''' + inviteinterceptor + '''" sends a connection request
     ''')

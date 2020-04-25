@@ -222,9 +222,14 @@ class AgentBackchannel:
                 ((method == "GET") or (operation and op["operation"] == operation) or (operation is None)) and
                 ((data and op["data"] == "Y") or (data is None))
             ):
+                print("Matched operation:", op)
                 return op
 
         return None
+
+    def not_found_response(self, request):
+        resp_text = "404 not found: " + str(request)
+        return web.Response(body=resp_text.encode('utf8'), status=404)
 
     async def _post_command_backchannel(self, request: ClientRequest):
         """
@@ -246,9 +251,14 @@ class AgentBackchannel:
 
             (resp_status, resp_text) = await self.make_agent_POST_request(operation, rec_id=rec_id, data=data)
 
-            return web.Response(text=resp_text, status=resp_status)
+            if resp_status == 200:
+                return web.Response(text=resp_text, status=resp_status)
+            elif resp_status == 404:
+                return self.not_found_response(json.dumps(operation))
+            else:
+                return web.Response(body=resp_text, status=resp_status)
 
-        return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
+        return self.not_found_response(topic)
 
     async def _get_command_backchannel(self, request: ClientRequest):
         """
@@ -264,9 +274,14 @@ class AgentBackchannel:
         if operation:
             (resp_status, resp_text) = await self.make_agent_GET_request(operation, rec_id=rec_id)
 
-            return web.Response(text=resp_text, status=resp_status)
+            if resp_status == 200:
+                return web.Response(text=resp_text, status=resp_status)
+            elif resp_status == 404:
+                return self.not_found_response(json.dumps(operation))
+            else:
+                return web.Response(body=resp_text, status=resp_status)
 
-        return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
+        return self.not_found_response(topic)
 
     async def _get_response_backchannel(self, request: ClientRequest):
         """

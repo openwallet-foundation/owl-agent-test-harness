@@ -200,6 +200,26 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 log_msg(resp_status, resp_text)
                 return (resp_status, resp_text)
 
+        elif op["topic"] == "schema":
+            # POST operation is to create a new schema
+            agent_operation = "/schemas"
+            log_msg(agent_operation, data)
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "credential-definition":
+            # POST operation is to create a new cred def
+            agent_operation = "/credential-definitions"
+            log_msg(agent_operation, data)
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
         return (404, '404: Not Found\n\n'.encode('utf8'))
 
     async def make_agent_GET_request(
@@ -232,6 +252,34 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     connection_info = {"connection_id": connection["connection_id"], "state": connection["state"], "connection": connection}
                     connection_infos.append(connection_info)
                 resp_text = json.dumps(connection_infos)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "schema":
+            schema_id = rec_id
+            agent_operation = "/schemas/created?schema_id=" + schema_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
+
+            resp_json = json.loads(resp_text)
+            schema = resp_json["schema"]
+
+            resp_text = json.dumps(schema)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "credential-definition":
+            cred_def_id = rec_id
+            agent_operation = "/schemas/created?id=" + cred_def_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
+
+            resp_json = json.loads(resp_text)
+            credential_definition = resp_json["credential_definition"]
+
+            resp_text = json.dumps(credential_definition)
             return (resp_status, resp_text)
 
         return (404, '404: Not Found\n\n'.encode('utf8'))
