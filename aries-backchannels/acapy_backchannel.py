@@ -256,7 +256,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "schema":
             schema_id = rec_id
-            agent_operation = "/schemas/created?schema_id=" + schema_id
+            agent_operation = "/schemas/" + schema_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:
@@ -270,7 +270,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "credential-definition":
             cred_def_id = rec_id
-            agent_operation = "/schemas/created?id=" + cred_def_id
+            agent_operation = "/credential-definitions/" + cred_def_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:

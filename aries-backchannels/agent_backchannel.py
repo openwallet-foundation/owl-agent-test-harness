@@ -4,6 +4,7 @@ import functools
 import json
 import logging
 import os
+import traceback
 import random
 import subprocess
 import sys
@@ -238,27 +239,36 @@ class AgentBackchannel:
         topic = request.match_info["topic"]
         payload = await request.json()
 
-        operation = self.match_operation(topic, "POST", payload=payload)
-        if operation:
-            if "data" in payload:
-                data = payload["data"]
-            else:
-                data = None
-            if "id" in payload:
-                rec_id = payload["id"]
-            else:
-                rec_id = None
+        try:
+            operation = self.match_operation(topic, "POST", payload=payload)
+            if operation:
+                if "data" in payload:
+                    data = payload["data"]
+                else:
+                    data = None
+                if "id" in payload:
+                    rec_id = payload["id"]
+                else:
+                    rec_id = None
 
-            (resp_status, resp_text) = await self.make_agent_POST_request(operation, rec_id=rec_id, data=data)
+                (resp_status, resp_text) = await self.make_agent_POST_request(operation, rec_id=rec_id, data=data)
 
-            if resp_status == 200:
-                return web.Response(text=resp_text, status=resp_status)
-            elif resp_status == 404:
-                return self.not_found_response(json.dumps(operation))
-            else:
-                return web.Response(body=resp_text, status=resp_status)
+                if resp_status == 200:
+                    return web.Response(text=resp_text, status=resp_status)
+                elif resp_status == 404:
+                    return self.not_found_response(json.dumps(operation))
+                else:
+                    return web.Response(body=resp_text, status=resp_status)
 
-        return self.not_found_response(topic)
+            return self.not_found_response(topic)
+
+        except NotImplementedError as ni_e:
+            # TODO standard handling ...
+            raise ni_e
+        except Exception as e:
+            print("Exception:", e)
+            traceback.print_exc()
+            return web.Response(body=str(e), status=500)
 
     async def _get_command_backchannel(self, request: ClientRequest):
         """
@@ -270,18 +280,27 @@ class AgentBackchannel:
         else:
             rec_id = None
 
-        operation = self.match_operation(topic, "GET", rec_id=rec_id)
-        if operation:
-            (resp_status, resp_text) = await self.make_agent_GET_request(operation, rec_id=rec_id)
+        try:
+            operation = self.match_operation(topic, "GET", rec_id=rec_id)
+            if operation:
+                (resp_status, resp_text) = await self.make_agent_GET_request(operation, rec_id=rec_id)
 
-            if resp_status == 200:
-                return web.Response(text=resp_text, status=resp_status)
-            elif resp_status == 404:
-                return self.not_found_response(json.dumps(operation))
-            else:
-                return web.Response(body=resp_text, status=resp_status)
+                if resp_status == 200:
+                    return web.Response(text=resp_text, status=resp_status)
+                elif resp_status == 404:
+                    return self.not_found_response(json.dumps(operation))
+                else:
+                    return web.Response(body=resp_text, status=resp_status)
 
-        return self.not_found_response(topic)
+            return self.not_found_response(topic)
+
+        except NotImplementedError as ni_e:
+            # TODO standard handling ...
+            raise ni_e
+        except Exception as e:
+            print("Exception:", e)
+            traceback.print_exc()
+            return web.Response(body=str(e), status=500)
 
     async def _get_response_backchannel(self, request: ClientRequest):
         """
@@ -293,9 +312,18 @@ class AgentBackchannel:
         else:
             rec_id = None
 
-        (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
+        try:
+            (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
 
-        return web.Response(text=resp_text, status=resp_status)
+            return web.Response(text=resp_text, status=resp_status)
+
+        except NotImplementedError as ni_e:
+            # TODO standard handling ...
+            raise ni_e
+        except Exception as e:
+            print("Exception:", e)
+            traceback.print_exc()
+            return web.Response(body=str(e), status=500)
 
     async def _post_reply_backchannel(self, request: ClientRequest):
         """
