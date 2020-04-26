@@ -65,9 +65,12 @@ RUN cd ./indy-sdk/indy-sdk*/vcx/dummy-cloud-agent && \
     $HOME/.cargo/bin/cargo build ${indy_build_flags} && \
     mv target/*/indy-dummy-agent "/aries-backchannels/bin/" 
 
-COPY . /aries-backchannels
+COPY ./requirements.txt /aries-backchannels
+COPY ./requirements-vcx.txt /aries-backchannels
 RUN pip install -r requirements.txt
 RUN pip install -r requirements-vcx.txt
+
+COPY . /aries-backchannels
 
 ENV RUNMODE=docker
 

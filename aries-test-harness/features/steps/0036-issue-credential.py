@@ -30,7 +30,7 @@ def step_impl(context, issuer):
         schema["schema_name"] = schema["schema_name"] + issuer
         data = json.dumps(schema)
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "schema", data=schema)
-        assert resp_status == 200
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
         resp_json = json.loads(resp_text)
         context.issuer_schema_id = resp_json["schema_id"]
@@ -42,7 +42,7 @@ def step_impl(context, issuer):
         cred_def["schema_id"] = context.issuer_schema_id
         data = json.dumps(cred_def)
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential-definition", data=cred_def)
-        assert resp_status == 200
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
         resp_json = json.loads(resp_text)
         context.credential_definition_id = resp_json["credential_definition_id"]
@@ -56,16 +56,18 @@ def step_impl(context, issuer):
     issuer_credential_definition_id = context.credential_definition_id
 
     (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "schema", id=issuer_schema_id)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    issuer_schema = resp_json["schema"]
+    print("schema resp_json:", resp_json)
+    issuer_schema = resp_json
 
     (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "credential-definition", id=issuer_credential_definition_id)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    issuer_credential_definition = resp_json["schema"]
+    print("credential-definition resp_json:", resp_json)
+    issuer_credential_definition = resp_json
 
     pass
 

@@ -18,8 +18,8 @@ def step_impl(context, inviter, invitee):
     """Determine there are 2 agents running based on data in the Behave input file behave.ini."""
     inviter_url = context.config.userdata.get(inviter)
     invitee_url = context.config.userdata.get(invitee)
-    assert inviter_url is not None and 0 < len(inviter_url)
-    assert invitee_url is not None and 0 < len(invitee_url)
+    assert inviter_url is not None and 0 < len(inviter_url), f'invalid inviter_url: {inviter_url}'
+    assert invitee_url is not None and 0 < len(invitee_url), f'invalid invitee_url: {invitee_url}'
     # TODO need to assert if the URLs are up (200) before continuing with the test, and message if they are not (404?).
 
 @when('"{inviter}" generates a connection invitation')
@@ -27,7 +27,7 @@ def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="create-invitation")
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
     context.inviter_invitation = resp_json["invitation"]
@@ -42,7 +42,7 @@ def step_impl(context, invitee):
 
     data = context.inviter_invitation
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="receive-invitation", data=data)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
     context.invitee_connection_id = resp_json["connection_id"]
@@ -62,7 +62,7 @@ def step_impl(context, inviter):
     assert connection_status(inviter_url, inviter_connection_id, ["request", "response"])
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, "response")
@@ -77,7 +77,7 @@ def step_impl(context, invitee):
 
     # TODO There doesn't seem to be an operation/event for send connection request
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="accept-invitation", id=invitee_connection_id)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     # TODO request should be requested according to the RFC
@@ -92,7 +92,7 @@ def step_impl(context, inviter):
     assert connection_status(inviter_url, inviter_connection_id, ["invitation", "request"])
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, ["request", "response"])
@@ -106,7 +106,7 @@ def step_impl(context, inviter):
     assert connection_status(inviter_url, inviter_connection_id, ["invitation", "request"])
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, ["request", "response"])
@@ -121,7 +121,7 @@ def step_impl(context, invitee):
 
     data = {"comment": "Hello from " + invitee}
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="send-ping", id=invitee_connection_id, data=data)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(invitee_url, invitee_connection_id, "active")
@@ -134,7 +134,7 @@ def step_impl(context, inviter):
 
     data = {"comment": "Hello from " + inviter}
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="send-ping", id=inviter_connection_id, data=data)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, "active")
@@ -177,7 +177,7 @@ def step_impl(context, sender):
 
     data = {"comment": "Hello from " + sender}
     (resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(sender_url, sender_connection_id, "active")
@@ -236,7 +236,7 @@ def step_impl(context, sender):
     #(resp_status, resp_text) = agent_backchannel_POST(receiver_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
     # ack not yet implemented. Use line below when it is and remove the upper send-ping call
     (resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="ack", id=sender_connection_id, data=data)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(receiver_url, receiver_connection_id, "active")
@@ -252,7 +252,7 @@ def step_impl(context, sender, receiver):
 
     data = {"comment": "acknowledgement from " + sender}
     (resp_status, resp_text) = agent_backchannel_POST(receiver_url + "/agent/command/", "connection", operation="send-ping", id=receiver_connection_id, data=data)
-    assert resp_status == 200
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
     assert connection_status(receiver_url, receiver_connection_id, "active")
@@ -335,7 +335,7 @@ def step_impl(context, inviter):
 
     # TODO It is expected that accept-request should send a request not accepted error, not a 500
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
-    assert resp_status == 500
+    assert resp_status == 500, f'resp_status {resp_status} is not 500; {resp_text}'
 
     # Invitee should still be active based on the inviter connection id.
     assert connection_status(inviter_url, inviter_connection_id, ["active"])
