@@ -17,8 +17,10 @@ Feature: Aries agent connection functions RFC 0160
 
       Examples:
          | message   |
-         | acks      |
          | trustping |
+         # | acks      | *Note* in RFC 0302: Aries Interop Profile, it states that Acknowledgements are part of AIP 1.0, however, agents under test have
+                        # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
+                        # the agents under test implement acks.
 
    @T001.2-API10-RFC0160 @P1 @AcceptanceTest
    Scenario Outline: establish a connection between two agents with role reversal
@@ -37,8 +39,10 @@ Feature: Aries agent connection functions RFC 0160
 
       Examples:
          | message   |
-         | acks      |
          | trustping |
+         # | acks      | *Note* in RFC 0302: Aries Interop Profile, it states that Acknowledgements are part of AIP 1.0, however, agents under test have
+                        # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
+                        # the agents under test implement acks.
 
 
    @T002-API10-RFC0160 @P1 @AcceptanceTest
@@ -58,8 +62,10 @@ Feature: Aries agent connection functions RFC 0160
 
       Examples:
          | message   |
-         | acks      |
          | trustping |
+         # | acks      | *Note* in RFC 0302: Aries Interop Profile, it states that Acknowledgements are part of AIP 1.0, however, agents under test have
+                        # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
+                        # the agents under test implement acks.
 
 
    @T003-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
@@ -106,8 +112,8 @@ Feature: Aries agent connection functions RFC 0160
       And "Alice" sends a connection response to "Bob"
       When "Mallory" sends a connection request to "Alice" based on the connection invitation
       Then "Alice" sends a connection response to "Mallory"
-      #And "Alice" and "Bob" are able to complete the connection
-      #And "Alice" and "Mallory" are able to complete the connection
+   #And "Alice" and "Bob" are able to complete the connection
+   #And "Alice" and "Mallory" are able to complete the connection
 
    @T006-API10-RFC0160 @P4 @DerivedFunctionalTest
    Scenario: Establish a connection between two agents who already have a connection initiated from invitee
@@ -120,21 +126,21 @@ Feature: Aries agent connection functions RFC 0160
       And "Bob" and "Alice" complete the connection process
       Then "Alice" and "Bob" have another connection
 
-@T007-API10-RFC0160 @P2 @ExceptionTest @SingleTryOnException @NeedsReview @wip
-Scenario Outline: Establish a connection between two agents but gets a request not accepted report problem message
+   @T007-API10-RFC0160 @P2 @ExceptionTest @SingleTryOnException @NeedsReview @wip
+   Scenario Outline: Establish a connection between two agents but gets a request not accepted report problem message
       Given we have "2" agents
          | name  | role    |
          | Alice | inviter |
          | Bob   | invitee |
-And "Bob" has <problem>
-When "Alice" generates a connection invitation
-And "Bob" receives the connection invitation
-And "Bob" sends a connection request to "Alice"
-Then "Alice" sends an request not accepted error
-And the state of "Alice" is reset to Null
-And the state of "Bob" is reset to Null
+      And "Bob" has <problem>
+      When "Alice" generates a connection invitation
+      And "Bob" receives the connection invitation
+      And "Bob" sends a connection request to "Alice"
+      Then "Alice" sends an request not accepted error
+      And the state of "Alice" is reset to Null
+      And the state of "Bob" is reset to Null
 
-Examples:
-| problem |
-| Invalid DID Method |
-| unknown endpoint protocols |
+      Examples:
+         | problem                    |
+         | Invalid DID Method         |
+         | unknown endpoint protocols |

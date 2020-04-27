@@ -21,10 +21,10 @@ def before_scenario(context, scenario):
         s_issue_url = l_issue_info[2]
 
         # Tell the user the scenario will fail, the bug number, and the URL to the bug
-        print ('NOTE: Test ' + scenario.name + ' WILL FAIL due to an outstanding issue, ' + s_issue_num + ', not yet resolved.')
+        print ('NOTE: Test \"' + scenario.name + '\" WILL FAIL due to an outstanding issue, ' + s_issue_num + ', not yet resolved.')
         print ('For more information see issue details at ' + s_issue_url)
 
     # Check if the @MultiUseInvite tag exists
     if 'MultiUseInvite' in context.tags :
         
-        print ('NOTE: Test ' + scenario.name + ' WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
+        print ('NOTE: Test \"' + scenario.name + '\" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
