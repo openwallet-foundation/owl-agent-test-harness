@@ -18,6 +18,12 @@ CRED_DEF_TEMPLATE = {
   "tag": "default"
 }
 
+CREDENTIAL_ATTR_TEMPLATE = [
+    {"name": "attr_1", "value": "value_1"},
+    {"name": "attr_2", "value": "value_2"},
+    {"name": "attr_3", "value": "value_3"}
+]
+
 @given('"{issuer}" has an existing schema and credential definition')
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
@@ -55,21 +61,44 @@ def step_impl(context, issuer):
     issuer_schema_id = context.issuer_schema_id
     issuer_credential_definition_id = context.credential_definition_id
 
+    (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "did")
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    resp_json = json.loads(resp_text)
+    issuer_did = resp_json
+
     (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "schema", id=issuer_schema_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    print("schema resp_json:", resp_json)
     issuer_schema = resp_json
 
     (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "credential-definition", id=issuer_credential_definition_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    print("credential-definition resp_json:", resp_json)
     issuer_credential_definition = resp_json
 
-    pass
+    credential_offer = {
+        "schema_issuer_did": issuer_did["did"],
+        "issuer_did": issuer_did["did"],
+        "schema_name": issuer_schema["name"],
+        "cred_def_id": issuer_credential_definition["id"],
+        "schema_version": issuer_schema["version"],
+        "credential_proposal": {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+            "attributes": CREDENTIAL_ATTR_TEMPLATE.copy(),
+        },
+        "connection_id": context.inviter_connection_id,
+        "schema_id": issuer_schema["id"],
+    }
+
+    (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential", operation="send", data=credential_offer)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    resp_json = json.loads(resp_text)
+    issuer_credential_definition = resp_json
+
 
 @when('"{issuer}" sends a credential offer')
 def step_impl(context, issuer):

@@ -220,7 +220,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg(resp_status, resp_text)
             return (resp_status, resp_text)
 
-        return (404, '404: Not Found\n\n'.encode('utf8'))
+        return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
@@ -254,6 +254,19 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 resp_text = json.dumps(connection_infos)
             return (resp_status, resp_text)
 
+        elif op["topic"] == "did":
+            agent_operation = "/wallet/did/public"
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
+
+            resp_json = json.loads(resp_text)
+            did = resp_json["result"]
+
+            resp_text = json.dumps(did)
+            return (resp_status, resp_text)
+
         elif op["topic"] == "schema":
             schema_id = rec_id
             agent_operation = "/schemas/" + schema_id
@@ -282,7 +295,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = json.dumps(credential_definition)
             return (resp_status, resp_text)
 
-        return (404, '404: Not Found\n\n'.encode('utf8'))
+        return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request_response(
         self, topic, rec_id=None, text=False, params=None
@@ -303,7 +316,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             return (resp_status, resp_text)
 
-        return (404, '404: Not Found\n\n'.encode('utf8'))
+        return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     def _process(self, args, env, loop):
         proc = subprocess.Popen(
