@@ -1,5 +1,6 @@
 Feature: Aries agent issue credential functions RFC 0036
 
+  @T001-API10-RFC0036
   Scenario: issue a credential from one agent to another with manual flow
      Given "Alice" and "Bob" have an existing connection
        And "Alice" has an existing schema and credential definition
@@ -10,6 +11,7 @@ Feature: Aries agent issue credential functions RFC 0036
       Then "Alice" has an acknowledged credential issue
        And "Bob" has received a credential
 
+  @T002-API10-RFC0036
   Scenario: issue a credential from one agent to another with automated flow
      Given "Alice" and "Bob" have an existing connection
        And "Alice" has an existing schema and credential definition
