@@ -186,20 +186,20 @@ runTests() {
   export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
   
   echo "Starting Alice Agent ..."
-  docker run -d --rm --name alice_agent --expose 8020-8023 -p 8020-8023:8020-8023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ALICE_AGENT} -p 8020 -i false >/dev/null  
+  docker run -d --rm --name alice_agent --expose 9020-9023 -p 9020-9023:9020-9023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ALICE_AGENT} -p 9020 -i false >/dev/null  
   echo "Starting Bob Agent ..."
-  docker run -d --rm --name bob_agent --expose 8030-8033 -p 8030-8033:8030-8033 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 8030 -i false >/dev/null
+  docker run -d --rm --name bob_agent --expose 9030-9033 -p 9030-9033:9030-9033 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
   echo "Starting Mallory Agent ..."
-  docker run -d --rm --name mallory_agent --expose 8040-8043 -p 8040-8043:8040-8043 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 8040  -i false >/dev/null
+  docker run -d --rm --name mallory_agent --expose 9040-9043 -p 9040-9043:9040-9043 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9040  -i false >/dev/null
  
   echo
-  waitForAgent Alice 8020
-  waitForAgent Bob 8030
-  waitForAgent Mallory 8040
+  waitForAgent Alice 9020
+  waitForAgent Bob 9030
+  waitForAgent Mallory 9040
 
   echo
   echo
-  ${terminalEmu} docker run -it --rm --network="host" aries-test-harness -k ${runArgs} -D Alice=http://0.0.0.0:8020 -D Bob=http://0.0.0.0:8030 -D Mallory=http://0.0.0.0:8040
+  ${terminalEmu} docker run -it --rm --network="host" aries-test-harness -k ${runArgs} -D Alice=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Mallory=http://0.0.0.0:9040
 
   echo
   echo "Cleanup:"
