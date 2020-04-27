@@ -258,8 +258,24 @@ def pipe_parser(str_data):
     reader = csv.reader(data, dialect='piper')
     return [[x.strip() for x in row] for row in reader]
 
-def read_operations(str_data):
-    operations_list = pipe_parser(str_data)
+def csv_parser(str_data):
+    data = io.StringIO(str_data)
+    reader = csv.reader(data)
+    return [[x.strip() for x in row] for row in reader]
+
+def read_operations(str_data=None, file_name=None, parser=None):
+    # either str_data or an input file must be provided
+    if not str_data:
+        # read data from input file
+        with open(file_name, "r") as in_file:
+            str_data = in_file.read()
+    if str_data is None:
+        raise Exception("Error backchannel api data is not provided")
+    # use pipe parser if requested else default to csv
+    if parser and parser == "pipe":
+        operations_list = pipe_parser(str_data)
+    else:
+        operations_list = csv_parser(str_data)
     operations = []
     headers = None
     for row in operations_list:
