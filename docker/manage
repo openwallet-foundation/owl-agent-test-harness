@@ -1,4 +1,5 @@
 #!/bin/bash
+# set -x
 export MSYS_NO_PATHCONV=1
 export DOCKERHOST=${APPLICATION_URL-$(docker run --rm --net=host eclipse/che-ip)}
 
@@ -21,13 +22,21 @@ usage () {
 
   Commands:
 
-  build - Build the docker images for the project.
+  build - Build the docker images for the agents and the test harness.
           You need to do this first.
+  
+  rebuild - same as build, but adds the --no-cache option to force building from scratch
 
-  run <testTags> - Run the tests.
+  run [ -a/b/m/d agent ] [ -t tags ]* - Run the tagged tests using the specified agents for Alice, Bob and Mallory.
+    Select the agents for the roles of Alice (-a), Bob (-b) and Mallory (-m).
+    - For all to be set to the same, use "-d" for default.
+    - The value for agent must be one of: ${VALID_AGENTS}
+    Use -t option(s) to indicate tests with the gives tag(s) are to be executed.
+
     Examples:
-    $0 run                            - Run all tests for all features
-    $0 run --tags=ExceptionTest       - Run all the ExceptionTests
+    $0 run -a acapy -b vcx -m vcx           - Run all the tests using the specified agents per role
+    $0 run -d vcx                           - Run all tests for all features using the vcx agent in all roles
+    $0 run -d acapy -t @SmokeTest -t @P1    - Run the tests tagged @SmokeTest and/or @P1 (priority 1) using all ACA-Py agents
 
   rebuild - Rebuild the docker images.
 
@@ -37,23 +46,10 @@ exit 1
 }
 
 # -----------------------------------------------------------------------------------------------------------------
-# Initialization:
-# -----------------------------------------------------------------------------------------------------------------
-while getopts h FLAG; do
-  case $FLAG in
-    h ) usage ;;
-    \? ) #unrecognized option - show help
-      echo -e \\n"Invalid script option: -${OPTARG}"\\n
-      usage
-      ;;
-  esac
-done
-shift $((OPTIND-1))
-
-# -----------------------------------------------------------------------------------------------------------------
 # Functions:
 # -----------------------------------------------------------------------------------------------------------------
-function toLower() {
+
+toLower() {
   echo $(echo ${@} | tr '[:upper:]' '[:lower:]')
 }
 
@@ -116,6 +112,11 @@ function initEnv() {
   export RUST_LOG=${RUST_LOG:-warning}
 }
 
+# Set of valid agents - add new agents here and in the buildImages() function
+export VALID_AGENTS="acapy vcx"
+
+# Build images -- add more backchannels here...
+# TODO: Define args to build only what's needed
 buildImages() {
   args=${@}
 
@@ -180,27 +181,21 @@ waitForAgent(){
 runTests() {
   runArgs=${@}
 
-  export ALICE_AGENT=${ALICE_AGENT:-acapy-agent-backchannel}
-  export BOB_AGENT=${BOB_AGENT:-acapy-agent-backchannel}
-  export MALLORY_AGENT=${MALLORY_AGENT:-acapy-agent-backchannel}
-  export VICTOR_AGENT=${VICTOR_AGENT:-vcx-agent-backchannel}
-
+  export ALICE_AGENT=${ALICE_AGENT:-${ALICE}-agent-backchannel}
+  export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
+  export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
+  
   echo "Starting Alice Agent ..."
   docker run -d --rm --name alice_agent --expose 8020-8023 -p 8020-8023:8020-8023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ALICE_AGENT} -p 8020 -i false >/dev/null  
   echo "Starting Bob Agent ..."
   docker run -d --rm --name bob_agent --expose 8030-8033 -p 8030-8033:8030-8033 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 8030 -i false >/dev/null
   echo "Starting Mallory Agent ..."
   docker run -d --rm --name mallory_agent --expose 8040-8043 -p 8040-8043:8040-8043 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 8040  -i false >/dev/null
-  # Victor agent isn't used in the tests, it's just an example of running a VCX agent
-  # to use VCX (for example) for the Bob agent:  "BOB_AGENT=vcx-agent-backchannel ./manage run"
-  echo "Starting Victor Agent ..."
-  docker run -d --rm --name victor_agent --expose 8050-8053 -p 8050-8053:8050-8053 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${VICTOR_AGENT} -p 8050  -i false >/dev/null
-
+ 
   echo
   waitForAgent Alice 8020
   waitForAgent Bob 8030
   waitForAgent Mallory 8040
-  waitForAgent Victor 8050
 
   echo
   echo
@@ -221,15 +216,83 @@ runTests() {
   docker stop mallory_agent >/dev/null  
   printf "Done\n"
 
-  printf "    - Victor: "
-  docker stop victor_agent >/dev/null
-  printf "Done\n"
 }
-# =================================================================================================================
+
+isAgent() {
+  result=false
+
+  for agent in ${VALID_AGENTS}; do
+    if [[ "${1}" == "${agent}" ]]; then
+        result=true
+    fi
+  done
+
+  echo $result
+}
+
+# -----------------------------------------------------------------------------------------------------------------
+# Initialization:
+# -----------------------------------------------------------------------------------------------------------------
+# Command to run must be the first argument
+COMMAND=$(toLower ${1})
+shift
+
+# Handle run args separately
+if [[ "${COMMAND}" == "run" ]]; then
+  ALICE="none"
+  BOB="none"
+  MALLORY="none"
+  TAGS=""
+
+  while getopts "ha:b:c:m:d:t:" FLAG; do
+    case $FLAG in
+        h ) usage ;;
+        : ) usage ;;
+        \? ) #unrecognized option - show help
+        echo -e \\n"Invalid script option: -${OPTARG}"\\n
+        usage
+            ;;
+        a ) export ALICE=${OPTARG}
+            ;;
+        b ) export BOB=${OPTARG}
+            ;;
+        m ) export MALLORY=${OPTARG}
+            ;;
+        t ) export TAGS="${TAGS} --tags=${OPTARG}"
+            ;;
+        d )
+            export ALICE=${OPTARG}
+            export BOB=${OPTARG}
+            export MALLORY=${OPTARG}
+            ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  for agent in ${ALICE} ${BOB} ${MALLORY}; do
+      if [[ $(isAgent $agent) == false ]] ; then
+          echo All agents Alice, Bob and Mallory must be set to one of: ${VALID_AGENTS}.
+          echo Use \"${0} help\" to get more information.
+          exit 1
+      fi
+  done
+
+  echo Agents to be used:
+  echo "  Alice - ${ALICE}"
+  echo "  Bob - ${BOB}"
+  echo "  Mallory - ${MALLORY}"
+  if [[ "${TAGS}" ]]; then
+      echo "Tags: ${TAGS}"
+  else
+      echo "No tags specified; all tests will be run."
+  fi 
+  if [[ "$@" ]]; then
+      echo "Other args:  $@"
+  fi
+fi
+echo ""
 
 pushd ${SCRIPT_HOME} >/dev/null
-COMMAND=$(toLower ${1})
-shift || COMMAND=usage
 
 case "${COMMAND}" in
   build)
@@ -240,7 +303,7 @@ case "${COMMAND}" in
     ;;
 
   run)
-      runTests ${@}
+      runTests ${TAGS} ${@}
     ;;
 
   dockerhost)
