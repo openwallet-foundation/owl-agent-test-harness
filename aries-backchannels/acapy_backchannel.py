@@ -119,6 +119,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if topic != "webhook":  # would recurse
             handler = f"handle_{topic}"
             method = getattr(self, handler, None)
+            # put a log message here
+            log_msg('Passing payload to handler ' + handler + ' payload is: ' + payload)
             if method:
                 await method(payload)
             else:
@@ -127,11 +129,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     f"has no method {handler} "
                     f"to handle webhook on topic {topic}"
                 )
+        else:
+            log_msg('in webhook, topic is: ' + topic + ' payload is: ' + payload)
 
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
         push_resource(connection_id, "connection-msg", message)
-
+        # put a log message here (all the handle_ )
         # TODO wait here to determine the response to the web hook?????
         pass
 
@@ -193,7 +197,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ):
                 connection_id = rec_id
                 agent_operation = "/connections/" + connection_id + "/" + operation
-                log_msg(agent_operation, data)
+                log_msg('POST Request: ', agent_operation, data)
 
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -212,9 +216,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             else:
                 agent_operation = "/connections"
             
+            log_msg('GET Request agent operation: ', agent_operation)
+
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:
                 return (resp_status, resp_text)
+
+            log_msg('GET Request response details: ', resp_status, resp_text)
 
             resp_json = json.loads(resp_text)
             if rec_id:
@@ -281,7 +289,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             bin_path = DEFAULT_BIN_PATH
         if bin_path:
             cmd_path = os.path.join(bin_path, cmd_path)
-        print (cmd_path)
+        print ('Location of ACA-Py: ' + cmd_path)
         return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
@@ -334,6 +342,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         # start agent sub-process
         self.log(f"Starting agent sub-process ...")
+        self.log(f"agent starting with params: ")
+        self.log(agent_args)
         loop = asyncio.get_event_loop()
         self.proc = await loop.run_in_executor(
             None, self._process, agent_args, my_env, loop
@@ -362,7 +372,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             await self.webhook_site.stop()
 
 
-async def main(start_port: int, show_timing: bool = False):
+async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
 
     genesis = await default_genesis_txns()
     if not genesis:
@@ -386,11 +396,16 @@ async def main(start_port: int, show_timing: bool = False):
         await agent.start_process()
 
         # now wait ...
-        async for option in prompt_loop(
-            "(X) Exit? [X] "
-        ):
-            if option is None or option in "xX":
-                break
+        if interactive:
+            async for option in prompt_loop(
+                "(X) Exit? [X] "
+            ):
+                if option is None or option in "xX":
+                    break
+        else:
+            print("Press Ctrl-C to exit ...")
+            remaining_tasks = asyncio.Task.all_tasks()
+            await asyncio.gather(*remaining_tasks)
 
     finally:
         terminated = True
@@ -406,6 +421,15 @@ async def main(start_port: int, show_timing: bool = False):
     if not terminated:
         os._exit(1)
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 if __name__ == "__main__":
     import argparse
@@ -419,11 +443,19 @@ if __name__ == "__main__":
         metavar=("<port>"),
         help="Choose the starting port number to listen on",
     )
+    parser.add_argument(
+        "-i",
+        "--interactive",
+        type=str2bool,
+        default=True,
+        metavar=("<interactive>"),
+        help="Start agent interactively",
+    )
     args = parser.parse_args()
 
     require_indy()
 
     try:
-        asyncio.get_event_loop().run_until_complete(main(args.port))
+        asyncio.get_event_loop().run_until_complete(main(start_port=args.port, interactive=args.interactive))
     except KeyboardInterrupt:
         os._exit(1)

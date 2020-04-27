@@ -3,6 +3,8 @@ COPY . /aries-backchannels
 WORKDIR /aries-backchannels
 RUN pip install -r requirements.txt
 
+# install libraries used for remote debugging into container from Visual Studio Code
+RUN pip install ptvsd
 
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
    && apt-get update \
@@ -19,4 +21,5 @@ ENV RUNMODE=docker
 RUN mkdir -p ./bin
 RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
 
+#ENTRYPOINT ["python", "-m", "ptvsd", "--host", "0.0.0.0", "--port", "5678", "--wait", "acapy_backchannel.py"]
 ENTRYPOINT ["python", "acapy_backchannel.py"]

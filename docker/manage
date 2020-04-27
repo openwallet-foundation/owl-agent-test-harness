@@ -1,0 +1,231 @@
+#!/bin/bash
+export MSYS_NO_PATHCONV=1
+export DOCKERHOST=${APPLICATION_URL-$(docker run --rm --net=host eclipse/che-ip)}
+
+SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
+export AGENT_TIMEOUT=30
+# Running on Windows?
+if [[ "$OSTYPE" == "msys" ]]; then
+  # Prefix interactive terminal commands ...
+  terminalEmu="winpty"
+fi
+
+# =================================================================================================================
+# Usage:
+# -----------------------------------------------------------------------------------------------------------------
+usage () {
+  cat <<-EOF
+
+  Usage: $0 [command] [options]
+
+  Commands:
+
+  build - Build the docker images for the project.
+          You need to do this first.
+
+  run <testTags> - Run the tests.
+    Examples:
+    $0 run                            - Run all tests for all features
+    $0 run --tags=ExceptionTest       - Run all the ExceptionTests
+
+  rebuild - Rebuild the docker images.
+
+  dockerhost - Print the ip address of the Docker Host Adapter as it is seen by containers running in docker.
+EOF
+exit 1
+}
+
+# -----------------------------------------------------------------------------------------------------------------
+# Initialization:
+# -----------------------------------------------------------------------------------------------------------------
+while getopts h FLAG; do
+  case $FLAG in
+    h ) usage ;;
+    \? ) #unrecognized option - show help
+      echo -e \\n"Invalid script option: -${OPTARG}"\\n
+      usage
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+# -----------------------------------------------------------------------------------------------------------------
+# Functions:
+# -----------------------------------------------------------------------------------------------------------------
+function toLower() {
+  echo $(echo ${@} | tr '[:upper:]' '[:lower:]')
+}
+
+function echoRed (){
+  _msg="${@}"
+  _red='\e[31m'
+  _nc='\e[0m' # No Color
+  echo -e "${_red}${_msg}${_nc}"
+}
+
+function initDockerBuildArgs() {
+  dockerBuildArgs=""
+
+  # HTTP proxy, prefer lower case
+  if [[ "${http_proxy}" ]]; then
+    dockerBuildArgs=" ${dockerBuildArgs} --build-arg http_proxy=${http_proxy}"
+  else
+    if [[ "${HTTP_PROXY}" ]]; then
+      dockerBuildArgs=" ${dockerBuildArgs} --build-arg http_proxy=${HTTP_PROXY}"
+    fi
+  fi
+
+  # HTTPS proxy, prefer lower case
+  if [[ "${https_proxy}" ]]; then
+    dockerBuildArgs=" ${dockerBuildArgs} --build-arg https_proxy=${https_proxy}"
+  else
+    if [[ "${HTTPS_PROXY}" ]]; then
+      dockerBuildArgs=" ${dockerBuildArgs} --build-arg https_proxy=${HTTPS_PROXY}"
+    fi
+  fi
+
+  echo ${dockerBuildArgs}
+}
+
+function initEnv() {
+
+  if [ -f .env ]; then
+    while read line; do
+      if [[ ! "$line" =~ ^\# ]] && [[ "$line" =~ .*= ]]; then
+        export ${line//[$'\r\n']}
+      fi
+    done <.env
+  fi
+
+  for arg in "$@"; do
+    # Remove recognized arguments from the list after processing.
+    shift
+    case "$arg" in
+      *=*)
+        export "${arg}"
+        ;;
+      *)
+        # If not recognized, save it for later procesing ...
+        set -- "$@" "$arg"
+        ;;
+    esac
+  done
+
+  export LOG_LEVEL=${LOG_LEVEL:-info}
+  export RUST_LOG=${RUST_LOG:-warning}
+}
+
+buildImages() {
+  args=${@}
+
+  echo "Building acapy-agent-backchannel ..."
+  docker build \
+    ${args} \
+    $(initDockerBuildArgs) \
+    -t 'acapy-agent-backchannel' \
+    -f '../aries-backchannels/Dockerfile' '../aries-backchannels/'
+
+  echo "Building aries-test-harness ..."
+  docker build \
+    ${args} \
+    $(initDockerBuildArgs) \
+    -t 'aries-test-harness' \
+    -f '../aries-test-harness/Dockerfile' '../aries-test-harness/'
+}
+
+pingAgent(){
+  name=${1}
+  port=${2}
+
+  rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:${port}/)
+  if (( ${rtnCd} == 200 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForAgent(){
+  (
+    name=${1}
+
+    # Wait for agent to start ...
+    local startTime=${SECONDS}
+    rtnCd=0
+    printf "waiting for ${name} agent to start"
+    while ! pingAgent ${@}; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${AGENT_TIMEOUT} )); then
+        echoRed "\nThe agent failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
+runTests() {
+  runArgs=${@}
+
+  echo "Starting Alice Agent ..."
+  docker run -d --rm --name alice_agent --expose 8020-8023 -p 8020-8023:8020-8023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" acapy-agent-backchannel -p 8020 -i false >/dev/null  
+  echo "Starting Bob Agent ..."
+  docker run -d --rm --name bob_agent --expose 8030-8033 -p 8030-8033:8030-8033 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" acapy-agent-backchannel -p 8030 -i false >/dev/null
+  echo "Starting Mallory Agent ..."
+  docker run -d --rm --name mallory_agent --expose 8040-8043 -p 8040-8043:8040-8043 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" acapy-agent-backchannel -p 8040  -i false >/dev/null
+
+  echo
+  waitForAgent Alice 8021
+  waitForAgent Bob 8031
+  waitForAgent Mallory 8041
+
+  echo
+  echo
+  ${terminalEmu} docker run -it --rm --network="host" aries-test-harness -k ${runArgs} -D Alice=http://0.0.0.0:8020 -D Bob=http://0.0.0.0:8030 -D Mallory=http://0.0.0.0:8040
+
+  echo
+  echo "Cleanup:"
+  echo "  - Shutting down agents ..."
+  printf "    - Alice: "
+  docker stop alice_agent >/dev/null
+  printf "Done\n"
+
+  printf "    - Bob: "
+  docker stop bob_agent >/dev/null  
+  printf "Done\n"
+
+  printf "    - Mallory: "
+  docker stop mallory_agent >/dev/null  
+  printf "Done\n"
+}
+# =================================================================================================================
+
+pushd ${SCRIPT_HOME} >/dev/null
+COMMAND=$(toLower ${1})
+shift || COMMAND=usage
+
+case "${COMMAND}" in
+  build)
+      buildImages
+    ;;
+  rebuild)
+      buildImages --no-cache
+    ;;
+
+  run)
+      runTests ${@}
+    ;;
+
+  dockerhost)
+      echo ${DOCKERHOST}
+    ;;
+  *)
+      usage;;
+esac
+
+popd >/dev/null
