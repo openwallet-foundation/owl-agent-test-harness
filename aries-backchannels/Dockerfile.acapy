@@ -1,8 +1,6 @@
 FROM python:3.7-buster
-COPY . /aries-backchannels
+RUN mkdir -p /aries-backchannels
 WORKDIR /aries-backchannels
-RUN pip install -r requirements.txt
-
 
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
    && apt-get update \
@@ -14,6 +12,11 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
    && apt-get install -y libnullpay
 
 ENV RUNMODE=docker
+
+COPY ./requirements.txt /aries-backchannels
+RUN pip install -r requirements.txt
+
+COPY . /aries-backchannels
 
 #aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
 RUN mkdir -p ./bin

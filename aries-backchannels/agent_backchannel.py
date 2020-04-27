@@ -4,6 +4,7 @@ import functools
 import json
 import logging
 import os
+import traceback
 import random
 import subprocess
 import sys
@@ -147,46 +148,47 @@ class AgentBackchannel:
         Operations for each topic are:
         """
         operations_str = """
-        topic                 | method | operation          | id  | data  | description 
-        status                |  GET   |                    |     |       | Return agent status 200 if Active or 418 if Inactive
-        schema                |  GET   |                    |  Y  |       | Fetch a specific schema by ID
-        schema                |  POST  |                    |     |   Y   | Register a schema on the ledger
-        credential-definition |  GET   |                    |  Y  |       | Fetch a specific cred def by ID
-        credential-definition |  POST  |                    |     |   Y   | Register a cred def on the ledger
-        connection            |  GET   |                    |     |       | Get a list of all connections from the agent
-        connection            |  GET   |                    |  Y  |       | Get a specific connection from the agent by ID
-        connection            |  POST  | create-invitation  |     |       | Create a new invitation
-        connection            |  POST  | receive-invitation |     |   Y   | Receive an invitation
-        connection            |  POST  | accept-invitation  |  Y  |   Y   | Accept an invitation
-        connection            |  POST  | accept-request     |  Y  |   Y   | Accept a connection request
-        connection            |  POST  | establish-inbound  |  Y* |       | ???
-        connection            |  POST  | remove             |  Y  |       | Remove a connection
-        connection            |  POST  | start-introduction |  Y  |   Y   | Start an introcution between two agents
-        connection            |  POST  | send-message       |  Y  |   Y   | Send a basic message
-        connection            |  POST  | expire-message     |  Y* |       | Expire a basic message
-        connection            |  POST  | send-ping          |  Y  |   Y   | Send a trust ping
-        credential            |  GET   | records            |     |       | Fetch all credential exchange records
-        credential            |  GET   | records            |  Y  |       | Fetch a specific credential exchange record
-        credential            |  GET   | mime-types         |  Y  |       | Get mime types associated with a credential's attributes
-        credential            |  POST  | send               |     |   Y   | Send a credential, automating the entire flow
-        credential            |  POST  | send-proposal      |     |   Y   | Send a credential proposal
-        credential            |  POST  | send-offer         |     |   Y   | Send a credential offer
-        credential            |  POST  | send-offer         |  Y  |   Y   | Send a credential offer associated with a proposal
-        credential            |  POST  | send-request       |  Y  |   Y   | Send a credential request
-        credential            |  POST  | issue              |  Y  |   Y   | Issue a credential in response to a request
-        credential            |  POST  | store              |  Y  |   Y   | Store a credential
-        credential            |  POST  | problem-report     |  Y  |   Y   | Raise a problem report for a credential exchange
-        credential            |  POST  | remove             |  Y  |       | Remove an existing credential exchange record
-        proof                 |  GET   | records            |     |       | Fetch all proof exchange records
-        proof                 |  GET   | records            |  Y  |       | Fetch a specific proof exchange record
-        proof                 |  GET   | credentials        |  Y  |       | Fetch credentials from the wallet for a specific proof exchange
-        proof                 |  GET   | referent           |  Y* |       | Fetch credentials from the wallet for a specific proof exchange/referent
-        proof                 |  POST  | send-proposal      |     |   Y   | Send a proof proposal
-        proof                 |  POST  | send-request       |     |   Y   | Send a proof request not bound to a proposal
-        proof                 |  POST  | send-request       |  Y  |   Y   | Send a proof request in reference to a proposal
-        proof                 |  POST  | send-presentation  |  Y  |   Y   | Send a proof presentation
-        proof                 |  POST  | verify-presentation|  Y  |   Y   | Verify a received proof presentation
-        proof                 |  POST  | remove             |  Y  |       | Remove an existing proof exchange record          
+        topic                 | method | operation          | id  | data  | description                                              | input
+        status                |  GET   |                    |     |       | Return agent status 200 if Active or 418 if Inactive     |
+        did                   |  GET   |                    |     |       | Fetch the agent's public DID                             |
+        schema                |  GET   |                    |  Y  |       | Fetch a specific schema by ID                            |
+        schema                |  POST  |                    |     |   Y   | Register a schema on the ledger                          | {}
+        credential-definition |  GET   |                    |  Y  |       | Fetch a specific cred def by ID                          |
+        credential-definition |  POST  |                    |     |   Y   | Register a cred def on the ledger                        | {}
+        connection            |  GET   |                    |     |       | Get a list of all connections from the agent             |
+        connection            |  GET   |                    |  Y  |       | Get a specific connection from the agent by ID           |
+        connection            |  POST  | create-invitation  |     |       | Create a new invitation                                  |
+        connection            |  POST  | receive-invitation |     |   Y   | Receive an invitation                                    | {}
+        connection            |  POST  | accept-invitation  |  Y  |   Y   | Accept an invitation                                     | {}
+        connection            |  POST  | accept-request     |  Y  |   Y   | Accept a connection request                              | {}
+        connection            |  POST  | establish-inbound  |  Y* |       | ???                                                      |
+        connection            |  POST  | remove             |  Y  |       | Remove a connection                                      |
+        connection            |  POST  | start-introduction |  Y  |   Y   | Start an introcution between two agents                  | {}
+        connection            |  POST  | send-message       |  Y  |   Y   | Send a basic message                                     | {}
+        connection            |  POST  | expire-message     |  Y* |       | Expire a basic message                                   |
+        connection            |  POST  | send-ping          |  Y  |   Y   | Send a trust ping                                        | {}
+        credential            |  GET   | records            |     |       | Fetch all credential exchange records                    |
+        credential            |  GET   | records            |  Y  |       | Fetch a specific credential exchange record              |
+        credential            |  GET   | mime-types         |  Y  |       | Get mime types associated with a credential's attributes |
+        credential            |  POST  | send               |     |   Y   | Send a credential, automating the entire flow            | {}
+        credential            |  POST  | send-proposal      |     |   Y   | Send a credential proposal                               | {}
+        credential            |  POST  | send-offer         |     |   Y   | Send a credential offer                                  | {}
+        credential            |  POST  | send-offer         |  Y  |   Y   | Send a credential offer associated with a proposal       | {}
+        credential            |  POST  | send-request       |  Y  |   Y   | Send a credential request                                | {}
+        credential            |  POST  | issue              |  Y  |   Y   | Issue a credential in response to a request              | {}
+        credential            |  POST  | store              |  Y  |   Y   | Store a credential                                       | {}
+        credential            |  POST  | problem-report     |  Y  |   Y   | Raise a problem report for a credential exchange         | {}
+        credential            |  POST  | remove             |  Y  |       | Remove an existing credential exchange record            |
+        proof                 |  GET   | records            |     |       | Fetch all proof exchange records                         |
+        proof                 |  GET   | records            |  Y  |       | Fetch a specific proof exchange record                   |
+        proof                 |  GET   | credentials        |  Y  |       | Fetch credentials from the wallet for a specific proof exchange |
+        proof                 |  GET   | referent           |  Y* |       | Fetch credentials from the wallet for a specific proof exchange/referent |
+        proof                 |  POST  | send-proposal      |     |   Y   | Send a proof proposal                                    | {}
+        proof                 |  POST  | send-request       |     |   Y   | Send a proof request not bound to a proposal             | {}
+        proof                 |  POST  | send-request       |  Y  |   Y   | Send a proof request in reference to a proposal          | {}
+        proof                 |  POST  | send-presentation  |  Y  |   Y   | Send a proof presentation                                | {}
+        proof                 |  POST  | verify-presentation|  Y  |   Y   | Verify a received proof presentation                     | {}
+        proof                 |  POST  | remove             |  Y  |       | Remove an existing proof exchange record                 |
         """
         self.operations = read_operations(operations_str)
 
@@ -222,9 +224,18 @@ class AgentBackchannel:
                 ((method == "GET") or (operation and op["operation"] == operation) or (operation is None)) and
                 ((data and op["data"] == "Y") or (data is None))
             ):
+                print("Matched operation:", op)
                 return op
 
         return None
+
+    def not_found_response(self, request):
+        resp_text = "404 not found: " + str(request)
+        return web.Response(body=resp_text.encode('utf8'), status=404)
+
+    def not_implemented_response(self, operation):
+        resp_text = "501 not implemented: " + str(operation)
+        return web.Response(body=resp_text.encode('utf8'), status=501)
 
     async def _post_command_backchannel(self, request: ClientRequest):
         """
@@ -233,22 +244,38 @@ class AgentBackchannel:
         topic = request.match_info["topic"]
         payload = await request.json()
 
-        operation = self.match_operation(topic, "POST", payload=payload)
-        if operation:
-            if "data" in payload:
-                data = payload["data"]
-            else:
-                data = None
-            if "id" in payload:
-                rec_id = payload["id"]
-            else:
-                rec_id = None
+        try:
+            operation = self.match_operation(topic, "POST", payload=payload)
+            if operation:
+                try:
+                    if "data" in payload:
+                        data = payload["data"]
+                    else:
+                        data = None
+                    if "id" in payload:
+                        rec_id = payload["id"]
+                    else:
+                        rec_id = None
 
-            (resp_status, resp_text) = await self.make_agent_POST_request(operation, rec_id=rec_id, data=data)
+                    (resp_status, resp_text) = await self.make_agent_POST_request(operation, rec_id=rec_id, data=data)
 
-            return web.Response(text=resp_text, status=resp_status)
+                    if resp_status == 200:
+                        return web.Response(text=resp_text, status=resp_status)
+                    elif resp_status == 404:
+                        return self.not_found_response(json.dumps(operation))
+                    elif resp_status == 501:
+                        return self.not_implemented_response(json.dumps(operation))
+                    else:
+                        return web.Response(body=resp_text, status=resp_status)
+                except NotImplementedError as ni_e:
+                    return self.not_implemented_response(json.dumps(operation))
 
-        return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
+            return self.not_found_response(topic)
+
+        except Exception as e:
+            print("Exception:", e)
+            traceback.print_exc()
+            return web.Response(body=str(e), status=500)
 
     async def _get_command_backchannel(self, request: ClientRequest):
         """
@@ -260,13 +287,29 @@ class AgentBackchannel:
         else:
             rec_id = None
 
-        operation = self.match_operation(topic, "GET", rec_id=rec_id)
-        if operation:
-            (resp_status, resp_text) = await self.make_agent_GET_request(operation, rec_id=rec_id)
+        try:
+            operation = self.match_operation(topic, "GET", rec_id=rec_id)
+            if operation:
+                try:
+                    (resp_status, resp_text) = await self.make_agent_GET_request(operation, rec_id=rec_id)
 
-            return web.Response(text=resp_text, status=resp_status)
+                    if resp_status == 200:
+                        return web.Response(text=resp_text, status=resp_status)
+                    elif resp_status == 404:
+                        return self.not_found_response(json.dumps(operation))
+                    elif resp_status == 501:
+                        return self.not_implemented_response(json.dumps(operation))
+                    else:
+                        return web.Response(body=resp_text, status=resp_status)
+                except NotImplementedError as ni_e:
+                    return self.not_implemented_response(json.dumps(operation))
 
-        return web.Response(body='404: Not Found\n\n'.encode('utf8'), status=404)
+            return self.not_found_response(topic)
+
+        except Exception as e:
+            print("Exception:", e)
+            traceback.print_exc()
+            return web.Response(body=str(e), status=500)
 
     async def _get_response_backchannel(self, request: ClientRequest):
         """
@@ -278,9 +321,24 @@ class AgentBackchannel:
         else:
             rec_id = None
 
-        (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
+        try:
+            (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
 
-        return web.Response(text=resp_text, status=resp_status)
+            if resp_status == 200:
+                return web.Response(text=resp_text, status=resp_status)
+            elif resp_status == 404:
+                return self.not_found_response(topic)
+            elif resp_status == 501:
+                return self.not_implemented_response(topic)
+            else:
+                return web.Response(body=resp_text, status=resp_status)
+
+        except NotImplementedError as ni_e:
+            return self.not_implemented_response(topic)
+        except Exception as e:
+            print("Exception:", e)
+            traceback.print_exc()
+            return web.Response(body=str(e), status=500)
 
     async def _post_reply_backchannel(self, request: ClientRequest):
         """
