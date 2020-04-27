@@ -1,5 +1,13 @@
 Feature: Aries agent issue credential functions RFC 0036
 
+  @T000-API10-RFC0036
+  Scenario: create a schema and credential definition in order to issue a credential
+     Given "Alice" has a public did
+      When "Alice" creates a new schema
+       And "Alice" creates a new credential definition
+      Then "Alice" has an existing schema
+       And "Alice" has an existing credential definition
+
   @T001-API10-RFC0036
   Scenario: issue a credential from one agent to another with manual flow
      Given "Alice" and "Bob" have an existing connection
