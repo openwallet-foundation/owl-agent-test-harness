@@ -145,52 +145,11 @@ class AgentBackchannel:
         E.g.:  POST to /agent/command/issue_credential { "operation":"send-proposal", "data":"{...}"}
         E.g.:  POST to /agent/command/issue_credential { "operation":"issue", "id":"<cred exch id>", "data":"{...}"}
 
-        Operations for each topic are:
+        Operations for each topic are in the backchannel_operations.csv file, generated from
+        the Google sheet at https://bit.ly/AriesTestHarnessScenarios
         """
-        operations_str = """
-        topic                 | method | operation          | id  | data  | description                                              | input
-        status                |  GET   |                    |     |       | Return agent status 200 if Active or 418 if Inactive     |
-        did                   |  GET   |                    |     |       | Fetch the agent's public DID                             |
-        schema                |  GET   |                    |  Y  |       | Fetch a specific schema by ID                            |
-        schema                |  POST  |                    |     |   Y   | Register a schema on the ledger                          | {}
-        credential-definition |  GET   |                    |  Y  |       | Fetch a specific cred def by ID                          |
-        credential-definition |  POST  |                    |     |   Y   | Register a cred def on the ledger                        | {}
-        connection            |  GET   |                    |     |       | Get a list of all connections from the agent             |
-        connection            |  GET   |                    |  Y  |       | Get a specific connection from the agent by ID           |
-        connection            |  POST  | create-invitation  |     |       | Create a new invitation                                  |
-        connection            |  POST  | receive-invitation |     |   Y   | Receive an invitation                                    | {}
-        connection            |  POST  | accept-invitation  |  Y  |   Y   | Accept an invitation                                     | {}
-        connection            |  POST  | accept-request     |  Y  |   Y   | Accept a connection request                              | {}
-        connection            |  POST  | establish-inbound  |  Y* |       | ???                                                      |
-        connection            |  POST  | remove             |  Y  |       | Remove a connection                                      |
-        connection            |  POST  | start-introduction |  Y  |   Y   | Start an introcution between two agents                  | {}
-        connection            |  POST  | send-message       |  Y  |   Y   | Send a basic message                                     | {}
-        connection            |  POST  | expire-message     |  Y* |       | Expire a basic message                                   |
-        connection            |  POST  | send-ping          |  Y  |   Y   | Send a trust ping                                        | {}
-        credential            |  GET   | records            |     |       | Fetch all credential exchange records                    |
-        credential            |  GET   | records            |  Y  |       | Fetch a specific credential exchange record              |
-        credential            |  GET   | mime-types         |  Y  |       | Get mime types associated with a credential's attributes |
-        credential            |  POST  | send               |     |   Y   | Send a credential, automating the entire flow            | {}
-        credential            |  POST  | send-proposal      |     |   Y   | Send a credential proposal                               | {}
-        credential            |  POST  | send-offer         |     |   Y   | Send a credential offer                                  | {}
-        credential            |  POST  | send-offer         |  Y  |   Y   | Send a credential offer associated with a proposal       | {}
-        credential            |  POST  | send-request       |  Y  |   Y   | Send a credential request                                | {}
-        credential            |  POST  | issue              |  Y  |   Y   | Issue a credential in response to a request              | {}
-        credential            |  POST  | store              |  Y  |   Y   | Store a credential                                       | {}
-        credential            |  POST  | problem-report     |  Y  |   Y   | Raise a problem report for a credential exchange         | {}
-        credential            |  POST  | remove             |  Y  |       | Remove an existing credential exchange record            |
-        proof                 |  GET   | records            |     |       | Fetch all proof exchange records                         |
-        proof                 |  GET   | records            |  Y  |       | Fetch a specific proof exchange record                   |
-        proof                 |  GET   | credentials        |  Y  |       | Fetch credentials from the wallet for a specific proof exchange |
-        proof                 |  GET   | referent           |  Y* |       | Fetch credentials from the wallet for a specific proof exchange/referent |
-        proof                 |  POST  | send-proposal      |     |   Y   | Send a proof proposal                                    | {}
-        proof                 |  POST  | send-request       |     |   Y   | Send a proof request not bound to a proposal             | {}
-        proof                 |  POST  | send-request       |  Y  |   Y   | Send a proof request in reference to a proposal          | {}
-        proof                 |  POST  | send-presentation  |  Y  |   Y   | Send a proof presentation                                | {}
-        proof                 |  POST  | verify-presentation|  Y  |   Y   | Verify a received proof presentation                     | {}
-        proof                 |  POST  | remove             |  Y  |       | Remove an existing proof exchange record                 |
-        """
-        self.operations = read_operations(operations_str)
+        operations_file = "./backchannel_operations.txt"
+        self.operations = read_operations(file_name=operations_file, parser="pipe")
 
         app = web.Application()
         app.add_routes([web.post("/agent/command/{topic}/", self._post_command_backchannel)])
