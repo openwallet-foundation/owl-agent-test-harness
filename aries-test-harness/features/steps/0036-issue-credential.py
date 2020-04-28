@@ -106,7 +106,7 @@ def step_impl(context, issuer):
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
     issuer_did = context.issuer_did
-    issuer_connection_id = context.inviter_connection_id
+    issuer_connection_id = context.connection_id_dict[issuer]
     issuer_schema_id = context.issuer_schema_id
     issuer_schema = context.issuer_schema
     issuer_credential_definition_id = context.credential_definition_id
