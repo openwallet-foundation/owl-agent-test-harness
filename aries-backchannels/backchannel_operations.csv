@@ -1,0 +1,59 @@
+rfc,command,response,topic,method,operation,id,data,description,id_details,data_details,result_details
+0000 General Backchallel Commands,X,,status,GET,,,,"Return agent status, 200 if active or 418 otherwise",,,status
+0160 Connection Protocol,X,,connection,POST,create-invitation,,Y,Create a new invitation ,,invitation,"connection_id, state"
+0160 Connection Protocol,X,,connection,POST,receive-invitation,,Y,Receive an invitation,,invitation,"connection_id, state"
+0160 Connection Protocol,X,,connection,POST,accept-invitation,Y,Y,Accept an invitation,connection_id,request,"connection_id, state"
+0160 Connection Protocol,,X,connection,POST,,Y,Y,,connection_id,request,"connection_id, state"
+0160 Connection Protocol,X,,connection,POST,accept-request,Y,Y,Accept a connection request ,connection_id,response,"connection_id, state"
+0160 Connection Protocol,X,,connection,POST,send-ping,Y,Y,Acknowledge acceptance of connectionr request,connection_id,ack,"connection_id, state"
+0160 Connection Protocol,,X,connection,GET,,Y,Y,Receive problem report,connection_id,ack,"connection_id, state"
+0160 Connection Protocol,X,,connection,POST,,Y,Y,Reject connection request and send message,connection_id,rejection,"connection_id, state"
+0015 Acks,X,,,POST,,,Y,"General purpose, will be part of another protocol",,ack,
+0015 Acks,,X,,GET,,,Y,"General purpose, will be part of another protocol",,ack,
+0095 Basic Message,X,,message,POST,,Y,Y,Send a basic message,connection_id,message,"connection_id, message"
+0095 Basic Message,,X,message,GET,,Y,Y,Receive a basic message,connection_id,message,"connection_id, message"
+0036 Issue Credential,X,,did,GET,,,,,,,did
+0036 Issue Credential,X,,schema,POST,,,Y,Register a schema on the ledger ,,"schema = {
+}",schema_id
+0036 Issue Credential,X,,schema,GET,,Y,,Fetch a specific schema by ID ,schema_id,,schema_id
+0036 Issue Credential,X,,credential-definition,POST,,,Y,Register a cred def on the ledger ,,"credential_definition = {
+}",credential_definition_id
+0036 Issue Credential,X,,credential-definition,GET,,Y,,Fetch a specific cred def by ID ,credential_definition_id,,credential_definition_id
+0036 Issue Credential,X,,credential,POST,send-proposal,Y,Y,Send a credential proposal,connection_id,"proposal = {
+    ""comment"": ""some comment"",
+    ""credential_proposal"": <json-ld object>,
+    ""schema_issuer_did"": ""DID of the proposed schema issuer"",
+    ""schema_id"": ""Schema ID string"",
+    ""schema_name"": ""Schema name string"",
+    ""schema_version"": ""Schema version string"",
+    ""cred_def_id"": ""Credential Definition ID string""
+    ""issuer_did"": ""DID of the proposed issuer""
+}",cred_exchange_id
+0036 Issue Credential,,X,credential,GET,,,,,,,offer
+0036 Issue Credential,X,,credential,POST,send,Y,Y,"Send a credential, automating the entire flow",connection_id,"offer = {
+    ""comment"": ""some comment"",
+    ""credential_proposal"": <json-ld object>,
+    ""schema_issuer_did"": ""DID of the proposed schema issuer"",
+    ""schema_id"": ""Schema ID string"",
+    ""schema_name"": ""Schema name string"",
+    ""schema_version"": ""Schema version string"",
+    ""cred_def_id"": ""Credential Definition ID string""
+    ""issuer_did"": ""DID of the proposed issuer""
+}",cred_exchange_id
+0036 Issue Credential,X,,credential,POST,send-offer,Y,Y,Send a credential offer (unsolicited),connection_id,"offer = {
+    ""comment"": ""some comment"",
+    ""credential_proposal"": <json-ld object>,
+    ""schema_issuer_did"": ""DID of the proposed schema issuer"",
+    ""schema_id"": ""Schema ID string"",
+    ""schema_name"": ""Schema name string"",
+    ""schema_version"": ""Schema version string"",
+    ""cred_def_id"": ""Credential Definition ID string""
+    ""issuer_did"": ""DID of the proposed issuer""
+}",cred_exchange_id
+0036 Issue Credential,X,,credential,POST,send-request,Y,,Send a credential request,cred_exchange_id,,cred_exchange_id
+0036 Issue Credential,X,,credential,POST,issue,Y,,Issue a credential in response to a request ,cred_exchange_id,,cred_exchange_id
+0036 Issue Credential,X,,credential,POST,store or ack,Y,,Send credential acknowledgement,cred_exchange_id,,cred_exchange_id
+0037 Present Proof,X,,proof,POST,send-proposal,Y,Y,Send a proof proposal,connection_id,proposal,pres_exchange_id
+0037 Present Proof,X,,proof,POST,send-request,Y,Y,Send a proof request in reference to a proposal,pres_exchange_id,proof_request,pres_exchange_id
+0037 Present Proof,X,,proof,POST,send-presentation,Y,Y,Send a proof presentation,pres_exchange_id,proof_presentation,pres_exchange_id
+0037 Present Proof,X,,proof,POST,verify-presentation,Y,,Verify a received proof presentation,pres_exchange_id,,status
