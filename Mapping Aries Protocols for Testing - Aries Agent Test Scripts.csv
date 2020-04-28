@@ -1,0 +1,87 @@
+RFC,Role,Step #,Steps,State,Method,Backchannel Endpoint,Operation,Id,Data Parameter,Response,Description,Notes
+0000 General Backchallel Commands,,,,,,,,,,,,
+,Controller,0,Get agent/backchannel status,,GET,/agent/command/status,,,,status,"Return agent status, 200 if active or 418 otherwise",Status returned as http status; response text is ignored
+,,,,,,,,,,,,
+0160 Connection Protocol,,,,,,,,,,,,
+,,0,No existing connection between Inviter and Invitee,,,,,,,,,
+,Inviter,1,Send Invitation,invited,POST,/agent/command/connection,create-invitation,,invitation,"connection_id, state",,
+,Invitee,2,Receive Invitation,invited,POST,/agent/command/connection,receive-invitation,,invitation,"connection_id, state",,Test harness has to communicate invitation
+,Invitee,3,Request Connection,requested,POST,/agent/command/connection,accept-invitation,connection_id,request,"connection_id, state",,
+,Inviter,4,Receive Connection Request,invited,POST,/agent/response/connection,,connection_id,request,"connection_id, state",,"""response"" allows the test harness to receive the response before replying"
+,Inviter,5,Accept Connection Request,responded,POST,/agent/command/connection,accept-request,connection_id,response,"connection_id, state",,
+,Invitee,6,Receive Connection Acceptance,requested,POST,/agent/response/connection,,connection_id,response,"connection_id, state",,
+,Invitee,7,Acknowledge Connection,complete,POST,/agent/command/connection,send-ping,connection_id,ack,"connection_id, state",,Protocol ends
+,Inviter,8,Receive Connection Acknowledgement,complete,GET,/agent/response/connection,,connection_id,ack,"connection_id, state",,Protocol ends
+,,,,,,,,,,,,
+,Inviter,5a,Reject Connection Request,rejected,POST,??,,connection_id,rejection,"connection_id, state",,Protocol ends
+,Invitee,6a,Receive Connection Rejection,rejected,GET,??,,connection_id,rejection,"connection_id, state",,Protocol ends
+,,,,,,,,,,,,
+,Inviter,5b,Send Request Processing Error,invited,POST,??,,connection_id,problem report,"connection_id, state",,
+,Invitee,6b,Receive Request Processing Error,requested,GET,??,,connection_id,problem report,"connection_id, state",,Go to step 3 Request Connection
+,,,,,,,,,,,,
+,Invitee,7c,Reject Connection Response (Acceptance),requested,POST,??,,connection_id,problem report,"connection_id, state",,
+,Inviter,8c,Receive Connection Response Rejection,responded,GET,??,,connection_id,problem report,"connection_id, state",,Go to step 5 Accept Connection Request
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+0015 Acks,,,,,,,,,,,,
+,,0,Establish connection between Sender and Receiver,,,,,,,,,
+,Sender,1,Send ack,,POST,,,,,,,
+,Receiver,2,Receive ack,,GET,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+0048 Trust Ping,,,,,,,,,,,,
+,,0,Establish connection between Sender and Receiver,,,,,,,,,
+,Sender,1,Send trust ping,,POST,/agent/command/connection,send-ping,connection_id,ping,"connection_id, activity",,
+,Receiver,2,Receive trust ping,,GET,/agent/response/connection,,connection_id,ping,"connection_id, activity",,Error handling if packet is not recognized?
+,Receiver,3,Send trust ping response,,POST,/agent/command/connection,send-ping,connection_id,ping,"connection_id, activity",,
+,Sender,4,Receive trust ping response,,GET,/agent/response/connection,,connection_id,ping,"connection_id, activity",,Error handling if packet is not recognized?
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+0095 Basic Message,,,,,,,,,,,,
+,,0,Establish connection between Sender and Receiver,,,,,,,,,
+,Sender,1,Send message,,POST,,,connection_id,message,"connection_id, message",,
+,Receiver,2,Receive message,,GET,,,connection_id,message,"connection_id, message",,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+0036 Issue Credential,,,,,,,,,,,,
+,,0,Issuer has existing public did,,GET,/agent/command/did,,,,did,,
+,,0,Issuer creates schema,,POST,/agent/command/schema,,,"schema = {
+}",schema_id,,
+,,0,Issuer fetches schema information,,GET,/agent/command/schema,,schema_id,,,,
+,,0,Issuer creates credential definition,,POST,/agent/command/credential-definition,,,"credential_definition = {
+}",credential_definition_id,,
+,,0,Issuer fetches credential definition information,,GET,/agent/command/credential-definition,,credential_definition_id,,,,
+,,0,Establish connection between Issuer and Holder,,,,,,,,,
+,Holder,1,Send credential proposal,,POST,/agent/command/credential,send-proposal,connection_id,"proposal = {
+    ""comment"": ""some comment"",
+    ""credential_proposal"": <json-ld object>,
+    ""schema_issuer_did"": ""DID of the proposed schema issuer"",
+    ""schema_id"": ""Schema ID string"",
+    ""schema_name"": ""Schema name string"",
+    ""schema_version"": ""Schema version string"",
+    ""cred_def_id"": ""Credential Definition ID string""
+    ""issuer_did"": ""DID of the proposed issuer""
+}",cred_exchange_id,,Optional
+,Issuer,2,Receive credental proposal,,GET,/agent/response/credential,,,,,,Optional
+,Issuer,3,Send credential offer,,POST,/agent/command/credential,send-offer,connection_id,"offer = {
+    ""comment"": ""some comment"",
+    ""credential_proposal"": <json-ld object>,
+    ""schema_issuer_did"": ""DID of the proposed schema issuer"",
+    ""schema_id"": ""Schema ID string"",
+    ""schema_name"": ""Schema name string"",
+    ""schema_version"": ""Schema version string"",
+    ""cred_def_id"": ""Credential Definition ID string""
+    ""issuer_did"": ""DID of the proposed issuer""
+}",cred_exchange_id,,
+,Holder,4,Receive credential offer,,GET,/agent/response/credential,,,,offer,,
+,Holder,5,Send credential request,,POST,/agent/command/credential,send-request,cred_exchange_id,,cred_exchange_id,,
+,Issuer,6,Receive credential request,,GET,/agent/response/credential,,,,request,,
+,Issuer,7,Send credential,,POST,/agent/command/credential,issue,cred_exchange_id,,cred_exchange_id,,
+,Holder,8,Receive credential,,GET,/agent/response/credential,,,,credential,,
+,Holder,9,Send credential acknowledgement,,POST,/agent/command/credential,store or ack,cred_exchange_id,,cred_exchange_id,,
+,Issuer,10,Receive credential acknowledgement,,GET,/agent/response/credential,,,,ack,,
+,,,,,,,,,,,,
+,Issuer,,Alternate flows …,,,,,,,,,
+,Holder,,Alternate flows …,,,,,,,,,
+,,,,,,,,,,,,
+0037 Present Proof,,,,,,,,,,,,
