@@ -191,11 +191,11 @@ If you are implementing from scratch, you need to implement a backchannel which:
 
 The test harness interacts with each backchannel using a standard set of web services, the url's are mapped here:
 
-https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/agent_backchannel.py#L190
+https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/agent_backchannel.py#L157
 
 ... and you can see a full set of the expected parameters here:
 
-https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/agent_backchannel.py#L150
+https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/agent_backchannel.py#L153
 
 Additional protocols may be added in the future, by extending the list of parameters with additional `topics`.
 
