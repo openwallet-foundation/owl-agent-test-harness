@@ -77,9 +77,13 @@ Defining specific tags should be discussed with the Aries Protocol test communit
 
 While defining tests it will become evident that your backchannel, the interface between the tests and your Agent, will need to support certain commands. These are to be defined in the [aries-agent-test-harness/aries-backchannels/backchannel_operations.csv](https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/backchannel_operations.csv)
 
+Note that this CSV file is currently generated from a google sheet, located [here](https://bit.ly/AriesTestHarnessScenarios).
+
 ## Implementing Test Steps
 
 Follow standard best practices for implementing test steps in Behave. Write the test steps as if your backchannel is already implemented, then implement your backchannel to make the test work. 
+
+Note that the current backchannels (aca-py and vcx) will throw a "NotImplementedException" for any steps that are not implemented in the backchannel, and will include information from the above-mentioned CSV file.
 
 ## Implementing the Backchannel
 
