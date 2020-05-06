@@ -15,6 +15,7 @@ Note that this code is in active development.
 
 ## Contents<!-- omit in toc -->
 
+- [Test Script Guidelines](#test-script-guidelines)
 - [Aries Agent Backchannels](#aries-agent-backchannels)
 - [Running the Backchannels using Docker](#running-the-backchannels-using-docker)
 - [Test Tags](#test-tags)
@@ -26,6 +27,12 @@ Note that this code is in active development.
   - [4. `./manage` Script Integration](#4-manage-script-integration)
 - [Behave in the Aries Test Framework](#behave-in-the-aries-test-framework)
 - [Running Locally (Bare Metal) - NOT RECOMMENDED](#running-locally-bare-metal---not-recommended)
+
+## Test Script Guidelines
+
+Test scripts are written in the Gherkin language, using the python Behave framework.
+
+Guidelines for writing test scripts are located [here](./TEST_DEV_GUIDE.md).
 
 ## Aries Agent Backchannels
 
