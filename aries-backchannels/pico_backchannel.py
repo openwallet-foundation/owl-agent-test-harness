@@ -1,3 +1,15 @@
+"""
+Note that this implementation is against the "old" pico agent.
+
+There is a re-implementation, so this backchannel needs to be updated.
+
+Pico engine:
+https://github.com/Picolab/pico-engine 
+
+Rulesets are for the aries-cloudagent-pico:
+https://github.com/Picolab/aries-cloudagent-pico
+"""
+
 import asyncio
 import asyncpg
 import functools
