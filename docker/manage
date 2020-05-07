@@ -1,5 +1,9 @@
 #!/bin/bash
 # set -x
+
+# Set of valid agents - add new agents here
+export VALID_AGENTS=$(ls ../aries-backchannels/Dockerfile.* | sed "s/^.*file.//")
+
 export MSYS_NO_PATHCONV=1
 export DOCKERHOST=${APPLICATION_URL-$(docker run --rm --net=host eclipse/che-ip)}
 
@@ -12,6 +16,31 @@ if [[ "$OSTYPE" == "msys" ]]; then
   terminalEmu="winpty"
 fi
 
+#Running on Play with Docker?
+if [ "${PWD_HOST_FQDN}" != "" ]; then
+  if [ "${PWD_HOST_FQDN}" == "labs.play-with-docker.com" ]; then
+    export ETH_CONFIG="eth1"
+  elif [ "${PWD_HOST_FQDN}" == "play-with-docker.vonx.io" ]; then
+    export ETH_CONFIG="eth0"
+  else
+    export ETH_CONFIG="eth0"
+  fi
+  myhost=`ifconfig ${ETH_CONFIG} | grep inet | cut -d':' -f2 | cut -d' ' -f1 | sed 's/\./\-/g'`
+  if [ "${GENESIS_URL}" == "" ]; then
+    export GENESIS_URL="http://ip${myhost}-${SESSION_ID}-9000.direct.${PWD_HOST_FQDN}/genesis"
+  fi
+  # Check if von-network is running
+  # Should this be moved out of the Play with Docker section?
+  curl -s ${GENESIS_URL} >/dev/nul
+  res=$?
+  if test "$res" != "0"; then
+    echo "Error: Unable to find the genesis file for the Indy Network"
+    echo "Is von-network running?"
+    echo GENESIS_URL: ${GENESIS_URL}
+    exit 1
+  fi
+fi
+
 # =================================================================================================================
 # Usage:
 # -----------------------------------------------------------------------------------------------------------------
@@ -22,16 +51,22 @@ usage () {
 
   Commands:
 
-  build - Build the docker images for the agents and the test harness.
-          You need to do this first.
+  build [ -a agent ]* args
+    Build the docker images for the agents and the test harness.
+      You need to do this first.
+      - "agent" must be one from the supported list: ${VALID_AGENTS}
+      - multiple agents may be built by specifying multiple -a options
+      - By default, all agents and the harness will be built
   
-  rebuild - same as build, but adds the --no-cache option to force building from scratch
+  rebuild [ -a agent ]* args
+    Same as build, but adds the --no-cache option to force building from scratch
 
-  run [ -a/b/m/d agent ] [ -t tags ]* - Run the tagged tests using the specified agents for Alice, Bob and Mallory.
-    Select the agents for the roles of Alice (-a), Bob (-b) and Mallory (-m).
-    - For all to be set to the same, use "-d" for default.
-    - The value for agent must be one of: ${VALID_AGENTS}
-    Use -t option(s) to indicate tests with the gives tag(s) are to be executed.
+  run [ -a/b/m/d agent ] [ -t tags ]*
+    Run the tagged tests using the specified agents for Alice, Bob and Mallory.
+      Select the agents for the roles of Alice (-a), Bob (-b) and Mallory (-m).
+      - For all to be set to the same, use "-d" for default.
+      - The value for agent must be one of: ${VALID_AGENTS}
+      Use -t option(s) to indicate tests with the gives tag(s) are to be executed.
 
     Examples:
     $0 run -a acapy -b vcx -m vcx           - Run all the tests using the specified agents per role
@@ -112,27 +147,26 @@ function initEnv() {
   export RUST_LOG=${RUST_LOG:-warning}
 }
 
-# Set of valid agents - add new agents here and in the buildImages() function
-export VALID_AGENTS="acapy vcx"
-
 # Build images -- add more backchannels here...
 # TODO: Define args to build only what's needed
 buildImages() {
   args=${@}
 
-  echo "Building acapy-agent-backchannel ..."
-  docker build \
-    ${args} \
-    $(initDockerBuildArgs) \
-    -t 'acapy-agent-backchannel' \
-    -f '../aries-backchannels/Dockerfile.acapy' '../aries-backchannels/'
+  echo Agents to build: ${BUILD_AGENTS}
 
-  echo "Building  vcx-agent-backchannel ..."
-  docker build \
-    ${args} \
-    $(initDockerBuildArgs) \
-    -t 'vcx-agent-backchannel' \
-    -f '../aries-backchannels/Dockerfile.vcx' '../aries-backchannels/'
+  for agent in ${BUILD_AGENTS}; do
+    if [ -e "../aries-backchannels/Dockerfile.${agent}" ]; then
+      echo "Building ${agent}-agent-backchannel ..."
+      docker build \
+        ${args} \
+        $(initDockerBuildArgs) \
+        -t "${agent}-agent-backchannel" \
+        -f "../aries-backchannels/Dockerfile.${agent}" "../aries-backchannels/"
+    else
+      echo "Unable to find agent to build: ${agent}"
+      echo "Must be one one of: ${VALID_AGENTS}"
+    fi
+  done
 
   echo "Building aries-test-harness ..."
   docker build \
@@ -237,7 +271,7 @@ isAgent() {
 COMMAND=$(toLower ${1})
 shift
 
-# Handle run args separately
+# Handle run args
 if [[ "${COMMAND}" == "run" ]]; then
   ALICE="none"
   BOB="none"
@@ -292,14 +326,36 @@ if [[ "${COMMAND}" == "run" ]]; then
 fi
 echo ""
 
+# Handle additional Build arguments
+if [[ "${COMMAND}" == "build" || "${COMMAND}" == "rebuild" ]]; then
+
+  while getopts "ha:" FLAG; do
+    case $FLAG in
+        h ) usage ;;
+        : ) usage ;;
+        \? ) #unrecognized option - show help
+        set -- "$@" "$FLAG"
+            ;;
+        a ) export BUILD_AGENTS="${BUILD_AGENTS} ${OPTARG}"
+            ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  if [ "${BUILD_AGENTS}" == "" ]; then
+     BUILD_AGENTS=${VALID_AGENTS}
+  fi
+fi
+
+
 pushd ${SCRIPT_HOME} >/dev/null
 
 case "${COMMAND}" in
   build)
-      buildImages
+      buildImages ${@}
     ;;
   rebuild)
-      buildImages --no-cache
+      buildImages --no-cache ${@}
     ;;
 
   run)
