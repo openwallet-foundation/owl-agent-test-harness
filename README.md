@@ -79,11 +79,11 @@ That's it!  Just sit back and enjoy the show, eventually you will see a test rep
 
 ```bash
 $ ./manage run
-Starting Alice Agent ...
+Starting Acme Agent ...
 Starting Bob Agent ...
 Starting Mallory Agent ...
 
-waiting for Alice agent to start...
+waiting for Acme agent to start...
 waiting for Bob agent to start...
 waiting for Mallory agent to start
 
@@ -104,19 +104,19 @@ Took 0m22.558s
 
 You can implement step definitions for undefined steps with these snippets:
 
-@when(u'"Alice" accepts the connection request')
+@when(u'"Acme" accepts the connection request')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: When "Alice" accepts the connection request')
+    raise NotImplementedError(u'STEP: When "Acme" accepts the connection request')
 
 
 Cleanup:
   - Shutting down agents ...
-    - Alice: Done
+    - Acme: Done
     - Bob: Done
     - Mallory: Done
 ```
 
-For the run above, the `Alice`, `Bob` and `Mallory` agents are all running with the ACA-Py backchannels and agent frameworks. Use the "-a" (for Alice), "-b" (for Bob) and "-m" (for Mallory) to mix and match the agents. Run `./manage help` to see the command usage information.
+For the run above, the `Acme`, `Bob` and `Mallory` agents are all running with the ACA-Py backchannels and agent frameworks. Use the "-a" (for Acme), "-b" (for Bob) and "-m" (for Mallory) to mix and match the agents. Run `./manage help` to see the command usage information.
 
 For example:
 
@@ -124,7 +124,7 @@ For example:
 ./manage run -a acapy -b vcx -m acapy
 ```
 
-... runs `Bob` using the VCX agent framework, while `Alice` and `Mallory` run the ACA-PY agent framework.
+... runs `Bob` using the VCX agent framework, while `Acme` and `Mallory` run the ACA-PY agent framework.
 
 ## Test Tags
 
@@ -225,10 +225,10 @@ The manage script builds an image for each backchannel:
 https://github.com/bcgov/aries-agent-test-harness/blob/master/docker/manage#L120
 
 
-... and the image is started using a standard set of parameters, for example for `Alice`:
+... and the image is started using a standard set of parameters, for example for `Acme`:
 
 ```
-docker run -d --rm --name alice_agent --expose 8020-8023 -p 8020-8023:8020-8023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ALICE_AGENT} -p 8020 -i false >/dev/null  
+docker run -d --rm --name acme_agent --expose 8020-8023 -p 8020-8023:8020-8023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 8020 -i false >/dev/null  
 ```
 
 Important things to note:
@@ -261,7 +261,7 @@ The agents are configured in `behave.ini`.
 ```bash
 # -- FILE: behave.ini
 [behave.userdata]
-Alice = http://localhost:8020
+Acme = http://localhost:8020
 Bob  = http://localhost:8070
 ```
 

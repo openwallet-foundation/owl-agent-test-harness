@@ -395,7 +395,7 @@ def step_impl(context, sender, receiver):
 
 @then('"{inviter}" and "{invitee}" are able to complete the connection')
 def step_impl(context):
-    raise NotImplementedError('STEP: Then "Alice" and "Bob" are able to complete the connection')
+    raise NotImplementedError('STEP: Then "Acme" and "Bob" are able to complete the connection')
 
 
 @then(u'"{receiver}" and "{sender}" have another connection')
@@ -410,14 +410,14 @@ def step_impl(context):
     raise NotImplementedError(u'STEP: Given "Bob" has Invalid DID Method')
 
 
-@then(u'"Alice" sends an request not accepted error')
+@then(u'"Acme" sends an request not accepted error')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Then "Alice" sends an request not accepted error')
+    raise NotImplementedError(u'STEP: Then "Acme" sends an request not accepted error')
 
 
-@then(u'the state of "Alice" is reset to Null')
+@then(u'the state of "Acme" is reset to Null')
 def step_impl(context):
-    raise NotImplementedError(u'STEP: Then the state of "Alice" is reset to Null')
+    raise NotImplementedError(u'STEP: Then the state of "Acme" is reset to Null')
 
 
 @then(u'the state of "Bob" is reset to Null')
