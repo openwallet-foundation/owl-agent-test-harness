@@ -62,8 +62,8 @@ usage () {
     Same as build, but adds the --no-cache option to force building from scratch
 
   run [ -a/b/m/d agent ] [ -t tags ]*
-    Run the tagged tests using the specified agents for Alice, Bob and Mallory.
-      Select the agents for the roles of Alice (-a), Bob (-b) and Mallory (-m).
+    Run the tagged tests using the specified agents for Acme, Bob and Mallory.
+      Select the agents for the roles of Acme (-a), Bob (-b) and Mallory (-m).
       - For all to be set to the same, use "-d" for default.
       - The value for agent must be one of: ${VALID_AGENTS}
       Use -t option(s) to indicate tests with the gives tag(s) are to be executed.
@@ -215,31 +215,31 @@ waitForAgent(){
 runTests() {
   runArgs=${@}
 
-  export ALICE_AGENT=${ALICE_AGENT:-${ALICE}-agent-backchannel}
+  export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
   export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
   export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
   
-  echo "Starting Alice Agent ..."
-  docker run -d --rm --name alice_agent --expose 9020-9023 -p 9020-9023:9020-9023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ALICE_AGENT} -p 9020 -i false >/dev/null  
+  echo "Starting Acme Agent ..."
+  docker run -d --rm --name acme_agent --expose 9020-9023 -p 9020-9023:9020-9023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null  
   echo "Starting Bob Agent ..."
   docker run -d --rm --name bob_agent --expose 9030-9033 -p 9030-9033:9030-9033 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
   echo "Starting Mallory Agent ..."
   docker run -d --rm --name mallory_agent --expose 9040-9043 -p 9040-9043:9040-9043 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9040  -i false >/dev/null
  
   echo
-  waitForAgent Alice 9020
+  waitForAgent Acme 9020
   waitForAgent Bob 9030
   waitForAgent Mallory 9040
 
   echo
   echo
-  ${terminalEmu} docker run -it --rm --network="host" aries-test-harness -k ${runArgs} -D Alice=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Mallory=http://0.0.0.0:9040
+  ${terminalEmu} docker run -it --rm --network="host" aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Mallory=http://0.0.0.0:9040
 
   echo
   echo "Cleanup:"
   echo "  - Shutting down agents ..."
-  printf "    - Alice: "
-  docker stop alice_agent >/dev/null
+  printf "    - Acme: "
+  docker stop acme_agent >/dev/null
   printf "Done\n"
 
   printf "    - Bob: "
@@ -273,7 +273,7 @@ shift
 
 # Handle run args
 if [[ "${COMMAND}" == "run" ]]; then
-  ALICE="none"
+  ACME="none"
   BOB="none"
   MALLORY="none"
   TAGS=""
@@ -286,7 +286,7 @@ if [[ "${COMMAND}" == "run" ]]; then
         echo -e \\n"Invalid script option: -${OPTARG}"\\n
         usage
             ;;
-        a ) export ALICE=${OPTARG}
+        a ) export ACME=${OPTARG}
             ;;
         b ) export BOB=${OPTARG}
             ;;
@@ -295,7 +295,7 @@ if [[ "${COMMAND}" == "run" ]]; then
         t ) export TAGS="${TAGS} --tags=${OPTARG}"
             ;;
         d )
-            export ALICE=${OPTARG}
+            export ACME=${OPTARG}
             export BOB=${OPTARG}
             export MALLORY=${OPTARG}
             ;;
@@ -303,16 +303,16 @@ if [[ "${COMMAND}" == "run" ]]; then
   done
   shift $((OPTIND-1))
 
-  for agent in ${ALICE} ${BOB} ${MALLORY}; do
+  for agent in ${ACME} ${BOB} ${MALLORY}; do
       if [[ $(isAgent $agent) == false ]] ; then
-          echo All agents Alice, Bob and Mallory must be set to one of: ${VALID_AGENTS}.
+          echo All agents Acme, Bob and Mallory must be set to one of: ${VALID_AGENTS}.
           echo Use \"${0} help\" to get more information.
           exit 1
       fi
   done
 
   echo Agents to be used:
-  echo "  Alice - ${ALICE}"
+  echo "  Acme - ${ACME}"
   echo "  Bob - ${BOB}"
   echo "  Mallory - ${MALLORY}"
   if [[ "${TAGS}" ]]; then

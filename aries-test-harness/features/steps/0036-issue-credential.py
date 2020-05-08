@@ -3,7 +3,7 @@ import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, connection_status
 
 # This step is defined in another feature file
-# Given "Alice" and "Bob" have an existing connection
+# Given "Acme" and "Bob" have an existing connection
 
 
 SCHEMA_TEMPLATE = {

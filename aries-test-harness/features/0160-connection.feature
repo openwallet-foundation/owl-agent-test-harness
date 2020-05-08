@@ -4,16 +4,16 @@ Feature: Aries agent connection functions RFC 0160
    Scenario Outline: establish a connection between two agents
       Given we have "2" agents
          | name  | role    |
-         | Alice | inviter |
+         | Acme | inviter |
          | Bob   | invitee |
-      When "Alice" generates a connection invitation
+      When "Acme" generates a connection invitation
       And "Bob" receives the connection invitation
-      And "Bob" sends a connection request to "Alice"
-      And "Alice" receives the connection request
-      And "Alice" sends a connection response to "Bob"
+      And "Bob" sends a connection request to "Acme"
+      And "Acme" receives the connection request
+      And "Acme" sends a connection response to "Bob"
       And "Bob" receives the connection response
-      And "Bob" sends <message> to "Alice"
-      Then "Alice" and "Bob" have a connection
+      And "Bob" sends <message> to "Acme"
+      Then "Acme" and "Bob" have a connection
 
       Examples:
          | message   |
@@ -26,16 +26,16 @@ Feature: Aries agent connection functions RFC 0160
    Scenario Outline: establish a connection between two agents with role reversal
       Given we have "2" agents
          | name  | role    |
-         | Alice | invitee |
+         | Acme | invitee |
          | Bob   | inviter |
       When "Bob" generates a connection invitation
-      And "Alice" receives the connection invitation
-      And "Alice" sends a connection request to "Bob"
+      And "Acme" receives the connection invitation
+      And "Acme" sends a connection request to "Bob"
       And "Bob" receives the connection request
-      And "Bob" sends a connection response to "Alice"
-      And "Alice" receives the connection response
-      And "Alice" sends <message> to "Bob"
-      Then "Bob" and "Alice" have a connection
+      And "Bob" sends a connection response to "Acme"
+      And "Acme" receives the connection response
+      And "Acme" sends <message> to "Bob"
+      Then "Bob" and "Acme" have a connection
 
       Examples:
          | message   |
@@ -49,16 +49,16 @@ Feature: Aries agent connection functions RFC 0160
    Scenario Outline: Connection established between two agents but inviter sends next message to establish full connection state
       Given we have "2" agents
          | name  | role    |
-         | Alice | inviter |
+         | Acme | inviter |
          | Bob   | invitee |
-      When "Alice" generates a connection invitation
+      When "Acme" generates a connection invitation
       And "Bob" receives the connection invitation
-      And "Bob" sends a connection request to "Alice"
-      And "Alice" receives the connection request
-      And "Alice" sends a connection response to "Bob"
+      And "Bob" sends a connection request to "Acme"
+      And "Acme" receives the connection request
+      And "Acme" sends a connection response to "Bob"
       And "Bob" receives the connection response
-      And "Alice" sends <message> to "Bob"
-      Then "Alice" and "Bob" have a connection
+      And "Acme" sends <message> to "Bob"
+      Then "Acme" and "Bob" have a connection
 
       Examples:
          | message   |
@@ -72,72 +72,72 @@ Feature: Aries agent connection functions RFC 0160
    Scenario: Inviter Sends invitation for one agent second agent tries after connection
       Given we have "3" agents
          | name    | role              |
-         | Alice   | inviter           |
+         | Acme   | inviter           |
          | Bob     | invitee           |
          | Mallory | inviteinterceptor |
-      And "Alice" generated a single-use connection invitation
+      And "Acme" generated a single-use connection invitation
       And "Bob" received the connection invitation
-      And "Bob" sent a connection request to "Alice"
-      And "Alice" receives the connection request
-      And "Alice" sends a connection response to "Bob"
+      And "Bob" sent a connection request to "Acme"
+      And "Acme" receives the connection request
+      And "Acme" sends a connection response to "Bob"
       And "Bob" receives the connection response
-      And "Alice" and "Bob" have a connection
-      When "Mallory" sends a connection request to "Alice" based on the connection invitation
-      Then "Alice" sends a request_not_accepted error
+      And "Acme" and "Bob" have a connection
+      When "Mallory" sends a connection request to "Acme" based on the connection invitation
+      Then "Acme" sends a request_not_accepted error
 
    @T004-API10-RFC0160 @SingleUseInvite @P2 @ExceptionTest @WillFail @OutstandingBug..418..https://github.com/hyperledger/aries-cloudagent-python/issues/418
    Scenario: Inviter Sends invitation for one agent second agent tries during first share phase
       Given we have "3" agents
          | name    | role              |
-         | Alice   | inviter           |
+         | Acme   | inviter           |
          | Bob     | invitee           |
          | Mallory | inviteinterceptor |
-      And "Alice" generated a single-use connection invitation
+      And "Acme" generated a single-use connection invitation
       And "Bob" received the connection invitation
-      And "Bob" sent a connection request to "Alice"
-      When "Mallory" sends a connection request to "Alice" based on the connection invitation
-      Then "Alice" sends a request_not_accepted error
+      And "Bob" sent a connection request to "Acme"
+      When "Mallory" sends a connection request to "Acme" based on the connection invitation
+      Then "Acme" sends a request_not_accepted error
 
    @T005-API10-RFC0160 @MultiUseInvite @P3 @DerivedFunctionalTest @NeedsReview @wip
    Scenario: Inviter Sends invitation for multiple agents
       Given we have "3" agents
          | name    | role              |
-         | Alice   | inviter           |
+         | Acme   | inviter           |
          | Bob     | invitee           |
          | Mallory | inviteinterceptor |
-      And "Alice" generated a multi-use connection invitation
+      And "Acme" generated a multi-use connection invitation
       And "Bob" receives the connection invitation
-      And "Bob" sends a connection request to "Alice"
-      And "Alice" receives the connection request
-      And "Alice" sends a connection response to "Bob"
-      When "Mallory" sends a connection request to "Alice" based on the connection invitation
-      Then "Alice" sends a connection response to "Mallory"
-   #And "Alice" and "Bob" are able to complete the connection
-   #And "Alice" and "Mallory" are able to complete the connection
+      And "Bob" sends a connection request to "Acme"
+      And "Acme" receives the connection request
+      And "Acme" sends a connection response to "Bob"
+      When "Mallory" sends a connection request to "Acme" based on the connection invitation
+      Then "Acme" sends a connection response to "Mallory"
+   #And "Acme" and "Bob" are able to complete the connection
+   #And "Acme" and "Mallory" are able to complete the connection
 
    @T006-API10-RFC0160 @P4 @DerivedFunctionalTest
    Scenario: Establish a connection between two agents who already have a connection initiated from invitee
       Given we have "2" agents
          | name  | role    |
-         | Alice | inviter |
+         | Acme | inviter |
          | Bob   | invitee |
-      And "Alice" and "Bob" have an existing connection
+      And "Acme" and "Bob" have an existing connection
       When "Bob" generates a connection invitation
-      And "Bob" and "Alice" complete the connection process
-      Then "Alice" and "Bob" have another connection
+      And "Bob" and "Acme" complete the connection process
+      Then "Acme" and "Bob" have another connection
 
    @T007-API10-RFC0160 @P2 @ExceptionTest @SingleTryOnException @NeedsReview @wip
    Scenario Outline: Establish a connection between two agents but gets a request not accepted report problem message
       Given we have "2" agents
          | name  | role    |
-         | Alice | inviter |
+         | Acme | inviter |
          | Bob   | invitee |
       And "Bob" has <problem>
-      When "Alice" generates a connection invitation
+      When "Acme" generates a connection invitation
       And "Bob" receives the connection invitation
-      And "Bob" sends a connection request to "Alice"
-      Then "Alice" sends an request not accepted error
-      And the state of "Alice" is reset to Null
+      And "Bob" sends a connection request to "Acme"
+      Then "Acme" sends an request not accepted error
+      And the state of "Acme" is reset to Null
       And the state of "Bob" is reset to Null
 
       Examples:

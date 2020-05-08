@@ -16,21 +16,21 @@ The first step in developing a suite of tests for the Aries Interop Protocols is
 
 Intitial writing of the Gherkin tests themselves can be done in a [.feature file](https://behave.readthedocs.io/en/latest/tutorial.html?highlight=feature%20file#features) or in the [GitHub issue](https://github.com/bcgov/aries-agent-test-harness/issues) detailing the test development work to be accomplished. If no GitHub issue exists, for the test development work, create one. 
 
-To keep test definitions immune to code changes or nomenclatures in code, it is best to express the RFC in high level terms from the user level (Alice and Bob for instance), that can be interpreted by the business instead of revealing implementation details. For example, `When Alice requests a connection with Bob` instead of `When Alice sends a connection-request to Bob`.  Sometimes this may be cumbersome, so just make it as high level as makes sense.  A full example from the connection protocol might look something like this;
+To keep test definitions immune to code changes or nomenclatures in code, it is best to express the RFC in high level terms from the user level (Acme and Bob for instance), that can be interpreted by the business instead of revealing implementation details. For example, `When Acme requests a connection with Bob` instead of `When Acme sends a connection-request to Bob`.  Sometimes this may be cumbersome, so just make it as high level as makes sense.  A full example from the connection protocol might look something like this;
 ```
 Scenario Outline: establish a connection between two agents
 Given we have "2" agents
 | name | role |
-| Alice | inviter |
+| Acme | inviter |
 | Bob | invitee |
-When "Alice" generates a connection invitation
+When "Acme" generates a connection invitation
 And "Bob" receives the connection invitation
-And "Bob" sends a connection request to "Alice"
-And "Alice" receives the connection request
-And "Alice" sends a connection response to "Bob"
+And "Bob" sends a connection request to "Acme"
+And "Acme" receives the connection request
+And "Acme" sends a connection response to "Bob"
 And "Bob" receives the connection response
-And "Bob" sends <message> to "Alice"
-Then "Alice" and "Bob" have a connection
+And "Bob" sends <message> to "Acme"
+Then "Acme" and "Bob" have a connection
 
 Examples:
 | message |
