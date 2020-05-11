@@ -224,6 +224,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg(resp_status, resp_text)
             return (resp_status, resp_text)
 
+        elif op["topic"] == "credential":
+            # POST operation is to create a new cred def
+            agent_operation = "/issue-credential"
+            log_msg(agent_operation, data)
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request(

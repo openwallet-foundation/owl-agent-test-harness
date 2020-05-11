@@ -12,12 +12,13 @@ from behave import given, when, then
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, connection_status
 
-
+@given('{n} agents')
 @given(u'we have {n} agents')
 def step_impl(context, n):
     """Determine there are at least 2 agents running based on data in the Behave input file behave.ini."""
     
     for row in context.table:
+        # Connection roles
         if row['role'] == 'inviter':
             context.inviter_url = context.config.userdata.get(row['name'])
             context.inviter_name = row['name']
@@ -30,8 +31,17 @@ def step_impl(context, n):
             context.inviteinterceptor_url = context.config.userdata.get(row['name'])
             context.inviteinterceptor_name = row['name']
             assert context.inviteinterceptor_url is not None and 0 < len(context.inviteinterceptor_url)
+        # This step is used across protocols, this adds roles for issue credential
+        elif row['role'] == 'issuer':
+            context.issuer_url = context.config.userdata.get(row['name'])
+            context.issuer_name = row['name']
+            assert context.issuer_url is not None and 0 < len(context.issuer_url)
+        elif row['role'] == 'holder':
+            context.holder_url = context.config.userdata.get(row['name'])
+            context.holder_name = row['name']
+            assert context.holder_url is not None and 0 < len(context.holder_url)
         else:
-            print("Data table in step contains an unrecognized role, must be inviter, invitee, or inviteinterceptor")
+            print("Data table in step contains an unrecognized role, must be inviter, invitee, inviteinterceptor, issuer, or holder")
 
 
 
