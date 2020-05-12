@@ -132,22 +132,55 @@ def step_impl(context, issuer):
     resp_json = json.loads(resp_text)
     issuer_credential_definition = resp_json
 
+@when('"{holder}" proposes a credential to "{issuer}"')
+def step_impl(context, holder, issuer):
+    #raise NotImplementedError(u'STEP: When “Bob” proposes a credential')
+    holder_url = context.config.userdata.get(holder)
+    holder_connection_id = context.connection_id_dict[holder]
 
+    print(holder, holder_url, holder_connection_id)
+
+    credential_offer = {
+        "schema_issuer_did": context.issuer_did,
+        "issuer_did": context.issuer_did,
+        "schema_name": context.issuer_schema["name"],
+        "cred_def_id": context.issuer_credential_definition["id"],
+        "schema_version": context.issuer_schema["version"],
+        "credential_proposal": {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+            "attributes": CREDENTIAL_ATTR_TEMPLATE.copy(),
+        },
+        "connection_id": context.connection_id_dict[issuer],
+        "schema_id": context.issuer_schema["id"],
+    }
+
+    (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="send-proposal", id=holder_connection_id, data=credential_offer)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+
+@when('"{issuer}" offers a credential')
 @when('"{issuer}" sends a credential offer')
 def step_impl(context, issuer):
-    pass
+    raise NotImplementedError(u'STEP: When “Alice” offers a credential')
 
-@when('"{receiver}" sends a credential request')
-def step_impl(context, receiver):
-    pass
+@when('"{holder}" requests the credential')
+@when('"{holder}" sends a credential request')
+def step_impl(context, holder):
+    raise NotImplementedError(u'STEP: When “Bob” requests the credential')
 
+@when('"{issuer}" issues the credential')
 @when('"{issuer}" issues a credential')
 def step_impl(context, issuer):
-    pass
+    raise NotImplementedError(u'STEP: When “Alice” issues the credential')
 
-@when('"{receiver}" receives and acknowledges the credential')
+@when('"{holder}" acknowledges the credential issue')
+@when('"{holder}" receives and acknowledges the credential')
 def step_impl(context, receiver):
-    pass
+    raise NotImplementedError(u'STEP: When “Bob” acknowledges the credential issue')
+
+@then('"{holder}" has the credential issued')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: Then “Bob” has the credential issued')
 
 @then('"{issuer}" has an acknowledged credential issue')
 def step_impl(context, issuer):
