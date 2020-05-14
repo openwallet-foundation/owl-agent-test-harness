@@ -68,6 +68,7 @@ usage () {
       - The value for agent must be one of: ${VALID_AGENTS}
       Use -t option(s) to indicate tests with the gives tag(s) are to be executed.
         -t options can NOT have spaces, even if the option is quoted; use a behave INI file instead (-i option)
+        For not running tagged tests, specify a ~ before the tag, e.g. "-t ~@wip" runs tests that don't have the "@wip" tag
       Use the -i option to use the specified file as the behave.ini file for the run
       - Default is the behave.ini file in the "aries-test-harness" folder
 
