@@ -28,7 +28,7 @@ The commands take a while to run (you know...building modern apps always means d
 
 It's that last part makes the AATH powerful. On every run, different AATH-enabled components can be assigned any role (Acme, Bob, Mallory and others to come, like Carol and Faber). For some initial pain (AATH-enabling a component), interoperability testing becomes routine, and we can make hit our goal: to make interoperability boring.
 
-Interesting to you?  Read on for more about the architecture, how to build tests, how to AATH-enable the Aries agents and agent frameworks that you are building and how you can run these tests on a continuous basis.
+Interesting to you?  Read on for more about the architecture, how to build tests, how to AATH-enable the Aries agents and agent frameworks that you are building and how you can run these tests on a continuous basis. For a brief set of slides covering the process and goals, check [this](https://docs.google.com/presentation/d/1tNttxlHE8iwyOr7LDOZ6VrCwh8AuINfzuI2Gl0WEld0/edit?usp=sharing) out.
 
 We'd love to have help in building out a full Aries interoperability lab.
 
