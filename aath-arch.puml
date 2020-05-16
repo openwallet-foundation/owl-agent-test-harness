@@ -1,0 +1,41 @@
+@startuml
+
+package Scripts {
+  component "RFC\nProtocol\nTest Cases" as tests
+}
+node "Test Harness" as bdd {
+  node "BDD Engine" as eng
+  node "BDD Steps\n(Python)" as steps
+}
+package "Test Run\nResults" as Report
+package "Acme Test Agent (TA)" {
+  node "Backchannel" as abck
+  node "Component\nUnder Test (CUT)" as aaut
+}
+package "Bob Test Agent (TA)" {
+  node "Backchannel" as bbck
+  node "Component\nUnder Test (CUT)" as baut
+}
+
+package "Mallory Test Agent (TA)" {
+  node "Backchannel" as mbck
+  node "Component\nUnder Test (CUT)" as maut
+}
+
+eng <-left- tests
+eng --> steps
+eng -right-> Report
+
+steps <-down-> abck :HTTP
+steps <--> bbck :HTTP
+steps <--> mbck :HTTP
+
+abck -down-> aaut
+bbck -down-> baut
+mbck -down-> maut
+
+aaut <--> baut :DIDComm
+baut <--> maut :DIDComm
+aaut <--> maut :DIDComm
+
+@enduml
