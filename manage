@@ -2,7 +2,7 @@
 # set -x
 
 # Set of valid agents - add new agents here
-export VALID_AGENTS=$(ls ../aries-backchannels/Dockerfile.* | sed "s/^.*file.//" |  tr " " "\n" | sort -u)
+export VALID_AGENTS=$(ls aries-backchannels/*/Dockerfile.* | sed "s/^.*file.//" |  tr "\n" " " | sort -u)
 
 export MSYS_NO_PATHCONV=1
 export DOCKERHOST=${APPLICATION_URL-$(docker run --rm --net=host eclipse/che-ip)}
@@ -31,13 +31,15 @@ if [ "${PWD_HOST_FQDN}" != "" ]; then
   fi
   # Check if von-network is running
   # Should this be moved out of the Play with Docker section?
-  curl -s ${GENESIS_URL} >/dev/nul
-  res=$?
-  if test "$res" != "0"; then
-    echo "Error: Unable to find the genesis file for the Indy Network"
-    echo "Is von-network running?"
-    echo GENESIS_URL: ${GENESIS_URL}
-    exit 1
+  if [ "${1}" == "run" ]; then
+    curl -s ${GENESIS_URL} >/dev/nul
+    res=$?
+    if test "$res" != "0"; then
+      echo "Error: Unable to find the genesis file for the Indy Network"
+      echo "Is von-network running?"
+      echo GENESIS_URL: ${GENESIS_URL}
+      exit 1
+    fi
   fi
 fi
 
@@ -164,15 +166,17 @@ buildImages() {
   echo Agents to build: ${BUILD_AGENTS}
 
   for agent in ${BUILD_AGENTS}; do
-    if [ -e "../aries-backchannels/Dockerfile.${agent}" ]; then
+    export BACKCHANNEL_FOLDER=$(dirname "$(find aries-backchannels -name *.${agent})" )
+    echo Backchannel Folder: ${BACKCHANNEL_FOLDER}
+    if [ -e "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" ]; then
       echo "Building ${agent}-agent-backchannel ..."
       docker build \
         ${args} \
         $(initDockerBuildArgs) \
         -t "${agent}-agent-backchannel" \
-        -f "../aries-backchannels/Dockerfile.${agent}" "../aries-backchannels/"
+        -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"
     else
-      echo "Unable to find agent to build: ${agent}"
+      echo "Unable to find Dockerfile to build agent: ${agent}"
       echo "Must be one one of: ${VALID_AGENTS}"
     fi
   done
@@ -182,7 +186,7 @@ buildImages() {
     ${args} \
     $(initDockerBuildArgs) \
     -t 'aries-test-harness' \
-    -f '../aries-test-harness/Dockerfile.harness' '../aries-test-harness/'
+    -f 'aries-test-harness/Dockerfile.harness' 'aries-test-harness/'
 }
 
 pingAgent(){
@@ -229,11 +233,11 @@ runTests() {
   export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
   
   echo "Starting Acme Agent ..."
-  docker run -d --rm --name acme_agent --expose 9020-9023 -p 9020-9023:9020-9023 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null  
+  docker run -d --rm --name acme_agent --expose 9020-9029 -p 9020-9029:9020-9029 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null  
   echo "Starting Bob Agent ..."
-  docker run -d --rm --name bob_agent --expose 9030-9033 -p 9030-9033:9030-9033 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
+  docker run -d --rm --name bob_agent --expose 9030-9039 -p 9030-9039:9030-9039 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
   echo "Starting Mallory Agent ..."
-  docker run -d --rm --name mallory_agent --expose 9040-9043 -p 9040-9043:9040-9043 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9040  -i false >/dev/null
+  docker run -d --rm --name mallory_agent --expose 9040-9049 -p 9040-9049:9040-9049 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9040  -i false >/dev/null
  
   echo
   waitForAgent Acme 9020
@@ -282,7 +286,7 @@ if [[ "${COMMAND}" == "run" ]]; then
   BOB="none"
   MALLORY="none"
   TAGS=""
-  BEHAVE_INI=../aries-test-harness/behave.ini
+  BEHAVE_INI=aries-test-harness/behave.ini
 
   while getopts "ha:b:c:m:d:t:i:" FLAG; do
     case $FLAG in
@@ -378,11 +382,11 @@ case "${COMMAND}" in
     ;;
 
   tags)
-      grep -h @ ../aries-test-harness/features/*feature |  tr " " "\n" | sort -u | fmt
+      grep -h @ aries-test-harness/features/*feature |  tr " " "\n" | sort -u | fmt
     ;;
 
   tests|scenarios)
-      grep -h -B 1 Scenario ../aries-test-harness/features/*feature
+      grep -h -B 1 Scenario aries-test-harness/features/*feature
     ;;
 
   dockerhost)
