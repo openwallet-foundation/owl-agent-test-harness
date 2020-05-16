@@ -13,12 +13,15 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
 
 ENV RUNMODE=docker
 
-COPY ./requirements.txt /aries-backchannels
+COPY python/requirements.txt ./
 RUN pip install -r requirements.txt
+COPY acapy/requirements-latest.txt ./
+RUN pip install -r requirements-latest.txt
 
-COPY . /aries-backchannels
+# Copy the necessary files from the AATH Backchannel sub-folders
+COPY python acapy data ./
 
-#aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
+# aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
 RUN mkdir -p ./bin
 RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
 
