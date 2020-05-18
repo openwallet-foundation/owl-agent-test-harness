@@ -11,10 +11,9 @@ git clone https://github.com/bcgov/von-network
 cd von-network
 ./manage build
 ./manage start
-sleep 20
 cd ..
 git clone https://github.com/bcgov/aries-agent-test-harness
-cd aries-agent-test-harness/docker
+cd aries-agent-test-harness
 ./manage build -a acapy
 ./manage run -d acapy -t @AcceptanceTest -t ~@wip
 
@@ -91,13 +90,13 @@ A further complication is that as tests are added to the test suite, the backcha
 
 ### Implemented Backchannels
 
-Backchannels can be found in the [`aries-backchannels`](aries-backchannels) folder of this repo. For more information on building a backchannel, see the documentation in the [`aries-backchannels` README](aries-backchannels/README.md), and look at the code of the existing backchannels. To get help, please use GitHub issues and/or ask questions on the [Hyperledger Rocketchat](https://chat.hyperledger.org) `#aries-agent-test-harness` channel (free Linux Foundation account required).
+Backchannels can be found in the [`aries-backchannels`](aries-backchannels) folder of this repo. For more information on building a backchannel, see the documentation in the [`aries-backchannels` README](aries-backchannels/README.md), and look at the code of the existing backchannels. To get help in building a backchannel for a component you want tested, please use GitHub issues and/or ask questions on the [Hyperledger Rocketchat](https://chat.hyperledger.org) `#aries-agent-test-harness` channel (free Linux Foundation account required).
 
-Two backchannels have been implemented, for the ACA-PY (https://github.com/hyperledger/aries-cloudagent-python) and VCX (https://github.com/hyperledger/indy-sdk/tree/master/vcx) Aries agent frameworks. Both are built on a common Python base (./aries-backchannels/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. The ACA-PY (./aries-backchannels/acapy_backchannel.py) and VCX (./aries-backchannels/vcx_backchannel.py) implementations extend the base to add support for their respective agent frameworks.
+Two backchannels have been implemented, for the [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python) and [VCX](https://github.com/hyperledger/indy-sdk/tree/master/vcx) Aries agent frameworks. Both are built on a common Python base (./aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. The ACA-PY (./aries-backchannels/acapy/acapy_backchannel.py) and VCX (./aries-backchannels/vcx/vcx_backchannel.py) implementations extend the base to add support for their respective agent frameworks.
 
 ## The `manage` bash script
 
-The AATH `./manage` script in the repos's `docker` folder is used to manage running builds of TA images and initiate test runs. Running the script with no arguments or just `help` to see the script's usage information. The following summarizes the key concepts.
+The AATH `./manage` script in the repo root folder is used to manage running builds of TA images and initiate test runs. Running the script with no arguments or just `help` to see the script's usage information. The following summarizes the key concepts.
 
 `./manage` is a bash script, so you must be in a bash compatible shell to run the AATH. You must also have an operational docker installation and git installed. Pretty normal stuff for Aries Agent development. As well, the current AATH requires access to a running Indy network. A locally running instance of [VON-Network](https://github.com/bcgov/von-network) is one option, but you can also pass in environment variables for the LEDGER_URL, GENESIS_URL or GENESIS_FILE to use a remote network. For example `GENESIS_URL=
 
@@ -113,7 +112,7 @@ To enable full control over behave's behaviour (if you will...), the `-i <ini fi
 
 ## Test Tags
 
-The test harness has utilized tags in the BDD feature files to be able to narrow down a test set to be executed at runtime. The general tags currently utilized are as follows:
+The test harness has utilized tags in the BDD feature files to be able to narrow down a test set to be executed at runtime. The general AATH tags currently utilized are as follows:
 
 - @AcceptanceTest - Tests based on requirements specifically stated in the RFC
 - @DerivedFunctionalTest - Tests derived on requirements but not specifically stated in the RFC.
@@ -167,6 +166,6 @@ or all the ExceptionTests...
 ./manage run -t @ExceptionTest
 ```
 
-To read more on how one can control the execution of test sets based on tags see [https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags](https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags)
+To read more on how one can control the execution of test sets based on tags see the [behave documentation](https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags)
 
-The option `-i <inifile>` can be used to pass a file in the `behave.ini` format into behave. With that, any behave configuration settings can be specified to control how behave behaves. See [https://behave.readthedocs.io/en/stable/behave.html#configuration-files](https://behave.readthedocs.io/en/stable/behave.html#configuration-files).
+The option `-i <inifile>` can be used to pass a file in the `behave.ini` format into behave. With that, any behave configuration settings can be specified to control how behave behaves. See the behave documentation about the `behave.ini` configuration file [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files).
