@@ -1,10 +1,12 @@
 # Aries Backchannels
 
-This folder contains the Aries backchannels that have been added to the Aries Agent Test Harness, each in their own folder. As noted in the main repo readme, backchannels receive requests from the test harness and convert those requests into instructions for the component under test (CUT). Within backchannel folders there may be more than one Dockerfile to build a different Test Agents sharing a single backchannel, perhaps for different versions of the CUT or different configurations.
+This folder contains the Aries backchannels that have been added to the Aries Agent Test Harness, each in their own folder, plus some shared files that may be useful to specific backchannel implementations. As noted in the main repo readme, backchannels receive requests from the test harness and convert those requests into instructions for the component under test (CUT). Within the component backchannel folders there may be more than one Dockerfile to build a different Test Agents sharing a single backchannel, perhaps for different versions of the CUT or different configurations.
 
 ## Writing a new Backchannel
 
-If you are writing a backchannel using Python, you're in luck!  Just use either the `ACA-Py` or `VCX` backchannels as a model.  They sub-class from a common base class (in the `python` folder), which implements the common backchannel features. The Python implementation is data driven, using the txt file in the `data` folder.
+If you are writing a backchannel using Python, you're in luck!  Just use either the `ACA-Py` or `VCX` backchannels as a model. They sub-class from a common base class (in the `python` folder), which implements the common backchannel features. The Python implementation is data driven, using the txt file in the `data` folder.
+
+### What's Needed
 
 If you are implementing from scratch, you need to implement a backchannel which:
 
@@ -14,29 +16,41 @@ If you are implementing from scratch, you need to implement a backchannel which:
 
 Once you have the backchannel, you need to define one or more docker files to create docker images of Test Agents to deploy in an AATH run. To do that, you must create a Dockerfile that builds a Docker image for the Test Agent (TA), including the backchannel, the CUT and anything else needed to operate the TA. The resulting docker image must be able to be launched by the common `./manage` bash script so the new TA can be included in the standard test scenarios.
 
-### 1. Standard Backchannel API
+### Standard Backchannel API
 
-The test harness interacts with each backchannel using a standard set of web services, the url's are mapped here:
+The test harness interacts with each backchannel using a small set of standard set of web services. Endpoints are here:
 
-https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/python/agent_backchannel.py#L157
+- POST /agent/command/{topic}/
+- GET /agent/command/{topic}/
+- GET /agent/command/{topic}/{id}
 
-... and you can see a full set of the expected parameters here:
+That's all of the endpoints your agent has to handle. Of course, your backchannel also has to be able to communicate
+with the CUT (the agent or agent framework being tested). Likely that means being able to generate requests to the
+CUT (mostly based on requests from the endpoints above) and monitor events from the CUT.
 
-https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-backchannels/python/agent_backchannel.py#L153
+### Standard Backchannel Topics and Operations
 
-Additional protocols will be added in the future by extending the list of parameters with additional `topics`.
+Although the number of endpoints is small, the number of topic and operation parameters is much larger. That list of operations drives the effort in building and maintaining the backchannel. The list of operations to be supported can be found in this [Google Sheet](https://bit.ly/AriesTestHarnessScenarios). It lists all of the possible `topic` values, the related `operations` and information about each one, including such things as:
 
-A backchannel should be implemented to always return a `404` HTTP result for topics not handled by the backchannel, so that it is easy to separate errors in the CUT vs. test steps not yet implemented by the backchannel.
+- related RFC and protocol
+- a description
+- the role of the operation in the protocol
+- the test case steps using the operation
+- the HTTP method
+- whether the operation is a command or a response
+- data associated with the operation
 
-### 2. Backchannel/Agent Interaction
+The Google Sheet data can help guide the implementation of the backchannel, providing a to do list of operations to handle. As well, a code-friendly version of the data from the spreadsheet is made available in the docker image of the Test Agent as the file `backchannel_operations.csv`. We recommend that in writing a backchannel, any `Not Implemented` commands and operations return an HTTP `501` result code ("Not Implemented")and dump the data related to the operation from the `backchannel_operations.csv` to the console to help guide the work to be done in implementing the operation in the backchannel.
 
-The test harness interacts with each published backchannel API using the following common functions:
+Support for testing new protocols will extend the data file with additional `topics` and related `operations`, adding to the workload of the backchannel maintainer.
 
-https://github.com/bcgov/aries-agent-test-harness/blob/master/aries-test-harness/agent_backchannel_client.py
+### Backchannel/Agent Interaction
 
-### 3. Docker Build Script
+The test harness interacts with each published backchannel API using the following [common Python functions](../aries-test-harness/agent_backchannel_client.py). Pretty simple, eh?
 
-Each backchannel should provide one or more Docker scripts that build a self-contained Docker image for the backchannel, the CUT and anything else needed to run the TA.
+### Docker Build Script
+
+Each backchannel should provide one or more Docker scripts, each of which build a self-contained Docker image for the backchannel, the CUT and anything else needed to run the TA.
 
 The following lists the requirements for building AATH compatible docker images:
 
@@ -54,11 +68,13 @@ The following lists the requirements for building AATH compatible docker images:
   - The lowest port number is passed to the TA on startup and is used by the test harness to send HTTP requests to the running TA.
   - The next nine higher ports are exposed across the docker network and can be used as needed by the TA.
 
-Examples are provided for aca-py (`Dockerfile.acapy`) and VCX (`Dockerfile.vcx`).
+Examples are provided for aca-py [(`Dockerfile.acapy`)](acapy/Dockerfile.acapy) and VCX [(`Dockerfile.vcx`)](vcx/Dockerfile.vcx).
 
-### 4. `./manage` Script Integration
+### `./manage` Script Integration
 
-The `./manage` script builds an image for each backchannel using the following command:
+The `./manage` script builds images and runs those images as containers in test runs. This integration applies some constraints on the docker images used. Most of those constraints are documented in the previous section, but the following provides some additional context. 
+
+An image for each backchannel using the following command:
 
 ```bash
       echo "Building ${agent}-agent-backchannel ..."
@@ -76,7 +92,7 @@ where:
 - `${args}` are any extra arguments on the command line after standard options processing.
 - Note that the docker build context is the aries-backchannel folder&mdash;the folder above the backchannel folders
 
-Once built, the selected TAs for the run are started for the test roles (Acme, Bob and Mallory) using the following commands:
+Once built, the selected TAs for the run are started for the test roles (currently Acme, Bob and Mallory) using the following commands:
 
 ```bash
   echo "Starting Acme Agent ..."
@@ -99,3 +115,5 @@ Important things to note from the script snippet:
 ## The ACA-Py and Indy Influence
 
 Many of the BDD feature steps (and hence, backchannel requests) in the initial test cases map very closely to the ACA-Py "admin" API used by a controller to control an instance of an ACA-Py agent. This makes sense because both the ACA-Py admin API and the AATH test cases were defined based on the Aries RFCs. However, we are aware the alignment between the two might be too close and welcome recommendations for making the backchannel API more agnostic, easier for other CUTs. Likewise, as the test suite becomes ledger- and verifiable credential format-agnostic, we anticipate abstracting away the Indy-isms that are in the current test cases, making them test parameters versus explicit steps.
+
+The Google Sheet list of operations has that same influence, referencing things like `connection_id`, `cred_exchange_id` and so on. As new backchannels are developed, we welcome feedback on how to make the list of operations easier to maintain backchannels.
