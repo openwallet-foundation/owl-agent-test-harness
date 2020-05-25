@@ -1,4 +1,4 @@
-## Behave in the Aries Test Framework
+# Behave in the Aries Test Framework
 
 The test framework is implemented using Behave (https://behave.readthedocs.io/en/latest/index.html) and Python.
 
