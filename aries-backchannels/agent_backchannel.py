@@ -31,6 +31,8 @@ from aiohttp import (
 
 from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, read_operations
 
+import ptvsd
+ptvsd.enable_attach()
 
 LOGGER = logging.getLogger(__name__)
 
@@ -175,6 +177,8 @@ class AgentBackchannel:
         if payload:
             if "id" in payload:
                 rec_id = payload["id"]
+            if "cred_ex_id" in payload:
+                rec_id = payload["cred_ex_id"]
             if "operation" in payload:
                 operation = payload["operation"]
             if "data" in payload:
@@ -215,6 +219,8 @@ class AgentBackchannel:
                         data = None
                     if "id" in payload:
                         rec_id = payload["id"]
+                    elif "cred_ex_id" in payload:
+                        rec_id = payload["cred_ex_id"]
                     else:
                         rec_id = None
 
@@ -231,7 +237,7 @@ class AgentBackchannel:
                 except NotImplementedError as ni_e:
                     return self.not_implemented_response(json.dumps(operation))
 
-            return self.not_found_response(topic)
+            return self.not_found_response(topic + " " + payload["operation"])
 
         except Exception as e:
             print("Exception:", e)
@@ -243,6 +249,7 @@ class AgentBackchannel:
         Post a GET command to the agent.
         """
         topic = request.match_info["topic"]
+
         if "id" in request.match_info:
             rec_id = request.match_info["id"]
         else:
