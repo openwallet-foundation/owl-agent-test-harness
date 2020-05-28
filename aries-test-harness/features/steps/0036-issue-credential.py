@@ -136,7 +136,6 @@ def step_impl(context, issuer):
 @given('"{holder}" proposes a credential to "{issuer}"')
 @when('"{holder}" proposes a credential to "{issuer}"')
 def step_impl(context, holder, issuer):
-    #raise NotImplementedError(u'STEP: When "Bob" proposes a credential')
     holder_url = context.config.userdata.get(holder)
     #holder_connection_id = context.connection_id_dict[holder]
 
@@ -177,7 +176,6 @@ def step_impl(context, issuer):
     #issuer_connection_id = context.connection_id_dict[issuer]
 
     if not hasattr('context','cred_thread_id'):
-    #if context.cred_thread_id is None:
 
         credential_offer = {
             "cred_def_id": context.issuer_credential_definition["id"],
@@ -194,10 +192,8 @@ def step_impl(context, issuer):
         context.cred_thread_id = resp_json["thread_id"]
 
         # get the holder cred_ex_id from the webhook with the thread id
-        # TODO add Bob to the Gherkin call to get the URL or use the context data table to get the issuer name by role.
-        holder_url = context.config.userdata.get("Bob")
         sleep(1) # It seems like you have to wait here for a moment in order to wait for the webhook to happen. 
-        (resp_status2, resp_text2) = agent_backchannel_GET(holder_url + "/agent/response/", "credential", id=context.cred_thread_id)
+        (resp_status2, resp_text2) = agent_backchannel_GET(context.holder_url + "/agent/response/", "credential", id=context.cred_thread_id)
         assert resp_status2 == 200, f'resp_status {resp_status2} is not 200; {resp_text2}'
         resp_json2 = json.loads(resp_text2)
         context.holder_cred_ex_id = resp_json2["credential_exchange_id"]
@@ -222,24 +218,25 @@ def step_impl(context, issuer):
 @when('"{holder}" requests the credential')
 @when('"{holder}" sends a credential request')
 def step_impl(context, holder):
-    holder_url = context.config.userdata.get(holder)
+    holder_url = context.holder_url
 
-    # # get the state of the credential for the holder
-    # (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.holder_cred_ex_id)
-    # assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    # resp_json = json.loads(resp_text)
-    # #assert resp_json["state"] == "credential_acked"
+    # If @indy then we can be sure we cannot start the protocol from this command. We can be sure that we have previously 
+    # gotten the cred_ex_id or have a thread_id.
+    if "Indy" in context.tags:
+        sleep(1)
+        (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="send-request", id=context.holder_cred_ex_id)
 
-    sleep(1)
-    (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="send-request", id=context.holder_cred_ex_id)
+    # We are starting from here in the protocol so you won't have the cred_ex_id or the thread_id
+    else:
+        (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="send-request", id=context.connection_id_dict[holder])
+    
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "request_sent"
 
-    issuer_url = context.config.userdata.get("Acme")
+    # Check the state of the issuer through the webhook
     sleep(1) # It seems like you have to wait here for a moment in order to wait for the webhook to happen. 
-    (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/response/", "credential", id=context.cred_thread_id)
-    # get the cred_ex_id for the issuer from the response and save it off for later.
+    (resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/response/", "credential", id=context.cred_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     # Need to log a bug for this. It should be "request_recieved"
