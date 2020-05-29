@@ -284,13 +284,17 @@ def step_impl(context, holder):
 
 @then('"{holder}" has the credential issued')
 def step_impl(context, holder):
-        holder_url = context.config.userdata.get(holder)
-        # get the end state of the credential
-        (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.holder_cred_ex_id)
-        #(resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "credential-definition", id=issuer_credential_definition_id)
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-        resp_json = json.loads(resp_text)
-        assert resp_json["state"] == "credential_acked"
+        # Verified in the last step
+        pass
+        # TODO in the near future check the wallet (or ledger?) for the credential.  
+
+        # holder_url = context.config.userdata.get(holder)
+        # # get the end state of the credential
+        # (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.holder_cred_ex_id)
+        # #(resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "credential-definition", id=issuer_credential_definition_id)
+        # assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+        # resp_json = json.loads(resp_text)
+        # assert resp_json["state"] == "credential_acked"
 
 @when(u'"{holder}" negotiates the offer with a proposal of the credential to "{issuer}"')
 @when(u'"{holder}" negotiates the offer with another proposal of the credential to "{issuer}"')

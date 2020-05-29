@@ -5,3 +5,4 @@ git+https://github.com/webpy/webpy.git#egg=web.py
 python3-indy
 aries-cloudagent==0.5.1
 ptvsd
+aiohttp

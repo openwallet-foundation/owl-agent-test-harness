@@ -1,11 +1,19 @@
+#!/usr/bin/python
+
 import csv
+import os.path
+import sys
 
+if ( (len(sys.argv) - 1 < 1) or ( not os.path.isfile(sys.argv[1]) ) ):
+    print("Error: Input file name saved from Google Sheet must be provided as a parameter and exist.")
+    exit(1)
 
+input = sys.argv[1]
 rfc = None
 command_rows = {}
 fieldnames = None
 
-with open("../gen/Mapping Aries Protocols for Testing - Aries Agent Test Scripts.csv", "r", newline='') as proto_file:
+with open(input, "r") as proto_file:
     proto_reader = csv.DictReader(proto_file)
     for row in proto_reader:
         if row["RFC"] and 0 < len(row["RFC"]):
@@ -41,7 +49,7 @@ with open("../gen/Mapping Aries Protocols for Testing - Aries Agent Test Scripts
                     old_row[key] = new_row[key]
             command_rows[row_key] = old_row
 
-with open('../gen/backchannel_operations.csv', 'w', newline='') as command_file:
+with open('../../aries-backchannel/data/backchannel_operations.csv', 'w') as command_file:
     writer = csv.DictWriter(command_file, fieldnames=fieldnames)
     writer.writeheader()
     for key, val in command_rows.items():
