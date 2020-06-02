@@ -151,7 +151,7 @@ class AgentBackchannel:
         Operations for each topic are in the backchannel_operations.csv file, generated from
         the Google sheet at https://bit.ly/AriesTestHarnessScenarios
         """
-        #operations_file = "./backchannel_operations.txt"
+        #operations_file = "../backchannel_operations.txt"
         #self.operations = read_operations(file_name=operations_file, parser="pipe")
         operations_file = "./backchannel_operations.csv"
         self.operations = read_operations(file_name=operations_file)

@@ -30,9 +30,9 @@ from aiohttp import (
     ClientTimeout,
 )
 
-from agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
-from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
-from storage import store_resource, get_resource, delete_resource, pop_resource, get_resources, clear_resource
+from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
+from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
+from python.storage import store_resource, get_resource, delete_resource, pop_resource, get_resources, clear_resource
 
 
 LOGGER = logging.getLogger(__name__)
