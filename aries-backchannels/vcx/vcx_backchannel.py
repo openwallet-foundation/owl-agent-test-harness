@@ -20,9 +20,9 @@ from aiohttp import (
     ClientTimeout,
 )
 
-from agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
-from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
-from storage import store_resource, get_resource, delete_resource, pop_resource, get_resources
+from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
+from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
+from python.storage import store_resource, get_resource, delete_resource, pop_resource, get_resources
 
 from vcx.api.connection import Connection
 from vcx.api.credential_def import CredentialDef
@@ -115,8 +115,8 @@ class VCXAgentBackchannel(AgentBackchannel):
         # http port is the main agency port
         # admin_port and admin_port+1 are used by the agency server
         # we need to rewrite these to the config file
-        input_config = "./vcx_agency/agency_config.json.template"
-        self.output_config = "./vcx_agency/agency_config.json"
+        input_config = "vcx/vcx_agency/agency_config.json.template"
+        self.output_config = "vcx/vcx_agency/agency_config.json"
         agency_host = os.getenv("DOCKERHOST") or "host.docker.internal"
         self.rewrite_config(
             input_config,
