@@ -120,7 +120,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             handler = f"handle_{topic}"
             method = getattr(self, handler, None)
             # put a log message here
-            log_msg('Passing payload to handler ' + handler + ' payload is: ' + payload)
+            log_msg('Passing payload to handler ' + handler + ' payload is: ' + json.dumps(payload))
             if method:
                 await method(payload)
             else:
@@ -130,11 +130,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     f"to handle webhook on topic {topic}"
                 )
         else:
-            log_msg('in webhook, topic is: ' + topic + ' payload is: ' + payload)
+            log_msg('in webhook, topic is: ' + topic + ' payload is: ' + json.dumps(payload))
 
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
         push_resource(connection_id, "connection-msg", message)
+        # put a log message here (all the handle_ )
+        # TODO wait here to determine the response to the web hook?????
+        pass
+
+    async def handle_issue_credential(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "credential-msg", message)
         # put a log message here (all the handle_ )
         # TODO wait here to determine the response to the web hook?????
         pass
@@ -224,6 +231,28 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg(resp_status, resp_text)
             return (resp_status, resp_text)
 
+        elif op["topic"] == "credential":
+            operation = op["operation"]
+            if rec_id is None:
+                agent_operation = "/issue-credential/" + operation
+            else:
+                if (operation == "send-offer" 
+                    or operation == "send-request"
+                    or operation == "issue"
+                    or operation == "store"
+                ):
+                    cred_ex_id = rec_id
+                    agent_operation = "/issue-credential/records/" + cred_ex_id + "/" + operation
+                else:
+                    agent_operation = "/issue-credential/" + operation
+            
+            log_msg(agent_operation, data)
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request(
@@ -303,6 +332,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = json.dumps(credential_definition)
             return (resp_status, resp_text)
 
+        elif op["topic"] == "credential":
+            cred_def_id = rec_id
+            agent_operation = "/issue-credential/records/" + cred_def_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request_response(
@@ -319,6 +356,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_status = 200
             if connection_msg:
                 resp_text = json.dumps(connection_msg)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
+        elif topic == "credential" and rec_id:
+            credential_msg = pop_resource(rec_id, "credential-msg")
+            i = 0
+            while credential_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                credential_msg = pop_resource(rec_id, "credential-msg")
+                i = i + 1
+
+            resp_status = 200
+            if credential_msg:
+                resp_text = json.dumps(credential_msg)
             else:
                 resp_text = "{}"
 
