@@ -29,7 +29,7 @@ from aiohttp import (
     ClientTimeout,
 )
 
-from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, read_operations
+from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, read_operations
 
 import ptvsd
 ptvsd.enable_attach()
@@ -68,7 +68,7 @@ async def default_genesis_txns():
                 ) as resp:
                     genesis = await resp.text()
         else:
-            with open("local-genesis.txt", "r") as genesis_file:
+            with open("../local-genesis.txt", "r") as genesis_file:
                 genesis = genesis_file.read()
     except Exception:
         LOGGER.exception("Error loading genesis transactions:")
@@ -150,7 +150,7 @@ class AgentBackchannel:
         Operations for each topic are in the backchannel_operations.csv file, generated from
         the Google sheet at https://bit.ly/AriesTestHarnessScenarios
         """
-        #operations_file = "./backchannel_operations.txt"
+        #operations_file = "../backchannel_operations.txt"
         #self.operations = read_operations(file_name=operations_file, parser="pipe")
         operations_file = "./backchannel_operations.csv"
         self.operations = read_operations(file_name=operations_file)
