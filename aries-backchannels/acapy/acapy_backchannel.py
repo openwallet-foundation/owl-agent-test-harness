@@ -19,9 +19,9 @@ from aiohttp import (
     ClientTimeout,
 )
 
-from agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
-from utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
-from storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
+from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
+from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
+from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
 
 
 LOGGER = logging.getLogger(__name__)
@@ -231,7 +231,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg(resp_status, resp_text)
             return (resp_status, resp_text)
 
-        elif op["topic"] == "credential":
+        elif op["topic"] == "issue-credential":
             operation = op["operation"]
             if rec_id is None:
                 agent_operation = "/issue-credential/" + operation
@@ -332,13 +332,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = json.dumps(credential_definition)
             return (resp_status, resp_text)
 
-        elif op["topic"] == "credential":
+        elif op["topic"] == "issue-credential":
             cred_def_id = rec_id
             agent_operation = "/issue-credential/records/" + cred_def_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status != 200:
-                return (resp_status, resp_text)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "credential":
+            agent_operation = "/credential/" + rec_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            return (resp_status, resp_text)
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
@@ -356,6 +361,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_status = 200
             if connection_msg:
                 resp_text = json.dumps(connection_msg)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
+        elif topic == "issue-credential" and rec_id:
+            credential_msg = pop_resource(rec_id, "credential-msg")
+            i = 0
+            while credential_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                credential_msg = pop_resource(rec_id, "credential-msg")
+                i = i + 1
+
+            resp_status = 200
+            if credential_msg:
+                resp_text = json.dumps(credential_msg)
             else:
                 resp_text = "{}"
 

@@ -7,7 +7,7 @@ Feature: Aries agent issue credential functions RFC 0036
     Then "Acme" has an existing schema
     And "Acme" has an existing credential definition
 
-  @T001-API10-RFC0036 @wip @AcceptanceTest @P1 @Indy
+  @T001-API10-RFC0036 @AcceptanceTest @P1 @Indy
   Scenario: Issue a credential with the Holder beginning with a proposal
     Given "2" agents
       | name  | role   |
@@ -21,7 +21,7 @@ Feature: Aries agent issue credential functions RFC 0036
     And "Bob" acknowledges the credential issue
     Then "Bob" has the credential issued
 
-  @T002-API10-RFC0036 @wip @AcceptanceTest @P2 @Indy
+  @T002-API10-RFC0036 @AcceptanceTest @P2 @Indy
     Scenario: Issue a credential with the Holder beginning with a proposal with negotiation
     Given "2" agents
       | name  | role   |
@@ -37,7 +37,7 @@ Feature: Aries agent issue credential functions RFC 0036
     And "Bob" acknowledges the credential issue
     Then "Bob" has the credential issued
   
-  @T003-API10-RFC0036 @wip @AcceptanceTest @P1 @Indy
+  @T003-API10-RFC0036 @AcceptanceTest @P1 @Indy
   Scenario: Issue a credential with the Issuer beginning with an offer
     Given "2" agents
       | name  | role   |
@@ -50,7 +50,7 @@ Feature: Aries agent issue credential functions RFC 0036
     And "Bob" acknowledges the credential issue
     Then "Bob" has the credential issued
 
-  @T004-API10-RFC0036 @wip @AcceptanceTest @P2 @Indy
+  @T004-API10-RFC0036 @AcceptanceTest @P2 @Indy
   Scenario: Issue a credential with the Issuer beginning with an offer with negotiation
     Given "2" agents
       | name  | role   |
