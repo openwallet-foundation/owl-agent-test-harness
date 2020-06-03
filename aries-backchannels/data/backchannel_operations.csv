@@ -19,7 +19,7 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0036 Issue Credential,X,,credential-definition,POST,,,Y,Register a cred def on the ledger ,,"credential_definition = {
 }",credential_definition_id
 0036 Issue Credential,X,,credential-definition,GET,,Y,,Fetch a specific cred def by ID ,credential_definition_id,,credential_definition_id
-0036 Issue Credential,X,,credential,POST,send-proposal,Y,Y,Send a credential proposal,connection_id,"proposal = {
+0036 Issue Credential,X,,issue-credential,POST,send-proposal,Y,Y,Send a credential proposal,connection_id,"proposal = {
     ""comment"": ""some comment"",
     ""credential_proposal"": <json-ld object>,
     ""schema_issuer_did"": ""DID of the proposed schema issuer"",
@@ -29,9 +29,9 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
     ""cred_def_id"": ""Credential Definition ID string""
     ""issuer_did"": ""DID of the proposed issuer""
 }",cred_exchange_id
-0036 Issue Credential,,X,credential,GET,,,,,,,offer
-0036 Issue Credential,X,,credential,GET,,Y,,Fetch a specific credential by ID ,credential_exchange_id,,credential_exchange_id
-0036 Issue Credential,X,,credential,POST,send,Y,Y,"Send a credential, automating the entire flow",connection_id,"offer = {
+0036 Issue Credential,,X,issue-credential,GET,,,,,,,offer
+0036 Issue Credential,X,,issue-credential,GET,,Y,,Fetch a specific credential by ID ,credential_exchange_id,,credential_exchange_id
+0036 Issue Credential,X,,issue-credential,POST,send,Y,Y,"Send a credential, automating the entire flow",connection_id,"offer = {
     ""comment"": ""some comment"",
     ""credential_proposal"": <json-ld object>,
     ""schema_issuer_did"": ""DID of the proposed schema issuer"",
@@ -41,7 +41,7 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
     ""cred_def_id"": ""Credential Definition ID string""
     ""issuer_did"": ""DID of the proposed issuer""
 }",cred_exchange_id
-0036 Issue Credential,X,,credential,POST,send-offer,Y,Y,Send a credential offer (unsolicited),connection_id,"offer = {
+0036 Issue Credential,X,,issue-credential,POST,send-offer,Y,Y,Send a credential offer (unsolicited),connection_id,"offer = {
     ""comment"": ""some comment"",
     ""credential_proposal"": <json-ld object>,
     ""schema_issuer_did"": ""DID of the proposed schema issuer"",
@@ -51,9 +51,9 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
     ""cred_def_id"": ""Credential Definition ID string""
     ""issuer_did"": ""DID of the proposed issuer""
 }",cred_exchange_id
-0036 Issue Credential,X,,credential,POST,send-request,Y,,Send a credential request,cred_exchange_id,,cred_exchange_id
-0036 Issue Credential,X,,credential,POST,issue,Y,,Issue a credential in response to a request ,cred_exchange_id,,cred_exchange_id
-0036 Issue Credential,X,,credential,POST,issue,Y,Y,Issue a credential in response to a request with details ,cred_exchange_id,"offer = {
+0036 Issue Credential,X,,issue-credential,POST,send-request,Y,,Send a credential request,cred_exchange_id,,cred_exchange_id
+0036 Issue Credential,X,,issue-credential,POST,issue,Y,,Issue a credential in response to a request ,cred_exchange_id,,cred_exchange_id
+0036 Issue Credential,X,,issue-credential,POST,issue,Y,Y,Issue a credential in response to a request with details ,cred_exchange_id,"offer = {
     ""comment"": ""some comment"",
     ""credential_proposal"": <json-ld object>,
     ""schema_issuer_did"": ""DID of the proposed schema issuer"",
@@ -63,10 +63,11 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
     ""cred_def_id"": ""Credential Definition ID string""
     ""issuer_did"": ""DID of the proposed issuer""
 }",cred_exchange_id
-0036 Issue Credential,X,,credential,POST,store,Y,,Send credential acknowledgement,cred_exchange_id,,cred_exchange_id
-0036 Issue Credential,X,,credential,POST,store,Y,Y,Send credential acknowledgement with ID ,cred_exchange_id,"offer = {
-    ""credential_id"": ""credential exchange id string""
+0036 Issue Credential,X,,issue-credential,POST,store,Y,,Send credential acknowledgement,cred_exchange_id,,cred_exchange_id
+0036 Issue Credential,X,,issue-credential,POST,store,Y,Y,Send credential acknowledgement with ID ,cred_exchange_id,"offer = {
+    ""credential_id"": ""issue-credential exchange id string""
 }",cred_exchange_id
+0036 Issue Credential,X,,credential,GET,,Y,,Get a stored credential from the holders wallet ,credential_id,,credential
 0037 Present Proof,X,,proof,POST,send-proposal,Y,Y,Send a proof proposal,connection_id,proposal,pres_exchange_id
 0037 Present Proof,X,,proof,POST,send-request,Y,Y,Send a proof request in reference to a proposal,pres_exchange_id,proof_request,pres_exchange_id
 0037 Present Proof,X,,proof,POST,send-presentation,Y,Y,Send a proof presentation,pres_exchange_id,proof_presentation,pres_exchange_id
