@@ -70,9 +70,12 @@ RUN pip install -r requirements.txt
 COPY vcx/requirements-vcx.txt ./
 RUN pip install -r requirements-vcx.txt
 
-COPY python data vcx  /aries-backchannels/
-RUN ls -al /aries-backchannels/
+# Copy the necessary files from the AATH Backchannel sub-folders
+COPY python python
+COPY vcx vcx
+COPY data ./
 
 ENV RUNMODE=docker
+ENV PYTHONPATH=/aries-backchannels
 
-ENTRYPOINT ["python", "vcx_backchannel.py"]
+ENTRYPOINT ["python", "vcx/vcx_backchannel.py"]

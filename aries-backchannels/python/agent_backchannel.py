@@ -151,7 +151,7 @@ class AgentBackchannel:
         Operations for each topic are in the backchannel_operations.csv file, generated from
         the Google sheet at https://bit.ly/AriesTestHarnessScenarios
         """
-        #operations_file = "./backchannel_operations.txt"
+        #operations_file = "../backchannel_operations.txt"
         #self.operations = read_operations(file_name=operations_file, parser="pipe")
         operations_file = "./backchannel_operations.csv"
         self.operations = read_operations(file_name=operations_file)
@@ -162,7 +162,6 @@ class AgentBackchannel:
         app.add_routes([web.get("/agent/command/{topic}/{id}", self._get_command_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}/", self._get_response_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}/{id}", self._get_response_backchannel)])
-        app.add_routes([web.post("/agent/reply/{topic}/", self._post_reply_backchannel)])
         runner = web.AppRunner(app)
         await runner.setup()
         self.backchannel_site = web.TCPSite(runner, "0.0.0.0", backchannel_port)
@@ -281,39 +280,33 @@ class AgentBackchannel:
             return web.Response(body=str(e), status=500)
 
     async def _get_response_backchannel(self, request: ClientRequest):
-        """
-        Get a response from the (remote) agent.
-        """
-        topic = request.match_info["topic"]
-        if "id" in request.match_info:
-            rec_id = request.match_info["id"]
-        else:
-            rec_id = None
-
-        try:
-            (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
-
-            if resp_status == 200:
-                return web.Response(text=resp_text, status=resp_status)
-            elif resp_status == 404:
-                return self.not_found_response(topic)
-            elif resp_status == 501:
-                return self.not_implemented_response(topic)
+            """
+            Get a response from the (remote) agent.
+            """
+            topic = request.match_info["topic"]
+            if "id" in request.match_info:
+                rec_id = request.match_info["id"]
             else:
-                return web.Response(body=resp_text, status=resp_status)
+                rec_id = None
 
-        except NotImplementedError as ni_e:
-            return self.not_implemented_response(topic)
-        except Exception as e:
-            print("Exception:", e)
-            traceback.print_exc()
-            return web.Response(body=str(e), status=500)
+            try:
+                (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
 
-    async def _post_reply_backchannel(self, request: ClientRequest):
-        """
-        Reply to a response from the (remote) agent.
-        """
-        return web.Response(text="")
+                if resp_status == 200:
+                    return web.Response(text=resp_text, status=resp_status)
+                elif resp_status == 404:
+                    return self.not_found_response(topic)
+                elif resp_status == 501:
+                    return self.not_implemented_response(topic)
+                else:
+                    return web.Response(body=resp_text, status=resp_status)
+
+            except NotImplementedError as ni_e:
+                return self.not_implemented_response(topic)
+            except Exception as e:
+                print("Exception:", e)
+                traceback.print_exc()
+                return web.Response(body=str(e), status=500)
 
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None

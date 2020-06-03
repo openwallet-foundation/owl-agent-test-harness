@@ -187,6 +187,7 @@ def step_impl(context, issuer):
         }
 
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", data=credential_offer)
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
         context.issuer_cred_ex_id = resp_json["credential_exchange_id"]
         context.cred_thread_id = resp_json["thread_id"]
@@ -210,8 +211,6 @@ def step_impl(context, issuer):
         resp_json = json.loads(resp_text)
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.issuer_cred_ex_id)
         
-
-    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     # Check the State of the credential
     assert resp_json["state"] == "offer_sent"
 
