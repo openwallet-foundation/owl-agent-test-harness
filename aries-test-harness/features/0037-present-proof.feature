@@ -6,7 +6,7 @@ Feature: Aries agent present proof functions RFC 0037
          | name  | role     |
          | Faber | verifier |
          | Bob   | prover   |
-      And "Faber" and "Bob" have an existing connection
+      And "Faber" and "Bob" <connection status> connection
       And "Bob" has an issued credential from <issuer>
       When "Faber" sends a request for proof presentation to "Bob"
       And "Bob" makes the presentation of the proof
@@ -14,9 +14,9 @@ Feature: Aries agent present proof functions RFC 0037
       Then "Bob" has the proof acknowledged
 
       Examples:
-         | issuer |
-         | Acme   |
-         | Faber  |
+         | connection status | issuer |
+         | have an existing  | Acme   |
+         | does not have a   | Faber  |
 
    @T001.2-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview
    Scenario Outline: Present Proof of specific types and proof is acknowledged
@@ -24,7 +24,7 @@ Feature: Aries agent present proof functions RFC 0037
          | name  | role     |
          | Faber | verifier |
          | Bob   | prover   |
-      And "Faber" and "Bob" have an existing connection
+      And "Faber" and "Bob" <connection status> connection
       And "Bob" has an issued credential from <issuer>
       When "Faber" sends a request for proof presentation to "Bob" for <proof>
       And "Bob" makes the presentation of the proof
@@ -34,26 +34,26 @@ Feature: Aries agent present proof functions RFC 0037
       # Fyi, some of these proof examples may end up in the negative/exception test case. leaving them here for now.
       # This proof list is free to grow as cases are discovered and raised.
       Examples:
-         | issuer | proof       |
-         | Acme   | address2    |
-         | Faber  | zip         |
-         |        | city        |
-         |        | address1    |
-         |        | state       |
-         |        | empty       |
-         |        | null        |
-         |        | true        |
-         |        | false       |
-         |        | max i32     |
-         |        | max i32 + 1 |
-         |        | i0          |
-         |        | min i32     |
-         |        | min i32 - 1 |
-         |        | float 0.0   |
-         |        | str 0.0     |
-         |        | chr 0       |
-         |        | chr 1       |
-         |        | chr 2       |
+         | connection status | issuer | proof       |
+         | have an existing  | Acme   | address2    |
+         | does not have a   | Faber  | zip         |
+         |                   |        | city        |
+         |                   |        | address1    |
+         |                   |        | state       |
+         |                   |        | empty       |
+         |                   |        | null        |
+         |                   |        | true        |
+         |                   |        | false       |
+         |                   |        | max i32     |
+         |                   |        | max i32 + 1 |
+         |                   |        | i0          |
+         |                   |        | min i32     |
+         |                   |        | min i32 - 1 |
+         |                   |        | float 0.0   |
+         |                   |        | str 0.0     |
+         |                   |        | chr 0       |
+         |                   |        | chr 1       |
+         |                   |        | chr 2       |
 
    @T002-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview
    Scenario Outline: Present Proof where the prover has proposed the presentation of proof and is acknowledged
@@ -61,7 +61,7 @@ Feature: Aries agent present proof functions RFC 0037
          | name  | role     |
          | Faber | verifier |
          | Bob   | prover   |
-      And "Faber" and "Bob" have an existing connection
+      And "Faber" and "Bob" <connection status> connection
       And "Bob" has an issued credential from <issuer>
       When "Faber" sends a request for proof presentation to "Bob"
       And "Bob" doesn’t want to reveal what was requested so makes a presentation proposal
@@ -71,9 +71,9 @@ Feature: Aries agent present proof functions RFC 0037
       Then "Bob" has the proof acknowledged
 
       Examples:
-         | issuer |
-         | Acme   |
-         | Faber  |
+         | connection status | issuer |
+         | have an existing  | Acme   |
+         | does not have a   | Faber  |
 
    @T003-API10-RFC0037 @AcceptanceTest @ExceptionTest @P2 @wip @NeedsReview
    Scenario Outline: Present Proof where the verifier rejects the presentation of the proof
@@ -81,7 +81,7 @@ Feature: Aries agent present proof functions RFC 0037
          | name  | role     |
          | Faber | verifier |
          | Bob   | prover   |
-      And "Faber" and "Bob" have an existing connection
+      And "Faber" and "Bob" <connection status> connection
       And "Bob" has an issued credential from <issuer>
       When "Faber" sends a request for proof presentation to "Bob"
       And "Bob" makes the presentation of the proof
@@ -89,6 +89,6 @@ Feature: Aries agent present proof functions RFC 0037
       Then "Bob" has the proof unacknowledged
 
       Examples:
-         | issuer |
-         | Acme   |
-         | Alice  |
+         | connection status | issuer |
+         | have an existing  | Acme   |
+         | does not have a   | Faber  |
