@@ -167,7 +167,7 @@ function write_to_requirements(){
   #TODO: comment out sanity checks for now, take out before merging
   #echo Agent input to write function: ${agent}
   #echo Folder input to write function: ${folder}
-  echo Fork input to write function: ${fork}
+  #echo Fork input to write function: ${fork}
   #echo Branch input to write function:${branch}
   # read template_parts from requirements-template in the backchannel folder
   file="${folder}/requirements-template.txt"
