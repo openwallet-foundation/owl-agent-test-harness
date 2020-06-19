@@ -59,7 +59,7 @@ usage () {
       - "agent" must be one from the supported list: ${VALID_AGENTS}
       - multiple agents may be built by specifying multiple -a options
       - By default, all agents and the harness will be built
-  
+
   rebuild [ -a agent ]* args
     Same as build, but adds the --no-cache option to force building from scratch
 
@@ -78,7 +78,7 @@ usage () {
     $0 run -a acapy -b vcx -m vcx           - Run all the tests using the specified agents per role
     $0 run -d vcx                           - Run all tests for all features using the vcx agent in all roles
     $0 run -d acapy -t @SmokeTest -t @P1    - Run the tests tagged @SmokeTest and/or @P1 (priority 1) using all ACA-Py agents
-  
+
   tags - Get a list of the tags on the features tests
 
   tests - Get a list of the test scenarios in the features, including the associated tags
@@ -158,6 +158,51 @@ function initEnv() {
   export RUST_LOG=${RUST_LOG:-warning}
 }
 
+function write_to_requirements(){
+  # constructs and writes backchannel repo string from fork and branch input
+  agent=$1
+  folder=$2
+  fork=$3
+  branch=$4
+  #TODO: comment out sanity checks for now, take out before merging
+  #echo Agent input to write function: ${agent}
+  #echo Folder input to write function: ${folder}
+  #echo Fork input to write function: ${fork}
+  #echo Branch input to write function:${branch}
+  # read template_parts from requirements-template in the backchannel folder
+  file="${folder}/requirements-template.txt"
+  template_parts=$(cat ${file})
+  # split base into default values
+  SAVEIFS=$IFS
+  IFS=$'\n'
+  parts=($template_parts)
+  base=${parts[0]}
+  default_fork=${parts[1]}
+  repo=${parts[2]}
+  default_branch=${parts[3]}
+
+  # use inputs, or set defaults if no input, to  construct string
+  if [ -z "$fork" ]
+  then
+    fork=${default_fork}
+  else
+    if [ "$fork"="default" ]
+    then
+      fork=${default_fork}
+    fi
+  fi
+  if [ -z "$branch" ]
+  then
+    branch=${default_branch}
+  fi
+  write_string="${base}${fork}${repo}${branch}"
+  # write the constructed string to requirements file
+  write_file="${folder}/requirements-${agent}.txt"
+  # TODO:remove this test line before merging:
+  # write_file="${folder}/requirements-test.txt"
+  echo ${write_string} > $write_file
+}
+
 # Build images -- add more backchannels here...
 # TODO: Define args to build only what's needed
 buildImages() {
@@ -166,8 +211,19 @@ buildImages() {
   echo Agents to build: ${BUILD_AGENTS}
 
   for agent in ${BUILD_AGENTS}; do
+    #echo Agent before split is: ${agent}
+    split_agent=($(echo $agent | tr ":" " "))
+    agent=${split_agent[0]}
+    fork=${split_agent[1]}
+    branch=${split_agent[2]}
+    #TODO comment out sanity checks for now, take out before merging
+    #echo Agent after split is: ${agent}
+    #echo Fork after split is: ${fork}
+    #echo Branch after split  is: ${branch}
     export BACKCHANNEL_FOLDER=$(dirname "$(find aries-backchannels -name *.${agent})" )
     echo Backchannel Folder: ${BACKCHANNEL_FOLDER}
+    # update requirements file with fork and/or branch specifications
+    write_to_requirements ${agent} ${BACKCHANNEL_FOLDER}  ${fork} ${branch}
     if [ -e "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" ]; then
       echo "Building ${agent}-agent-backchannel ..."
       docker build \
@@ -231,14 +287,14 @@ runTests() {
   export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
   export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
   export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
-  
+
   echo "Starting Acme Agent ..."
-  docker run -d --rm --name acme_agent --expose 9020-9029 -p 9020-9029:9020-9029 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null  
+  docker run -d --rm --name acme_agent --expose 9020-9029 -p 9020-9029:9020-9029 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null
   echo "Starting Bob Agent ..."
   docker run -d --rm --name bob_agent --expose 9030-9039 -p 9030-9039:9030-9039 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
   echo "Starting Mallory Agent ..."
   docker run -d --rm --name mallory_agent --expose 9040-9049 -p 9040-9049:9040-9049 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9040  -i false >/dev/null
- 
+
   echo
   waitForAgent Acme 9020
   waitForAgent Bob 9030
@@ -372,7 +428,7 @@ case "${COMMAND}" in
   build)
       buildImages ${@}
     ;;
-  
+
   rebuild)
       buildImages --no-cache ${@}
     ;;
