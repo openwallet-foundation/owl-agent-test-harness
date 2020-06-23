@@ -40,6 +40,15 @@ def step_impl(context, n):
             context.holder_url = context.config.userdata.get(row['name'])
             context.holder_name = row['name']
             assert context.holder_url is not None and 0 < len(context.holder_url)
+        # This step is used across protocols, this adds roles for present proof
+        elif row['role'] == 'verifier':
+            context.verifier_url = context.config.userdata.get(row['name'])
+            context.verifier_name = row['name']
+            assert context.verifier_url is not None and 0 < len(context.verifier_url)
+        elif row['role'] == 'prover':
+            context.prover_url = context.config.userdata.get(row['name'])
+            context.prover_name = row['name']
+            assert context.prover_url is not None and 0 < len(context.prover_url)
         else:
             print("Data table in step contains an unrecognized role, must be inviter, invitee, inviteinterceptor, issuer, or holder")
 
@@ -54,12 +63,28 @@ def step_impl(context, inviter):
 
     resp_json = json.loads(resp_text)
     context.inviter_invitation = resp_json["invitation"]
-    context.connection_id_dict = {inviter: resp_json["connection_id"]}
-    #context.inviter_connection_id = resp_json["connection_id"]
+
+    # check and see if the connection_id_dict exists
+    # if it does, it was probably used to create another connection in a 3+ agent scenario
+    # so that means we need to keep the connection ids around for use in the scenario
+    # so we will not create a new dict which will reset the dict
+    if hasattr(context, 'temp_connection_id_dict'):
+        #context.connection_id_dict[inviter] = resp_json["connection_id"]
+        context.temp_connection_id_dict[inviter] = resp_json["connection_id"]
+        #context.connection_id_dict[inviter] = {context.invitee_name: resp_json["connection_id"]}
+    else:
+        #context.connection_id_dict = {inviter: resp_json["connection_id"]}
+        context.temp_connection_id_dict = {inviter: resp_json["connection_id"]}
+        #context.connection_id_dict = {inviter: {context.invitee_name: resp_json["connection_id"]}}
+
+    # Check to see if the inviter_name exists in context. If not, antother suite is using it so set the inviter name and url
+    if not hasattr(context, 'inviter_name') or context.inviter_name != inviter:
+        context.inviter_url = inviter_url
+        context.inviter_name = inviter
 
     # get connection and verify status
-    #assert connection_status(inviter_url, context.inviter_connection_id, "invitation")
-    assert connection_status(inviter_url, context.connection_id_dict[inviter], "invitation")
+    #assert connection_status(inviter_url, context.connection_id_dict[inviter][context.invitee_name], "invitation")
+    assert connection_status(inviter_url, context.temp_connection_id_dict[inviter], "invitation")
 
 @given('"{invitee}" receives the connection invitation')
 @when('"{invitee}" receives the connection invitation')
@@ -71,22 +96,36 @@ def step_impl(context, invitee):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    context.connection_id_dict[invitee] = resp_json["connection_id"]
-    #context.invitee_connection_id = resp_json["connection_id"]
+
+    if not hasattr(context, 'connection_id_dict'):
+        context.connection_id_dict = {}
+        context.connection_id_dict[invitee] = {}
+    
+    context.connection_id_dict[invitee][context.inviter_name] = resp_json["connection_id"]
+
+    # Also add the inviter into the main connection_id_dict. if the len is 0 that means its already been cleared and this may be Mallory.
+    if len(context.temp_connection_id_dict) != 0:
+        context.connection_id_dict[context.inviter_name] = {invitee: context.temp_connection_id_dict[context.inviter_name]}
+        #clear the temp connection id dict used in the initial step. We don't need it anymore.
+        context.temp_connection_id_dict.clear()
+
+    # Check to see if the invitee_name exists in context. If not, antother suite is using it so set the invitee name and url
+    if not hasattr(context, 'invitee_name'):
+        context.invitee_url = invitee_url
+        context.invitee_name = invitee
 
     # get connection and verify status
-    assert connection_status(invitee_url, context.connection_id_dict[invitee], "invitation")
+    assert connection_status(invitee_url, context.connection_id_dict[invitee][context.inviter_name], "invitation")
 
 @when('"{inviter}" sends a connection response to "{invitee}"')
 @given('"{inviter}" sends a connection response to "{invitee}"')
 @then('"{inviter}" sends a connection response to "{invitee}"')
 def step_impl(context, inviter, invitee):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    #inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][invitee]
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
-
-    print(inviter, inviter_url, inviter_connection_id)
+    invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, "request")
@@ -102,7 +141,7 @@ def step_impl(context, inviter, invitee):
 @given('"{invitee}" receives the connection response')
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
+    invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # invitee already recieved the connection response in the accept-request call so get connection and verify status=response.
     assert connection_status(invitee_url, invitee_connection_id, "response")
@@ -111,9 +150,9 @@ def step_impl(context, invitee):
 @when('"{invitee}" sends a connection request to "{inviter}"')
 def step_impl(context, invitee, inviter):
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
+    invitee_connection_id = context.connection_id_dict[invitee][inviter]
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][invitee]
 
     # get connection and verify status
     #assert connection_status(invitee_url, invitee_connection_id, ["invitation", "request"])
@@ -132,7 +171,7 @@ def step_impl(context, invitee, inviter):
 @given('"{inviter}" receives the connection request')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # inviter already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
     assert connection_status(inviter_url, inviter_connection_id, "request")
@@ -141,9 +180,9 @@ def step_impl(context, inviter):
 @when('"{inviter}" accepts the connection response to "{invitee}"')
 def step_impl(context, inviter, invitee):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][invitee]
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
+    invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status
     assert connection_status(inviter_url, inviter_connection_id, ["request"])
@@ -159,7 +198,7 @@ def step_impl(context, inviter, invitee):
 @when('"{invitee}" sends a response ping')
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
+    invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # get connection and verify status
     assert connection_status(invitee_url, invitee_connection_id, ["response"])
@@ -175,7 +214,7 @@ def step_impl(context, invitee):
 def step_impl(context, inviter):
     # extra step to force status to 'active' for VCX
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     data = {"comment": "Hello from " + inviter}
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="send-ping", id=inviter_connection_id, data=data)
@@ -187,9 +226,9 @@ def step_impl(context, inviter):
 @then('"{inviter}" and "{invitee}" have a connection')
 def step_impl(context, inviter, invitee):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][invitee]
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
+    invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status for inviter
     assert connection_status(inviter_url, inviter_connection_id, "active")
@@ -200,9 +239,9 @@ def step_impl(context, inviter, invitee):
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][invitee]
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
+    invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status for inviter
     assert connection_status(inviter_url, inviter_connection_id, "response")
@@ -227,7 +266,7 @@ def step_impl(context, sender, receiver):
 @when(u'"{sender}" sends a trust ping')
 def step_impl(context, sender):
     sender_url = context.config.userdata.get(sender)
-    sender_connection_id = context.connection_id_dict[sender]
+    sender_connection_id = context.connection_id_dict[sender][context.inviter_name]
 
     # get connection and verify status
     assert connection_status(sender_url, sender_connection_id, "active")
@@ -263,7 +302,7 @@ def step_impl(context, invitee):
     # inviter_url = context.config.userdata.get(inviter)
     # inviter_connection_id = context.inviter_connection_id
     invitee_url = context.config.userdata.get(invitee)
-    invitee_connection_id = context.connection_id_dict[invitee]
+    invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # get connection and verify status
     # TODO this status should be complete, change in client backchannel to map complete to active
@@ -273,7 +312,7 @@ def step_impl(context, invitee):
 @given(u'"{inviter}" is in the state of responded')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # get connection and verify status
     # TODO this status should be responded, change in client backchannel to map responded to response
@@ -283,7 +322,7 @@ def step_impl(context, inviter):
 @when(u'"{sender}" sends acks to "{reciever}"')
 def step_impl(context, sender, reciever):
     sender_url = context.config.userdata.get(sender)
-    sender_connection_id = context.connection_id_dict[sender]
+    sender_connection_id = context.connection_id_dict[sender][context.inviter_name]
 
     # get connection and verify status of the reciever
     # no need to do this here, an acks may be called at any point, can't check for state.
@@ -301,7 +340,7 @@ def step_impl(context, sender, reciever):
 @when('"{sender}" sends trustping to "{receiver}"')
 def step_impl(context, sender, receiver):
     sender_url = context.config.userdata.get(sender)
-    sender_connection_id = context.connection_id_dict[sender]
+    sender_connection_id = context.connection_id_dict[sender][receiver]
 
     # get connection and verify status of the reciever
     # no need to do this here, a trust pint may be called at any point, can't check for state.
@@ -319,7 +358,7 @@ def step_impl(context, sender, receiver):
 def step_impl(context, inviter):
     # get connection and verify status
     # TODO this status should be complete, change in client backchannel to map complete to active
-    assert connection_status(context.config.userdata.get(inviter), context.connection_id_dict[inviter], "active")
+    assert connection_status(context.config.userdata.get(inviter), context.connection_id_dict[inviter][context.invitee_name], "active")
 
 
 @given(u'"{inviter}" generated a single-use connection invitation')
@@ -357,9 +396,9 @@ def step_impl(context, inviteinterceptor, inviter):
         When "''' + inviteinterceptor + '''" receives the connection invitation
     ''')
     inviteinterceptor_url = context.config.userdata.get(inviteinterceptor)
-    inviteinterceptor_connection_id = context.connection_id_dict[inviteinterceptor]
-    inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviteinterceptor_connection_id = context.connection_id_dict[inviteinterceptor][inviter]
+    #inviter_url = context.config.userdata.get(inviter)
+    #inviter_connection_id = context.connection_id_dict[inviter]
 
     # get connection and verify status before call
     assert connection_status(inviteinterceptor_url, inviteinterceptor_connection_id, ["invitation"])
@@ -373,7 +412,7 @@ def step_impl(context, inviteinterceptor, inviter):
 @then(u'"{inviter}" sends a request_not_accepted error')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # TODO It is expected that accept-request should send a request not accepted error, not a 500
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
