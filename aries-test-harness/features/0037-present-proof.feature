@@ -1,6 +1,6 @@
 Feature: Aries agent present proof functions RFC 0037
 
-   @T001-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview @Indy
+   @T001-API10-RFC0037 @P1 @AcceptanceTest @Indy
    Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged
       Given "2" agents
          | name  | role     |
