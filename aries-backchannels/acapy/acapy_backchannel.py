@@ -10,6 +10,7 @@ import sys
 import uuid
 from timeit import default_timer
 from time import sleep
+from operator import itemgetter
 
 from aiohttp import (
     web,
@@ -567,50 +568,50 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             await self.webhook_site.stop()
 
     def map_test_json_to_admin_api_json(self, topic, operation, data):
+        # If the translation of the json get complicated in the future we might want to consider a switch to JsonMapper or equivalent.
         #json_mapper = JsonMapper()
-
         # map_specification = {
         #     'name': ['person_name']
         # }
-
         #JsonMapper(test_json).map(map_specification)
 
         if topic == "proof":
 
             if operation == "send-request":
                 
-                if data.get("requested_predicates") != None and data.get("requested_values") != None:
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_values") == None:
+                    requested_attributes = {}
+                else:
+                    requested_attributes = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_values"]
 
-                    admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
-                        "trace": False,
-                        "connection_id": data["connection_id"],
-                        "proof_request": {
-                            "requested_predicates": data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_predicates"],
-                            "requested_attributes": data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_values"]
-                        }
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_predicates") == None:
+                    requested_predicates = {}
+                else:
+                    requested_predicates = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_predicates"]
+
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("name") == None:
+                    proof_request_name = "test proof"
+                else:
+                    proof_request_name = data["presentation_proposal"]["request_presentations~attach"]["name"]
+
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("version") == None:
+                    proof_request_version = "1.0"
+                else:
+                    proof_request_version = data["presentation_proposal"]["request_presentations~attach"]["version"]
+
+                admin_data = {
+                    "comment": data["presentation_proposal"]["comment"],
+                    "trace": False,
+                    "connection_id": data["connection_id"],
+                    "proof_request": {
+                        "name": proof_request_name,
+                        "version": proof_request_version,
+                        "requested_attributes": requested_attributes,
+                        "requested_predicates": requested_predicates
                     }
-                elif data.get("requested_predicates") == None:
-                    admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
-                        "trace": False,
-                        "connection_id": data["connection_id"],
-                        "proof_request": {
-                            "requested_attributes": data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_values"]
-                        }
-                    }
-                elif data.get("requested_values") == None:
-                    admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
-                        "trace": False,
-                        "connection_id": data["connection_id"],
-                        "proof_request": {
-                            "requested_predicates": data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_predicates"]
-                        }
-                    }
+                }
+
             elif operation == "send-presentation":
-                # TODO: abstract away the admin api from the tests and do translation here.  
-                # "nonce": uuid.uuid4().hex,
                 
                 if data.get("requested_attributes") == None:
                     requested_attributes = {}
@@ -629,15 +630,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 admin_data = {
                     "comment": data["comment"],
-                    "trace": False,
-                    "connection_id": data["connection_id"],
-                    "proof_request": {
-                        "requested_attributes": requested_attributes,
-                        "requested_predicates": requested_predicates,
-                        "self_attested_attributes": self_attested_attributes
-                    }
+                    "requested_attributes": requested_attributes,
+                    "requested_predicates": requested_predicates,
+                    "self_attested_attributes": self_attested_attributes
                 }
-                #admin_data = data
 
             else:
                 admin_data = data
