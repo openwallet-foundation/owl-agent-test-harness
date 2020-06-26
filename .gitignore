@@ -1,7 +1,6 @@
 venv/
 __pycache__/
 
-.vscode/launch.json
-.DS_Store
+.vscode/
 aries-agent-test-harness.code-workspace
-
+**/.DS_Store
