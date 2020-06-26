@@ -3,3 +3,4 @@ __pycache__/
 
 .vscode/
 aries-agent-test-harness.code-workspace
+**/.DS_Store
