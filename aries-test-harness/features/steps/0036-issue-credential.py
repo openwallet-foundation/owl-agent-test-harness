@@ -276,6 +276,7 @@ def step_impl(context, holder):
     }
 
     # (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="store", id=context.holder_cred_ex_id)
+    sleep(1)
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="store", id=context.holder_cred_ex_id, data=credential_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)

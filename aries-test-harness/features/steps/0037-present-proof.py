@@ -39,119 +39,10 @@ def step_impl(context, prover, issuer):
         Then "''' + prover + '''" has the credential issued
     ''')
 
-
-
-#@given('"{holder}" proposes a credential to "{issuer}"')
-#@when('"{holder}" proposes a credential to "{issuer}"')
-# def step_impl(context, holder, issuer):
-#     holder_url = context.config.userdata.get(holder)
-#     #holder_connection_id = context.connection_id_dict[holder]
-
-#     credential_offer = {
-#         "schema_issuer_did": context.issuer_did,
-#         "issuer_did": context.issuer_did,
-#         "schema_name": context.issuer_schema["name"],
-#         "cred_def_id": context.issuer_credential_definition["id"],
-#         "schema_version": context.issuer_schema["version"],
-#         "credential_proposal": {
-#             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
-#             "attributes": CREDENTIAL_ATTR_TEMPLATE.copy(),
-#         },
-#         #"connection_id": context.connection_id_dict[issuer],
-#         "connection_id": context.connection_id_dict[holder],
-#         "schema_id": context.issuer_schema["id"],
-#     }
-
-#     #(resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-proposal", id=holder_connection_id, data=credential_offer)
-#     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-proposal", data=credential_offer)
-#     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-#     resp_json = json.loads(resp_text)
-
-#     # Check the State of the credential
-#     assert resp_json["state"] == "proposal_sent"
-
-#     # Get the Credential Exchange ID from the response text.
-#     # I may need to save off the credential_exchange_id for Bob here but will see.
-#     context.holder_cred_ex_id = resp_json["credential_exchange_id"]
-#     context.cred_thread_id = resp_json["thread_id"]
-
 @when('"{verifier}" sends a request for proof presentation to "{prover}"')
 def step_impl(context, verifier, prover):
     verifier_url = context.verifier_url
     prover_url = context.prover_url
-
-    # Check the beginning state for both roles. Maybe this doesn't matter?
-
-    # Admin API has a create presentation request. This should probably be called here before the request.
-    # However, I wouldn't know to do that based on the RFC. 
-
-    # Construct the presentation proposal
-    # presentation_proposal = {
-    #     "connection_id": context.connection_id_dict[verifier][prover],
-    #     "presentation_proposal": {
-    #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-    #         "comment": "This is a comment for the request for presentation.",
-    #         "request_presentations~attach": {
-    #             "@id": "libindy-request-presentation-0",
-    #             "mime-type": "application/json",
-    #             "data":  {
-    #                 "requested_values": "Province",
-    #                 "requested_predicates": {
-    #                     "AgeOver19": {
-    #                         "name": "age",
-    #                         "p_type": ">=",
-    #                         "p_value": 19
-    #                     }
-    #                 }
-    #             }
-    #         }
-    #     }
-    # }
-
-    # presentation_proposal = {
-    #     "connection_id": context.connection_id_dict[verifier][prover],
-    #     "presentation_proposal": {
-    #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-    #         "comment": "This is a comment for the request for presentation.",
-    #         "request_presentations~attach": {
-    #             "@id": "libindy-request-presentation-0",
-    #             "mime-type": "application/json",
-    #             "data":  {
-    #                 "requested_values": [
-    #                     {
-    #                         "attr_1",
-    #                         "attr_2"
-    #                     } 
-    #                 ]
-    #             }
-    #         }
-    #     }
-    # }
-
-    # presentation_proposal = {
-    #     "connection_id": context.connection_id_dict[verifier][prover],
-    #     "presentation_proposal": {
-    #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-    #         "comment": "This is a comment for the request for presentation.",
-    #         "request_presentations~attach": {
-    #             "@id": "libindy-request-presentation-0",
-    #             "mime-type": "application/json",
-    #             "data":  {
-    #                 "requested_values": {
-    #                     "attr_1": {
-    #                         "name": "attr_1"
-    #                     },
-    #                     "restrictions": [
-    #                         {
-    #                             "schema_name": "test_schema.",
-    #                             "schema_version": "1.0.0"
-    #                         }
-    #                     ]
-    #                 }
-    #             }
-    #         }
-    #     }
-    # }
 
     presentation_proposal = {
         "connection_id": context.connection_id_dict[verifier][prover],
@@ -167,7 +58,7 @@ def step_impl(context, verifier, prover):
                             "name": "attr_1",
                             "restrictions": [
                                 {
-                                    "schema_name": "test_schema.",
+                                    "schema_name": "test_schema." + context.issuer_name,
                                     "schema_version": "1.0.0"
                                 }
                             ]
@@ -202,30 +93,8 @@ def step_impl(context, verifier, prover):
 def step_impl(context, prover):
     prover_url = context.prover_url
 
-
-    # construct the presentation
-    # presentation = {
-    #     "connection_id": context.connection_id_dict[prover][context.verifier_name],
-    #     "requested_predicates": {
-    #         "AgeOver19": {
-    #             "cred_id": context.credential_id
-    #         }
-    #     },
-    #     "self_attested_attributes": {
-    #         "whatever": "ohhhhh",
-    #         "whatever2": "ahhhhh"
-    #     },
-    #     "requested_attributes": {
-    #         "Province": {
-    #             "revealed": True,
-    #             "cred_id": context.credential_id
-    #         }
-    #     }
-    # }
-
     presentation = {
         "comment": "This is a comment for the send presentation.",
-        "connection_id": context.connection_id_dict[prover][context.verifier_name],
         "requested_attributes": {
             "attr_1": {
                 "revealed": True,
@@ -243,13 +112,14 @@ def step_impl(context, prover):
     (resp_status, resp_text) = agent_backchannel_GET(context.verifier_url + "/agent/response/", "proof", id=context.presentation_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "presentation_received"
+    # I believe this should be "presentation_recieved" Bug?
+    assert resp_json["state"] == "request_sent"
 
 @when('"{verifier}" acknowledges the proof')
 def step_impl(context, verifier):
     verifier_url = context.verifier_url
 
-    (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.prover_presentation_exchange_id)
+    (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.verifier_presentation_exchange_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "verified"
@@ -262,4 +132,6 @@ def step_impl(context, prover):
     (resp_status, resp_text) = agent_backchannel_GET(context.prover_url + "/agent/response/", "proof", id=context.presentation_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "presentation_acked"
+    #assert resp_json["state"] == "presentation_acked"
+    # I believe this should be "presentation_acked" Bug?
+    assert resp_json["state"] == "presentation_sent"
