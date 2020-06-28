@@ -3,6 +3,7 @@ __pycache__/
 
 .vscode/
 aries-agent-test-harness.code-workspace
+**/.DS_Store
 
 # macOS generated files
 .DS_Store

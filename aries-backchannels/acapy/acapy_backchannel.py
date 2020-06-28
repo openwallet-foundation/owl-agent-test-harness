@@ -7,8 +7,10 @@ import os
 import random
 import subprocess
 import sys
+import uuid
 from timeit import default_timer
 from time import sleep
+from operator import itemgetter
 
 from aiohttp import (
     web,
@@ -23,6 +25,7 @@ from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN
 from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
 from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
 
+#from helpers.jsonmapper.json_mapper import JsonMapper
 
 LOGGER = logging.getLogger(__name__)
 
@@ -146,6 +149,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # TODO wait here to determine the response to the web hook?????
         pass
 
+    async def handle_present_proof(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "presentation-msg", message)
+        # put a log message here (all the handle_ )
+        # TODO wait here to determine the response to the web hook?????
+        pass
+
     async def make_admin_request(
         self, method, path, data=None, text=False, params=None
     ) -> (int, str):
@@ -253,6 +263,30 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg(resp_status, resp_text)
             return (resp_status, resp_text)
 
+        elif op["topic"] == "proof":
+            operation = op["operation"]
+            if rec_id is None:
+                agent_operation = "/present-proof/" + operation
+            else:
+                if (operation == "send-presentation" 
+                    or operation == "send-request"
+                    or operation == "verify-presentation"
+                    or operation == "remove"
+                ):
+                    pres_ex_id = rec_id
+                    agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
+                else:
+                    agent_operation = "/present-proof/" + operation
+            
+            log_msg(agent_operation, data)
+            # Format the message data that came from the test, to what the Aca-py admin api expects.
+            data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request(
@@ -345,6 +379,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             return (resp_status, resp_text)
 
+        elif op["topic"] == "proof":
+            agent_operation = "/present-proof/" + rec_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request_response(
@@ -393,6 +433,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_status = 200
             if credential_msg:
                 resp_text = json.dumps(credential_msg)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+        
+        elif topic == "proof" and rec_id:
+            presentation_msg = pop_resource(rec_id, "presentation-msg")
+            i = 0
+            while presentation_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                presentation_msg = pop_resource(rec_id, "presentation-msg")
+                i = i + 1
+
+            resp_status = 200
+            if presentation_msg:
+                resp_text = json.dumps(presentation_msg)
             else:
                 resp_text = "{}"
 
@@ -510,6 +566,79 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         await self.client_session.close()
         if self.webhook_site:
             await self.webhook_site.stop()
+
+    def map_test_json_to_admin_api_json(self, topic, operation, data):
+        # If the translation of the json get complicated in the future we might want to consider a switch to JsonMapper or equivalent.
+        #json_mapper = JsonMapper()
+        # map_specification = {
+        #     'name': ['person_name']
+        # }
+        #JsonMapper(test_json).map(map_specification)
+
+        if topic == "proof":
+
+            if operation == "send-request":
+                
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_values") == None:
+                    requested_attributes = {}
+                else:
+                    requested_attributes = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_values"]
+
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_predicates") == None:
+                    requested_predicates = {}
+                else:
+                    requested_predicates = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_predicates"]
+
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("name") == None:
+                    proof_request_name = "test proof"
+                else:
+                    proof_request_name = data["presentation_proposal"]["request_presentations~attach"]["name"]
+
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("version") == None:
+                    proof_request_version = "1.0"
+                else:
+                    proof_request_version = data["presentation_proposal"]["request_presentations~attach"]["version"]
+
+                admin_data = {
+                    "comment": data["presentation_proposal"]["comment"],
+                    "trace": False,
+                    "connection_id": data["connection_id"],
+                    "proof_request": {
+                        "name": proof_request_name,
+                        "version": proof_request_version,
+                        "requested_attributes": requested_attributes,
+                        "requested_predicates": requested_predicates
+                    }
+                }
+
+            elif operation == "send-presentation":
+                
+                if data.get("requested_attributes") == None:
+                    requested_attributes = {}
+                else:
+                    requested_attributes = data["requested_attributes"]
+
+                if data.get("requested_predicates") == None:
+                    requested_predicates = {}
+                else:
+                    requested_predicates = data["requested_predicates"]
+
+                if data.get("self_attested_attributes") == None:
+                    self_attested_attributes = {}
+                else:
+                    self_attested_attributes = data["self_attested_attributes"]
+
+                admin_data = {
+                    "comment": data["comment"],
+                    "requested_attributes": requested_attributes,
+                    "requested_predicates": requested_predicates,
+                    "self_attested_attributes": self_attested_attributes
+                }
+
+            else:
+                admin_data = data
+
+            return (admin_data)
 
 
 async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
