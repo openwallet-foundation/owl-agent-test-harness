@@ -1,0 +1,20 @@
+# Build / Publish
+FROM streetcred/dotnet-indy:1.15.0 AS build
+RUN mkdir -p /app/src
+WORKDIR /app/src
+
+COPY dotnet/server .
+
+RUN dotnet restore "DotNet.Backchannel.csproj"
+RUN dotnet publish "DotNet.Backchannel.csproj" -c Release -o /app/build
+COPY dotnet/von-genesis.txt /app/build/pool_genesis.txn
+
+# Run
+FROM streetcred/dotnet-indy:1.15.0 AS final
+RUN mkdir -p /aries-backchannels
+WORKDIR /aries-backchannels
+COPY --from=build /app/build /aries-backchannels
+
+ENV RUNMODE=docker
+
+ENTRYPOINT ["dotnet", "DotNet.Backchannel.dll"]
