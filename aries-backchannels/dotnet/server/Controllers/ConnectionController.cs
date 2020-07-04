@@ -28,6 +28,18 @@ namespace DotNet.Backchannel.Controllers
 
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllConnectionsAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetConnectionByIdAsync([FromRoute] string id)
+        {
+            throw new NotImplementedException();
+        }
+
         [HttpPost]
         public async Task<IActionResult> ConnectionOperationAsync(OperationBody body)
         {
@@ -44,7 +56,7 @@ namespace DotNet.Backchannel.Controllers
                 case "send-ping":
                     return await this.SendPingAsync(body.Id, body.Data);
                 default:
-                    throw new NotImplementedException();
+                    throw new NotSupportedException();
             }
         }
 
@@ -60,14 +72,6 @@ namespace DotNet.Backchannel.Controllers
         private async Task<IActionResult> ReceiveInvitationAsync(object invitation)
         {
             throw new NotImplementedException();
-            // var context = await _agentContextProvider.GetContextAsync();
-
-            // var invitation = new UnpackedMessageContext(body.Data.ToString(), senderVerkey: null).GetMessage<ConnectionInvitationMessage>();
-            // var (request, record) = await _connectionService.CreateRequestAsync(context, invitation);
-
-            // var response = await messageService.SendReceiveAsync<ConnectionResponseMessage>(context.Wallet, request, record);
-
-            // await connectionService.ProcessResponseAsync(agentContext, response, record);
         }
 
         private async Task<IActionResult> AcceptInvitationAsync(string connectionId)
