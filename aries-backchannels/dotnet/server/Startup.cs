@@ -36,6 +36,10 @@ namespace DotNet.Backchannel
                     // TODO: now uses hardcoded pool_genesis from von-network for running inside docker
                     // must be made dynamic
                     c.GenesisFilename = Path.GetFullPath("pool_genesis.txn");
+                    // TODO: Use custom seed for issuer key
+                    // We will register this seed beforehand in the von-network
+                    // allowing us to create transactions on the network.
+                    // c.IssuerKeySeed = ""
                 });
             });
         }
