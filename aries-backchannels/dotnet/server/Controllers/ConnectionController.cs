@@ -31,13 +31,39 @@ namespace DotNet.Backchannel.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllConnectionsAsync()
         {
-            throw new NotImplementedException();
+            var context = await _agentContextProvider.GetContextAsync();
+            var connections = await _connectionService.ListAsync(context);
+
+            return StatusCode(200, connections.ConvertAll(connection =>
+            {
+                // TODO: states do not match states from RFC
+                var state = connection.State == ConnectionState.Invited ? "invitation" : "TODO";
+
+                return new
+                {
+                    connection_id = connection.Id,
+                    state,
+                    connection = connection
+                };
+            }
+
+                ));
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetConnectionByIdAsync([FromRoute] string id)
+        [HttpGet("{connectionId}")]
+        public async Task<IActionResult> GetConnectionByIdAsync([FromRoute] string connectionId)
         {
-            throw new NotImplementedException();
+            var context = await _agentContextProvider.GetContextAsync();
+            var connection = await _connectionService.GetAsync(context, connectionId);
+            // TODO: states do not match states from RFC
+            var state = connection.State == ConnectionState.Invited ? "invitation" : "TODO";
+
+            return StatusCode(200, new
+            {
+                connection_id = connection.Id,
+                state,
+                connection
+            });
         }
 
         [HttpPost]
