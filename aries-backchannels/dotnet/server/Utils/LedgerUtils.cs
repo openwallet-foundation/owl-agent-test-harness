@@ -12,6 +12,33 @@ namespace DotNet.Backchannel.Utils
     {
         private static HttpClient Client = new HttpClient();
 
+
+        public static async Task RegisterPublicDidAsync(string ledgerUrl, string seed, string alias = null)
+        {
+            var data = new
+            {
+                alias,
+                seed,
+                role = "TRUST_ANCHOR"
+            };
+
+            var json = JsonConvert.SerializeObject(data);
+            var stringContent = new StringContent(json, UnicodeEncoding.UTF8, MediaTypeNames.Application.Json);
+
+            var requestUrl = ledgerUrl + "/register";
+            await LedgerUtils.Client.PostAsync(requestUrl, stringContent);
+        }
+
+        public static string getRandomSeed()
+        {
+            Random random = new Random();
+            String randomNum = random.Next(100000, 999999).ToString();
+
+            String seed = $"my_seed_000000000000000000{randomNum}";
+
+            return seed;
+        }
+
         public static async Task<string> GetGenesisPathAsync()
         {
             String genesisPath = null;
