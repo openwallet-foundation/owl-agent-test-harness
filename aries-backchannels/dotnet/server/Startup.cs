@@ -34,10 +34,7 @@ namespace DotNet.Backchannel
                     c.WalletConfiguration = new WalletConfiguration { Id = "TestAgentWallet" };
                     c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey" };
                     c.GenesisFilename = Environment.GetEnvironmentVariable("GENESIS_PATH");
-                    // TODO: Use custom seed for issuer key
-                    // We will register this seed beforehand in the von-network
-                    // allowing us to create transactions on the network.
-                    // c.IssuerKeySeed = ""
+                    c.IssuerKeySeed = Environment.GetEnvironmentVariable("ISSUER_KEY_SEED");
                 });
             });
         }

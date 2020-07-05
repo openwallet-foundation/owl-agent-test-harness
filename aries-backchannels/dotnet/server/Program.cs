@@ -29,7 +29,11 @@ namespace DotNet.Backchannel
             var LEDGER_URL = Environment.GetEnvironmentVariable("LEDGER_URL") ?? $"http://{EXTERNAL_HOST}:9000";
             var ENDPOINT_HOST = $"http://{EXTERNAL_HOST}:{port}";
             var GENESIS_PATH = await LedgerUtils.GetGenesisPathAsync();
+            var ISSUER_KEY_SEED = LedgerUtils.getRandomSeed();
 
+            await LedgerUtils.RegisterPublicDidAsync(LEDGER_URL, ISSUER_KEY_SEED, "dotnet-backchannel");
+
+            Environment.SetEnvironmentVariable("ISSUER_KEY_SEED", ISSUER_KEY_SEED);
             Environment.SetEnvironmentVariable("ENDPOINT_HOST", ENDPOINT_HOST);
             Environment.SetEnvironmentVariable("DOCKER_HOST", DOCKER_HOST);
             Environment.SetEnvironmentVariable("GENESIS_PATH", GENESIS_PATH);
