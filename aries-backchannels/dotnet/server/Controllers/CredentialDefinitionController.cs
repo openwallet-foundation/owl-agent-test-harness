@@ -8,6 +8,7 @@ using Hyperledger.Aries.Configuration;
 using System.Net.Mime;
 using Hyperledger.Indy;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace DotNet.Backchannel.Controllers
 {
@@ -32,18 +33,14 @@ namespace DotNet.Backchannel.Controllers
         [HttpGet("{credentialDefinitionId}")]
         public async Task<IActionResult> GetCredentialDefinitionByIdAsync([FromRoute] string credentialDefinitionId)
         {
-            var context = await _agentContextProvider.GetContextAsync();
+            var credentialDefintion = await this.LookupCredentialDefinitionByIdAsync(credentialDefinitionId);
 
-            try
+            if (credentialDefintion != null)
             {
-                var credentialDefinition = await _schemaService.LookupCredentialDefinitionAsync(context, credentialDefinitionId);
-                return Content(credentialDefinition, MediaTypeNames.Application.Json);
+                return Content(credentialDefintion, MediaTypeNames.Application.Json);
             }
-            catch (IndyException indyException)
-            {
-                if (indyException.SdkErrorCode == 309) return NotFound();
-                else return StatusCode(500);
-            }
+
+            return NotFound();
         }
 
         [HttpPost]
@@ -58,18 +55,51 @@ namespace DotNet.Backchannel.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
 
-            var credentialDefinitionId = await _schemaService.CreateCredentialDefinitionAsync(context, new CredentialDefinitionConfiguration
+            var schemaId = credentialDefinition.GetProperty("schema_id").GetString();
+            var tag = credentialDefinition.GetProperty("tag").GetString();
+            var supportRevocation = credentialDefinition.GetProperty("support_revocation").GetBoolean();
+
+            // Needed to construct credential definition id
+            var schema = JObject.Parse(await _schemaService.LookupSchemaAsync(context, schemaId));
+            var schemaSeqNo = schema["seqNo"].ToString();
+            var signatureType = "CL"; // TODO: can we make this variable?
+
+            // The test client sends multiple create credential definition requests with
+            // the same parameters. First check whether the credential definition already exists.
+            var credentialDefinitionId = $"{issuer.IssuerDid}:3:{signatureType}:{schemaSeqNo}:{tag}";
+            var credentialDefinitionString = await this.LookupCredentialDefinitionByIdAsync(credentialDefinitionId);
+
+            // If the credential defintion doesn't already exists, create it
+            if (credentialDefinitionString == null)
             {
-                SchemaId = credentialDefinition.GetProperty("schema_id").GetString(),
-                Tag = credentialDefinition.GetProperty("tag").GetString(),
-                EnableRevocation = credentialDefinition.GetProperty("support_revocation").GetBoolean(),
-                IssuerDid = issuer.IssuerDid
-            });
+                await _schemaService.CreateCredentialDefinitionAsync(context, new CredentialDefinitionConfiguration
+                {
+                    SchemaId = schemaId,
+                    Tag = tag,
+                    EnableRevocation = supportRevocation,
+                    IssuerDid = issuer.IssuerDid
+                });
+            }
 
             return Ok(new
             {
                 credential_definition_id = credentialDefinitionId
             });
+        }
+
+        private async Task<string> LookupCredentialDefinitionByIdAsync(string credentialDefinitionId)
+        {
+            var context = await _agentContextProvider.GetContextAsync();
+
+            try
+            {
+                var credentialDefintion = await _schemaService.LookupCredentialDefinitionAsync(context, credentialDefinitionId);
+                return credentialDefintion;
+            }
+            catch (IndyException)
+            {
+                return null;
+            }
         }
     }
 }

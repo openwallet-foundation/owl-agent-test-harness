@@ -33,18 +33,14 @@ namespace DotNet.Backchannel.Controllers
         [HttpGet("{schemaId}")]
         public async Task<IActionResult> GetSchemaByIdAsync([FromRoute] string schemaId)
         {
-            var context = await _agentContextProvider.GetContextAsync();
+            var schema = await this.LookupSchemaByIdAsync(schemaId);
 
-            try
+            if (schema != null)
             {
-                var schema = await _schemaService.LookupSchemaAsync(context, schemaId);
                 return Content(schema, MediaTypeNames.Application.Json);
             }
-            catch (IndyException indyException)
-            {
-                if (indyException.SdkErrorCode == 309) return NotFound();
-                else return StatusCode(500);
-            }
+
+            return NotFound();
         }
 
         [HttpPost]
@@ -59,25 +55,52 @@ namespace DotNet.Backchannel.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
 
+            var schemaName = schema.GetProperty("schema_name").GetString();
+            var schemaVersion = schema.GetProperty("schema_version").GetString();
+
             // TODO: There should be a cleaner approach
-            var attributes = new List<string>();
+            var schemaAttributes = new List<string>();
             foreach (JsonElement attribute in schema.GetProperty("attributes").EnumerateArray())
             {
-                attributes.Add(attribute.GetString());
+                schemaAttributes.Add(attribute.GetString());
             }
 
-            var schemaId = await _schemaService.CreateSchemaAsync(
-                context: context,
-                issuerDid: issuer.IssuerDid,
-                name: schema.GetProperty("schema_name").GetString(),
-                version: schema.GetProperty("schema_version").GetString(),
-                attributeNames: attributes.ToArray()
-            );
+            // The test client sends multiple create schema requests with
+            // the same parameters. First check whether the schema already exists.
+            var schemaId = $"{issuer.IssuerDid}:2:{schemaName}:{schemaVersion}";
+            var schemaString = await this.LookupSchemaByIdAsync(schemaId);
+
+            // If the schema doesn't already exists, create it
+            if (schemaString == null)
+            {
+                await _schemaService.CreateSchemaAsync(
+                    context: context,
+                    issuerDid: issuer.IssuerDid,
+                    name: schemaName,
+                    version: schemaVersion,
+                    attributeNames: schemaAttributes.ToArray()
+                );
+            }
 
             return Ok(new
             {
                 schema_id = schemaId
             });
+        }
+
+        private async Task<string> LookupSchemaByIdAsync(string schemaId)
+        {
+            var context = await _agentContextProvider.GetContextAsync();
+
+            try
+            {
+                var schema = await _schemaService.LookupSchemaAsync(context, schemaId);
+                return schema;
+            }
+            catch (IndyException)
+            {
+                return null;
+            }
         }
     }
 }
