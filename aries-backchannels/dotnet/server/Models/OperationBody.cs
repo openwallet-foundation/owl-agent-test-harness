@@ -1,4 +1,5 @@
 
+using System.Text.Json;
 using Newtonsoft.Json;
 
 namespace DotNet.Backchannel.Models
@@ -12,6 +13,6 @@ namespace DotNet.Backchannel.Models
         public string Id { get; set; }
 
         [JsonProperty(PropertyName = "data")]
-        public dynamic Data { get; set; }
+        public JsonElement Data { get; set; }
     }
 }

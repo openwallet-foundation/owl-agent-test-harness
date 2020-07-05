@@ -34,7 +34,7 @@ namespace DotNet.Backchannel.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var connections = await _connectionService.ListAsync(context);
 
-            return StatusCode(200, connections.ConvertAll(connection =>
+            return Ok(connections.ConvertAll(connection =>
             {
                 // TODO: states do not match states from RFC
                 var state = connection.State == ConnectionState.Invited ? "invitation" : "TODO";
@@ -58,7 +58,7 @@ namespace DotNet.Backchannel.Controllers
             // TODO: states do not match states from RFC
             var state = connection.State == ConnectionState.Invited ? "invitation" : "TODO";
 
-            return StatusCode(200, new
+            return Ok(new
             {
                 connection_id = connection.Id,
                 state,
@@ -92,7 +92,7 @@ namespace DotNet.Backchannel.Controllers
 
             var (invitation, connection) = await _connectionService.CreateInvitationAsync(context, new InviteConfiguration());
 
-            return StatusCode(200, new { connection_id = connection.Id, invitation });
+            return Ok(new { connection_id = connection.Id, invitation });
         }
 
         private async Task<IActionResult> ReceiveInvitationAsync(object invitation)
@@ -121,7 +121,7 @@ namespace DotNet.Backchannel.Controllers
 
             await _messageService.SendAsync(context.Wallet, message, connection);
 
-            return StatusCode(200);
+            return Ok();
         }
     }
 }

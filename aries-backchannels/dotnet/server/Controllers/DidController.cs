@@ -28,7 +28,7 @@ namespace DotNet.Backchannel.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
 
-            return StatusCode(200, new
+            return Ok(new
             {
                 did = issuer.IssuerDid,
                 verkey = issuer.IssuerVerkey
