@@ -33,9 +33,7 @@ namespace DotNet.Backchannel
                     c.EndpointUri = Environment.GetEnvironmentVariable("ENDPOINT_HOST");
                     c.WalletConfiguration = new WalletConfiguration { Id = "TestAgentWallet" };
                     c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey" };
-                    // TODO: now uses hardcoded pool_genesis from von-network for running inside docker
-                    // must be made dynamic
-                    c.GenesisFilename = Path.GetFullPath("pool_genesis.txn");
+                    c.GenesisFilename = Environment.GetEnvironmentVariable("GENESIS_PATH");
                     // TODO: Use custom seed for issuer key
                     // We will register this seed beforehand in the von-network
                     // allowing us to create transactions on the network.
