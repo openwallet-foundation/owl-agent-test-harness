@@ -12,14 +12,8 @@ namespace DotNet.Backchannel.Controllers
             // TODO: check whether agent is active
             var active = true;
 
-            if (active)
-            {
-                return StatusCode(200, new { status = "active" });
-            }
-            else
-            {
-                return StatusCode(418, new { status = "inactive" });
-            }
+            if (active) return Ok(new { status = "active" });
+            else return StatusCode(418, new { status = "inactive" });
         }
     }
 }

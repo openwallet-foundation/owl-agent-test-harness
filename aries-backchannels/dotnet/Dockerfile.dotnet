@@ -7,7 +7,6 @@ COPY dotnet/server .
 
 RUN dotnet restore "DotNet.Backchannel.csproj"
 RUN dotnet publish "DotNet.Backchannel.csproj" -c Release -o /app/build
-COPY dotnet/von-genesis.txt /app/build/pool_genesis.txn
 
 # Run
 FROM streetcred/dotnet-indy:1.15.0 AS final
