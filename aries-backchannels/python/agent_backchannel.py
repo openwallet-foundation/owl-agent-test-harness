@@ -158,9 +158,16 @@ class AgentBackchannel:
 
         app = web.Application()
         app.add_routes([web.post("/agent/command/{topic}/", self._post_command_backchannel)])
+        app.add_routes([web.post("/agent/command/{topic}", self._post_command_backchannel)])
+        app.add_routes([web.post("/agent/command/{topic}/{operation}/", self._post_command_backchannel)])
+        app.add_routes([web.post("/agent/command/{topic}/{operation}", self._post_command_backchannel)])
         app.add_routes([web.get("/agent/command/{topic}/", self._get_command_backchannel)])
+        app.add_routes([web.get("/agent/command/{topic}", self._get_command_backchannel)])
+        app.add_routes([web.get("/agent/command/{topic}/{id}/", self._get_command_backchannel)])
         app.add_routes([web.get("/agent/command/{topic}/{id}", self._get_command_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}/", self._get_response_backchannel)])
+        app.add_routes([web.get("/agent/response/{topic}", self._get_response_backchannel)])
+        app.add_routes([web.get("/agent/response/{topic}/{id}/", self._get_response_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}/{id}", self._get_response_backchannel)])
         runner = web.AppRunner(app)
         await runner.setup()
@@ -168,19 +175,16 @@ class AgentBackchannel:
         await self.backchannel_site.start()
         print("Listening to backchannel on port", backchannel_port)
 
-    def match_operation(self, topic, method, payload=None, rec_id=None):
+    def match_operation(self, topic, method, payload=None, operation=None, rec_id=None):
         """
         Determine which agent operation we are trying to invoke
         """
         data = None
-        operation = None
         if payload:
             if "id" in payload:
                 rec_id = payload["id"]
             if "cred_ex_id" in payload:
                 rec_id = payload["cred_ex_id"]
-            if "operation" in payload:
-                operation = payload["operation"]
             if "data" in payload:
                 data = payload["data"]
         for op in self.operations:
@@ -207,10 +211,11 @@ class AgentBackchannel:
         Post a POST command to the agent.
         """
         topic = request.match_info["topic"]
+        topic_operation = request.match_info["operation"] if "operation" in request.match_info else None
         payload = await request.json()
 
         try:
-            operation = self.match_operation(topic, "POST", payload=payload)
+            operation = self.match_operation(topic, "POST", payload=payload, operation=topic_operation)
             if operation:
                 try:
                     if "data" in payload:
@@ -237,7 +242,7 @@ class AgentBackchannel:
                 except NotImplementedError as ni_e:
                     return self.not_implemented_response(json.dumps(operation))
 
-            return self.not_found_response(topic + " " + payload["operation"])
+            return self.not_found_response(topic + " " + topic_operation)
 
         except Exception as e:
             print("Exception:", e)

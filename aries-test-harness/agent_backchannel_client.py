@@ -54,7 +54,7 @@ async def make_agent_backchannel_request(
         return (resp_status, resp_text)
 
 
-def agent_backchannel_GET(url, topic, operation=None, id=None, data=None) -> (int, str):
+def agent_backchannel_GET(url, topic, id=None, data=None) -> (int, str):
     agent_url = url + topic + "/"
     if id:
         agent_url = agent_url + id
@@ -68,7 +68,7 @@ def agent_backchannel_POST(url, topic, operation=None, id=None, data=None) -> (i
     if data:
         payload["data"] = data
     if operation:
-        payload["operation"] = operation
+        agent_url = agent_url + operation + "/"
     if id:
         if topic == 'credential':
             payload["cred_ex_id"] = id
