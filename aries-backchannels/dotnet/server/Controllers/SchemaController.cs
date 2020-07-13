@@ -43,17 +43,12 @@ namespace DotNet.Backchannel.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SchemaOperationAsync(OperationBody body)
-        {
-            // Schema only has one operation
-            return await this.CreateSchemaAsync(body.Data);
-        }
-
-        private async Task<IActionResult> CreateSchemaAsync(JObject schema)
+        public async Task<IActionResult> CreateSchemaAsync(OperationBody body)
         {
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
 
+            var schema = body.Data;
             var schemaName = (string)schema["schema_name"];
             var schemaVersion = (string)schema["schema_version"];
             var schemaAttributes = schema["attributes"].ToObject<string[]>();

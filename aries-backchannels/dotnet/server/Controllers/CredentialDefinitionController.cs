@@ -43,17 +43,13 @@ namespace DotNet.Backchannel.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CredentialDefinitionOperationAsync(OperationBody body)
+        public async Task<IActionResult> CreateCredentialDefinitionAsync(OperationBody body)
         {
-            // Credential Defintion only has one operation
-            return await this.CreateCredentialDefinitionAsync(body.Data);
-        }
 
-        private async Task<IActionResult> CreateCredentialDefinitionAsync(JObject credentialDefinition)
-        {
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
 
+            var credentialDefinition = body.Data;
             var schemaId = (string)credentialDefinition["schema_id"];
             var tag = (string)credentialDefinition["tag"];
             var supportRevocation = (bool)credentialDefinition["support_revocation"];
