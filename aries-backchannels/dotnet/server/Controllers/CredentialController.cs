@@ -8,7 +8,7 @@ namespace DotNet.Backchannel.Controllers
     [ApiController]
     public class CredentialController : ControllerBase
     {
-        [HttpGet("{id}")]
+        [HttpGet("{credentialId}")]
         public async Task<IActionResult> GetCredentialById([FromRoute] string credentialId)
         {
             throw new NotImplementedException();
