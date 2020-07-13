@@ -1,6 +1,5 @@
-
-using System.Text.Json;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace DotNet.Backchannel.Models
 {
@@ -13,6 +12,6 @@ namespace DotNet.Backchannel.Models
         public string Id { get; set; }
 
         [JsonProperty(PropertyName = "data")]
-        public JsonElement Data { get; set; }
+        public JObject Data { get; set; }
     }
 }
