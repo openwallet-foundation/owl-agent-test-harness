@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using DotNet.Backchannel.Models;
+using Newtonsoft.Json.Linq;
 
 using Hyperledger.Aries.Features.DidExchange;
 using Hyperledger.Aries.Features.TrustPing;
@@ -95,7 +96,7 @@ namespace DotNet.Backchannel.Controllers
             return Ok(new { connection_id = connection.Id, invitation });
         }
 
-        private async Task<IActionResult> ReceiveInvitationAsync(object invitation)
+        private async Task<IActionResult> ReceiveInvitationAsync(JObject invitationObject)
         {
             throw new NotImplementedException();
         }
@@ -109,14 +110,14 @@ namespace DotNet.Backchannel.Controllers
         {
             throw new NotImplementedException();
         }
-        private async Task<IActionResult> SendPingAsync(string connectionId, dynamic data)
+        private async Task<IActionResult> SendPingAsync(string connectionId, JObject data)
         {
             var context = await _agentContextProvider.GetContextAsync();
             var connection = await _connectionService.GetAsync(context, connectionId);
             var message = new TrustPingMessage
             {
                 ResponseRequested = true,
-                Comment = data.comment
+                Comment = (string)data["comment"]
             };
 
             await _messageService.SendAsync(context.Wallet, message, connection);
