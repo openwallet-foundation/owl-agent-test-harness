@@ -1,21 +1,16 @@
-# Build / Publish
-FROM streetcred/dotnet-indy:1.15.0 AS build
-RUN mkdir -p /app/src
-WORKDIR /app/src
+# Final image needs indy
+FROM streetcred/dotnet-indy:1.15.0 AS base
+WORKDIR /app
 
-# Only copy dependency file to benefit from Docker layer caching
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+WORKDIR /src
 COPY dotnet/server/DotNet.Backchannel.csproj ./DotNet.Backchannel.csproj
 RUN dotnet restore "DotNet.Backchannel.csproj"
 
 COPY dotnet/server .
-RUN dotnet publish "DotNet.Backchannel.csproj" -c Release -o /app/build
+RUN dotnet publish "DotNet.Backchannel.csproj" -c Release -o /app/publish
 
-# Run
-FROM streetcred/dotnet-indy:1.15.0 AS final
-RUN mkdir -p /aries-backchannels
-WORKDIR /aries-backchannels
-COPY --from=build /app/build /aries-backchannels
-
-ENV RUNMODE=docker
-
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "DotNet.Backchannel.dll"]
