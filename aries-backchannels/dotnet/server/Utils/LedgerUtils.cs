@@ -39,36 +39,22 @@ namespace DotNet.Backchannel.Utils
             return seed;
         }
 
-        public static async Task<string> GetGenesisPathAsync()
+        public static async Task<string> GetGenesisPathAsync(string genesisFile = null, string genesisUrl = null, string ledgerUrl = null, string dockerHost = null)
         {
-            String genesisPath = null;
+            // If the genesis file is present, we already have the path
+            if (genesisFile != null) return genesisFile;
 
-            var RUN_MODE = Environment.GetEnvironmentVariable("RUNMODE");
-            var GENESIS_URL = Environment.GetEnvironmentVariable("GENESIS_URL");
-            var GENESIS_FILE = Environment.GetEnvironmentVariable("GENESIS_FILE");
-            var LEDGER_URL = Environment.GetEnvironmentVariable("LEDGER_URL");
-            var DOCKER_HOST = Environment.GetEnvironmentVariable("DOCKER_HOST") ?? "host.docker.internal";
+            string genesisTransactionUrl = null;
 
-            if (GENESIS_FILE != null) genesisPath = GENESIS_FILE;
-            else if (LEDGER_URL != null || GENESIS_URL != null || RUN_MODE == "docker")
-            {
-                String genesisUrl = null;
+            if (genesisUrl != null) genesisTransactionUrl = genesisUrl;
+            else if (ledgerUrl != null) genesisTransactionUrl = $"{ledgerUrl}/genesis";
+            else genesisTransactionUrl = $"http://{dockerHost}:9000/genesis";
 
-                if (GENESIS_URL != null) genesisUrl = GENESIS_URL;
-                else if (LEDGER_URL != null) genesisUrl = $"{LEDGER_URL}/genesis";
-                else if (RUN_MODE == "docker") genesisUrl = $"http://{DOCKER_HOST}:9000/genesis";
+            var result = await LedgerUtils.Client.GetAsync(genesisTransactionUrl);
 
-                var result = await LedgerUtils.Client.GetAsync(genesisUrl);
-
-                var genesis = await result.Content.ReadAsStringAsync();
-                genesisPath = Path.GetFullPath("genesis.txn");
-                File.WriteAllText(genesisPath, genesis);
-            }
-            else
-            {
-                // Use local file. Uses localhost instead of docker host for von-network
-                genesisPath = Path.GetFullPath("../../data/local-genesis.txt");
-            }
+            var genesis = await result.Content.ReadAsStringAsync();
+            var genesisPath = Path.GetFullPath("genesis.txn");
+            File.WriteAllText(genesisPath, genesis);
 
             return genesisPath;
         }

@@ -18,32 +18,34 @@ namespace DotNet.Backchannel
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
             Program.SetEnvironment(p).Wait();
-            CreateHostBuilder().Build().Run();
+            CreateHostBuilder(p).Build().Run();
         }
 
         public static async Task SetEnvironment(int port)
         {
-            var RUNMODE = Environment.GetEnvironmentVariable("RUNMODE");
-            var DOCKER_HOST = Environment.GetEnvironmentVariable("DOCKER_HOST") ?? "host.docker.internal";
-            var EXTERNAL_HOST = RUNMODE == "docker" ? DOCKER_HOST : "localhost";
+            var DOCKER_HOST = Environment.GetEnvironmentVariable("DOCKERHOST") ?? "host.docker.internal";
+            var EXTERNAL_HOST = DOCKER_HOST;
             var LEDGER_URL = Environment.GetEnvironmentVariable("LEDGER_URL") ?? $"http://{EXTERNAL_HOST}:9000";
             var ENDPOINT_HOST = $"http://{EXTERNAL_HOST}:{port}";
-            var GENESIS_PATH = await LedgerUtils.GetGenesisPathAsync();
             var ISSUER_KEY_SEED = LedgerUtils.getRandomSeed();
+            var GENESIS_URL = Environment.GetEnvironmentVariable("GENESIS_URL");
+            var GENESIS_FILE = Environment.GetEnvironmentVariable("GENESIS_FILE");
+            var GENESIS_PATH = await LedgerUtils.GetGenesisPathAsync(GENESIS_FILE, GENESIS_URL, LEDGER_URL, DOCKER_HOST);
+
+
 
             await LedgerUtils.RegisterPublicDidAsync(LEDGER_URL, ISSUER_KEY_SEED, "dotnet-backchannel");
 
             Environment.SetEnvironmentVariable("ISSUER_KEY_SEED", ISSUER_KEY_SEED);
             Environment.SetEnvironmentVariable("ENDPOINT_HOST", ENDPOINT_HOST);
-            Environment.SetEnvironmentVariable("DOCKER_HOST", DOCKER_HOST);
             Environment.SetEnvironmentVariable("GENESIS_PATH", GENESIS_PATH);
         }
 
-        public static IHostBuilder CreateHostBuilder() => Host.CreateDefaultBuilder()
+        public static IHostBuilder CreateHostBuilder(int port) => Host.CreateDefaultBuilder()
             .ConfigureWebHostDefaults(builder =>
             {
                 builder.UseStartup<Startup>();
-                builder.UseUrls(Environment.GetEnvironmentVariable("ENDPOINT_HOST"));
+                builder.UseUrls($"http://0.0.0.0:{port}");
             });
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
