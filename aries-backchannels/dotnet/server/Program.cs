@@ -12,7 +12,7 @@ namespace DotNet.Backchannel
         /// <param name="p">Choose the starting port number to listen on</param>
         /// <param name="i">Start agent interactively</param>
         // TODO: Improve CLI argument handling / parsing
-        public static void Main(int p, bool i)
+        public static void Main(int p = 9020, bool i = false)
         {
             // Catch all unhandled exceptions
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);

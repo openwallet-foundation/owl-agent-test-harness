@@ -1,7 +1,6 @@
 venv/
 __pycache__/
 
-.vscode/
 aries-agent-test-harness.code-workspace
 
 # macOS generated files

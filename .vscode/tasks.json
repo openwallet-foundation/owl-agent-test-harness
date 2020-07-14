@@ -1,0 +1,78 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dotnet:build",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "dotnet:publish",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "dotnet:watch",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "type": "docker-build",
+      "label": "dotnet:docker-build:debug",
+      "dependsOn": ["dotnet:build"],
+      "dockerBuild": {
+        "tag": "dotnet-agent-backchannel:dev",
+        "target": "base",
+        "dockerfile": "${workspaceFolder}/aries-backchannels/dotnet/Dockerfile.dotnet",
+        "context": "${workspaceFolder}/aries-backchannels",
+        "pull": true
+      },
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj"
+      }
+    },
+    {
+      "type": "docker-run",
+      "label": "dotnet:docker-run:debug",
+      "dependsOn": ["dotnet:docker-build:debug"],
+      "dockerRun": {
+        "env": {
+          "DOCKERHOST": "${DOCKERHOST}",
+          "LEDGER_URL": "http://${DOCKERHOST}:9000"
+        },
+        "ports": [
+          {
+            "containerPort": 9020,
+            "hostPort": 9020
+          }
+        ]
+      },
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",
+        "enableDebugging": true
+      }
+    }
+  ]
+}

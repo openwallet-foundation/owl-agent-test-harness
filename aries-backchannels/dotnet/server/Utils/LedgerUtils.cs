@@ -53,7 +53,7 @@ namespace DotNet.Backchannel.Utils
             var result = await LedgerUtils.Client.GetAsync(genesisTransactionUrl);
 
             var genesis = await result.Content.ReadAsStringAsync();
-            var genesisPath = Path.GetFullPath("genesis.txn");
+            var genesisPath = Path.GetTempFileName();
             File.WriteAllText(genesisPath, genesis);
 
             return genesisPath;
