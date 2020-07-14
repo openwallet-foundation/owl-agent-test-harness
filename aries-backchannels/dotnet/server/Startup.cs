@@ -1,11 +1,11 @@
 using System;
-using System.IO;
 using Hyperledger.Aries.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Converters;
 
 namespace DotNet.Backchannel
 {
@@ -23,9 +23,16 @@ namespace DotNet.Backchannel
         {
             services.AddControllers()
             // Aries Framework .NET uses Newtonsoft JSON library
-            .AddNewtonsoftJson();
+            .AddNewtonsoftJson(options =>
+            {
+                // Convert Enum values to string values
+                options.SerializerSettings.Converters.Add(new StringEnumConverter());
+            });
 
             services.AddLogging();
+
+            // Add in memory cache to store invitations
+            services.AddMemoryCache();
 
             services.AddAriesFramework(builder =>
             {
