@@ -18,6 +18,7 @@ namespace DotNet.Backchannel
             AddBasicMessageHandler();
             AddCredentialHandler();
             AddProofHandler();
+            AddForwardHandler();
         }
     }
 }
