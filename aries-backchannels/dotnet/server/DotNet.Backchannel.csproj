@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Hyperledger.Aries" Version="1.2.14" />
     <PackageReference Include="Hyperledger.Aries.AspNetCore" Version="1.2.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.5" />
     <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20303.1" />
   </ItemGroup>
 

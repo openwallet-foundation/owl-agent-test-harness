@@ -1,14 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using DotNet.Backchannel.Models;
+using System.Net.Mime;
 
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
 using Hyperledger.Aries.Features.IssueCredential;
-using System.Text.Json;
-using System.Net.Mime;
 using Hyperledger.Indy;
+using Newtonsoft.Json.Linq;
 
 namespace DotNet.Backchannel.Controllers
 {
@@ -44,26 +43,15 @@ namespace DotNet.Backchannel.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SchemaOperationAsync(OperationBody body)
-        {
-            // Schema only has one operation
-            return await this.CreateSchemaAsync(body.Data);
-        }
-
-        private async Task<IActionResult> CreateSchemaAsync(JsonElement schema)
+        public async Task<IActionResult> CreateSchemaAsync(OperationBody body)
         {
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
 
-            var schemaName = schema.GetProperty("schema_name").GetString();
-            var schemaVersion = schema.GetProperty("schema_version").GetString();
-
-            // TODO: There should be a cleaner approach
-            var schemaAttributes = new List<string>();
-            foreach (JsonElement attribute in schema.GetProperty("attributes").EnumerateArray())
-            {
-                schemaAttributes.Add(attribute.GetString());
-            }
+            var schema = body.Data;
+            var schemaName = (string)schema["schema_name"];
+            var schemaVersion = (string)schema["schema_version"];
+            var schemaAttributes = schema["attributes"].ToObject<string[]>();
 
             // The test client sends multiple create schema requests with
             // the same parameters. First check whether the schema already exists.
@@ -78,7 +66,7 @@ namespace DotNet.Backchannel.Controllers
                     issuerDid: issuer.IssuerDid,
                     name: schemaName,
                     version: schemaVersion,
-                    attributeNames: schemaAttributes.ToArray()
+                    attributeNames: schemaAttributes
                 );
             }
 

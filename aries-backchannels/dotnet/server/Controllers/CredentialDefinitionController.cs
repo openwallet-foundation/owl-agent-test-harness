@@ -1,14 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using DotNet.Backchannel.Models;
+using System.Net.Mime;
+using Newtonsoft.Json.Linq;
 
 using Hyperledger.Aries.Features.IssueCredential;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Configuration;
-using System.Net.Mime;
 using Hyperledger.Indy;
-using System.Text.Json;
-using Newtonsoft.Json.Linq;
 
 namespace DotNet.Backchannel.Controllers
 {
@@ -44,24 +43,20 @@ namespace DotNet.Backchannel.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CredentialDefinitionOperationAsync(OperationBody body)
+        public async Task<IActionResult> CreateCredentialDefinitionAsync(OperationBody body)
         {
-            // Credential Defintion only has one operation
-            return await this.CreateCredentialDefinitionAsync(body.Data);
-        }
 
-        private async Task<IActionResult> CreateCredentialDefinitionAsync(JsonElement credentialDefinition)
-        {
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
 
-            var schemaId = credentialDefinition.GetProperty("schema_id").GetString();
-            var tag = credentialDefinition.GetProperty("tag").GetString();
-            var supportRevocation = credentialDefinition.GetProperty("support_revocation").GetBoolean();
+            var credentialDefinition = body.Data;
+            var schemaId = (string)credentialDefinition["schema_id"];
+            var tag = (string)credentialDefinition["tag"];
+            var supportRevocation = (bool)credentialDefinition["support_revocation"];
 
             // Needed to construct credential definition id
             var schema = JObject.Parse(await _schemaService.LookupSchemaAsync(context, schemaId));
-            var schemaSeqNo = schema["seqNo"].ToString();
+            var schemaSeqNo = (string)schema["seqNo"];
             var signatureType = "CL"; // TODO: can we make this variable?
 
             // The test client sends multiple create credential definition requests with

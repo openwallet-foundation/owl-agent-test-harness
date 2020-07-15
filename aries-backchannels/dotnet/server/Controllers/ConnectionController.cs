@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using DotNet.Backchannel.Models;
+using Newtonsoft.Json.Linq;
 
 using Hyperledger.Aries.Features.DidExchange;
 using Hyperledger.Aries.Features.TrustPing;
@@ -66,27 +67,8 @@ namespace DotNet.Backchannel.Controllers
             });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ConnectionOperationAsync(OperationBody body)
-        {
-            switch (body.Operation)
-            {
-                case "create-invitation":
-                    return await this.CreateInvitationAsync();
-                case "receive-invitation":
-                    return await this.ReceiveInvitationAsync(body.Data);
-                case "accept-invitation":
-                    return await this.AcceptInvitationAsync(body.Id);
-                case "accept-request":
-                    return await this.AcceptRequestAsync(body.Id);
-                case "send-ping":
-                    return await this.SendPingAsync(body.Id, body.Data);
-                default:
-                    throw new NotSupportedException();
-            }
-        }
-
-        private async Task<IActionResult> CreateInvitationAsync()
+        [HttpPost("create-invitation")]
+        public async Task<IActionResult> CreateInvitationAsync()
         {
             var context = await _agentContextProvider.GetContextAsync();
 
@@ -95,28 +77,39 @@ namespace DotNet.Backchannel.Controllers
             return Ok(new { connection_id = connection.Id, invitation });
         }
 
-        private async Task<IActionResult> ReceiveInvitationAsync(object invitation)
+        [HttpPost("receive-invitation")]
+        public async Task<IActionResult> ReceiveInvitationAsync(OperationBody body)
         {
+            var invitationBody = body.Data;
             throw new NotImplementedException();
         }
 
-        private async Task<IActionResult> AcceptInvitationAsync(string connectionId)
+        [HttpPost("accept-invitation")]
+        public async Task<IActionResult> AcceptInvitationAsync(OperationBody body)
         {
+            var connectionId = body.Id;
             throw new NotImplementedException();
         }
 
-        private async Task<IActionResult> AcceptRequestAsync(string connectionId)
+        [HttpPost("accept-request")]
+        public async Task<IActionResult> AcceptRequestAsync(OperationBody body)
         {
+            var connectionId = body.Id;
             throw new NotImplementedException();
         }
-        private async Task<IActionResult> SendPingAsync(string connectionId, dynamic data)
+
+        [HttpPost("send-ping")]
+        public async Task<IActionResult> SendPingAsync(OperationBody body)
         {
+            var connectionId = body.Id;
+            var data = body.Data;
+
             var context = await _agentContextProvider.GetContextAsync();
             var connection = await _connectionService.GetAsync(context, connectionId);
             var message = new TrustPingMessage
             {
                 ResponseRequested = true,
-                Comment = data.comment
+                Comment = (string)data["comment"]
             };
 
             await _messageService.SendAsync(context.Wallet, message, connection);

@@ -15,43 +15,40 @@ namespace DotNet.Backchannel.Controllers
             throw new NotImplementedException();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PresentProofOperationAsync(OperationBody body)
+        [HttpPost("send-proposal")]
+        public async Task<IActionResult> SendPresentationProposalAsync(OperationBody body)
         {
-            switch (body.Operation)
-            {
-                case "send-proposal":
-                    return await this.SendPresentationProposalAsync(body.Id, body.Data);
-                case "send-request":
-                    // TODO: ID can be both pres_exchange_id OR connection_id
-                    // Find out how this works exactly. Probably as different key
-                    return await this.SendPresentationRequestAsync(body.Id, body.Data);
-                case "send-presentation":
-                    return await this.SendProofPresentationOfferAsync(body.Id, body.Data);
-                case "verify-presentation":
-                    return await this.VerifyPresentation(body.Id);
-                default:
-                    throw new NotSupportedException();
-            }
-        }
+            var connectionId = body.Id;
+            var proposal = body.Data;
 
-        private async Task<IActionResult> SendPresentationProposalAsync(string connectionId, dynamic proposal)
-        {
             throw new NotImplementedException();
         }
 
-        private async Task<IActionResult> SendPresentationRequestAsync(string proofRecordId, dynamic proofRequest)
+        [HttpPost("send-request")]
+        public async Task<IActionResult> SendPresentationRequestAsync(OperationBody body)
         {
+            // TODO: ID can be both pres_exchange_id OR connection_id
+            // Find out how this works exactly. Probably as different key
+            var proofRecordId = body.Id;
+            var proofRequest = body.Data;
+
             throw new NotImplementedException();
         }
 
-        private async Task<IActionResult> SendProofPresentationOfferAsync(string proofRecordId, dynamic proofPresentation)
+        [HttpPost("send-presentation")]
+        public async Task<IActionResult> SendProofPresentationOfferAsync(OperationBody body)
         {
+            var proofRecordId = body.Id;
+            var proofPresentation = body.Data;
+
             throw new NotImplementedException();
         }
 
-        private async Task<IActionResult> VerifyPresentation(string proofRecordId)
+        [HttpPost("verify-presentation")]
+        public async Task<IActionResult> VerifyPresentation(OperationBody body)
         {
+            var proofRecordId = body.Id;
+
             throw new NotImplementedException();
         }
     }
