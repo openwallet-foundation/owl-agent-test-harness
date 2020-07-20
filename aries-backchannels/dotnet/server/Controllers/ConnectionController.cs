@@ -79,10 +79,7 @@ namespace DotNet.Backchannel.Controllers
         {
             var context = await _agentContextProvider.GetContextAsync();
 
-            var (invitation, connection) = await _connectionService.CreateInvitationAsync(context, new InviteConfiguration
-            {
-                MyAlias = new ConnectionAlias { Name = "dotnet" }
-            });
+            var (invitation, connection) = await _connectionService.CreateInvitationAsync(context);
 
             var testHarnessConnection = new TestHarnessConnection
             {
