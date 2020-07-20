@@ -79,10 +79,7 @@ namespace DotNet.Backchannel.Controllers
         {
             var context = await _agentContextProvider.GetContextAsync();
 
-            var (invitation, connection) = await _connectionService.CreateInvitationAsync(context, new InviteConfiguration
-            {
-                MyAlias = new ConnectionAlias { Name = "dotnet" }
-            });
+            var (invitation, connection) = await _connectionService.CreateInvitationAsync(context);
 
             var testHarnessConnection = new TestHarnessConnection
             {
@@ -136,11 +133,8 @@ namespace DotNet.Backchannel.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
 
-            // Listen for connection response and trust ping message to update the state
-            // TODO: TrustPingMessage event doesn't include the connection(id) so we can't verify whether the
-            // received trust ping comes from the connection we send the connection response to.
+            // Listen for connection response to update the state
             UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Response, _ => _.MessageType == MessageTypes.ConnectionResponse && _.RecordId == connection.Id);
-            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Active, _ => _.MessageType == MessageTypes.TrustPingMessageType && testHarnessConnection.State == TestHarnessConnectionState.Response);
 
             await _messageService.SendAsync(context.Wallet, testHarnessConnection.Request, connection);
 
@@ -148,7 +142,6 @@ namespace DotNet.Backchannel.Controllers
             testHarnessConnection.State = TestHarnessConnectionState.Request;
 
             return Ok();
-
         }
 
         [HttpPost("accept-request")]
@@ -160,11 +153,6 @@ namespace DotNet.Backchannel.Controllers
             if (testHarnessConnection == null) return NotFound(); // Return early if not found
 
             var context = await _agentContextProvider.GetContextAsync();
-
-            // Listen for trusting ping to update the state to 'active'
-            // TODO: TrustPingMessage event doesn't include the connection(id) so we can't verify whether the
-            // received trust ping comes from the connection we send the connection response to.
-            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Active, _ => _.MessageType == MessageTypes.TrustPingMessageType);
 
             var (response, connection) = await _connectionService.CreateResponseAsync(context, connectionId);
             await _messageService.SendAsync(context.Wallet, response, connection);

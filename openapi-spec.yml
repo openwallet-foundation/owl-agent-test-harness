@@ -1,0 +1,487 @@
+openapi: 3.0.0
+servers:
+  - description: Agent Backchannel
+    url: http://localhost:{port}
+    variables:
+      port:
+        description: >
+          The port to use for the backchannel
+            * Alice:    9020
+            * Bob:      9030
+            * Faber:    9040
+            * Mallory:  9050
+        enum:
+          - "9020"
+          - "9030"
+          - "9040"
+          - "9050"
+        default: "9020"
+info:
+  description: Open API definition for AATH backchannel servers
+  version: "1.0.0"
+  title: Aries Agent Test Harness Backchannel
+  contact:
+    name: Province of British Columbia
+    url: https://github.com/bcgov/aries-agent-test-harness
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+tags:
+  - name: Status
+    description: Agent commands to get agent status
+  - name: Connection
+    description: Agent commands related to connection topic
+  - name: DID
+    description: Agent commands related to did topic
+  - name: Schema
+    description: Agent commands related to schema topic
+  - name: Credential Definition
+    description: Agent commands related to credential-definition topic
+paths:
+  /agent/command/status:
+    get:
+      summary: Get agent/backchannel status
+      tags:
+        - Status
+      responses:
+        200:
+          description: Agent is active
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    enum: [active]
+        418:
+          description: Agent is not active
+          content:
+            application/json:
+              schema:
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    enum: [inactive]
+
+  /agent/command/connection:
+    get:
+      tags:
+        - Connection
+      summary: Get all connections
+      operationId: ConnectionGetAll
+      responses:
+        200:
+          description: Connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConnectionResponse"
+  /agent/command/connection/{connectionId}:
+    get:
+      tags:
+        - Connection
+      summary: Get connection by id
+      operationId: ConnectionGetById
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionResponse"
+        404:
+          description: Connection not found
+  /agent/command/connection/create-invitation:
+    post:
+      tags:
+        - Connection
+      summary: Create a new connection invitation
+      operationId: ConnectionCreateInvitation
+      responses:
+        200:
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                  - invitation
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  invitation:
+                    $ref: "#/components/schemas/ConnectionInvitation"
+  /agent/command/connection/receive-invitation:
+    post:
+      tags:
+        - Connection
+      summary: Receive an invitation
+      operationId: ConnectionReceiveInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  $ref: "#/components/schemas/ConnectionInvitation"
+      responses:
+        200:
+          description: Invitation received
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    $ref: "#/components/schemas/ConnectionState"
+  /agent/command/connection/accept-invitation:
+    post:
+      tags:
+        - Connection
+      summary: Accept an invitation
+      operationId: ConnectionAcceptInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    # With allOf we can overwrite properties of the $ref
+                    allOf:
+                      - $ref: "#/components/schemas/ConnectionState"
+                      - example: request
+  /agent/command/connection/accept-request:
+    post:
+      tags:
+        - Connection
+      summary: Accept a connection request
+      operationId: ConnectionAcceptRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    # With allOf we can overwrite properties of the $ref
+                    allOf:
+                      - $ref: "#/components/schemas/ConnectionState"
+                      - example: response
+  /agent/command/connection/send-ping:
+    post:
+      tags:
+        - Connection
+      summary: Send trust ping
+      operationId: ConnectionSendPing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+                data:
+                  required:
+                    - comment
+                  properties:
+                    comment:
+                      title: Comment
+                      type: string
+                      example: Hello
+      responses:
+        200:
+          description: Trust ping send
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    # With allOf we can overwrite properties of the $ref
+                    allOf:
+                      - $ref: "#/components/schemas/ConnectionState"
+                      - example: response
+
+  /agent/command/did:
+    get:
+      tags:
+        - DID
+      summary: Get public DID
+      operationId: DIDGetPublic
+      responses:
+        200:
+          description: Public DID information
+          content:
+            application/json:
+              schema:
+                properties:
+                  did:
+                    $ref: "#/components/schemas/Did"
+                  verkey:
+                    $ref: "#/components/schemas/Verkey"
+
+  /agent/command/schema/{schemaId}:
+    get:
+      tags:
+        - Schema
+      summary: Get schema by id
+      operationId: SchemaGetById
+      parameters:
+        - in: path
+          name: schemaId
+          required: true
+          schema:
+            $ref: "#/components/schemas/SchemaId"
+      responses:
+        200:
+          description: Schema
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schema"
+        404:
+          description: Schema not found
+  /agent/command/schema:
+    post:
+      tags:
+        - Schema
+      summary: Create a new schema
+      operationId: SchemaCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  # TODO: combine with Schema schema
+                  required:
+                    - schema_name
+                    - schema_version
+                    - attributes
+                  properties:
+                    schema_name:
+                      type: string
+                      example: "test_schema"
+                    schema_version:
+                      type: string
+                      example: "1.0.0"
+                    attributes:
+                      type: array
+                      example:
+                        - "attr_1"
+                        - "attr_2"
+                        - "attr_3"
+                      items:
+                        type: string
+
+      responses:
+        200:
+          description: Schema created
+          content:
+            application/json:
+              schema:
+                properties:
+                  schema_id:
+                    $ref: "#/components/schemas/SchemaId"
+                  schema:
+                    $ref: "#/components/schemas/Schema"
+
+  /agent/command/credential-definition/{credentialDefinitionId}:
+    get:
+      tags:
+        - Credential Definition
+      summary: Get credential definition by id
+      operationId: CredentialDefinitionGetById
+      parameters:
+        - in: path
+          name: credentialDefinitionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialDefinitionId"
+      responses:
+        200:
+          description: Credential Definition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialDefinition"
+        404:
+          description: Credential Definition not found
+  /agent/command/credential-definition:
+    post:
+      tags:
+        - Credential Definition
+      summary: Create a new credential definition
+      operationId: CredentialDefinitionCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  # TODO: combine with CredentialDefinition schema
+                  required:
+                    - support_revocation
+                    - schema_id
+                    - tag
+                  properties:
+                    support_revocation:
+                      type: boolean
+                      example: false
+                    schema_id:
+                      $ref: "#/components/schemas/SchemaId"
+                    tag:
+                      type: string
+                      example: default
+      responses:
+        200:
+          description: Credential definition created
+          content:
+            application/json:
+              schema:
+                properties:
+                  credential_definition_id:
+                    $ref: "#/components/schemas/CredentialDefinitionId"
+
+components:
+  schemas:
+    ConnectionInvitation:
+      title: Connection Invitation
+      example:
+        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation"
+        "@id": 11640bd1-cdc2-45e4-9fcc-43ccc27fc9d4
+        serviceEndpoint: "http://192.168.65.3:9021"
+        recipientKeys:
+          - GqQh9pLeMrE7E2ZxA47GbW4XQuLYsyd1bdfZvxLi7aZ6
+        label: aca-py
+    ConnectionId:
+      title: Connection Id
+      example: "8fb9ea21-d094-4506-86b6-c7c1627d753a"
+      type: string
+    SchemaId:
+      title: Schema Id
+      example: "Y9oNbFNTgxrRuvxQk3xEzr:2:test_schema:1.0.0"
+      type: string
+    CredentialDefinitionId:
+      title: Credential Definition Id
+      example: "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default"
+      type: string
+    ConnectionState:
+      title: Connection State
+      description: All possible connection state values
+      type: string
+      example: invitation
+      enum:
+        - invitation
+        - request
+        - response
+        - active
+    Connection:
+      title: Connection
+      example: {}
+    ConnectionResponse:
+      title: Connection Response
+      required:
+        - connection_id
+        - state
+      properties:
+        connection_id:
+          $ref: "#/components/schemas/ConnectionId"
+        state:
+          $ref: "#/components/schemas/ConnectionState"
+        connection:
+          $ref: "#/components/schemas/Connection"
+    Did:
+      title: DID
+      example: Y9oNbFNTgxrRuvxQk3xEzr
+      type: string
+    Verkey:
+      title: Verkey
+      example: HymVhRozF7o9Sh9iyKXu5WKHP95YERhrpZxGx5d6WhYw
+      type: string
+    Schema:
+      title: Schema
+      description: Schema definition
+      # TODO: add required fields?
+      example:
+        ver: "1.0"
+        id: "Y9oNbFNTgxrRuvxQk3xEzr:2:test_schema:1.0.0"
+        name: "test_schema"
+        version: "1.0.0"
+        attrNames:
+          - "attr_1"
+          - "attr_2"
+          - "attr_3"
+        seqNo: 11
+    CredentialDefinition:
+      title: Credential Definition
+      # TODO: add required fields?
+      example:
+        ver: "1.0"
+        id: "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default"
+        schemaId: "12"
+        type: CL
+        tag: default
+        value:
+          primary:
+            "n": "127473542495438147573510476102476902133854813754098957204867619522405674317018859941864352419933227338200593131633863547249552725335523634158360861379038920996404174540285309296147612235783265529767167904996672533424299318502061201785710802874714294174143582682739350240229266415073900875507216317608608419590749758007624873612987354273561597672087026667313974344205743513108098303412867935178289607206971675919540105355234142077505442787841104628317493214564810784261197466701597725036470989697050855442369151927195340336984787674149053901429543050018150008478471976322268372173725164950897146486534208375313658743913"
+            s: "65818689269823967224337061200277779392234203780958681071979765611348839168322943966737475112261896111357320138778757065891281921197440097002615498509033425652242864586741386765592821062979097745378937128174004971762786640103105629442159475365159836976073886029307851026908970994829903300109597230301114225997246242679312570675015835522760053319269527084928663538396971295690506335377466402252848447042892658905613203874434705837943677780063921041179819697545228811016183063967989936330561640506841490120102577693339579651117393959310406568508979515298779995407222937217220638869118337307458754771745779882842551583957"
+            r:
+              attr_2: "51288787261098209501918361017434738039396559240181084024072376043981733617197124422285362785531867106205259059511012989265257750815057229625776239902268148159240026351692626846471237370316944382717070664579921786642246297025320221128643932326231901994502071437080527938105845057316611594317815585962995630440264494906187392024263524589040353791190656247954182173035217728619640076109690946048473714974821555775006753553400010494644755834190135206012433445625838647683519920548605994424810625611229251495082321603992265565001261836732982193329161683683007877406661513473331737004850593281692214631901319662119982702922"
+              attr_3: "49181762688290033657446628790584551868718995111464422170653915452393747911840814545440872765372893672471205136395434982292712460522218700053539095558984733806664620823639102136028452144009159713045675694364042524060684443787233750663981609531778189390047496947791414470032823060753313065437518080235878845351585405484399614405394732610591997574454401630571733355205236989435994214291321960467589480432939966179940916409629940016780143983651757105859829934723575147299207641665320314894905208079668584551936316156492573527926041185621509809863665431708246846967753137673120991441299733316834328405117780995288938831960"
+              master_secret: "55538424482357179006904475057212929303648337854551436067860163418580875286658754309614134356521736148588690128194367442517503542151131893353616029898291001113787008415246944257559064252055726634969959428779277791311649310859911986025543178916305739383261726815449892298017969062336790138195201464646418205024584174631846494837622469674261184752618226770681209326126925275817705162548925201642177095627695920338858257041172323289863931904819081634906164566038325643344387794492965878883835475209080317985881686751050847796692787879655322665209901159744163351765059041544796505393057421762647235069315054477528853561473"
+              attr_1: "30886155743965686596111154816080405248462718126264612304549353774874576024335575570672949599223811931464968785591555429018481986959035338465010646916129018856811265590112946954474656478128827689132913637543377270592217574931365985240940393300396509940083648506176813465677576969450791064392913905672340945666537607742715770967118252787128981065813564952993994324545119742090220379288320480251447895567821617698929571634776885837657497224943766401548060195388838088667649983419151624233451714099262934942791309973082062184242430968684229937149556567677716686322793149698990735633517128615499672788711239033452193882997"
+            rctxt: "118794108011306418186599966013685417259067451572329168338986396401718511272829290486080995212827126457817056257265484527810068143652813250691318847597106924333754555635689923547896416240741937417433198117397677657367813549201117642415892893893381488036182474297804412028150810635810333104761444058436184382989414463435135399687357899136817489918140316906972132553030427022094507232967240719401668656063683319995507797481327116566453773630750501126563798296642025598222840921566196961717932895723665756200235727569096614264333988899662958311074895571782854329655460918882500227649533684869211196542823703742125337784110"
+            z: "105630626525262054412237755083369001506042501169646719098603962721650276426684319172879455142677137798560163792358891628363088368803209632822777508716551660571988904519705987074094883201485589766095616179828793397893771789008873400971460093284769835475804783847161628863255694379113641839797171437881461956336479878362639116657891310026976287218412427465483710278481629012528677992951433715775723708478290067190705706789707748967166740980626023098110954588495187304096367803794208972671801623501450811525547654409352588261071510140289955775228914918919001173412112332959725654909432886608249741918119912786853133051762"

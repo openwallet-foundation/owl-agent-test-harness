@@ -1,4 +1,6 @@
 using System;
+using DotNet.Backchannel.Middlewares;
+using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,9 +38,11 @@ namespace DotNet.Backchannel
 
             services.AddAriesFramework(builder =>
             {
+                builder.Services.AddSingleton<IAgentMiddleware, MessageAgentMiddleware>();
+
                 builder.RegisterAgent<DotNet.Backchannel.TestAgent>(c =>
                 {
-                    c.AgentName = Environment.GetEnvironmentVariable("AGENT_NAME");
+                    c.AgentName = Environment.GetEnvironmentVariable("AGENT_NAME") ?? "dotnet";
                     c.EndpointUri = Environment.GetEnvironmentVariable("ENDPOINT_HOST");
                     c.WalletConfiguration = new WalletConfiguration { Id = "TestAgentWallet" };
                     c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey" };
