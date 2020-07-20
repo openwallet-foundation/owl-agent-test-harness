@@ -589,15 +589,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 else:
                     requested_predicates = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_predicates"]
 
-                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("name") == None:
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("name") == None:
                     proof_request_name = "test proof"
                 else:
-                    proof_request_name = data["presentation_proposal"]["request_presentations~attach"]["name"]
+                    proof_request_name = data["presentation_proposal"]["request_presentations~attach"]["data"]["name"]
 
-                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("version") == None:
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("version") == None:
                     proof_request_version = "1.0"
                 else:
-                    proof_request_version = data["presentation_proposal"]["request_presentations~attach"]["version"]
+                    proof_request_version = data["presentation_proposal"]["request_presentations~attach"]["data"]["version"]
 
                 admin_data = {
                     "comment": data["presentation_proposal"]["comment"],

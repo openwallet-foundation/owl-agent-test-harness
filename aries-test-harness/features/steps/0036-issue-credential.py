@@ -43,9 +43,13 @@ def step_impl(context, issuer):
     issuer_did = context.issuer_did
 
     if not "issuer_schema_id" in context:
-        schema = SCHEMA_TEMPLATE.copy()
-        schema["schema_name"] = schema["schema_name"] + issuer
-        data = json.dumps(schema)
+        # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
+        if "schema" in context:
+            schema = context.schema
+        else:   
+            schema = SCHEMA_TEMPLATE.copy()
+            schema["schema_name"] = schema["schema_name"] + issuer
+
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "schema", data=schema)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
@@ -60,7 +64,9 @@ def step_impl(context, issuer):
     if not "credential_definition_id" in context:
         cred_def = CRED_DEF_TEMPLATE.copy()
         cred_def["schema_id"] = context.issuer_schema_id
-        data = json.dumps(cred_def)
+        if "support_revocation" in context:
+            cred_def["support_revocation"] = context.support_revocation
+        #data = json.dumps(cred_def)
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential-definition", data=cred_def)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
@@ -139,6 +145,12 @@ def step_impl(context, holder, issuer):
     holder_url = context.config.userdata.get(holder)
     #holder_connection_id = context.connection_id_dict[holder]
 
+    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
+    if "credential_data" in context:
+        cred_data = context.credential_data
+    else:   
+        cred_data = CREDENTIAL_ATTR_TEMPLATE.copy()
+
     credential_offer = {
         "schema_issuer_did": context.issuer_did,
         "issuer_did": context.issuer_did,
@@ -147,7 +159,7 @@ def step_impl(context, holder, issuer):
         "schema_version": context.issuer_schema["version"],
         "credential_proposal": {
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
-            "attributes": CREDENTIAL_ATTR_TEMPLATE.copy(),
+            "attributes": cred_data,
         },
         #"connection_id": context.connection_id_dict[issuer],
         "connection_id": context.connection_id_dict[holder][issuer],
@@ -173,15 +185,19 @@ def step_impl(context, holder, issuer):
 @when('"{issuer}" sends a credential offer')
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
-    #issuer_connection_id = context.connection_id_dict[issuer]
 
     if not hasattr('context','cred_thread_id'):
+
+        if "credential_data" in context:
+            cred_data = context.credential_data
+        else:   
+            cred_data = CREDENTIAL_ATTR_TEMPLATE.copy()
 
         credential_offer = {
             "cred_def_id": context.issuer_credential_definition["id"],
             "credential_preview": {
                 "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
-                "attributes": CREDENTIAL_ATTR_TEMPLATE.copy(),
+                "attributes": cred_data,
             },
             "connection_id": context.connection_id_dict[issuer][context.holder_name],
         }
@@ -248,22 +264,24 @@ def step_impl(context, holder):
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
 
+    if "credential_data" in context:
+        cred_data = context.credential_data
+    else:   
+        cred_data = CREDENTIAL_ATTR_TEMPLATE.copy()
+
     # a credential preview shouldn't have to be here with a cred_ex_id being passed
     credential_preview = {
         #"cred_def_id": context.issuer_credential_definition["id"],
         "credential_preview": {
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
-            "attributes": CREDENTIAL_ATTR_TEMPLATE.copy(),
+            "attributes": cred_data,
         },
         "comment": "issuing credential",
     }
 
-    #(resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential", operation="issue", id=context.issuer_cred_ex_id)
     (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="issue", id=context.issuer_cred_ex_id, data=credential_preview)
-    #(resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential", operation="issue", data=credential_preview)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    #resp_json = json.loads(resp_text)
-    #context.credential_id = resp_json["credential_id"]
+
 
 @when('"{holder}" acknowledges the credential issue')
 @when('"{holder}" receives and acknowledges the credential')
