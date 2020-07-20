@@ -37,7 +37,7 @@ def before_scenario(context, scenario):
                 if 'Schema_' in tag:
                     # Get and assign the scehma to the context
                     try:
-                        schema_json_file = open('features/data/' + tag + '.json')
+                        schema_json_file = open('features/data/' + tag.lower() + '.json')
                         schema_json = json.load(schema_json_file)
                         context.schema = schema_json["schema"]
 
@@ -46,7 +46,7 @@ def before_scenario(context, scenario):
 
                         #context.credential_definition = 
                     except FileNotFoundError:
-                        print(FileNotFoundError + ': features/data/' + tag + '.json')
+                        print('FileNotFoundError: features/data/' + tag.lower + '.json')
                     
                     
 
