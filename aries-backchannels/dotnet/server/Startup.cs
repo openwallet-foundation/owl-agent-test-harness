@@ -1,4 +1,6 @@
 using System;
+using DotNet.Backchannel.Middlewares;
+using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,6 +38,8 @@ namespace DotNet.Backchannel
 
             services.AddAriesFramework(builder =>
             {
+                builder.Services.AddSingleton<IAgentMiddleware, MessageAgentMiddleware>();
+
                 builder.RegisterAgent<DotNet.Backchannel.TestAgent>(c =>
                 {
                     c.AgentName = Environment.GetEnvironmentVariable("AGENT_NAME");
