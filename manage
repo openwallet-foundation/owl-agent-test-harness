@@ -64,8 +64,8 @@ usage () {
     Same as build, but adds the --no-cache option to force building from scratch
 
   run [ -a/b/m/d agent ] [ -i <ini file> ] [ -o <output file> ] [ -t tags ]*
-    Run the tagged tests using the specified agents for Acme, Bob and Mallory.
-      Select the agents for the roles of Acme (-a), Bob (-b) and Mallory (-m).
+    Run the tagged tests using the specified agents for Acme, Bob, Faber and Mallory.
+      Select the agents for the roles of Acme (-a), Bob (-b), Faber (-f) and Mallory (-m).
       - For all to be set to the same, use "-d" for default.
       - The value for agent must be one of: ${VALID_AGENTS}
       Use -t option(s) to indicate tests with the gives tag(s) are to be executed.
@@ -75,7 +75,7 @@ usage () {
       - Default is the behave.ini file in the "aries-test-harness" folder
 
     Examples:
-    $0 run -a acapy -b vcx -m vcx           - Run all the tests using the specified agents per role
+    $0 run -a acapy -b vcx -f vcx -m acapy  - Run all the tests using the specified agents per role
     $0 run -d vcx                           - Run all tests for all features using the vcx agent in all roles
     $0 run -d acapy -t @SmokeTest -t @P1    - Run the tests tagged @SmokeTest and/or @P1 (priority 1) using all ACA-Py agents
   
@@ -230,33 +230,37 @@ runTests() {
 
   export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
   export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
+  export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
   export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
   
   echo "Starting Acme Agent ..."
   docker run -d --rm --name acme_agent --expose 9020-9029 -p 9020-9029:9020-9029 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null  
   echo "Starting Bob Agent ..."
   docker run -d --rm --name bob_agent --expose 9030-9039 -p 9030-9039:9030-9039 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
+  echo "Starting Faber Agent ..."
+  docker run -d --rm --name faber_agent --expose 9040-9049 -p 9040-9049:9040-9049 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${FABER_AGENT} -p 9040  -i false >/dev/null
   echo "Starting Mallory Agent ..."
-  docker run -d --rm --name mallory_agent --expose 9040-9049 -p 9040-9049:9040-9049 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9040  -i false >/dev/null
+  docker run -d --rm --name mallory_agent --expose 9050-9059 -p 9050-9059:9050-9059 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9050  -i false >/dev/null
  
   echo
   waitForAgent Acme 9020
   waitForAgent Bob 9030
-  waitForAgent Mallory 9040
+  waitForAgent Faber 9040
+  waitForAgent Mallory 9050
 
   echo
   # Behave.ini file handling
   export BEHAVE_INI_TMP="${PWD}/behave.ini.tmp"
   cp ${BEHAVE_INI} ${BEHAVE_INI_TMP}
 
-  ${terminalEmu} docker run -it --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Mallory=http://0.0.0.0:9040
+  ${terminalEmu} docker run -it --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   rm ${BEHAVE_INI_TMP}
 
   echo
   echo "Cleanup:"
   echo "  - Shutting down all the agents ..."
   # printf "    - Acme: "
-  docker stop acme_agent bob_agent mallory_agent >/dev/null
+  docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
   printf "Done\n"
 
 }
@@ -284,11 +288,12 @@ shift
 if [[ "${COMMAND}" == "run" ]]; then
   ACME="none"
   BOB="none"
+  FABER="none"
   MALLORY="none"
   TAGS=""
   BEHAVE_INI=aries-test-harness/behave.ini
 
-  while getopts "ha:b:c:m:d:t:i:" FLAG; do
+  while getopts "ha:b:c:f:m:d:t:i:" FLAG; do
     case $FLAG in
         h ) usage ;;
         : ) usage ;;
@@ -300,6 +305,8 @@ if [[ "${COMMAND}" == "run" ]]; then
             ;;
         b ) export BOB=${OPTARG}
             ;;
+        f ) export FABER=${OPTARG}
+            ;;
         m ) export MALLORY=${OPTARG}
             ;;
         t ) export TAGS="${TAGS} --tags=${OPTARG}"
@@ -309,15 +316,16 @@ if [[ "${COMMAND}" == "run" ]]; then
         d )
             export ACME=${OPTARG}
             export BOB=${OPTARG}
+            export FABER=${OPTARG}
             export MALLORY=${OPTARG}
             ;;
     esac
   done
   shift $((OPTIND-1))
 
-  for agent in ${ACME} ${BOB} ${MALLORY}; do
+  for agent in ${ACME} ${BOB} ${FABER} ${MALLORY}; do
       if [[ $(isAgent $agent) == false ]] ; then
-          echo All agents Acme, Bob and Mallory must be set to one of: ${VALID_AGENTS}.
+          echo All agents Acme, Bob, Faber and Mallory must be set to one of: ${VALID_AGENTS}.
           echo Use \"${0} help\" to get more information.
           exit 1
       fi
@@ -326,6 +334,7 @@ if [[ "${COMMAND}" == "run" ]]; then
   echo Agents to be used:
   echo "  Acme - ${ACME}"
   echo "  Bob - ${BOB}"
+  echo "  Faber - ${FABER}"
   echo "  Mallory - ${MALLORY}"
   echo ""
   if [[ "${TAGS}" ]]; then

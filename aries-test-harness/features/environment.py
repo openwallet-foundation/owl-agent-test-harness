@@ -5,6 +5,7 @@
 # https://behave.readthedocs.io/en/latest/tutorial.html#environmental-controls
 #  
 # -----------------------------------------------------------
+import json
 
 def before_scenario(context, scenario):
     
@@ -28,3 +29,27 @@ def before_scenario(context, scenario):
     if 'MultiUseInvite' in context.tags :
         
         print ('NOTE: Test \"' + scenario.name + '\" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
+
+    # Check for Present Froof Feature to be able to handle the loading of schemas and credential definitions before the scenarios.
+    if 'present proof' in context.feature.name:
+            # get the tag with "Schema_".
+            for tag in context.tags:
+                if 'Schema_' in tag:
+                    # Get and assign the scehma to the context
+                    try:
+                        schema_json_file = open('features/data/' + tag + '.json')
+                        schema_json = json.load(schema_json_file)
+                        context.schema = schema_json["schema"]
+
+                        # Get and assign the credential definition info to the context
+                        context.support_revocation = schema_json["cred_def_support_revocation"]
+
+                        #context.credential_definition = 
+                    except FileNotFoundError:
+                        print(FileNotFoundError + ': features/data/' + tag + '.json')
+                    
+                    
+
+
+
+

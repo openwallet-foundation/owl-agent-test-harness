@@ -19,42 +19,41 @@ Feature: Aries agent present proof functions RFC 0037
          | Faber  |
 
 
-   @T001.2-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview
+   @T001.2-API10-RFC0037 @P1 @AcceptanceTest @Schema_DriversLicense @Indy
    Scenario Outline: Present Proof of specific types and proof is acknowledged
       Given "2" agents
          | name  | role     |
          | Faber | verifier |
          | Bob   | prover   |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from <issuer>
-      When "Faber" sends a request for proof presentation to "Bob" for <proof> with <restrictions>
-      And "Bob" makes the presentation of the proof
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      When "Faber" sends a <request_for_proof> presentation to "Bob"
+      And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
       Then "Bob" has the proof acknowledged
 
-      # Fyi, some of these proof examples may end up in the negative/exception test case. leaving them here for now.
-      # This proof list is free to grow as cases are discovered and raised.
       Examples:
-         | issuer | proof       | restrictions |
-         | Acme   | address2    | schema       |
-         | Faber  | zip         | cred_def_id  |
-         |        | city        | attribute    |
-         |        | address1    |              |
-         |        | state       |              |
-         |        | empty       |              |
-         |        | null        |              |
-         |        | true        |              |
-         |        | false       |              |
-         |        | max i32     |              |
-         |        | max i32 + 1 |              |
-         |        | i0          |              |
-         |        | min i32     |              |
-         |        | min i32 - 1 |              |
-         |        | float 0.0   |              |
-         |        | str 0.0     |              |
-         |        | chr 0       |              |
-         |        | chr 1       |              |
-         |        | chr 2       |              |
+         | issuer | credential_data   | request_for_proof            | presentation                |
+         | Acme   | Data_DL_MaxValues | proof_request_DL_address     | presentation_DL_address     |
+         | Faber  | Data_DL_MinValues | proof_request_DL_age_over_19 | presentation_DL_age_over_19 |
+
+
+   @T001.3-API10-RFC0037 @P1 @AcceptanceTest @Schema_Biological_Indicators @Indy
+   Scenario Outline: Present Proof of specific types and proof is acknowledged
+      Given "2" agents
+         | name  | role     |
+         | Faber | verifier |
+         | Bob   | prover   |
+      And "Faber" and "Bob" have an existing connection
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      When "Faber" sends a <request for proof> presentation to "Bob"
+      And "Bob" makes the <presentation> of the proof
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof acknowledged
+
+      Examples:
+         | issuer | credential_data          | request for proof                    | presentation                        |
+         | Acme   | Data_BI_NormalizedValues | proof_request_biological_indicator_a | presentation_biological_indicator_a |
 
    @T002-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview
    Scenario Outline: Present Proof where the prover and verifier are connectionless, the prover does not propose a presentation of the proof, and is acknowledged
