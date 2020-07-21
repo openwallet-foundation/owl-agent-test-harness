@@ -1,6 +1,6 @@
 from behave import *
 import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, connection_status
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, present_proof_status
 from time import sleep
 
 @given('"{prover}" has an issued credential from {issuer} with {credential_data}')
@@ -93,37 +93,12 @@ def step_impl(context, verifier, prover):
         }
     }
 
-    # presentation_proposal = {
-    #     "connection_id": context.connection_id_dict[verifier][prover],
-    #     "presentation_proposal": {
-    #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-    #         "comment": "This is a comment for the request for presentation.",
-    #         "request_presentations~attach": {
-    #             "@id": "libindy-request-presentation-0",
-    #             "mime-type": "application/json",
-    #             "data":  {
-    #                 "requested_values": {
-    #                     "attr_1": {
-    #                         "name": "attr_1",
-    #                         "restrictions": [
-    #                             {
-    #                                 "schema_name": "test_schema." + context.issuer_name,
-    #                                 "schema_version": "1.0.0"
-    #                             }
-    #                         ]
-    #                     }
-    #                 }
-    #             }
-    #         }
-    #     }
-    # }
-
     # send presentation request
     (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     # check the state of the presentation from the verifiers perspective
-    assert resp_json["state"] == "request_sent"
+    assert resp_json["state"] == "request-sent"
 
     # save off anything that is returned in the response to use later?
     context.presentation_thread_id = resp_json["thread_id"]
@@ -136,7 +111,10 @@ def step_impl(context, verifier, prover):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     context.prover_presentation_exchange_id = resp_json["presentation_exchange_id"]
-    assert resp_json["state"] == "request_received"
+    assert resp_json["state"] == "request-received"
+
+    # get connection and verify status
+    #assert present_proof_status(context.prover_url, context.prover_presentation_exchange_id, "request-received")
 
 @when('"{verifier}" sends a {request_for_proof} presentation to "{prover}"')
 def step_impl(context, verifier, request_for_proof, prover):
@@ -188,14 +166,14 @@ def step_impl(context, prover):
     (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.prover_presentation_exchange_id, data=presentation)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "presentation_sent"
+    assert resp_json["state"] == "presentation-sent"
 
     # check the state of the presentation from the verifier's perspective through the webhook
     (resp_status, resp_text) = agent_backchannel_GET(context.verifier_url + "/agent/response/", "proof", id=context.presentation_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     # I believe this should be "presentation_recieved" Bug?
-    assert resp_json["state"] == "request_sent"
+    assert resp_json["state"] == "request-sent"
 
 @when('"{prover}" makes the {presentation} of the proof')
 def step_impl(context, prover, presentation):
@@ -219,7 +197,7 @@ def step_impl(context, verifier):
     (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.verifier_presentation_exchange_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "verified"
+    assert resp_json["state"] == "done"
 
 @then('"{prover}" has the proof acknowledged')
 def step_impl(context, prover):
@@ -231,4 +209,4 @@ def step_impl(context, prover):
     resp_json = json.loads(resp_text)
     #assert resp_json["state"] == "presentation_acked"
     # I believe this should be "presentation_acked" Bug?
-    assert resp_json["state"] == "presentation_sent"
+    assert resp_json["state"] == "presentation-sent"

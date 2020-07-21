@@ -1,6 +1,6 @@
 from behave import *
 import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, connection_status
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, issue_credential_status
 from time import sleep
 
 # This step is defined in another feature file
@@ -172,7 +172,7 @@ def step_impl(context, holder, issuer):
     resp_json = json.loads(resp_text)
 
     # Check the State of the credential
-    assert resp_json["state"] == "proposal_sent"
+    assert resp_json["state"] == "proposal-sent"
 
     # Get the Credential Exchange ID from the response text.
     # I may need to save off the credential_exchange_id for Bob here but will see.
@@ -209,6 +209,7 @@ def step_impl(context, issuer):
         context.cred_thread_id = resp_json["thread_id"]
 
         # get the holder cred_ex_id from the webhook with the thread id
+        # TODO: remove this webhook call and move to the agent/command/ operation
         sleep(1) # It seems like you have to wait here for a moment in order to wait for the webhook to happen. 
         (resp_status2, resp_text2) = agent_backchannel_GET(context.holder_url + "/agent/response/", "issue-credential", id=context.cred_thread_id)
         assert resp_status2 == 200, f'resp_status {resp_status2} is not 200; {resp_text2}'
@@ -218,6 +219,7 @@ def step_impl(context, issuer):
     else:
         # get the cred_ex_id for the issuer by getting the webhook data for the previous step
         #(resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "connection", id=connection_id)
+        # TODO: remove this webhook call and move to the agent/command/ operation
         sleep(1) # It seems like you have to wait here for a moment in order to wait for the webhook to happen. 
         (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/response/", "issue-credential", id=context.cred_thread_id)
         # get the cred_ex_id for the issuer from the response and save it off for later.
@@ -228,7 +230,7 @@ def step_impl(context, issuer):
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.issuer_cred_ex_id)
         
     # Check the State of the credential
-    assert resp_json["state"] == "offer_sent"
+    assert resp_json["state"] == "offer-sent"
 
 @when('"{holder}" requests the credential')
 @when('"{holder}" sends a credential request')
@@ -247,16 +249,10 @@ def step_impl(context, holder):
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "request_sent"
+    assert resp_json["state"] == "request-sent"
 
-    # Check the state of the issuer through the webhook
-    sleep(1) # It seems like you have to wait here for a moment in order to wait for the webhook to happen. 
-    (resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/response/", "issue-credential", id=context.cred_thread_id)
-    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
-    # Need to log a bug for this. It should be "request_recieved"
-    #assert resp_json["state"] == "request_recieved" #its in offer_sent 
-    assert resp_json["state"] == "offer_sent"
+    # get connection and verify status
+    assert issue_credential_status(context.issuer_url, context.issuer_cred_ex_id, "request-received")
 
 
 @when('"{issuer}" issues the credential')
@@ -299,7 +295,7 @@ def step_impl(context, holder):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     context.credential_id = resp_json["credential_id"]
-    assert resp_json["state"] == "credential_acked"
+    assert resp_json["state"] == "done"
 
 @then('"{holder}" has the credential issued')
 def step_impl(context, holder):
