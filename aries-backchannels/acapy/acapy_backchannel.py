@@ -57,6 +57,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             genesis_data,
             params
         )
+        self.connectionStateTranslationDict = {
+            "invitation": "invited",
+            "request": "requested",
+            "response": "responded",
+            "active": "complete"
+        }
 
     def get_agent_args(self):
         result = [
@@ -197,6 +203,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 invitation_resp = json.loads(resp_text)
                 resp_text = json.dumps(invitation_resp)
 
+                resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
                 return (resp_status, resp_text)
 
             elif operation == "receive-invitation":
@@ -323,6 +330,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     connection_info = {"connection_id": connection["connection_id"], "state": connection["state"], "connection": connection}
                     connection_infos.append(connection_info)
                 resp_text = json.dumps(connection_infos)
+            # translate the state from that the agent gave to what the tests expect
+            resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "did":
@@ -639,6 +648,42 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 admin_data = data
 
             return (admin_data)
+
+    def agent_state_translation(self, topic, operation, data):
+            # This method is used to translate the agent states passes back in the responses of operations into the states the 
+            # test harness expects. The test harness expects states to be as they are written in the Protocol's RFC.
+            # the following is what the tests/rfc expect vs what aca-py communicates
+            # Connection Protocol:
+            # Tests/RFC         |   Aca-py
+            # invited           |   invitation
+            # requested         |   request
+            # responded         |   response
+            # complete          |   active
+            #
+            # Issue Credential Protocol:
+            # Tests/RFC         |   Aca-py
+            #
+            # Present Proof Protocol:
+            # Tests/RFC         |   Aca-py
+
+            if topic == "connection":
+                # Check to see if state is in the json
+                resp_json = json.loads(data)
+                # if 'state' in data:
+                if "state" in resp_json:
+                    agent_state = resp_json["state"]
+                    # use the dict to get the rfc state to be replaced.
+                    #resp_json["state"] = self.connectionStateTranslationDict[agent_state]
+                    #data = json.dumps[resp_json]
+                    data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
+
+                
+                # if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_values") == None:
+                #     requested_attributes = {}
+                # else:
+                #     requested_attributes = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_values"]
+
+            return (data)
 
 
 async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
