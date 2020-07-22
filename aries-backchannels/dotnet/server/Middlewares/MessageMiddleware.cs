@@ -35,9 +35,9 @@ namespace DotNet.Backchannel.Middlewares
 
                 var testHarnessConnection = _connectionCache.Get<TestHarnessConnection>(messageContext.Connection.Id);
 
-                if (testHarnessConnection != null && testHarnessConnection.State == TestHarnessConnectionState.Response)
+                if (testHarnessConnection != null && testHarnessConnection.State == TestHarnessConnectionState.Responded)
                 {
-                    testHarnessConnection.State = TestHarnessConnectionState.Active;
+                    testHarnessConnection.State = TestHarnessConnectionState.Complete;
                 }
             }
 
