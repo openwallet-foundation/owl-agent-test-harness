@@ -57,11 +57,38 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             genesis_data,
             params
         )
+
+        # Aca-py : RFC
         self.connectionStateTranslationDict = {
             "invitation": "invited",
             "request": "requested",
             "response": "responded",
             "active": "complete"
+        }
+
+        # Aca-py : RFC
+        self.issueCredentialStateTranslationDict = {
+            "proposal_sent": "proposal-sent",
+            "proposal_received": "proposal-received",
+            "offer_sent": "offer-sent",
+            "offer_received": "offer_received",
+            "request_sent": "request-sent",
+            "request_received": "request-received",
+            "credential_issued": "credential-issued",
+            "credential_received": "credential-received",
+            "credential_acked": "done"
+        }
+
+        # Aca-py : RFC
+        self.presentProofStateTranslationDict = {
+            "request_sent": "request-sent",
+            "request_received": "request-received",
+            "proposal_sent": "proposal-sent",
+            "proposal_received": "proposal_received",
+            "presentation_sent": "presentation-sent",
+            "presentation_received": "presentation-received",
+            "reject_sent": "reject-sent",
+            "verified": "done"
         }
 
     def get_agent_args(self):
@@ -203,14 +230,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 invitation_resp = json.loads(resp_text)
                 resp_text = json.dumps(invitation_resp)
 
-                resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+                if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
                 return (resp_status, resp_text)
 
             elif operation == "receive-invitation":
                 agent_operation = "/connections/" + operation
 
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data=data)
-
+                if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
                 return (resp_status, resp_text)
 
             elif (operation == "accept-invitation" 
@@ -226,6 +253,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
                 log_msg(resp_status, resp_text)
+                if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
                 return (resp_status, resp_text)
 
         elif op["topic"] == "schema":
@@ -264,10 +292,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_operation = "/issue-credential/" + operation
             
             log_msg(agent_operation, data)
-
+            
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
             log_msg(resp_status, resp_text)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "proof":
@@ -292,6 +321,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
             log_msg(resp_status, resp_text)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
@@ -380,6 +410,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = "/issue-credential/records/" + cred_def_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "credential":
@@ -392,6 +423,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = "/present-proof/" + rec_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
@@ -458,9 +490,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_status = 200
             if presentation_msg:
                 resp_text = json.dumps(presentation_msg)
+                if resp_status == 200: resp_text = self.agent_state_translation(topic, None, resp_text)
             else:
                 resp_text = "{}"
-
+            
             return (resp_status, resp_text)
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
@@ -662,27 +695,29 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             #
             # Issue Credential Protocol:
             # Tests/RFC         |   Aca-py
+            # proposal-sent     |   proposal_sent
+            # proposal-received |   proposal_received
+            # offer-sent        |   offer_sent
+            # offer_received    |   offer_received
+            # request-sent      |   request_sent
+            # request-received  |   request_received
+            # credential-issued |   issued
+            # credential-received | credential_received
+            # done              |   credential_acked
             #
             # Present Proof Protocol:
             # Tests/RFC         |   Aca-py
 
-            if topic == "connection":
-                # Check to see if state is in the json
-                resp_json = json.loads(data)
-                # if 'state' in data:
-                if "state" in resp_json:
-                    agent_state = resp_json["state"]
-                    # use the dict to get the rfc state to be replaced.
-                    #resp_json["state"] = self.connectionStateTranslationDict[agent_state]
-                    #data = json.dumps[resp_json]
+            resp_json = json.loads(data)
+            # Check to see if state is in the json
+            if "state" in resp_json:
+                agent_state = resp_json["state"]
+                if topic == "connection":
                     data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
-
-                
-                # if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_values") == None:
-                #     requested_attributes = {}
-                # else:
-                #     requested_attributes = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_values"]
-
+                elif topic == "issue-credential":
+                    data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
+                elif topic == "proof":
+                    data = data.replace(agent_state, self.presentProofStateTranslationDict[agent_state])
             return (data)
 
 

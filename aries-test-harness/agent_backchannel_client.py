@@ -95,3 +95,37 @@ def connection_status(agent_url, connection_id, status_txt):
     print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
     return False
 
+def issue_credential_status(agent_url, cred_ex_id, status_txt):
+    sleep(0.2)
+    state = "None"
+    if type(status_txt) != list:
+        status_txt = [status_txt]
+    for i in range(5):
+        (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "issue-credential", id=cred_ex_id)
+        if resp_status == 200:
+            resp_json = json.loads(resp_text)
+            state = resp_json["state"]
+            if state in status_txt:
+                return True
+        sleep(0.2)
+
+    print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
+    return False
+
+def present_proof_status(agent_url, pred_ex_id, status_txt):
+    sleep(0.2)
+    state = "None"
+    if type(status_txt) != list:
+        status_txt = [status_txt]
+    for i in range(5):
+        (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "proof", id=pred_ex_id)
+        if resp_status == 200:
+            resp_json = json.loads(resp_text)
+            state = resp_json["state"]
+            if state in status_txt:
+                return True
+        sleep(0.2)
+
+    print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
+    return False
+
