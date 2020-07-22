@@ -85,13 +85,13 @@ namespace DotNet.Backchannel.Controllers
             {
                 ConnectionId = connection.Id,
                 // State is 'Invited', should be 'invitation'
-                State = TestHarnessConnectionState.Invitation
+                State = TestHarnessConnectionState.Invited
             };
 
             _connectionCache.Set(connection.Id, testHarnessConnection);
 
             // Listen for connection request to update the state
-            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Request, _ => _.MessageType == MessageTypes.ConnectionRequest && _.RecordId == connection.Id);
+            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Requested, _ => _.MessageType == MessageTypes.ConnectionRequest && _.RecordId == connection.Id);
 
             return Ok(new { connection_id = testHarnessConnection.ConnectionId, state = testHarnessConnection.State, invitation });
         }
@@ -109,7 +109,7 @@ namespace DotNet.Backchannel.Controllers
             {
                 ConnectionId = record.Id,
                 // State is 'Negotiation', should be 'invitation'
-                State = TestHarnessConnectionState.Invitation,
+                State = TestHarnessConnectionState.Invited,
                 Request = request
             };
 
@@ -134,12 +134,12 @@ namespace DotNet.Backchannel.Controllers
             var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
 
             // Listen for connection response to update the state
-            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Response, _ => _.MessageType == MessageTypes.ConnectionResponse && _.RecordId == connection.Id);
+            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Responded, _ => _.MessageType == MessageTypes.ConnectionResponse && _.RecordId == connection.Id);
 
             await _messageService.SendAsync(context.Wallet, testHarnessConnection.Request, connection);
 
             // State is 'Negotiation', should be 'request'
-            testHarnessConnection.State = TestHarnessConnectionState.Request;
+            testHarnessConnection.State = TestHarnessConnectionState.Requested;
 
             return Ok();
         }
@@ -158,7 +158,7 @@ namespace DotNet.Backchannel.Controllers
             await _messageService.SendAsync(context.Wallet, response, connection);
 
             // State is 'Connected', should be 'response'
-            testHarnessConnection.State = TestHarnessConnectionState.Response;
+            testHarnessConnection.State = TestHarnessConnectionState.Responded;
 
             return Ok();
         }
@@ -181,7 +181,7 @@ namespace DotNet.Backchannel.Controllers
             await _messageService.SendAsync(context.Wallet, message, connection);
 
             // State is 'Connected', should be 'active'
-            testHarnessConnection.State = TestHarnessConnectionState.Active;
+            testHarnessConnection.State = TestHarnessConnectionState.Complete;
 
             return Ok();
         }

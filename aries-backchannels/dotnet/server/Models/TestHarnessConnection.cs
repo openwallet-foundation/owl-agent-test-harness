@@ -7,17 +7,17 @@ namespace DotNet.Backchannel.Models
 {
     public enum TestHarnessConnectionState
     {
-        [EnumMember(Value = "invitation")]
-        Invitation,
+        [EnumMember(Value = "invited")]
+        Invited,
 
-        [EnumMember(Value = "request")]
-        Request,
+        [EnumMember(Value = "requested")]
+        Requested,
 
-        [EnumMember(Value = "response")]
-        Response,
+        [EnumMember(Value = "responded")]
+        Responded,
 
-        [EnumMember(Value = "active")]
-        Active,
+        [EnumMember(Value = "complete")]
+        Complete,
     }
 
     public class TestHarnessConnection
