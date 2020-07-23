@@ -183,8 +183,8 @@ class AgentBackchannel:
         if payload:
             if "id" in payload:
                 rec_id = payload["id"]
-            if "cred_ex_id" in payload:
-                rec_id = payload["cred_ex_id"]
+            if "credential_exchange_id" in payload:
+                rec_id = payload["credential_exchange_id"]
             if "data" in payload:
                 data = payload["data"]
         for op in self.operations:
@@ -224,8 +224,8 @@ class AgentBackchannel:
                         data = None
                     if "id" in payload:
                         rec_id = payload["id"]
-                    elif "cred_ex_id" in payload:
-                        rec_id = payload["cred_ex_id"]
+                    elif "credential_exchange_id" in payload:
+                        rec_id = payload["credential_exchange_id"]
                     else:
                         rec_id = None
 

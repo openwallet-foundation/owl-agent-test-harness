@@ -71,7 +71,7 @@ def agent_backchannel_POST(url, topic, operation=None, id=None, data=None) -> (i
         agent_url = agent_url + operation + "/"
     if id:
         if topic == 'credential':
-            payload["cred_ex_id"] = id
+            payload["credential_exchange_id"] = id
         else:
             payload["id"] = id
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "POST", agent_url, data=payload)
