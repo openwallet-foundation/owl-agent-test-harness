@@ -78,47 +78,13 @@ def agent_backchannel_POST(url, topic, operation=None, id=None, data=None) -> (i
     return (resp_status, resp_text)
 
 
-def connection_status(agent_url, connection_id, status_txt):
+def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt):
     sleep(0.2)
     state = "None"
     if type(status_txt) != list:
         status_txt = [status_txt]
     for i in range(5):
-        (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "connection", id=connection_id)
-        if resp_status == 200:
-            resp_json = json.loads(resp_text)
-            state = resp_json["state"]
-            if state in status_txt:
-                return True
-        sleep(0.2)
-    # TODO only loop if the status is 200. Are we expectin the state to change in the loop? 
-    print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
-    return False
-
-def issue_credential_status(agent_url, thread_id, status_txt):
-    sleep(0.2)
-    state = "None"
-    if type(status_txt) != list:
-        status_txt = [status_txt]
-    for i in range(5):
-        (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "issue-credential", id=thread_id)
-        if resp_status == 200:
-            resp_json = json.loads(resp_text)
-            state = resp_json["state"]
-            if state in status_txt:
-                return True
-        sleep(0.2)
-
-    print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
-    return False
-
-def present_proof_status(agent_url, pred_ex_id, status_txt):
-    sleep(0.2)
-    state = "None"
-    if type(status_txt) != list:
-        status_txt = [status_txt]
-    for i in range(5):
-        (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "proof", id=pred_ex_id)
+        (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", protocol_txt, id=thread_id)
         if resp_status == 200:
             resp_json = json.loads(resp_text)
             state = resp_json["state"]

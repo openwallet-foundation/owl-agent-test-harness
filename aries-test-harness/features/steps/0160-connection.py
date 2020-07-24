@@ -10,7 +10,7 @@
 
 from behave import given, when, then
 import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, connection_status
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
 
 @given('{n} agents')
 @given(u'we have {n} agents')
@@ -79,7 +79,7 @@ def step_impl(context, inviter):
         context.inviter_name = inviter
 
     # get connection and verify status
-    assert connection_status(inviter_url, context.temp_connection_id_dict[inviter], "invited")
+    assert expected_agent_state(inviter_url, "connection", context.temp_connection_id_dict[inviter], "invited")
 
 @given('"{invitee}" receives the connection invitation')
 @when('"{invitee}" receives the connection invitation')
@@ -110,7 +110,7 @@ def step_impl(context, invitee):
         context.invitee_name = invitee
 
     # get connection and verify status
-    assert connection_status(invitee_url, context.connection_id_dict[invitee][context.inviter_name], "invited")
+    assert expected_agent_state(invitee_url, "connection", context.connection_id_dict[invitee][context.inviter_name], "invited")
 
 @when('"{inviter}" sends a connection response to "{invitee}"')
 @given('"{inviter}" sends a connection response to "{invitee}"')
@@ -123,14 +123,14 @@ def step_impl(context, inviter, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, "requested")
-    assert connection_status(invitee_url, invitee_connection_id, "requested")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "requested")
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, "responded")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "responded")
 
 @when('"{invitee}" receives the connection response')
 @given('"{invitee}" receives the connection response')
@@ -139,7 +139,7 @@ def step_impl(context, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # invitee already recieved the connection response in the accept-request call so get connection and verify status=responded.
-    assert connection_status(invitee_url, invitee_connection_id, "responded")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "responded")
 
 @given('"{invitee}" sends a connection request to "{inviter}"')
 @when('"{invitee}" sends a connection request to "{inviter}"')
@@ -150,14 +150,14 @@ def step_impl(context, invitee, inviter):
     inviter_connection_id = context.connection_id_dict[inviter][invitee]
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, ["invited"])
-    assert connection_status(inviter_url, inviter_connection_id, ["invited"])
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "invited")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "invited")
 
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="accept-invitation", id=invitee_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, "requested")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "requested")
 
 
 @when('"{inviter}" receives the connection request')
@@ -167,7 +167,7 @@ def step_impl(context, inviter):
     inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # inviter already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
-    assert connection_status(inviter_url, inviter_connection_id, "requested")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested")
 
 
 @when('"{inviter}" accepts the connection response to "{invitee}"')
@@ -178,15 +178,15 @@ def step_impl(context, inviter, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, ["requested"])
-    assert connection_status(invitee_url, invitee_connection_id, ["requested"])
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "requested")
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, ["responded"])
-    assert connection_status(invitee_url, invitee_connection_id, ["complete"])
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "responded")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
 
 @when('"{invitee}" sends a response ping')
 def step_impl(context, invitee):
@@ -194,14 +194,14 @@ def step_impl(context, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, ["responded"])
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "responded")
 
     data = {"comment": "Hello from " + invitee}
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="send-ping", id=invitee_connection_id, data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, "complete")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
 
 @when('"{inviter}" receives the response ping')
 def step_impl(context, inviter):
@@ -214,7 +214,7 @@ def step_impl(context, inviter):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, "complete")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "complete")
 
 @then('"{inviter}" and "{invitee}" have a connection')
 def step_impl(context, inviter, invitee):
@@ -224,10 +224,10 @@ def step_impl(context, inviter, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status for inviter
-    assert connection_status(inviter_url, inviter_connection_id, "complete")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "complete")
 
     # get connection and verify status for invitee
-    assert connection_status(invitee_url, invitee_connection_id, "complete")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
 
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):
@@ -237,11 +237,10 @@ def step_impl(context, inviter, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status for inviter
-    assert connection_status(inviter_url, inviter_connection_id, "responded")
-    #assert connection_status(inviter_url, inviter_connection_id, "active")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "responded")
 
     # get connection and verify status for invitee
-    assert connection_status(invitee_url, invitee_connection_id, "complete")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
 
 @given('"{sender}" and "{receiver}" have an existing connection')
 def step_impl(context, sender, receiver):
@@ -262,14 +261,14 @@ def step_impl(context, sender):
     sender_connection_id = context.connection_id_dict[sender][context.inviter_name]
 
     # get connection and verify status
-    assert connection_status(sender_url, sender_connection_id, "active")
+    assert expected_agent_state(sender_url, "connection", sender_connection_id, "active")
 
     data = {"comment": "Hello from " + sender}
     (resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
-    assert connection_status(sender_url, sender_connection_id, "complete")
+    assert expected_agent_state(sender_url, "connection", sender_connection_id, "complete")
 
 @then('"{receiver}" receives the trust ping')
 def step_impl(context, receiver):
@@ -296,7 +295,7 @@ def step_impl(context, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # get connection and verify status
-    assert connection_status(invitee_url, invitee_connection_id, "complete")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
 
 
 @given(u'"{inviter}" is in the state of responded')
@@ -305,7 +304,7 @@ def step_impl(context, inviter):
     inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # get connection and verify status
-    assert connection_status(inviter_url, inviter_connection_id, "responded")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "responded")
 
 
 @when(u'"{sender}" sends acks to "{reciever}"')
@@ -332,7 +331,7 @@ def step_impl(context, sender, receiver):
 @then(u'"{inviter}" is in the state of complete')
 def step_impl(context, inviter):
     # get connection and verify status
-    assert connection_status(context.config.userdata.get(inviter), context.connection_id_dict[inviter][context.invitee_name], "complete")
+    assert expected_agent_state(context.config.userdata.get(inviter), "connection", context.connection_id_dict[inviter][context.invitee_name], "complete")
 
 
 @given(u'"{inviter}" generated a single-use connection invitation')
@@ -373,13 +372,13 @@ def step_impl(context, inviteinterceptor, inviter):
     inviteinterceptor_connection_id = context.connection_id_dict[inviteinterceptor][inviter]
 
     # get connection and verify status before call
-    assert connection_status(inviteinterceptor_url, inviteinterceptor_connection_id, ["invited"])
+    assert expected_agent_state(inviteinterceptor_url, "connection", inviteinterceptor_connection_id, "invited")
 
     (resp_status, resp_text) = agent_backchannel_POST(inviteinterceptor_url + "/agent/command/", "connection", operation="accept-invitation", id=inviteinterceptor_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     # get connection and verify status
-    assert connection_status(inviteinterceptor_url, inviteinterceptor_connection_id, "requested")
+    assert expected_agent_state(inviteinterceptor_url, "connection", inviteinterceptor_connection_id, "requested")
 
 @then(u'"{inviter}" sends a request_not_accepted error')
 def step_impl(context, inviter):
