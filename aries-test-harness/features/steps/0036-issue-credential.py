@@ -174,9 +174,7 @@ def step_impl(context, holder, issuer):
     # Check the State of the credential
     assert resp_json["state"] == "proposal-sent"
 
-    # Get the Credential Exchange ID from the response text.
-    # I may need to save off the credential_exchange_id for Bob here but will see.
-    context.holder_cred_ex_id = resp_json["credential_exchange_id"]
+    # Get the thread ID from the response text.
     context.cred_thread_id = resp_json["thread_id"]
 
 @given('"{issuer}" offers a credential')
@@ -186,7 +184,8 @@ def step_impl(context, holder, issuer):
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
 
-    if not hasattr('context','cred_thread_id'):
+    # if context does not have the credential thread id then the proposal was not the starting point for the protocol. 
+    if not "cred_thread_id" in context:
 
         if "credential_data" in context:
             cred_data = context.credential_data
@@ -205,45 +204,34 @@ def step_impl(context, issuer):
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", data=credential_offer)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
-        context.issuer_cred_ex_id = resp_json["credential_exchange_id"]
+        #context.issuer_cred_ex_id = resp_json["credential_exchange_id"]
         context.cred_thread_id = resp_json["thread_id"]
 
-        # get the holder cred_ex_id from the webhook with the thread id
-        # TODO: remove this webhook call and move to the agent/command/ operation
-        sleep(1) # It seems like you have to wait here for a moment in order to wait for the webhook to happen. 
-        (resp_status2, resp_text2) = agent_backchannel_GET(context.holder_url + "/agent/response/", "issue-credential", id=context.cred_thread_id)
-        assert resp_status2 == 200, f'resp_status {resp_status2} is not 200; {resp_text2}'
-        resp_json2 = json.loads(resp_text2)
-        context.holder_cred_ex_id = resp_json2["credential_exchange_id"]
-
     else:
-        # get the cred_ex_id for the issuer by getting the webhook data for the previous step
-        #(resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", "connection", id=connection_id)
-        # TODO: remove this webhook call and move to the agent/command/ operation
-        sleep(1) # It seems like you have to wait here for a moment in order to wait for the webhook to happen. 
-        (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/response/", "issue-credential", id=context.cred_thread_id)
-        # get the cred_ex_id for the issuer from the response and save it off for later.
+        # If context has the credential thread id then the proposal was done. 
+        (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.cred_thread_id)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
-        context.issuer_cred_ex_id = resp_json["credential_exchange_id"]
-        resp_json = json.loads(resp_text)
-        (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.issuer_cred_ex_id)
         
-    # Check the State of the credential
+    # Check the issuers State
     assert resp_json["state"] == "offer-sent"
 
+    # Check the state of the holder after issuers call of send-offer
+    assert issue_credential_status(context.holder_url, context.cred_thread_id, "offer-received")
+
+    
 @when('"{holder}" requests the credential')
 @when('"{holder}" sends a credential request')
 def step_impl(context, holder):
     holder_url = context.holder_url
 
     # If @indy then we can be sure we cannot start the protocol from this command. We can be sure that we have previously 
-    # gotten the cred_ex_id or have a thread_id.
+    # reveived the thread_id.
     if "Indy" in context.tags:
         sleep(1)
-        (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.holder_cred_ex_id)
+        (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.cred_thread_id)
 
-    # We are starting from here in the protocol so you won't have the cred_ex_id or the thread_id
+    # If we are starting from here in the protocol you won't have the cred_ex_id or the thread_id
     else:
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.connection_id_dict[holder][context.issuer_name])
     
@@ -251,8 +239,8 @@ def step_impl(context, holder):
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "request-sent"
 
-    # get connection and verify status
-    assert issue_credential_status(context.issuer_url, context.issuer_cred_ex_id, "request-received")
+    # Verify issuer status
+    assert issue_credential_status(context.issuer_url, context.cred_thread_id, "request-received")
 
 
 @when('"{issuer}" issues the credential')
@@ -267,7 +255,6 @@ def step_impl(context, issuer):
 
     # a credential preview shouldn't have to be here with a cred_ex_id being passed
     credential_preview = {
-        #"cred_def_id": context.issuer_credential_definition["id"],
         "credential_preview": {
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
             "attributes": cred_data,
@@ -275,8 +262,13 @@ def step_impl(context, issuer):
         "comment": "issuing credential",
     }
 
-    (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="issue", id=context.issuer_cred_ex_id, data=credential_preview)
+    (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="issue", id=context.cred_thread_id, data=credential_preview)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+    assert resp_json["state"] == "credential-issued"
+
+    # Verify holder status
+    assert issue_credential_status(context.holder_url, context.cred_thread_id, "credential-received")
 
 
 @when('"{holder}" acknowledges the credential issue')
@@ -286,16 +278,20 @@ def step_impl(context, holder):
     
     # a credential id shouldn't be needed with a cred_ex_id being passed
     credential_id = {
-        "credential_id": context.holder_cred_ex_id,
+        "credential_id": context.cred_thread_id,
     }
 
     # (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="store", id=context.holder_cred_ex_id)
     sleep(1)
-    (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="store", id=context.holder_cred_ex_id, data=credential_id)
+    (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="store", id=context.cred_thread_id, data=credential_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     context.credential_id = resp_json["credential_id"]
     assert resp_json["state"] == "done"
+
+    # Verify issuer status
+    # This is returning none instead of Done. Should this be the case. Needs investigation.
+    #assert issue_credential_status(context.issuer_url, context.cred_thread_id, "done")
 
 @then('"{holder}" has the credential issued')
 def step_impl(context, holder):
@@ -310,9 +306,8 @@ def step_impl(context, holder):
         assert resp_json["cred_def_id"] == context.credential_definition_id
 
         # Make sure the issuer is not holding the credential
-        issuer_url = context.issuer_url
         # get the credential from the holders wallet
-        (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "credential", id=context.credential_id)
+        (resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id)
         assert resp_status == 404, f'resp_status {resp_status} is not 404; {resp_text}'
 
 
