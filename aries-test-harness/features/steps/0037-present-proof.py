@@ -1,6 +1,6 @@
 from behave import *
 import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, present_proof_status
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
 from time import sleep
 
 @given('"{prover}" has an issued credential from {issuer} with {credential_data}')
@@ -59,8 +59,6 @@ def step_impl(context, prover, issuer):
 
 @when('"{verifier}" sends a request for proof presentation to "{prover}"')
 def step_impl(context, verifier, prover):
-    verifier_url = context.verifier_url
-    prover_url = context.prover_url
 
     # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
     if "request_for_proof" in context:
@@ -94,7 +92,7 @@ def step_impl(context, verifier, prover):
     }
 
     # send presentation request
-    (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
+    (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     # check the state of the presentation from the verifiers perspective
@@ -102,19 +100,10 @@ def step_impl(context, verifier, prover):
 
     # save off anything that is returned in the response to use later?
     context.presentation_thread_id = resp_json["thread_id"]
-    context.verifier_presentation_exchange_id = resp_json["presentation_exchange_id"]
-    context.presentation_request = resp_json["presentation_request"]
 
-    # check the state of the presentation from the provers perspective through the webhook
-    sleep(1)
-    (resp_status, resp_text) = agent_backchannel_GET(context.prover_url + "/agent/response/", "proof", id=context.presentation_thread_id)
-    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
-    context.prover_presentation_exchange_id = resp_json["presentation_exchange_id"]
-    assert resp_json["state"] == "request-received"
-
-    # get connection and verify status
-    #assert present_proof_status(context.prover_url, context.prover_presentation_exchange_id, "request-received")
+    # check the state of the presentation from the provers perspective
+    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
+    #assert present_proof_status(context.prover_url, context.presentation_thread_id, "request-received")
 
 @when('"{verifier}" sends a {request_for_proof} presentation to "{prover}"')
 def step_impl(context, verifier, request_for_proof, prover):
@@ -163,17 +152,13 @@ def step_impl(context, prover):
         }
 
 
-    (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.prover_presentation_exchange_id, data=presentation)
+    (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "presentation-sent"
 
-    # check the state of the presentation from the verifier's perspective through the webhook
-    (resp_status, resp_text) = agent_backchannel_GET(context.verifier_url + "/agent/response/", "proof", id=context.presentation_thread_id)
-    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
-    # I believe this should be "presentation_recieved" Bug?
-    assert resp_json["state"] == "request-sent"
+    # check the state of the presentation from the verifier's perspective
+    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "presentation-received")
 
 @when('"{prover}" makes the {presentation} of the proof')
 def step_impl(context, prover, presentation):
@@ -194,19 +179,12 @@ def step_impl(context, prover, presentation):
 def step_impl(context, verifier):
     verifier_url = context.verifier_url
 
-    (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.verifier_presentation_exchange_id)
+    (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.presentation_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "done"
 
 @then('"{prover}" has the proof acknowledged')
 def step_impl(context, prover):
-    prover_url = context.prover_url
-
-    # check the state of the presentation from the prover's perspective through the webhook
-    (resp_status, resp_text) = agent_backchannel_GET(context.prover_url + "/agent/response/", "proof", id=context.presentation_thread_id)
-    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
-    #assert resp_json["state"] == "presentation_acked"
-    # I believe this should be "presentation_acked" Bug?
-    assert resp_json["state"] == "presentation-sent"
+    # check the state of the presentation from the prover's perspective
+    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
