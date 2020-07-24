@@ -88,7 +88,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "presentation_sent": "presentation-sent",
             "presentation_received": "presentation-received",
             "reject_sent": "reject-sent",
-            "verified": "done"
+            "verified": "done",
+            "presentation_acked": "done"
         }
 
     def get_agent_args(self):
@@ -189,11 +190,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # TODO wait here to determine the response to the web hook?????
         pass
 
-    async def swap_thread_id_for_cred_ex_id(self, thread_id, data_type):
+    async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
         await asyncio.sleep(2)
         msg = get_resource(thread_id, data_type)
-        cred_ex_id = msg[0]["credential_exchange_id"]
-        return cred_ex_id
+        ex_id = msg[0][id_txt]
+        return ex_id
 
     async def make_admin_request(
         self, method, path, data=None, text=False, params=None
@@ -293,7 +294,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     or operation == "store"
                 ):
                     # swap thread id for cred ex id from the webhook
-                    cred_ex_id = await self.swap_thread_id_for_cred_ex_id(rec_id, "credential-msg")
+                    cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
                     agent_operation = "/issue-credential/records/" + cred_ex_id + "/" + operation
                 else:
                     agent_operation = "/issue-credential/" + operation
@@ -316,7 +317,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     or operation == "verify-presentation"
                     or operation == "remove"
                 ):
-                    pres_ex_id = rec_id
+                    #pres_ex_id = rec_id
+                    # swap thread id for pres ex id from the webhook
+                    pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
                     agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
                 else:
                     agent_operation = "/present-proof/" + operation
@@ -413,9 +416,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "issue-credential":
-            #cred_def_id = rec_id
             # swap thread id for cred ex id from the webhook
-            cred_ex_id = await self.swap_thread_id_for_cred_ex_id(rec_id, "credential-msg")
+            cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
             agent_operation = "/issue-credential/records/" + cred_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
@@ -429,7 +431,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "proof":
-            agent_operation = "/present-proof/" + rec_id
+            # swap thread id for pres ex id from the webhook
+            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+            agent_operation = "/present-proof/records/" + pres_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
