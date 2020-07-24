@@ -1,6 +1,6 @@
 from behave import *
 import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, issue_credential_status
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
 from time import sleep
 
 # This step is defined in another feature file
@@ -217,7 +217,7 @@ def step_impl(context, issuer):
     assert resp_json["state"] == "offer-sent"
 
     # Check the state of the holder after issuers call of send-offer
-    assert issue_credential_status(context.holder_url, context.cred_thread_id, "offer-received")
+    assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "offer-received")
 
     
 @when('"{holder}" requests the credential')
@@ -240,7 +240,7 @@ def step_impl(context, holder):
     assert resp_json["state"] == "request-sent"
 
     # Verify issuer status
-    assert issue_credential_status(context.issuer_url, context.cred_thread_id, "request-received")
+    assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received")
 
 
 @when('"{issuer}" issues the credential')
@@ -268,7 +268,7 @@ def step_impl(context, issuer):
     assert resp_json["state"] == "credential-issued"
 
     # Verify holder status
-    assert issue_credential_status(context.holder_url, context.cred_thread_id, "credential-received")
+    assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "credential-received")
 
 
 @when('"{holder}" acknowledges the credential issue')
@@ -291,7 +291,7 @@ def step_impl(context, holder):
 
     # Verify issuer status
     # This is returning none instead of Done. Should this be the case. Needs investigation.
-    #assert issue_credential_status(context.issuer_url, context.cred_thread_id, "done")
+    #assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "done")
 
 @then('"{holder}" has the credential issued')
 def step_impl(context, holder):
