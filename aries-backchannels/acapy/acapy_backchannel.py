@@ -71,7 +71,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "proposal_sent": "proposal-sent",
             "proposal_received": "proposal-received",
             "offer_sent": "offer-sent",
-            "offer_received": "offer_received",
+            "offer_received": "offer-received",
             "request_sent": "request-sent",
             "request_received": "request-received",
             "credential_issued": "credential-issued",
@@ -189,6 +189,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # TODO wait here to determine the response to the web hook?????
         pass
 
+    async def swap_thread_id_for_cred_ex_id(self, thread_id, data_type):
+        await asyncio.sleep(2)
+        msg = get_resource(thread_id, data_type)
+        cred_ex_id = msg[0]["credential_exchange_id"]
+        return cred_ex_id
+
     async def make_admin_request(
         self, method, path, data=None, text=False, params=None
     ) -> (int, str):
@@ -286,7 +292,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     or operation == "issue"
                     or operation == "store"
                 ):
-                    cred_ex_id = rec_id
+                    # swap thread id for cred ex id from the webhook
+                    cred_ex_id = await self.swap_thread_id_for_cred_ex_id(rec_id, "credential-msg")
                     agent_operation = "/issue-credential/records/" + cred_ex_id + "/" + operation
                 else:
                     agent_operation = "/issue-credential/" + operation
@@ -406,8 +413,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "issue-credential":
-            cred_def_id = rec_id
-            agent_operation = "/issue-credential/records/" + cred_def_id
+            #cred_def_id = rec_id
+            # swap thread id for cred ex id from the webhook
+            cred_ex_id = await self.swap_thread_id_for_cred_ex_id(rec_id, "credential-msg")
+            agent_operation = "/issue-credential/records/" + cred_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
