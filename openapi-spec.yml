@@ -37,10 +37,15 @@ tags:
     description: Agent commands related to schema topic
   - name: Credential Definition
     description: Agent commands related to credential-definition topic
+  - name: Issue Credential
+    description: Agent commands related to issue-credential topic
+  - name: Present Proof
+    description: Agent commands related to present-proof topic
 paths:
   /agent/command/status:
     get:
       summary: Get agent/backchannel status
+      operationId: StatusGet
       tags:
         - Status
       responses:
@@ -132,6 +137,7 @@ paths:
         content:
           application/json:
             schema:
+              type: object
               required:
                 - data
               properties:
@@ -143,6 +149,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   connection_id:
                     $ref: "#/components/schemas/ConnectionId"
@@ -159,6 +166,7 @@ paths:
         content:
           application/json:
             schema:
+              type: object
               required:
                 - id
               properties:
@@ -170,6 +178,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   connection_id:
                     $ref: "#/components/schemas/ConnectionId"
@@ -189,6 +198,7 @@ paths:
         content:
           application/json:
             schema:
+              type: object
               required:
                 - id
               properties:
@@ -200,6 +210,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   connection_id:
                     $ref: "#/components/schemas/ConnectionId"
@@ -219,6 +230,7 @@ paths:
         content:
           application/json:
             schema:
+              type: object
               required:
                 - id
                 - data
@@ -226,19 +238,20 @@ paths:
                 id:
                   $ref: "#/components/schemas/ConnectionId"
                 data:
+                  type: object
                   required:
                     - comment
                   properties:
                     comment:
-                      title: Comment
-                      type: string
-                      example: Hello
+                      $ref: "#/components/schemas/Comment"
+
       responses:
         200:
           description: Trust ping send
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   connection_id:
                     $ref: "#/components/schemas/ConnectionId"
@@ -260,6 +273,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   did:
                     $ref: "#/components/schemas/Did"
@@ -298,30 +312,23 @@ paths:
         content:
           application/json:
             schema:
+              type: object
               required:
                 - data
               properties:
                 data:
-                  # TODO: combine with Schema schema
+                  type: object
                   required:
                     - schema_name
                     - schema_version
                     - attributes
                   properties:
                     schema_name:
-                      type: string
-                      example: "test_schema"
+                      $ref: "#/components/schemas/SchemaName"
                     schema_version:
-                      type: string
-                      example: "1.0.0"
+                      $ref: "#/components/schemas/SchemaVersion"
                     attributes:
-                      type: array
-                      example:
-                        - "attr_1"
-                        - "attr_2"
-                        - "attr_3"
-                      items:
-                        type: string
+                      $ref: "#/components/schemas/SchemaAttributes"
 
       responses:
         200:
@@ -329,6 +336,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   schema_id:
                     $ref: "#/components/schemas/SchemaId"
@@ -367,10 +375,12 @@ paths:
         content:
           application/json:
             schema:
+              type: object
               required:
                 - data
               properties:
                 data:
+                  type: object
                   # TODO: combine with CredentialDefinition schema
                   required:
                     - support_revocation
@@ -395,20 +405,270 @@ paths:
                   credential_definition_id:
                     $ref: "#/components/schemas/CredentialDefinitionId"
 
+  /agent/command/issue-credential/send-proposal:
+    post:
+      tags:
+        - Issue Credential
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#propose-credential
+      operationId: IssueCredentialSendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                  properties:
+                    comment:
+                      $ref: "#/components/schemas/Comment"
+                    credential_proposal:
+                      $ref: "#/components/schemas/CredentialPreview"
+                    schema_issuer_did:
+                      $ref: "#/components/schemas/Did"
+                    schema_id:
+                      $ref: "#/components/schemas/SchemaId"
+                    schema_name:
+                      $ref: "#/components/schemas/SchemaName"
+                    schema_version:
+                      $ref: "#/components/schemas/SchemaVersion"
+                    cred_def_id:
+                      $ref: "#/components/schemas/CredentialDefinitionId"
+                    issuer_did:
+                      $ref: "#/components/schemas/Did"
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Credential proposal send
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential/send-offer:
+    post:
+      tags:
+        - Issue Credential
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#offer-credential
+      operationId: IssueCredentialSendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Offer to start credential issuance flow
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - credential_preview
+                      properties:
+                        comment:
+                          $ref: "#/components/schemas/Comment"
+                        credential_preview:
+                          $ref: "#/components/schemas/CredentialPreview"
+                        cred_def_id:
+                          $ref: "#/components/schemas/CredentialDefinitionId"
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                - title: Send Offer in response to Proposal
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+            examples:
+              new:
+                summary: Send Offer to start credential issuance flow
+                description: >
+                  When sending an offer to start the credential issuance flow, the data
+                  of the credential that is going to be issued must be passed as value to the data key.
+                value:
+                  data:
+                    comment:
+                      $ref: "#/components/schemas/Comment/example"
+                    credential_preview:
+                      $ref: "#/components/schemas/CredentialPreview/example"
+                    cred_def_id:
+                      $ref: "#/components/schemas/CredentialDefinitionId/example"
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId/example"
+              response:
+                summary: Send Offer in response to Proposal
+                description: >
+                  When sending an offer in response to a received proposal only the
+                  thread id should be passed
+                value:
+                  id:
+                    $ref: "#/components/schemas/ThreadId/example"
+      responses:
+        200:
+          description: Credential offer send
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential/send-request:
+    post:
+      tags:
+        - Issue Credential
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#request-credential
+      operationId: IssueCredentialSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - title: Send Request to start credential issuance flow
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ConnectionId"
+                - title: Send Request in response to Offer
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+            examples:
+              response:
+                summary: Send Request in response to Offer
+                description: >
+                  When sending a Request in response to a received offer only the
+                  thread id should be passed
+                value:
+                  id:
+                    $ref: "#/components/schemas/ThreadId/example"
+              new:
+                summary: Send Request to start credential issuance flow
+                description: >
+                  This is not possible with Indy based credentials. TODO.
+                value:
+                  id:
+                    $ref: "#/components/schemas/ConnectionId/example"
+      responses:
+        200:
+          description: Credential request send
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential/issue:
+    post:
+      tags:
+        - Issue Credential
+      summary: Issue Credential
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#issue-credential
+      operationId: IssueCredentialIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  properties:
+                    comment:
+                      $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential/store:
+    post:
+      tags:
+        - Issue Credential
+      summary: Store Credential
+      operationId: IssueCredentialStore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: done
+
 components:
   schemas:
     ConnectionInvitation:
       title: Connection Invitation
+      type: object
       example:
-        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation"
-        "@id": 11640bd1-cdc2-45e4-9fcc-43ccc27fc9d4
-        serviceEndpoint: "http://192.168.65.3:9021"
-        recipientKeys:
-          - GqQh9pLeMrE7E2ZxA47GbW4XQuLYsyd1bdfZvxLi7aZ6
-        label: aca-py
+        {
+          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation",
+          "@id": "11640bd1-cdc2-45e4-9fcc-43ccc27fc9d4",
+          "serviceEndpoint": "http://192.168.65.3:9021",
+          "recipientKeys": ["GqQh9pLeMrE7E2ZxA47GbW4XQuLYsyd1bdfZvxLi7aZ6"],
+          "label": "aca-py",
+        }
     ConnectionId:
       title: Connection Id
       example: "8fb9ea21-d094-4506-86b6-c7c1627d753a"
+      type: string
+    ThreadId:
+      title: Thread Id
+      example: "e7280776-5315-4569-8cac-42cae108adfe"
       type: string
     SchemaId:
       title: Schema Id
@@ -431,8 +691,10 @@ components:
     Connection:
       title: Connection
       example: {}
+      type: object
     ConnectionResponse:
       title: Connection Response
+      type: object
       required:
         - connection_id
         - state
@@ -451,37 +713,131 @@ components:
       title: Verkey
       example: HymVhRozF7o9Sh9iyKXu5WKHP95YERhrpZxGx5d6WhYw
       type: string
+    Comment:
+      title: Comment
+      example: Hello World
+      type: string
+    SchemaName:
+      title: Schema Name
+      type: string
+      example: test_schema
+    SchemaVersion:
+      title: Schema Version
+      type: string
+      example: "1.0.0"
+    SchemaAttributes:
+      title: Schema Attributes
+      type: array
+      items:
+        type: string
+      example:
+        - attr_1
+        - attr_2
+        - attr_3
     Schema:
       title: Schema
       description: Schema definition
+      type: object
       # TODO: add required fields?
       example:
-        ver: "1.0"
-        id: "Y9oNbFNTgxrRuvxQk3xEzr:2:test_schema:1.0.0"
-        name: "test_schema"
-        version: "1.0.0"
-        attrNames:
-          - "attr_1"
-          - "attr_2"
-          - "attr_3"
-        seqNo: 11
+        {
+          "ver": "1.0",
+          "id": "Y9oNbFNTgxrRuvxQk3xEzr:2:test_schema:1.0.0",
+          "name": "test_schema",
+          "version": "1.0.0",
+          "attrNames": ["attr_1", "attr_2", "attr_3"],
+          "seqNo": 11,
+        }
+    CredentialPreview:
+      title: Credential Preview
+      type: object
+      required:
+        - "@type"
+        - attributes
+      properties:
+        "@type":
+          type: string
+          enum:
+            - "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"
+          example: "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"
+        attributes:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - value
+            properties:
+              name:
+                type: string
+              mime-type:
+                type: string
+              value:
+                type: string
+      example:
+        {
+          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+          "attributes":
+            [
+              { "name": "attr_1", "value": "value_1" },
+              { "name": "attr_2", "value": "value_2" },
+              { "name": "attr_3", "value": "value_3" },
+            ],
+        }
+
+    IssueCredentialState:
+      title: Issue Credential State
+      description: All possible issue credential state values
+      type: string
+      example: proposal-sent
+      enum:
+        - proposal-sent
+        - proposal-received
+        - offer-sent
+        - offer-received
+        - request-sent
+        - request-received
+        - credential-issued
+        - credential-received
+        - done
+
     CredentialDefinition:
       title: Credential Definition
+      type: object
       # TODO: add required fields?
       example:
-        ver: "1.0"
-        id: "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default"
-        schemaId: "12"
-        type: CL
-        tag: default
-        value:
-          primary:
-            "n": "127473542495438147573510476102476902133854813754098957204867619522405674317018859941864352419933227338200593131633863547249552725335523634158360861379038920996404174540285309296147612235783265529767167904996672533424299318502061201785710802874714294174143582682739350240229266415073900875507216317608608419590749758007624873612987354273561597672087026667313974344205743513108098303412867935178289607206971675919540105355234142077505442787841104628317493214564810784261197466701597725036470989697050855442369151927195340336984787674149053901429543050018150008478471976322268372173725164950897146486534208375313658743913"
-            s: "65818689269823967224337061200277779392234203780958681071979765611348839168322943966737475112261896111357320138778757065891281921197440097002615498509033425652242864586741386765592821062979097745378937128174004971762786640103105629442159475365159836976073886029307851026908970994829903300109597230301114225997246242679312570675015835522760053319269527084928663538396971295690506335377466402252848447042892658905613203874434705837943677780063921041179819697545228811016183063967989936330561640506841490120102577693339579651117393959310406568508979515298779995407222937217220638869118337307458754771745779882842551583957"
-            r:
-              attr_2: "51288787261098209501918361017434738039396559240181084024072376043981733617197124422285362785531867106205259059511012989265257750815057229625776239902268148159240026351692626846471237370316944382717070664579921786642246297025320221128643932326231901994502071437080527938105845057316611594317815585962995630440264494906187392024263524589040353791190656247954182173035217728619640076109690946048473714974821555775006753553400010494644755834190135206012433445625838647683519920548605994424810625611229251495082321603992265565001261836732982193329161683683007877406661513473331737004850593281692214631901319662119982702922"
-              attr_3: "49181762688290033657446628790584551868718995111464422170653915452393747911840814545440872765372893672471205136395434982292712460522218700053539095558984733806664620823639102136028452144009159713045675694364042524060684443787233750663981609531778189390047496947791414470032823060753313065437518080235878845351585405484399614405394732610591997574454401630571733355205236989435994214291321960467589480432939966179940916409629940016780143983651757105859829934723575147299207641665320314894905208079668584551936316156492573527926041185621509809863665431708246846967753137673120991441299733316834328405117780995288938831960"
-              master_secret: "55538424482357179006904475057212929303648337854551436067860163418580875286658754309614134356521736148588690128194367442517503542151131893353616029898291001113787008415246944257559064252055726634969959428779277791311649310859911986025543178916305739383261726815449892298017969062336790138195201464646418205024584174631846494837622469674261184752618226770681209326126925275817705162548925201642177095627695920338858257041172323289863931904819081634906164566038325643344387794492965878883835475209080317985881686751050847796692787879655322665209901159744163351765059041544796505393057421762647235069315054477528853561473"
-              attr_1: "30886155743965686596111154816080405248462718126264612304549353774874576024335575570672949599223811931464968785591555429018481986959035338465010646916129018856811265590112946954474656478128827689132913637543377270592217574931365985240940393300396509940083648506176813465677576969450791064392913905672340945666537607742715770967118252787128981065813564952993994324545119742090220379288320480251447895567821617698929571634776885837657497224943766401548060195388838088667649983419151624233451714099262934942791309973082062184242430968684229937149556567677716686322793149698990735633517128615499672788711239033452193882997"
-            rctxt: "118794108011306418186599966013685417259067451572329168338986396401718511272829290486080995212827126457817056257265484527810068143652813250691318847597106924333754555635689923547896416240741937417433198117397677657367813549201117642415892893893381488036182474297804412028150810635810333104761444058436184382989414463435135399687357899136817489918140316906972132553030427022094507232967240719401668656063683319995507797481327116566453773630750501126563798296642025598222840921566196961717932895723665756200235727569096614264333988899662958311074895571782854329655460918882500227649533684869211196542823703742125337784110"
-            z: "105630626525262054412237755083369001506042501169646719098603962721650276426684319172879455142677137798560163792358891628363088368803209632822777508716551660571988904519705987074094883201485589766095616179828793397893771789008873400971460093284769835475804783847161628863255694379113641839797171437881461956336479878362639116657891310026976287218412427465483710278481629012528677992951433715775723708478290067190705706789707748967166740980626023098110954588495187304096367803794208972671801623501450811525547654409352588261071510140289955775228914918919001173412112332959725654909432886608249741918119912786853133051762"
+        {
+          "ver": "1.0",
+          "id": "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default",
+          "schemaId": "12",
+          "type": "CL",
+          "tag": "default",
+          "value":
+            {
+              "primary":
+                {
+                  "n": "127473542495438147573510476102476902133854813754098957204867619522405674317018859941864352419933227338200593131633863547249552725335523634158360861379038920996404174540285309296147612235783265529767167904996672533424299318502061201785710802874714294174143582682739350240229266415073900875507216317608608419590749758007624873612987354273561597672087026667313974344205743513108098303412867935178289607206971675919540105355234142077505442787841104628317493214564810784261197466701597725036470989697050855442369151927195340336984787674149053901429543050018150008478471976322268372173725164950897146486534208375313658743913",
+                  "s": "65818689269823967224337061200277779392234203780958681071979765611348839168322943966737475112261896111357320138778757065891281921197440097002615498509033425652242864586741386765592821062979097745378937128174004971762786640103105629442159475365159836976073886029307851026908970994829903300109597230301114225997246242679312570675015835522760053319269527084928663538396971295690506335377466402252848447042892658905613203874434705837943677780063921041179819697545228811016183063967989936330561640506841490120102577693339579651117393959310406568508979515298779995407222937217220638869118337307458754771745779882842551583957",
+                  "r":
+                    {
+                      "attr_2": "51288787261098209501918361017434738039396559240181084024072376043981733617197124422285362785531867106205259059511012989265257750815057229625776239902268148159240026351692626846471237370316944382717070664579921786642246297025320221128643932326231901994502071437080527938105845057316611594317815585962995630440264494906187392024263524589040353791190656247954182173035217728619640076109690946048473714974821555775006753553400010494644755834190135206012433445625838647683519920548605994424810625611229251495082321603992265565001261836732982193329161683683007877406661513473331737004850593281692214631901319662119982702922",
+                      "attr_3": "49181762688290033657446628790584551868718995111464422170653915452393747911840814545440872765372893672471205136395434982292712460522218700053539095558984733806664620823639102136028452144009159713045675694364042524060684443787233750663981609531778189390047496947791414470032823060753313065437518080235878845351585405484399614405394732610591997574454401630571733355205236989435994214291321960467589480432939966179940916409629940016780143983651757105859829934723575147299207641665320314894905208079668584551936316156492573527926041185621509809863665431708246846967753137673120991441299733316834328405117780995288938831960",
+                      "master_secret": "55538424482357179006904475057212929303648337854551436067860163418580875286658754309614134356521736148588690128194367442517503542151131893353616029898291001113787008415246944257559064252055726634969959428779277791311649310859911986025543178916305739383261726815449892298017969062336790138195201464646418205024584174631846494837622469674261184752618226770681209326126925275817705162548925201642177095627695920338858257041172323289863931904819081634906164566038325643344387794492965878883835475209080317985881686751050847796692787879655322665209901159744163351765059041544796505393057421762647235069315054477528853561473",
+                      "attr_1": "30886155743965686596111154816080405248462718126264612304549353774874576024335575570672949599223811931464968785591555429018481986959035338465010646916129018856811265590112946954474656478128827689132913637543377270592217574931365985240940393300396509940083648506176813465677576969450791064392913905672340945666537607742715770967118252787128981065813564952993994324545119742090220379288320480251447895567821617698929571634776885837657497224943766401548060195388838088667649983419151624233451714099262934942791309973082062184242430968684229937149556567677716686322793149698990735633517128615499672788711239033452193882997",
+                    },
+                  "rctxt": "118794108011306418186599966013685417259067451572329168338986396401718511272829290486080995212827126457817056257265484527810068143652813250691318847597106924333754555635689923547896416240741937417433198117397677657367813549201117642415892893893381488036182474297804412028150810635810333104761444058436184382989414463435135399687357899136817489918140316906972132553030427022094507232967240719401668656063683319995507797481327116566453773630750501126563798296642025598222840921566196961717932895723665756200235727569096614264333988899662958311074895571782854329655460918882500227649533684869211196542823703742125337784110",
+                  "z": "105630626525262054412237755083369001506042501169646719098603962721650276426684319172879455142677137798560163792358891628363088368803209632822777508716551660571988904519705987074094883201485589766095616179828793397893771789008873400971460093284769835475804783847161628863255694379113641839797171437881461956336479878362639116657891310026976287218412427465483710278481629012528677992951433715775723708478290067190705706789707748967166740980626023098110954588495187304096367803794208972671801623501450811525547654409352588261071510140289955775228914918919001173412112332959725654909432886608249741918119912786853133051762",
+                },
+            },
+        }
+    IssueCredentialOperationResponse:
+      title: Issue Credential Operation Response
+      type: object
+      required:
+        - state
+        - thread_id
+      properties:
+        state:
+          $ref: "#/components/schemas/IssueCredentialState"
+        thread_id:
+          $ref: "#/components/schemas/ThreadId"
