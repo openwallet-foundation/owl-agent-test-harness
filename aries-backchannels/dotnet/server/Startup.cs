@@ -1,4 +1,5 @@
 using System;
+using DotNet.Backchannel.Handlers;
 using DotNet.Backchannel.Middlewares;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Storage;
@@ -36,9 +37,12 @@ namespace DotNet.Backchannel
             // Add in memory cache to store invitations
             services.AddMemoryCache();
 
+
+
             services.AddAriesFramework(builder =>
             {
                 builder.Services.AddSingleton<IAgentMiddleware, MessageAgentMiddleware>();
+                builder.Services.AddSingleton<AATHCredentialHandler>();
 
                 builder.RegisterAgent<DotNet.Backchannel.TestAgent>(c =>
                 {
