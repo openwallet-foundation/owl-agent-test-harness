@@ -39,6 +39,8 @@ tags:
     description: Agent commands related to credential-definition topic
   - name: Issue Credential
     description: Agent commands related to issue-credential topic
+  - name: Credential
+    description: Agent commands realted to credential topic
   - name: Present Proof
     description: Agent commands related to present-proof topic
 paths:
@@ -405,6 +407,27 @@ paths:
                   credential_definition_id:
                     $ref: "#/components/schemas/CredentialDefinitionId"
 
+  /agent/command/issue-credential/{credentialExchangeThreadId}:
+    get:
+      tags:
+        - Issue Credential
+      summary: Get credential exchange record by thread id
+      operationId: IssueCredentialGetByThreadId
+      parameters:
+        - in: path
+          name: credentialExchangeThreadId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential Exchange
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialId"
+        404:
+          description: Credential Exchange not found
   /agent/command/issue-credential/send-proposal:
     post:
       tags:
@@ -645,10 +668,43 @@ paths:
               schema:
                 allOf:
                   - $ref: "#/components/schemas/IssueCredentialOperationResponse"
-                  - properties:
+                  - required:
+                      - credential_id
+                    properties:
                       state:
                         example: done
 
+  /agent/command/credential/{credentialId}:
+    get:
+      tags:
+        - Credential
+      summary: Get credential by id
+      operationId: CredentialGetById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential
+          content:
+            application/json:
+              schema:
+                required:
+                  - referent
+                  - schema_id
+                  - cred_def_id
+                properties:
+                  referent:
+                    $ref: "#/components/schemas/CredentialId"
+                  schema_id:
+                    $ref: "#/components/schemas/SchemaId"
+                  cred_def_id:
+                    $ref: "#/components/schemas/CredentialDefinitionId"
+        404:
+          description: Credential not found
 components:
   schemas:
     ConnectionInvitation:
@@ -841,3 +897,9 @@ components:
           $ref: "#/components/schemas/IssueCredentialState"
         thread_id:
           $ref: "#/components/schemas/ThreadId"
+        credential_id:
+          $ref: "#/components/schemas/CredentialId"
+    CredentialId:
+      title: Credential Id
+      example: "828761d2-65e9-44a5-852e-1f60b943ab65"
+      type: string

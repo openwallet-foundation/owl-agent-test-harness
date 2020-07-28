@@ -7,18 +7,13 @@ using Hyperledger.Aries.Agents;
 
 namespace DotNet.Backchannel.Middlewares
 {
-
-
     public class MessageAgentMiddleware : IAgentMiddleware
     {
-
-        private IMemoryCache _connectionCache;
-
+        private IMemoryCache _cache;
         public MessageAgentMiddleware(
-
-       IMemoryCache memoryCache)
+            IMemoryCache memoryCache)
         {
-            _connectionCache = memoryCache;
+            _cache = memoryCache;
         }
 
         /// <inheritdoc />
@@ -33,14 +28,13 @@ namespace DotNet.Backchannel.Middlewares
             {
                 var message = messageContext.GetMessage<TrustPingMessage>();
 
-                var testHarnessConnection = _connectionCache.Get<TestHarnessConnection>(messageContext.Connection.Id);
+                var THConnection = _cache.Get<TestHarnessConnection>(messageContext.Connection.Id);
 
-                if (testHarnessConnection != null && testHarnessConnection.State == TestHarnessConnectionState.Responded)
+                if (THConnection != null && THConnection.State == TestHarnessConnectionState.Responded)
                 {
-                    testHarnessConnection.State = TestHarnessConnectionState.Complete;
+                    THConnection.State = TestHarnessConnectionState.Complete;
                 }
             }
-
         }
     }
 }

@@ -1,5 +1,6 @@
 
 using System;
+using DotNet.Backchannel.Handlers;
 using Hyperledger.Aries.Agents;
 
 namespace DotNet.Backchannel
@@ -16,9 +17,10 @@ namespace DotNet.Backchannel
             AddConnectionHandler();
             AddTrustPingHandler();
             AddBasicMessageHandler();
-            AddCredentialHandler();
             AddProofHandler();
             AddForwardHandler();
+            // We use a custom credential handler
+            AddHandler<AATHCredentialHandler>();
         }
     }
 }
