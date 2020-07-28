@@ -11,3 +11,6 @@ aries-agent-test-harness.code-workspace
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Agent log files
+.logs

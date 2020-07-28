@@ -514,8 +514,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     def _process(self, args, env, loop):
         proc = subprocess.Popen(
             args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             env=env,
             encoding="utf-8",
         )

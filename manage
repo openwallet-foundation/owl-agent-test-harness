@@ -256,6 +256,13 @@ runTests() {
   ${terminalEmu} docker run -it --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   rm ${BEHAVE_INI_TMP}
 
+  # Export agent logs
+  mkdir -p .logs
+  docker logs acme_agent > .logs/acme_agent.log
+  docker logs bob_agent > .logs/bob_agent.log
+  docker logs faber_agent > .logs/faber_agent.log
+  docker logs mallory_agent > .logs/mallory_agent.log
+
   echo
   echo "Cleanup:"
   echo "  - Shutting down all the agents ..."
