@@ -23,10 +23,14 @@ namespace DotNet.Backchannel.Models
     public class TestHarnessConnection
     {
 
+        [JsonProperty("connection_id")]
         public string ConnectionId;
 
+        [JsonProperty("state")]
         [JsonConverter(typeof(StringEnumConverter))]
         public TestHarnessConnectionState State;
+
+        [JsonIgnore]
         public ConnectionRequestMessage Request;
     }
 }

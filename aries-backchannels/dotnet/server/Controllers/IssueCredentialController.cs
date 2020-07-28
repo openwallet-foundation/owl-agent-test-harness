@@ -21,7 +21,6 @@ using System.Linq;
 using Hyperledger.Aries.Decorators.Attachments;
 using Hyperledger.Aries.Extensions;
 using Hyperledger.Aries.Decorators.Threading;
-using Newtonsoft.Json;
 
 namespace DotNet.Backchannel.Controllers
 {
@@ -64,17 +63,19 @@ namespace DotNet.Backchannel.Controllers
         {
             var context = await _agentContextProvider.GetContextAsync();
 
-            var THCredentialExchange = _credentialCache.Get<TestHarnessCredentialExchange>(threadId);
-            if (THCredentialExchange != null) return Ok(THCredentialExchange);
+            try
+            {
+                var credentialRecord = await _credentialService.GetByThreadIdAsync(context, threadId);
+                var THCredentialExchange = _credentialCache.Get<TestHarnessCredentialExchange>(threadId);
+                if (THCredentialExchange == null) return NotFound();
 
-            return NotFound();
-            // TODO
-            // var credentialRecord = await _credentialService.GetByThreadIdAsync(context, threadId); // TODO: Handle AriesFrameworkException if credential record not found
-            // return Ok(new
-            // {
-            //     connection_id = connection.Id,
-            //     state = connection.State
-            // });
+                return Ok(THCredentialExchange);
+            }
+            catch
+            {
+                // Can't find the credential record
+                return NotFound();
+            }
         }
 
         [HttpPost("send-proposal")]
