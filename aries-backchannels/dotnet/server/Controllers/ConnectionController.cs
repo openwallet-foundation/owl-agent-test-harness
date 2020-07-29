@@ -43,19 +43,7 @@ namespace DotNet.Backchannel.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var connections = await _connectionService.ListAsync(context);
 
-            // TODO: Should we also return the invitation connections from the cache?
-            return Ok(connections.ConvertAll(connection =>
-            {
-
-                var testHarnessConnection = _connectionCache.Get<TestHarnessConnection>(connection.Id);
-                if (testHarnessConnection != null) return MapConnection(testHarnessConnection);
-
-                return new
-                {
-                    connection_id = connection.Id,
-                    state = connection.State
-                };
-            }));
+            return Ok(connections.ConvertAll(connection => _connectionCache.Get<TestHarnessConnection>(connection.Id)));
         }
 
         [HttpGet("{connectionId}")]
@@ -63,15 +51,21 @@ namespace DotNet.Backchannel.Controllers
         {
             var context = await _agentContextProvider.GetContextAsync();
 
-            var testHarnessConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
-            if (testHarnessConnection != null) return Ok(MapConnection(testHarnessConnection));
-
-            var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
-            return Ok(new
+            try
             {
-                connection_id = connection.Id,
-                state = connection.State
-            });
+                var THConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
+                var connection = await _connectionService.GetAsync(context, connectionId);
+                if (THConnection == null) return NotFound();
+
+                return Ok(THConnection);
+            }
+            catch
+            {
+                // Connection record not found
+                return NotFound();
+            }
+
+
         }
 
         [HttpPost("create-invitation")]
@@ -84,14 +78,13 @@ namespace DotNet.Backchannel.Controllers
             var testHarnessConnection = new TestHarnessConnection
             {
                 ConnectionId = connection.Id,
-                // State is 'Invited', should be 'invitation'
-                State = TestHarnessConnectionState.Invitation
+                State = TestHarnessConnectionState.Invited
             };
 
             _connectionCache.Set(connection.Id, testHarnessConnection);
 
             // Listen for connection request to update the state
-            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Request, _ => _.MessageType == MessageTypes.ConnectionRequest && _.RecordId == connection.Id);
+            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Requested, _ => _.MessageType == MessageTypes.ConnectionRequest && _.RecordId == connection.Id);
 
             return Ok(new { connection_id = testHarnessConnection.ConnectionId, state = testHarnessConnection.State, invitation });
         }
@@ -108,59 +101,55 @@ namespace DotNet.Backchannel.Controllers
             var THConnection = new TestHarnessConnection
             {
                 ConnectionId = record.Id,
-                // State is 'Negotiation', should be 'invitation'
-                State = TestHarnessConnectionState.Invitation,
+                State = TestHarnessConnectionState.Invited,
                 Request = request
             };
 
-            // Cache is needed because the test harness separates
-            // Receiving and accepting of invitations but .NET does not support that
-            // We generate the ConnectionRequestMessage and store it in the cache.
-            // It will be send in the accept-invitation operation.
             _connectionCache.Set(record.Id, THConnection);
 
-            return Ok(MapConnection(THConnection));
+            return Ok(THConnection);
         }
 
         [HttpPost("accept-invitation")]
         public async Task<IActionResult> AcceptInvitationAsync(OperationBody body)
         {
             var connectionId = body.Id;
-
-            var testHarnessConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
-            if (testHarnessConnection == null) return NotFound(); // Return early if not found
-
             var context = await _agentContextProvider.GetContextAsync();
-            var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
+
+            var THConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
+            if (THConnection == null) return NotFound(); // Return early if not found
+
+            ConnectionRecord connection;
+            try { connection = await _connectionService.GetAsync(context, connectionId); }
+            catch { return NotFound(); }
 
             // Listen for connection response to update the state
-            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Response, _ => _.MessageType == MessageTypes.ConnectionResponse && _.RecordId == connection.Id);
+            UpdateStateOnMessage(THConnection, TestHarnessConnectionState.Responded, _ => _.MessageType == MessageTypes.ConnectionResponse && _.RecordId == connection.Id);
 
-            await _messageService.SendAsync(context.Wallet, testHarnessConnection.Request, connection);
+            await _messageService.SendAsync(context.Wallet, THConnection.Request, connection);
 
-            // State is 'Negotiation', should be 'request'
-            testHarnessConnection.State = TestHarnessConnectionState.Request;
+            THConnection.State = TestHarnessConnectionState.Requested;
 
-            return Ok();
+            return Ok(THConnection);
+
+
         }
 
         [HttpPost("accept-request")]
         public async Task<IActionResult> AcceptRequestAsync(OperationBody body)
         {
             var connectionId = body.Id;
-
-            var testHarnessConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
-            if (testHarnessConnection == null) return NotFound(); // Return early if not found
-
             var context = await _agentContextProvider.GetContextAsync();
+
+            var THConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
+            if (THConnection == null) return NotFound(); // Return early if not found
 
             var (response, connection) = await _connectionService.CreateResponseAsync(context, connectionId);
             await _messageService.SendAsync(context.Wallet, response, connection);
 
-            // State is 'Connected', should be 'response'
-            testHarnessConnection.State = TestHarnessConnectionState.Response;
+            THConnection.State = TestHarnessConnectionState.Responded;
 
-            return Ok();
+            return Ok(THConnection);
         }
 
         [HttpPost("send-ping")]
@@ -168,36 +157,32 @@ namespace DotNet.Backchannel.Controllers
         {
             var connectionId = body.Id;
             var data = body.Data;
-
-            var testHarnessConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
-            if (testHarnessConnection == null) return NotFound(); // Return early if not found
-
             var context = await _agentContextProvider.GetContextAsync();
-            var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
+
+            var THConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
+            if (THConnection == null) return NotFound(); // Return early if not found
+
+            ConnectionRecord connection;
+            try { connection = await _connectionService.GetAsync(context, connectionId); }
+            catch { return NotFound(); }
+
             var message = new TrustPingMessage
             {
                 Comment = (string)data["comment"]
             };
             await _messageService.SendAsync(context.Wallet, message, connection);
 
-            // State is 'Connected', should be 'active'
-            testHarnessConnection.State = TestHarnessConnectionState.Active;
+            THConnection.State = TestHarnessConnectionState.Complete;
 
-            return Ok();
+            return Ok(THConnection);
         }
 
-        private object MapConnection(TestHarnessConnection THConnection) => new
-        {
-            connection_id = THConnection.ConnectionId,
-            state = THConnection.State
-        };
-
-        private void UpdateStateOnMessage(TestHarnessConnection testHarnessConnection, TestHarnessConnectionState nextState, Func<ServiceMessageProcessingEvent, bool> predicate)
+        private void UpdateStateOnMessage(TestHarnessConnection THConnection, TestHarnessConnectionState nextState, Func<ServiceMessageProcessingEvent, bool> predicate)
         {
             _eventAggregator.GetEventByType<ServiceMessageProcessingEvent>()
             .Where(predicate)
             .Take(1)
-            .Subscribe(_ => { testHarnessConnection.State = nextState; });
+            .Subscribe(_ => { THConnection.State = nextState; });
         }
     }
 }
