@@ -9,11 +9,34 @@ def step_impl(context, prover, issuer, credential_data):
 
     if credential_data != None:
         # Get and assign the data to the context
-        try:
-            credential_data_json_file = open('features/data/cred_data_' + context.schema["schema_name"].lower() + '.json')
-            context.credential_data = json.load(credential_data_json_file)[credential_data]['attributes']
-        except FileNotFoundError:
-            print(FileNotFoundError + ': features/data/cred_data_' + context.schema["schema_name"].lower() + '.json')
+        # loop as many times as there are schemas and add to the cred data dict based on schema name
+        # try:
+        #     credential_data_json_file = open('features/data/cred_data_' + context.schema["schema_name"].lower() + '.json')
+        #     context.credential_data = json.load(credential_data_json_file)[credential_data]['attributes']
+        # except FileNotFoundError:
+        #     print(FileNotFoundError + ': features/data/cred_data_' + context.schema["schema_name"].lower() + '.json')
+
+        if "schema_dict" in context:
+            for schema in context.schema_dict:
+                if 'credential_data_dict' in context:
+                    try:
+                        credential_data_json_file = open('features/data/cred_data_' + schema.lower() + '.json')
+                        context.credential_data_dict[schema] = json.load(credential_data_json_file)[credential_data]['attributes']
+                    except FileNotFoundError:
+                        print(FileNotFoundError + ': features/data/cred_data_' + schema.lower() + '.json')
+                else:
+                    try:
+                        credential_data_json_file = open('features/data/cred_data_' + schema.lower() + '.json')
+                        context.credential_data_dict = {schema: json.load(credential_data_json_file)[credential_data]['attributes']}
+                    except FileNotFoundError:
+                        print(FileNotFoundError + ': features/data/cred_data_' + schema.lower() + '.json')
+
+        #         context.schema_dict[tag] = schema_json["schema"]
+        #         context.support_revocation_dict[tag] = schema_json["cred_def_support_revocation"]
+        # else:
+        #     context.schema_dict = {tag: schema_json["schema"]}
+        #     context.support_revocation_dict = {tag: schema_json["cred_def_support_revocation"]}
+
 
     # Call the step below to get the credential issued.
     context.execute_steps('''
@@ -29,13 +52,27 @@ def step_impl(context, prover, issuer):
     ''')
 
     # make sure the issuer has the credential definition
-    context.execute_steps('''
-     Given "''' + issuer + '''" has a public did
-      When "''' + issuer + '''" creates a new schema
-       And "''' + issuer + '''" creates a new credential definition
-      Then "''' + issuer + '''" has an existing schema
-       And "''' + issuer + '''" has an existing credential definition
-    ''')
+    # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
+    # there are schemas and add the schema to context as the issue cred tests expect. 
+    if 'schema_dict' not in context:
+        context.execute_steps('''
+        Given "''' + issuer + '''" has a public did
+        When "''' + issuer + '''" creates a new schema
+        And "''' + issuer + '''" creates a new credential definition
+        Then "''' + issuer + '''" has an existing schema
+        And "''' + issuer + '''" has an existing credential definition
+        ''')
+    else:
+        for schema in context.schema_dict:
+            context.support_revocation = context.support_revocation_dict[schema]
+            context.schema = context.schema_dict[schema]
+            context.execute_steps('''
+            Given "''' + issuer + '''" has a public did
+            When "''' + issuer + '''" creates a new schema
+            And "''' + issuer + '''" creates a new credential definition
+            Then "''' + issuer + '''" has an existing schema
+            And "''' + issuer + '''" has an existing credential definition
+            ''')
 
     # setup the holder and issuer for the issue cred sceneario below. The data table in the tests does not setup a holder.
     # The prover is also the holder.
@@ -48,13 +85,29 @@ def step_impl(context, prover, issuer):
     assert context.issuer_url is not None and 0 < len(context.issuer_url)
 
     # issue the credential to prover
-    context.execute_steps('''
-        When  "''' + issuer + '''" offers a credential
-        And "''' + prover + '''" requests the credential
-        And  "''' + issuer + '''" issues the credential
-        And "''' + prover + '''" acknowledges the credential issue
-        Then "''' + prover + '''" has the credential issued
-    ''')
+    # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
+    # there are schemas and add the schema to context as the issue cred tests expect. 
+    if 'schema_dict' not in context:
+        context.execute_steps('''
+            When  "''' + prover + '''" proposes a credential to "''' + issuer + '''"
+            And  "''' + issuer + '''" offers a credential
+            And "''' + prover + '''" requests the credential
+            And  "''' + issuer + '''" issues the credential
+            And "''' + prover + '''" acknowledges the credential issue
+            Then "''' + prover + '''" has the credential issued
+        ''')
+    else:
+        for schema in context.schema_dict:
+            context.credential_data = context.credential_data_dict[schema]
+            context.schema = context.schema_dict[schema]
+            context.execute_steps('''
+                When  "''' + prover + '''" proposes a credential to "''' + issuer + '''"
+                And  "''' + issuer + '''" offers a credential
+                And "''' + prover + '''" requests the credential
+                And  "''' + issuer + '''" issues the credential
+                And "''' + prover + '''" acknowledges the credential issue
+                Then "''' + prover + '''" has the credential issued
+            ''')
     
 
 @when('"{verifier}" sends a request for proof presentation to "{prover}"')
@@ -130,13 +183,21 @@ def step_impl(context, prover):
         # TODO: There is probably a better way to get access to the specific requested attributes and predicates. Revisit this later.
         try:
             for i in range(json.dumps(presentation["requested_attributes"]).count("cred_id")):
-                presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id
+                # Get the schema name from the loaded presentation for each requested attributes
+                cred_type_name = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_type_name"]
+                presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name]
+                # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+                presentation["requested_attributes"][list(presentation["requested_attributes"])[i]].pop("cred_type_name")
         except KeyError:
             pass
         
         try:
             for i in range(json.dumps(presentation["requested_predicates"]).count("cred_id")):
-                presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id  
+                # Get the schema name from the loaded presentation for each requested predicates
+                cred_type_name = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_type_name"]
+                presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name] 
+                # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+                presentation["requested_predicates"][list(presentation["requested_predicates"])[i]].pop("cred_type_name")
         except KeyError:
             pass
 
@@ -146,7 +207,7 @@ def step_impl(context, prover):
             "requested_attributes": {
                 "attr_1": {
                     "revealed": True,
-                    "cred_id": context.credential_id
+                    "cred_id": context.credential_id_dict[context.schema['schema_name']]
                 }
             }
         }
