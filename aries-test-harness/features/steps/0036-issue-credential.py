@@ -35,69 +35,91 @@ def step_impl(context, issuer):
     resp_json = json.loads(resp_text)
     issuer_did = resp_json
 
-    context.issuer_did = issuer_did["did"]
+    if "schema" not in context:
+        # check for a schema already loaded in the context. If it is not, load the template
+        if "schema" not in context:
+            context.schema = SCHEMA_TEMPLATE.copy()
+            context.schema["schema_name"] = context.schema["schema_name"] + issuer
+
+    #context.issuer_did = issuer_did["did"]
+    if 'issuer_did_dict' in context:
+        context.issuer_did_dict[context.schema['schema_name']] = issuer_did["did"]
+    else:
+        context.issuer_did_dict = {context.schema['schema_name']: issuer_did["did"]}
 
 @when('"{issuer}" creates a new schema')
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
-    issuer_did = context.issuer_did
 
-    if not "issuer_schema_id" in context:
+    #if not "issuer_schema_id_dict" in context:
         # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
-        if "schema" in context:
-            schema = context.schema
-        else:   
-            schema = SCHEMA_TEMPLATE.copy()
-            schema["schema_name"] = schema["schema_name"] + issuer
+    if "schema" in context:
+        schema = context.schema
+    else:   
+        schema = SCHEMA_TEMPLATE.copy()
+        schema["schema_name"] = schema["schema_name"] + issuer
 
-        (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "schema", data=schema)
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "schema", data=schema)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
-        resp_json = json.loads(resp_text)
-        context.issuer_schema_id = resp_json["schema_id"]
+    resp_json = json.loads(resp_text)
+    #context.issuer_schema_id = resp_json["schema_id"]
+    if 'issuer_schema_id_dict' in context:
+        context.issuer_schema_id_dict[context.schema['schema_name']] = resp_json["schema_id"]
+    else:
+        context.issuer_schema_id_dict = {context.schema['schema_name']: resp_json["schema_id"]}
 
 @when('"{issuer}" creates a new credential definition')
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
-    issuer_did = context.issuer_did
 
-    if not "credential_definition_id" in context:
-        cred_def = CRED_DEF_TEMPLATE.copy()
-        cred_def["schema_id"] = context.issuer_schema_id
-        if "support_revocation" in context:
-            cred_def["support_revocation"] = context.support_revocation
-        #data = json.dumps(cred_def)
-        (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential-definition", data=cred_def)
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    #if not "credential_definition_id_dict" in context:
+    cred_def = CRED_DEF_TEMPLATE.copy()
+    cred_def["schema_id"] = context.issuer_schema_id_dict[context.schema['schema_name']]
+    if "support_revocation" in context:
+        cred_def["support_revocation"] = context.support_revocation
 
-        resp_json = json.loads(resp_text)
-        context.credential_definition_id = resp_json["credential_definition_id"]
+    (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential-definition", data=cred_def)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    resp_json = json.loads(resp_text)
+    #context.credential_definition_id = resp_json["credential_definition_id"]
+    if 'credential_definition_id_dict' in context:
+        context.credential_definition_id_dict[context.schema['schema_name']] = resp_json["credential_definition_id"]
+    else:
+        context.credential_definition_id_dict = {context.schema['schema_name']: resp_json["credential_definition_id"]}
 
 @then('"{issuer}" has an existing schema')
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
-    issuer_schema_id = context.issuer_schema_id
+    issuer_schema_id = context.issuer_schema_id_dict[context.schema['schema_name']]
 
     (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "schema", id=issuer_schema_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    issuer_schema = resp_json
+    #context.issuer_schema = resp_json
+    if 'issuer_schema_dict' in context:
+        context.issuer_schema_dict[context.schema['schema_name']] = resp_json
+    else:
+        context.issuer_schema_dict = {context.schema['schema_name']: resp_json}
 
-    context.issuer_schema = issuer_schema
 
 @then('"{issuer}" has an existing credential definition')
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
-    issuer_credential_definition_id = context.credential_definition_id
+    issuer_credential_definition_id = context.credential_definition_id_dict[context.schema['schema_name']]
 
     (resp_status, resp_text) = agent_backchannel_GET(issuer_url + "/agent/command/", "credential-definition", id=issuer_credential_definition_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    issuer_credential_definition = resp_json
+    #context.issuer_credential_definition = resp_json
+    if 'issuer_credential_definition_dict' in context:
+        context.issuer_credential_definition_dict[context.schema['schema_name']] = resp_json
+    else:
+        context.issuer_credential_definition_dict = {context.schema['schema_name']: resp_json}
 
-    context.issuer_credential_definition = issuer_credential_definition
 
 @given('"{issuer}" has an existing schema and credential definition')
 def step_impl(context, issuer):
@@ -143,7 +165,6 @@ def step_impl(context, issuer):
 @when('"{holder}" proposes a credential to "{issuer}"')
 def step_impl(context, holder, issuer):
     holder_url = context.config.userdata.get(holder)
-    #holder_connection_id = context.connection_id_dict[holder]
 
     # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
     if "credential_data" in context:
@@ -152,18 +173,17 @@ def step_impl(context, holder, issuer):
         cred_data = CREDENTIAL_ATTR_TEMPLATE.copy()
 
     credential_offer = {
-        "schema_issuer_did": context.issuer_did,
-        "issuer_did": context.issuer_did,
-        "schema_name": context.issuer_schema["name"],
-        "cred_def_id": context.issuer_credential_definition["id"],
-        "schema_version": context.issuer_schema["version"],
+        "schema_issuer_did": context.issuer_did_dict[context.schema['schema_name']],
+        "issuer_did": context.issuer_did_dict[context.schema['schema_name']],
+        "schema_name": context.issuer_schema_dict[context.schema['schema_name']]["name"],
+        "cred_def_id": context.issuer_credential_definition_dict[context.schema['schema_name']]["id"],
+        "schema_version": context.issuer_schema_dict[context.schema['schema_name']]["version"],
         "credential_proposal": {
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
             "attributes": cred_data,
         },
-        #"connection_id": context.connection_id_dict[issuer],
         "connection_id": context.connection_id_dict[holder][issuer],
-        "schema_id": context.issuer_schema["id"],
+        "schema_id": context.issuer_schema_dict[context.schema['schema_name']]["id"],
     }
 
     #(resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-proposal", id=holder_connection_id, data=credential_offer)
@@ -193,7 +213,7 @@ def step_impl(context, issuer):
             cred_data = CREDENTIAL_ATTR_TEMPLATE.copy()
 
         credential_offer = {
-            "cred_def_id": context.issuer_credential_definition["id"],
+            "cred_def_id": context.issuer_credential_definition_dict[context.schema['schema_name']]["id"],
             "credential_preview": {
                 "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
                 "attributes": cred_data,
@@ -204,7 +224,6 @@ def step_impl(context, issuer):
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", data=credential_offer)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
-        #context.issuer_cred_ex_id = resp_json["credential_exchange_id"]
         context.cred_thread_id = resp_json["thread_id"]
 
     else:
@@ -286,8 +305,12 @@ def step_impl(context, holder):
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="store", id=context.cred_thread_id, data=credential_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    context.credential_id = resp_json["credential_id"]
     assert resp_json["state"] == "done"
+    #context.credential_id = resp_json["credential_id"]
+    if 'credential_id_dict' in context:
+        context.credential_id_dict[context.schema['schema_name']] = resp_json["credential_id"]
+    else:
+        context.credential_id_dict = {context.schema['schema_name']: resp_json["credential_id"]}
 
     # Verify issuer status
     # This is returning none instead of Done. Should this be the case. Needs investigation.
@@ -298,16 +321,16 @@ def step_impl(context, holder):
 
         holder_url = context.config.userdata.get(holder)
         # get the credential from the holders wallet
-        (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id)
+        (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
-        assert resp_json["referent"] == context.credential_id
-        assert resp_json["schema_id"] == context.issuer_schema_id
-        assert resp_json["cred_def_id"] == context.credential_definition_id
+        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']]
+        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 
         # Make sure the issuer is not holding the credential
         # get the credential from the holders wallet
-        (resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id)
+        (resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
         assert resp_status == 404, f'resp_status {resp_status} is not 404; {resp_text}'
 
 
