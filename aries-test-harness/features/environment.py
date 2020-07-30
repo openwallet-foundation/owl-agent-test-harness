@@ -39,12 +39,20 @@ def before_scenario(context, scenario):
                     try:
                         schema_json_file = open('features/data/' + tag.lower() + '.json')
                         schema_json = json.load(schema_json_file)
-                        context.schema = schema_json["schema"]
+                        #context.schema = schema_json["schema"]
 
                         # Get and assign the credential definition info to the context
-                        context.support_revocation = schema_json["cred_def_support_revocation"]
+                        #context.support_revocation = schema_json["cred_def_support_revocation"]
 
-                        #context.credential_definition = 
+                        # Support multiple schemas for multiple creds in a proof request.
+                        # for each schema in tags add the schema and revocation support to a dict keyed by schema name.
+                        if "schema_dict" in context:
+                            context.schema_dict[tag] = schema_json["schema"]
+                            context.support_revocation_dict[tag] = schema_json["cred_def_support_revocation"]
+                        else:
+                            context.schema_dict = {tag: schema_json["schema"]}
+                            context.support_revocation_dict = {tag: schema_json["cred_def_support_revocation"]}
+
                     except FileNotFoundError:
                         print('FileNotFoundError: features/data/' + tag.lower + '.json')
                     
