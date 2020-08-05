@@ -104,11 +104,13 @@ Before running tests, you must build the TA and harness docker images. Use `./ma
 
 To run the tests, use the `./manage run...` sub-command. the `run` command requires defining what TAs will be used for Acme (`-a <TA>`), Bob (`-b <TA>`) and Mallory (`-m <TA>`). To default all the agents to use a single component, use `-d <TA>`. Parameters are processed in order, so you can use `-d` to default the agents to one, and then use `-b` to use a different TA for Bob.
 
-There are two ways to control the behave test engine's selection of test cases to run. First, you can specify one or more `-t <tag>` options to select the tests associated with specific tags. See the guidance on using tags with behave [here](https://behave.readthedocs.io/en/stable/behave.html#tag-expression). Note that each `-t` option is passed to behave as a `--tags <tag>` parameter, enabling control of the ANDs and ORs handling of tags.
+There are two ways to control the behave test engine's selection of test cases to run. First, you can specify one or more `-t <tag>` options to select the tests associated with specific tags. See the guidance on using tags with behave [here](https://behave.readthedocs.io/en/stable/behave.html#tag-expression). Note that each `-t` option is passed to behave as a `--tags <tag>` parameter, enabling control of the ANDs and ORs handling of tags. To get a full list of possible tags to use in this run command, use the `./manage tags` command.
 
 > Note that the `<tag>` arguments passed in on the command line **cannot** have a space, even if you double-quote the tag or escape the space. This is because the args are going through multiple layers shells (the script, calling docker, calling a script in the docker instance that in turn calls behave...). In all that argument passing, the wrappers around the args get lost. That should be OK in most cases, but if it is a problem, we have the `-i` option as follows...
 
 To enable full control over behave's behaviour (if you will...), the `-i <ini file>` option can be used to pass a behave "ini" format file into the test harness container. The ini file enables full control over the behave engine, add handles the shortcoming of not being able to pass tags arguments with spaces in them. See the behave configuration file options [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files). Note that the file name can be whatever you want. When it lands in the test harness container, it will be called `behave.ini`.
+
+For a full inventory of tests available to run, use the `./manage tests`. Note that tests in the list tagged @wip are works in progress and should not run.
 
 ## Test Tags
 
