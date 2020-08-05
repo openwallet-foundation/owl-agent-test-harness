@@ -8,6 +8,7 @@
 - [Defining Backchannel Operations](#defining-backchannel-operations)
 - [Implementing Test Steps](#implementing-test-steps)
 - [Implementing the Backchannel](#implementing-the-backchannel)
+- [Diving Deeper](#diving-deeper)
 
 ## Writing Tests in Gherkin
 
@@ -119,3 +120,6 @@ Existing backchannels will throw a "NotImplementedException" for any steps that 
 
 See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in the [aries-backchannels](../aries-agent-test-harness/aries-backchannels) folder for details on writing backchannels.
 
+## Diving Deeper
+- [Accessing Connection ID in Test Code](ACCESS-CONNECTION-IDS.md)
+- [Configuring Tests with Credential Types and Proofs](CONFIGURE-CRED-TYPES.md)
