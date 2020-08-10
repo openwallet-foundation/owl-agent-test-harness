@@ -20,5 +20,51 @@
         "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj"
       }
     }
+    {
+        "name": "Python: Current File",
+        "type": "python",
+        "request": "launch",
+        "program": "${file}",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/aries-backchannels",
+        "args" : ["-p", "8020"],
+        "env": {
+            "LEDGER_URL": "http://localhost:9000"
+        },
+    },
+    {
+        "name": "Python: Behave current file",
+        "type": "python",
+        "request": "launch",
+        "module": "behave",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/aries-test-harness",
+        "args": [
+            "${file}",
+            "--tags=@T002-API10-RFC0037",
+            "-k",
+            "-D",
+            "Acme=http://0.0.0.0:8020",
+            "-D",
+            "Bob=http://0.0.0.0:8030",
+            "-D",
+            "Mallory=http://0.0.0.0:8040",
+            "-D",
+            "Faber=http://0.0.0.0:8050"
+        ]
+    },
+    {
+        "name": "Python: Remote Attach",
+        "type": "python",
+        "request": "attach",
+        "pathMappings": [
+            {
+                "localRoot": "${workspaceFolder}/aries-test-harness/aries-backchannels",
+                "remoteRoot": "/aries-backchannels"
+            } 
+        ],
+        "port": 5678,
+        "host": "127.0.0.1"
+    },
   ]
 }

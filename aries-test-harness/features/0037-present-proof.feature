@@ -72,7 +72,7 @@ Feature: Aries agent present proof functions RFC 0037
          | issuer | credential_data      | request for proof            | presentation                |
          | Faber  | Data_BI_HealthValues | proof_request_health_consent | presentation_health_consent |
 
-   @T002-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview
+   @T002-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview @Indy
    Scenario Outline: Present Proof where the prover and verifier are connectionless, the prover does not propose a presentation of the proof, and is acknowledged
       Given "2" agents
          | name  | role     |
@@ -89,7 +89,7 @@ Feature: Aries agent present proof functions RFC 0037
          | issuer |
          | Acme   |
 
-   @T003-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview
+   @T003-API10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview @Indy
    Scenario Outline: Present Proof where the prover has proposed the presentation of proof and is acknowledged
       Given "2" agents
          | name  | role     |

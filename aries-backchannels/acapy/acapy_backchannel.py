@@ -309,6 +309,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "proof":
             operation = op["operation"]
+            if operation == "create-send-connectionless-request":
+                operation = "create-request"
             if rec_id is None:
                 agent_operation = "/present-proof/" + operation
             else:
@@ -630,7 +632,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         if topic == "proof":
 
-            if operation == "send-request":
+            if operation == "send-request" or operation == "create-request":
                 
                 if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_values") == None:
                     requested_attributes = {}
@@ -651,18 +653,30 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     proof_request_version = "1.0"
                 else:
                     proof_request_version = data["presentation_proposal"]["request_presentations~attach"]["data"]["version"]
-
-                admin_data = {
-                    "comment": data["presentation_proposal"]["comment"],
-                    "trace": False,
-                    "connection_id": data["connection_id"],
-                    "proof_request": {
-                        "name": proof_request_name,
-                        "version": proof_request_version,
-                        "requested_attributes": requested_attributes,
-                        "requested_predicates": requested_predicates
+                
+                if "connection_id" in data:
+                    admin_data = {
+                        "comment": data["presentation_proposal"]["comment"],
+                        "trace": False,
+                        "connection_id": data["connection_id"],
+                        "proof_request": {
+                            "name": proof_request_name,
+                            "version": proof_request_version,
+                            "requested_attributes": requested_attributes,
+                            "requested_predicates": requested_predicates
+                        }
                     }
-                }
+                else:
+                    admin_data = {
+                        "comment": data["presentation_proposal"]["comment"],
+                        "trace": False,
+                        "proof_request": {
+                            "name": proof_request_name,
+                            "version": proof_request_version,
+                            "requested_attributes": requested_attributes,
+                            "requested_predicates": requested_predicates
+                        }
+                    }
 
             elif operation == "send-presentation":
                 
