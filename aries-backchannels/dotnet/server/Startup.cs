@@ -43,6 +43,7 @@ namespace DotNet.Backchannel
             {
                 builder.Services.AddSingleton<IAgentMiddleware, MessageAgentMiddleware>();
                 builder.Services.AddSingleton<AATHCredentialHandler>();
+                builder.Services.AddSingleton<PresentationAckHandler>();
 
                 builder.RegisterAgent<DotNet.Backchannel.TestAgent>(c =>
                 {

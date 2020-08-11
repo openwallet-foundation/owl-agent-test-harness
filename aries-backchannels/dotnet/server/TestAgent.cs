@@ -21,6 +21,8 @@ namespace DotNet.Backchannel
             AddForwardHandler();
             // We use a custom credential handler
             AddHandler<AATHCredentialHandler>();
+            // Framework doesn't send ack after verifying presentation
+            AddHandler<PresentationAckHandler>();
         }
     }
 }

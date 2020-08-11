@@ -1,11 +1,10 @@
 using System.Runtime.Serialization;
-using Hyperledger.Aries.Features.IssueCredential;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace DotNet.Backchannel.Models
 {
-    public enum TestHarnessCredentialExchangeState
+    public enum TestHarnessPresentationExchangeState
     {
         [EnumMember(Value = "proposal-sent")]
         ProposalSent,
@@ -13,43 +12,36 @@ namespace DotNet.Backchannel.Models
         [EnumMember(Value = "proposal-received")]
         ProposalReceived,
 
-        [EnumMember(Value = "offer-sent")]
-        OfferSent,
-
-        [EnumMember(Value = "offer-received")]
-        OfferReceived,
-
         [EnumMember(Value = "request-sent")]
         RequestSent,
 
         [EnumMember(Value = "request-received")]
         RequestReceived,
 
-        [EnumMember(Value = "credential-issued")]
-        CredentialIssued,
+        [EnumMember(Value = "presentation-sent")]
+        PresentationSent,
 
-        [EnumMember(Value = "credential-received")]
-        CredentialReceived,
+        [EnumMember(Value = "presentation-received")]
+        PresentationReceived,
+
+        [EnumMember(Value = "reject-sent")]
+        RejectSent,
 
         [EnumMember(Value = "done")]
         Done,
     }
 
-    public class TestHarnessCredentialExchange
+    public class TestHarnessPresentationExchange
     {
 
         [JsonProperty("thread_id")]
         public string ThreadId;
-
 
         [JsonIgnore]
         public string RecordId;
 
         [JsonProperty("state")]
         [JsonConverter(typeof(StringEnumConverter))]
-        public TestHarnessCredentialExchangeState State;
-
-        [JsonProperty("credential_id", NullValueHandling = NullValueHandling.Ignore)]
-        public string CredentialId;
+        public TestHarnessPresentationExchangeState State;
     }
 }

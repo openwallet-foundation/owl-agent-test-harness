@@ -40,7 +40,7 @@ tags:
   - name: Issue Credential
     description: Agent commands related to issue-credential topic
   - name: Credential
-    description: Agent commands realted to credential topic
+    description: Agent commands related to credential topic
   - name: Present Proof
     description: Agent commands related to present-proof topic
 paths:
@@ -249,7 +249,7 @@ paths:
 
       responses:
         200:
-          description: Trust ping send
+          description: Trust ping sent
           content:
             application/json:
               schema:
@@ -383,7 +383,6 @@ paths:
               properties:
                 data:
                   type: object
-                  # TODO: combine with CredentialDefinition schema
                   required:
                     - support_revocation
                     - schema_id
@@ -425,9 +424,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CredentialId"
+                $ref: "#/components/schemas/IssueCredentialOperationResponse"
         404:
-          description: Credential Exchange not found
+          description: Credential exchange record not found
   /agent/command/issue-credential/send-proposal:
     post:
       tags:
@@ -472,7 +471,7 @@ paths:
                       $ref: "#/components/schemas/ConnectionId"
       responses:
         200:
-          description: Credential proposal send
+          description: Credential proposal sent
           content:
             application/json:
               schema:
@@ -548,7 +547,7 @@ paths:
                     $ref: "#/components/schemas/ThreadId/example"
       responses:
         200:
-          description: Credential offer send
+          description: Credential offer sent
           content:
             application/json:
               schema:
@@ -595,13 +594,13 @@ paths:
               new:
                 summary: Send Request to start credential issuance flow
                 description: >
-                  This is not possible with Indy based credentials. TODO.
+                  This is not possible with Indy based credentials.
                 value:
                   id:
                     $ref: "#/components/schemas/ConnectionId/example"
       responses:
         200:
-          description: Credential request send
+          description: Credential request sent
           content:
             application/json:
               schema:
@@ -705,6 +704,145 @@ paths:
                     $ref: "#/components/schemas/CredentialDefinitionId"
         404:
           description: Credential not found
+
+  /agent/command/proof/{presentationExchangeThreadId}:
+    get:
+      tags:
+        - Present Proof
+      summary: Get presentation exchange record by thread id
+      operationId: PresentProofGetByThreadId
+      parameters:
+        - in: path
+          name: presentationExchangeThreadId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation Exchange
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresentProofOperationResponse"
+        404:
+          description: Presentation exchange record not found
+
+  /agent/command/proof/send-request:
+    post:
+      tags:
+        - Present Proof
+      summary: Send presentation request
+      description: >
+        Send a `request-presentation` message to connection with `connection_id` in body.
+        When the backchannel sends a `send-request` operation to a backchannel it sends the (almost) complete `request-presentation` message. However the data inside the proposal is not base64 encoded yet.
+        See the [`proof_request_json`](https://github.com/hyperledger/indy-sdk/blob/57dcdae74164d1c7aa06f2cccecaae121cefac25/libindy/src/api/anoncreds.rs#L1415-L1432) docs for expected contents of the data for Indy credentials.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#request-presentation
+      operationId: PresentProofSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - presentation_proposal
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    presentation_proposal:
+                      $ref: "#/components/schemas/PresentationRequestMessage"
+      responses:
+        200:
+          description: Presentation request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+
+  /agent/command/proof/send-presentation:
+    post:
+      tags:
+        - Present Proof
+      summary: Send presentation
+      description: >
+        Send a `presentation` message in response to presentation request with specified thread id.
+        See the [`requested_credentials_json`](https://github.com/hyperledger/indy-sdk/blob/57dcdae74164d1c7aa06f2cccecaae121cefac25/libindy/src/api/anoncreds.rs#L1433-L1445) docs for expected contents of the data for Indy credentials.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#presentation
+      operationId: PresentProofSendPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  allOf:
+                    - $ref: "#/components/schemas/RequestedCredentials"
+                    - type: object
+                      properties:
+                        comment:
+                          $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Presentation sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: presentation-sent
+
+  /agent/command/proof/verify-presentation:
+    post:
+      tags:
+        - Present Proof
+      summary: Verify presentation
+      description: >
+        Verify the received presentation with specified thread id.
+      operationId: PresentProofVerifyPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation verified
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: done
+
 components:
   schemas:
     ConnectionInvitation:
@@ -794,7 +932,6 @@ components:
       title: Schema
       description: Schema definition
       type: object
-      # TODO: add required fields?
       example:
         {
           "ver": "1.0",
@@ -837,7 +974,7 @@ components:
             [
               { "name": "attr_1", "value": "value_1" },
               { "name": "attr_2", "value": "value_2" },
-              { "name": "attr_3", "value": "value_3" },
+              { "name": "attr_3", "value": "10" },
             ],
         }
 
@@ -860,7 +997,6 @@ components:
     CredentialDefinition:
       title: Credential Definition
       type: object
-      # TODO: add required fields?
       example:
         {
           "ver": "1.0",
@@ -903,3 +1039,169 @@ components:
       title: Credential Id
       example: "828761d2-65e9-44a5-852e-1f60b943ab65"
       type: string
+    PresentProofOperationResponse:
+      title: Present Proof Operation Response
+      type: object
+      required:
+        - state
+        - thread_id
+      properties:
+        state:
+          $ref: "#/components/schemas/PresentProofState"
+        thread_id:
+          $ref: "#/components/schemas/ThreadId"
+    PresentProofState:
+      title: Present Proof State
+      description: All possible present proof state values
+      type: string
+      example: proposal-sent
+      enum:
+        - proposal-sent
+        - proposal-received
+        - request-sent
+        - request-received
+        - presentation-sent
+        - presentation-received
+        - reject-sent
+        - done
+    PresentationPreview:
+      title: Presentation Preview
+      type: object
+      required:
+        - "@type"
+        - attributes
+        - predicates
+      properties:
+        "@type":
+          type: string
+          enum:
+            - "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview"
+          example: "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview"
+        attributes:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+              cred_def_id:
+                $ref: "#/components/schemas/CredentialDefinitionId"
+              mime-type:
+                type: string
+              value:
+                type: string
+              referent:
+                type: string
+        predicates:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - cred_def_id
+              - predicate
+              - threshold
+            properties:
+              name:
+                type: string
+              cred_def_id:
+                $ref: "#/components/schemas/CredentialDefinitionId"
+              predicate:
+                type: string
+                enum:
+                  - "<"
+                  - "<="
+                  - ">="
+                  - ">"
+              threshold:
+                type: string
+      example:
+        {
+          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
+          "attributes":
+            [
+              {
+                "name": "attr_1",
+                "cred_def_id": "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default",
+                "value": "value_1",
+                "referent": "0",
+              },
+            ],
+          "predicates":
+            [
+              {
+                "name": "attr_2",
+                "cred_def_id": "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default",
+                "predicate": ">=",
+                "treshold": "100",
+              },
+            ],
+        }
+    PresentationRequestMessage:
+      title: Presentation Request Message
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#request-presentation
+      type: object
+      example:
+        {
+          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+          "comment": "This is a comment for the request for presentation.",
+          "request_presentations~attach":
+            {
+              "@id": "libindy-request-presentation-0",
+              "mime-type": "application/json",
+              "data":
+                {
+                  "requested_attributes":
+                    {
+                      "attr_1":
+                        {
+                          "name": "attr_1",
+                          "restrictions":
+                            [
+                              {
+                                "schema_name": "test_schema",
+                                "schema_version": "1.0.0",
+                              },
+                            ],
+                        },
+                    },
+                  "requested_predicates":
+                    {
+                      "attr_3":
+                        {
+                          "name": "attr_3",
+                          "p_type": ">",
+                          "p_value": 8,
+                          "restrictions":
+                            [
+                              {
+                                "schema_name": "test_schema",
+                                "schema_version": "1.0.0",
+                              },
+                            ],
+                        },
+                    },
+                },
+            },
+        }
+    RequestedCredentials:
+      title: Requested Credentials
+      externalDocs:
+        url: https://github.com/hyperledger/indy-sdk/blob/57dcdae74164d1c7aa06f2cccecaae121cefac25/libindy/src/api/anoncreds.rs#L1433-L1445
+      type: object
+      example:
+        {
+          "requested_attributes":
+            {
+              "attr_1":
+                {
+                  "revealed": true,
+                  "cred_id": "828761d2-65e9-44a5-852e-1f60b943ab65",
+                },
+            },
+          "requested_predicates":
+            { "attr_3": { "cred_id": "828761d2-65e9-44a5-852e-1f60b943ab65" } },
+        }
