@@ -42,11 +42,14 @@ namespace DotNet.Backchannel.Models
         public string ThreadId;
 
 
-        [JsonProperty("credential_id", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonIgnore]
         public string RecordId;
 
         [JsonProperty("state")]
         [JsonConverter(typeof(StringEnumConverter))]
         public TestHarnessCredentialExchangeState State;
+
+        [JsonProperty("credential_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string CredentialId;
     }
 }
