@@ -1,6 +1,6 @@
 {
    "presentation_proposal": {
-      "requested_values": {
+      "requested_attributes": {
          "address_attrs": {
             "name": "address",
             "restrictions": [
