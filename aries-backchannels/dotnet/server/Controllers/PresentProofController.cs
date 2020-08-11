@@ -105,8 +105,7 @@ namespace DotNet.Backchannel.Controllers
                 Name = (string)presentationRequestMessage["name"] ?? "test proof",
                 Version = (string)presentationRequestMessage["version"] ?? "1.0",
                 Nonce = await AnonCreds.GenerateNonceAsync(),
-                // Json should be requested_attributes, not requested_values
-                RequestedAttributes = presentationRequestMessage["requested_values"]?.ToObject<Dictionary<string, ProofAttributeInfo>>() ?? new Dictionary<string, ProofAttributeInfo> { },
+                RequestedAttributes = presentationRequestMessage["requested_attributes"]?.ToObject<Dictionary<string, ProofAttributeInfo>>() ?? new Dictionary<string, ProofAttributeInfo> { },
                 RequestedPredicates = presentationRequestMessage["requested_predicates"]?.ToObject<Dictionary<string, ProofPredicateInfo>>() ?? new Dictionary<string, ProofPredicateInfo> { }
             };
 

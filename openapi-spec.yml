@@ -1154,7 +1154,7 @@ components:
               "mime-type": "application/json",
               "data":
                 {
-                  "requested_values":
+                  "requested_attributes":
                     {
                       "attr_1":
                         {
