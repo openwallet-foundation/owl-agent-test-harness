@@ -8,7 +8,6 @@
                     "range",
                     "concentration",
                     "unit",
-                    "concentration",
                     "collected_on"
                 ],
                 "restrictions": [
