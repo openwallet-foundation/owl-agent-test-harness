@@ -1,7 +1,7 @@
 {
     "presentation_proposal": {
         "name": "Biological Indicator A Proof",
-        "requested_values": {
+        "requested_attributes": {
             "bioindicators_attrs": {
                 "name": "name",
                 "restrictions": [
