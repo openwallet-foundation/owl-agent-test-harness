@@ -2949,7 +2949,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"data\": {\n        \"connection_id\": \"{{issuerConnectionId}}\",\n        \"presentation_proposal\": {\n            \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation\",\n            \"comment\": \"This is a comment for the request for presentation.\",\n            \"request_presentations~attach\": {\n                \"@id\": \"libindy-request-presentation-0\",\n                \"mime-type\": \"application/json\",\n                \"data\": {\n                    \"requested_values\": {\n                        \"attr_1\": {\n                            \"name\": \"attr_1\",\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    },\n                    \"requested_predicates\": {\n                        \"attr_3\": {\n                            \"name\": \"attr_3\",\n                            \"p_type\": \">\",\n                            \"p_value\": 8,\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
+							"raw": "{\n    \"data\": {\n        \"connection_id\": \"{{issuerConnectionId}}\",\n        \"presentation_proposal\": {\n            \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation\",\n            \"comment\": \"This is a comment for the request for presentation.\",\n            \"request_presentations~attach\": {\n                \"@id\": \"libindy-request-presentation-0\",\n                \"mime-type\": \"application/json\",\n                \"data\": {\n                    \"requested_attributes\": {\n                        \"attr_1\": {\n                            \"name\": \"attr_1\",\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    },\n                    \"requested_predicates\": {\n                        \"attr_3\": {\n                            \"name\": \"attr_3\",\n                            \"p_type\": \">\",\n                            \"p_value\": 8,\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2977,7 +2977,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"data\": {\n        \"connection_id\": \"{{issuerConnectionId}}\",\n        \"presentation_proposal\": {\n            \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation\",\n            \"comment\": \"This is a comment for the request for presentation.\",\n            \"request_presentations~attach\": {\n                \"@id\": \"libindy-request-presentation-0\",\n                \"mime-type\": \"application/json\",\n                \"data\": {\n                    \"requested_values\": {\n                        \"attr_1\": {\n                            \"name\": \"attr_1\",\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    },\n                    \"requested_predicates\": {\n                        \"attr_3\": {\n                            \"name\": \"attr_3\",\n                            \"p_type\": \">\",\n                            \"p_value\": 8,\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
+									"raw": "{\n    \"data\": {\n        \"connection_id\": \"{{issuerConnectionId}}\",\n        \"presentation_proposal\": {\n            \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation\",\n            \"comment\": \"This is a comment for the request for presentation.\",\n            \"request_presentations~attach\": {\n                \"@id\": \"libindy-request-presentation-0\",\n                \"mime-type\": \"application/json\",\n                \"data\": {\n                    \"requested_attributes\": {\n                        \"attr_1\": {\n                            \"name\": \"attr_1\",\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    },\n                    \"requested_predicates\": {\n                        \"attr_3\": {\n                            \"name\": \"attr_3\",\n                            \"p_type\": \">\",\n                            \"p_value\": 8,\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -3028,7 +3028,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"data\": {\n        \"connection_id\": \"{{issuerConnectionId}}\",\n        \"presentation_proposal\": {\n            \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation\",\n            \"comment\": \"This is a comment for the request for presentation.\",\n            \"request_presentations~attach\": {\n                \"@id\": \"libindy-request-presentation-0\",\n                \"mime-type\": \"application/json\",\n                \"data\": {\n                    \"requested_values\": {\n                        \"attr_1\": {\n                            \"name\": \"attr_1\",\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    },\n                    \"requested_predicates\": {\n                        \"attr_3\": {\n                            \"name\": \"attr_3\",\n                            \"p_type\": \">\",\n                            \"p_value\": 8,\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
+									"raw": "{\n    \"data\": {\n        \"connection_id\": \"{{issuerConnectionId}}\",\n        \"presentation_proposal\": {\n            \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation\",\n            \"comment\": \"This is a comment for the request for presentation.\",\n            \"request_presentations~attach\": {\n                \"@id\": \"libindy-request-presentation-0\",\n                \"mime-type\": \"application/json\",\n                \"data\": {\n                    \"requested_attributes\": {\n                        \"attr_1\": {\n                            \"name\": \"attr_1\",\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    },\n                    \"requested_predicates\": {\n                        \"attr_3\": {\n                            \"name\": \"attr_3\",\n                            \"p_type\": \">\",\n                            \"p_value\": 8,\n                            \"restrictions\": [\n                                {\n                                    \"schema_name\": \"{{schemaName}}\",\n                                    \"schema_version\": \"{{schemaVersion}}\"\n                                }\n                            ]\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -3619,117 +3619,117 @@
 	],
 	"variable": [
 		{
-			"id": "34c3f1c1-4e78-400d-ac2c-7fdac6775e8b",
+			"id": "73f87dbc-f186-48ac-a40c-ba242522df9d",
 			"key": "acmeHost",
 			"value": "http://localhost:9020"
 		},
 		{
-			"id": "59019749-6c48-4be0-af46-613db3fe6604",
+			"id": "ca06c743-d190-4c88-ad0a-0cedfb5bf69f",
 			"key": "bobHost",
 			"value": "http://localhost:9030"
 		},
 		{
-			"id": "9e1a1488-7f3d-42ec-9078-467d89aff6c1",
+			"id": "95a05cf1-fac0-4129-ae10-cf0d18b5e19d",
 			"key": "faberHost",
 			"value": "http://localhost:9040"
 		},
 		{
-			"id": "881ab9fa-9096-44bb-885f-f8f91cacdedb",
+			"id": "90304084-9d31-4a11-a053-4699f8806031",
 			"key": "malloryHost",
 			"value": "http://localhost:9050"
 		},
 		{
-			"id": "6f1a91e1-c11d-4249-a2e5-ddc4755d37aa",
+			"id": "3f07cc5d-6834-4943-8646-5d2c3f6c3eda",
 			"key": "ledgerHost",
 			"value": "http://localhost:9000"
 		},
 		{
-			"id": "641d50fd-ede3-40d9-9ca4-d2bb271ac14e",
+			"id": "3c00bb82-0bee-4a47-9d6c-57ea5bd8bf48",
 			"key": "inviterHost",
 			"value": "{{acmeHost}}"
 		},
 		{
-			"id": "a00800e3-b5a8-462d-8abc-6991f10a336c",
+			"id": "deb70c50-501d-4e2d-a951-abef5565d8ad",
 			"key": "inviteeHost",
 			"value": "{{bobHost}}"
 		},
 		{
-			"id": "dc699250-3624-41ec-8d56-c3f3242dbf98",
+			"id": "4a4bae5f-1fc3-429c-8f74-fadd01bc51cb",
 			"key": "issuerHost",
 			"value": "{{bobHost}}"
 		},
 		{
-			"id": "da4dcb41-393a-4de9-b79c-27d53a5e1620",
+			"id": "c6d0b087-4adf-4605-9b58-9faaed39d755",
 			"key": "holderHost",
 			"value": "{{acmeHost}}"
 		},
 		{
-			"id": "c769667c-a2e3-40f5-aa4b-12596a101432",
+			"id": "e7d4f700-987f-44bc-b27f-91a06650fa20",
 			"key": "inviterConnectionId",
 			"value": ""
 		},
 		{
-			"id": "b9441858-7447-4fd7-b095-b13b6611210b",
+			"id": "5085bdde-48a8-4a3f-b565-f0a838eafa63",
 			"key": "inviteeConnectionId",
 			"value": ""
 		},
 		{
-			"id": "5eb70701-3dc3-4743-b58e-35ab1a38cd20",
+			"id": "b7c785be-5c8a-433a-805f-4f7f4c03811d",
 			"key": "connectionInvitation",
 			"value": ""
 		},
 		{
-			"id": "59971e2c-3fb0-4be2-b1d3-65dbce6cdc5d",
+			"id": "43e61be4-318d-4269-b69f-262a39d34f9c",
 			"key": "schemaId",
 			"value": ""
 		},
 		{
-			"id": "5a7f93fd-d343-4879-9c00-c4e7f34bb2d2",
+			"id": "25c18480-976a-4819-a677-7aed770bc156",
 			"key": "credentialDefinitionId",
 			"value": ""
 		},
 		{
-			"id": "70f636ff-b828-49c5-9c35-0e6904eb30bd",
+			"id": "43b46e77-8129-4cef-bab1-9bce2f51a38d",
 			"key": "schemaName",
 			"value": "test_schema"
 		},
 		{
-			"id": "cd70e9c2-dfe5-416e-865a-8d5e30350872",
+			"id": "a4ae5796-0563-4bbf-8758-99d66dcd7c59",
 			"key": "schemaVersion",
 			"value": "1.0.0"
 		},
 		{
-			"id": "8b097616-6aaa-41e6-8dee-706e678decf9",
+			"id": "1710dd81-1125-4639-8682-d23496516384",
 			"key": "issuerDid",
 			"value": ""
 		},
 		{
-			"id": "b42e1c91-f0ec-4182-92a3-93a28d812b33",
+			"id": "b93ef7a3-be31-4db7-9e14-10a494640a94",
 			"key": "issuerConnectionId",
 			"value": "{{inviteeConnectionId}}"
 		},
 		{
-			"id": "88e002da-2dea-4c01-9494-9f17f2b9237a",
+			"id": "367e2d57-5b74-4147-9c0c-2cb6b18d4fa6",
 			"key": "holderConnectionId",
 			"value": "{{inviterConnectionId}}"
 		},
 		{
-			"id": "a56a20d5-3c41-4419-8906-a14a6435ecf8",
+			"id": "b6f2338f-7404-4a39-8fa7-83cba814c5e2",
 			"key": "credentialExchangeThreadId",
 			"value": ""
 		},
 		{
-			"id": "63ce33b8-ad19-4581-bbe4-efa101c03ae0",
+			"id": "2b2d7ee1-fd2f-4aff-9f10-d08a9b7de9ca",
 			"key": "verifierHost",
 			"value": "{{bobHost}}"
 		},
 		{
-			"id": "b0893ad7-0fc2-4537-9570-0a9f6f5954be",
+			"id": "74109bcc-6790-46d4-b9e7-06e0f1c948f4",
 			"key": "presentationExchangeThreadId",
 			"value": ""
 		},
 		{
-			"id": "7fbf4b78-1001-4e07-ae93-e1d1fba6f9f8",
+			"id": "91186d86-118d-47b2-a332-7421fe557132",
 			"key": "holderCredentialId",
 			"value": ""
 		}
