@@ -148,7 +148,7 @@ The following is an example of a simple proof request for one attribute with som
 ```
 {
    "presentation_proposal": {
-      "requested_values": {
+      "requested_attributes": {
          "address_attrs": {
             "name": "address",
             "restrictions": [
@@ -168,7 +168,7 @@ The following is an example of a proof request using more than one credential.
 {
    "presentation_proposal": {
       "name": "Health Consent Proof",
-      "requested_values": {
+      "requested_attributes": {
          "bioindicators_attrs": {
             "names": [
                "name",

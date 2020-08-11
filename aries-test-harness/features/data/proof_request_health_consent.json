@@ -1,7 +1,7 @@
 {
     "presentation_proposal": {
         "name": "Health Consent Proof",
-        "requested_values": {
+        "requested_attributes": {
             "bioindicators_attrs": {
                 "names": [
                     "name",
