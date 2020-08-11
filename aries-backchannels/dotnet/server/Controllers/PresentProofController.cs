@@ -2,6 +2,22 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using DotNet.Backchannel.Models;
+using Hyperledger.Aries.Features.PresentProof;
+using Hyperledger.Aries.Storage;
+using Hyperledger.Aries.Contracts;
+using Hyperledger.Aries.Configuration;
+using Hyperledger.Aries.Features.DidExchange;
+using Hyperledger.Aries.Agents;
+using Microsoft.Extensions.Caching.Memory;
+using Hyperledger.Aries.Utils;
+using Hyperledger.Aries.Models.Events;
+using System.Reactive.Linq;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using Hyperledger.Indy.AnonCredsApi;
+using DotNet.Backchannel.Messages;
+using Hyperledger.Aries.Extensions;
+using Hyperledger.Aries.Decorators.Threading;
 
 namespace DotNet.Backchannel.Controllers
 {
@@ -9,10 +25,60 @@ namespace DotNet.Backchannel.Controllers
     [ApiController]
     public class PresentProofController : ControllerBase
     {
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetProofRecordByIdAsync([FromRoute] string proofRecordId)
+        private readonly IProofService _proofService;
+        private readonly IWalletRecordService _recordService;
+        private readonly IEventAggregator _eventAggregator;
+        private readonly IProvisioningService _provisionService;
+        private readonly IConnectionService _connectionService;
+        private readonly IAgentProvider _agentContextProvider;
+        private readonly IMessageService _messageService;
+        private IMemoryCache _proofCache;
+
+        private ILogger<PresentProofController> _logger;
+
+        public PresentProofController(
+
+             IProofService proofService,
+            IWalletRecordService recordService,
+            IEventAggregator eventAggregator,
+            IProvisioningService provisionService,
+            IConnectionService connectionService,
+            IAgentProvider agentContextProvider,
+            IMessageService messageService,
+            IMemoryCache memoryCache,
+            ILogger<PresentProofController> logger
+
+            )
         {
-            throw new NotImplementedException();
+            _proofService = proofService;
+            _recordService = recordService;
+            _eventAggregator = eventAggregator;
+            _provisionService = provisionService;
+            _connectionService = connectionService;
+            _agentContextProvider = agentContextProvider;
+            _messageService = messageService;
+            _proofCache = memoryCache;
+            _logger = logger;
+        }
+
+        [HttpGet("{threadId}")]
+        public async Task<IActionResult> GetProofRecordByThreadIdAsync([FromRoute] string threadId)
+        {
+            var context = await _agentContextProvider.GetContextAsync();
+
+            try
+            {
+                var proofRecord = await _proofService.GetByThreadIdAsync(context, threadId);
+                var THProofExchange = _proofCache.Get<TestHarnessPresentationExchange>(threadId);
+                if (THProofExchange == null) return NotFound();
+
+                return Ok(THProofExchange);
+            }
+            catch
+            {
+                // Can't find the proof record
+                return NotFound();
+            }
         }
 
         [HttpPost("send-proposal")]
@@ -27,29 +93,111 @@ namespace DotNet.Backchannel.Controllers
         [HttpPost("send-request")]
         public async Task<IActionResult> SendPresentationRequestAsync(OperationBody body)
         {
-            // TODO: ID can be both pres_exchange_id OR connection_id
-            // Find out how this works exactly. Probably as different key
-            var proofRecordId = body.Id;
-            var proofRequest = body.Data;
+            // TODO: AATH doesn't yet support presentation request as response to other message
+            var context = await _agentContextProvider.GetContextAsync();
 
-            throw new NotImplementedException();
+            var presentationRequest = body.Data;
+            var connectionId = (string)presentationRequest["connection_id"];
+            var presentationRequestMessage = presentationRequest["presentation_proposal"]["request_presentations~attach"]["data"];
+
+            var proofRequest = new ProofRequest
+            {
+                Name = (string)presentationRequestMessage["name"] ?? "test proof",
+                Version = (string)presentationRequestMessage["version"] ?? "1.0",
+                Nonce = await AnonCreds.GenerateNonceAsync(),
+                // Json should be requested_attributes, not requested_values
+                RequestedAttributes = presentationRequestMessage["requested_values"]?.ToObject<Dictionary<string, ProofAttributeInfo>>() ?? new Dictionary<string, ProofAttributeInfo> { },
+                RequestedPredicates = presentationRequestMessage["requested_predicates"]?.ToObject<Dictionary<string, ProofPredicateInfo>>() ?? new Dictionary<string, ProofPredicateInfo> { }
+            };
+
+            _logger.LogInformation("SendPresentationRequest {proofRequest}", proofRequest.ToJson());
+
+
+            var (requestPresentationMessage, proofRecord) = await _proofService.CreateRequestAsync(context, proofRequest, connectionId);
+
+            var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
+
+            var THPresentationExchange = new TestHarnessPresentationExchange
+            {
+                RecordId = proofRecord.Id,
+                ThreadId = proofRecord.GetTag(TagConstants.LastThreadId),
+                State = TestHarnessPresentationExchangeState.RequestSent
+            };
+            _proofCache.Set(THPresentationExchange.ThreadId, THPresentationExchange);
+
+            UpdateStateOnMessage(THPresentationExchange, TestHarnessPresentationExchangeState.PresentationReceived, _ => _.MessageType == MessageTypes.PresentProofNames.Presentation && _.ThreadId == THPresentationExchange.ThreadId);
+
+            _logger.LogDebug("Send Presentation Request {requestPresentationMessage}", requestPresentationMessage.ToJson());
+
+            await _messageService.SendAsync(context.Wallet, requestPresentationMessage, connection);
+
+            return Ok(THPresentationExchange);
         }
 
         [HttpPost("send-presentation")]
-        public async Task<IActionResult> SendProofPresentationOfferAsync(OperationBody body)
+        public async Task<IActionResult> SendProofPresentationAsync(OperationBody body)
         {
-            var proofRecordId = body.Id;
-            var proofPresentation = body.Data;
+            var context = await _agentContextProvider.GetContextAsync();
 
-            throw new NotImplementedException();
+            var threadId = body.Id;
+            var THPresentationExchange = _proofCache.Get<TestHarnessPresentationExchange>(threadId);
+            var requestedCredentialsJson = body.Data;
+
+            var requestedCredentials = requestedCredentialsJson.ToObject<RequestedCredentials>();
+
+            _logger.LogInformation("SendProofPresentation {requestedCredentials}", requestedCredentials.ToJson());
+
+            var (presentationMessage, proofRecord) = await _proofService.CreatePresentationAsync(context, THPresentationExchange.RecordId, requestedCredentials);
+
+            var connection = await _connectionService.GetAsync(context, proofRecord.ConnectionId);
+
+            THPresentationExchange.State = TestHarnessPresentationExchangeState.PresentationSent;
+
+            _logger.LogDebug("Send Presentation {presentationMessage}", presentationMessage.ToJson());
+
+            await _messageService.SendAsync(context.Wallet, presentationMessage, connection);
+
+            return Ok(THPresentationExchange);
         }
 
         [HttpPost("verify-presentation")]
         public async Task<IActionResult> VerifyPresentation(OperationBody body)
         {
-            var proofRecordId = body.Id;
+            var context = await _agentContextProvider.GetContextAsync();
+            var threadId = body.Id;
+            var THPresentationExchange = _proofCache.Get<TestHarnessPresentationExchange>(threadId);
+            var proofRecord = await _proofService.GetByThreadIdAsync(context, THPresentationExchange.ThreadId);
+            var connectionRecord = await _connectionService.GetAsync(context, proofRecord.ConnectionId);
 
-            throw new NotImplementedException();
+            _logger.LogInformation("VerifyPresentation {proofRecord}", proofRecord.ToJson());
+
+            var isValid = await _proofService.VerifyProofAsync(context, THPresentationExchange.RecordId);
+
+            if (!isValid)
+            {
+                // TODO: properly handle invalid proof
+                return Problem("Proof is not valid");
+            }
+
+            THPresentationExchange.State = TestHarnessPresentationExchangeState.Done;
+            var ackPresentationMessage = new AckPresentationMessage()
+            {
+                Status = "OK"
+            };
+
+            ackPresentationMessage.ThreadFrom(threadId);
+
+            await _messageService.SendAsync(context.Wallet, ackPresentationMessage, connectionRecord);
+
+            return Ok(THPresentationExchange);
+        }
+
+        private void UpdateStateOnMessage(TestHarnessPresentationExchange THPresentationExchange, TestHarnessPresentationExchangeState nextState, Func<ServiceMessageProcessingEvent, bool> predicate)
+        {
+            _eventAggregator.GetEventByType<ServiceMessageProcessingEvent>()
+            .Where(predicate)
+            .Take(1)
+            .Subscribe(_ => { THPresentationExchange.State = nextState; });
         }
     }
 }

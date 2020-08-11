@@ -4,16 +4,23 @@ using DotNet.Backchannel.Models;
 
 using Hyperledger.Aries.Features.TrustPing;
 using Hyperledger.Aries.Agents;
+using Hyperledger.Aries.Features.PresentProof;
+using Hyperledger.Aries.Decorators.Threading;
 
 namespace DotNet.Backchannel.Middlewares
 {
     public class MessageAgentMiddleware : IAgentMiddleware
     {
         private IMemoryCache _cache;
+        private IProofService _proofService;
+
         public MessageAgentMiddleware(
-            IMemoryCache memoryCache)
+            IMemoryCache memoryCache,
+            IProofService proofService
+            )
         {
             _cache = memoryCache;
+            _proofService = proofService;
         }
 
         /// <inheritdoc />
@@ -34,6 +41,21 @@ namespace DotNet.Backchannel.Middlewares
                 {
                     THConnection.State = TestHarnessConnectionState.Complete;
                 }
+            }
+            else if (messageContext.GetMessageType() == MessageTypes.PresentProofNames.RequestPresentation)
+            {
+                var message = messageContext.GetMessage<RequestPresentationMessage>();
+
+                var proofRecord = await _proofService.GetByThreadIdAsync(agentContext, message.GetThreadId());
+
+                var THPresentationExchange = new TestHarnessPresentationExchange
+                {
+                    ThreadId = message.GetThreadId(),
+                    RecordId = proofRecord.Id,
+                    State = TestHarnessPresentationExchangeState.RequestReceived,
+                };
+
+                _cache.Set(THPresentationExchange.ThreadId, THPresentationExchange);
             }
         }
     }
