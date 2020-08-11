@@ -3,6 +3,10 @@ using System.Threading.Tasks;
 using Hyperledger.Aries.Features.IssueCredential;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Utils;
+using Hyperledger.Aries.Storage;
+using System.Linq;
+using Hyperledger.Indy.AnonCredsApi;
+using Newtonsoft.Json;
 
 namespace DotNet.Backchannel.Controllers
 {
@@ -30,20 +34,17 @@ namespace DotNet.Backchannel.Controllers
 
             try
             {
-                var credentialRecord = await _credentialService.GetAsync(context, credentialId);
+                var credentialRecords = await _credentialService.ListAsync(context, SearchQuery.Equal(nameof(CredentialRecord.CredentialId), credentialId), 1);
+                var credentialRecord = credentialRecords.First();
 
-                if (credentialRecord.GetTag(TagConstants.Role) != TagConstants.Holder)
-                {
-                    // We should only return the credential if we are the holder
-                    return NotFound();
-                }
+                var credential = await AnonCreds.ProverGetCredentialAsync(context.Wallet, credentialId);
 
-                // TODO: should we return extra data?
                 return Ok(new
                 {
-                    referent = credentialRecord.Id,
+                    referent = credentialRecord.CredentialId,
                     schema_id = credentialRecord.SchemaId,
-                    cred_def_id = credentialRecord.CredentialDefinitionId
+                    cred_def_id = credentialRecord.CredentialDefinitionId,
+                    credential = JsonConvert.DeserializeObject(credential)
                 });
             }
             catch

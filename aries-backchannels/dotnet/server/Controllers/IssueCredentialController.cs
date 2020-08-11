@@ -143,6 +143,7 @@ namespace DotNet.Backchannel.Controllers
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
             var threadId = body.Id;
 
+            // TODO: can we remove delay?
             await Task.Delay(5000);
 
             string connectionId;
@@ -278,8 +279,9 @@ namespace DotNet.Backchannel.Controllers
             var threadId = body.Id;
             var context = await _agentContextProvider.GetContextAsync();
             var THCredentialExchange = _credentialCache.Get<TestHarnessCredentialExchange>(threadId);
-            var credentialRecord = _credentialService.GetAsync(context, THCredentialExchange.RecordId);
+            var credentialRecord = await _credentialService.GetAsync(context, THCredentialExchange.RecordId);
 
+            THCredentialExchange.CredentialId = credentialRecord.CredentialId;
             // TODO: Should we do some checks here??
             THCredentialExchange.State = TestHarnessCredentialExchangeState.Done;
 
@@ -301,11 +303,10 @@ namespace DotNet.Backchannel.Controllers
 
         private void UpdateStateOnMessage(TestHarnessCredentialExchange testHarnessCredentialExchange, TestHarnessCredentialExchangeState nextState, Func<ServiceMessageProcessingEvent, bool> predicate)
         {
-            System.Console.WriteLine($"Waiting to update state to ${nextState}, on credential {testHarnessCredentialExchange.ThreadId}, from state: {testHarnessCredentialExchange.State} ");
             _eventAggregator.GetEventByType<ServiceMessageProcessingEvent>()
             .Where(predicate)
             .Take(1)
-            .Subscribe(_ => { System.Console.WriteLine($"Updated state to ${nextState}, on credential {testHarnessCredentialExchange.ThreadId}, from state: {testHarnessCredentialExchange.State} "); testHarnessCredentialExchange.State = nextState; });
+            .Subscribe(_ => { testHarnessCredentialExchange.State = nextState; });
         }
     }
 }
