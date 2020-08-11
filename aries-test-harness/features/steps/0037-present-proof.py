@@ -118,7 +118,7 @@ def step_impl(context, verifier, prover):
         data = context.request_for_proof
     else:   
         data = {
-                    "requested_values": {
+                    "requested_attributes": {
                         "attr_1": {
                             "name": "attr_1",
                             "restrictions": [
