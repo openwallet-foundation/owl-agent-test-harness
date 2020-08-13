@@ -319,7 +319,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     or operation == "verify-presentation"
                     or operation == "remove"
                 ):
-                    if (operation not in "send-presentation" or operation not in "send-request") and "~service" not in data:
+                    
+                    if (operation not in "send-presentation" or operation not in "send-request") and (data is None or "~service" not in data):
                         # swap thread id for pres ex id from the webhook
                         pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
                     else:
@@ -331,8 +332,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_operation = "/present-proof/" + operation
             
             log_msg(agent_operation, data)
-            # Format the message data that came from the test, to what the Aca-py admin api expects.
-            data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
+
+            if data is not None:
+                # Format the message data that came from the test, to what the Aca-py admin api expects.
+                data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
 
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -708,6 +711,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             else:
                 admin_data = data
+
+            # Add on the service decorator if it exists.
+            if "~service" in data: 
+                admin_data["~service"] = data["~service"]
 
             return (admin_data)
 
