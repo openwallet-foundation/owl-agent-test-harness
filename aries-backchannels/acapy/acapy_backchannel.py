@@ -638,10 +638,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             if operation == "send-request" or operation == "create-request":
                 
-                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_values") == None:
+                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_attributes") == None:
                     requested_attributes = {}
                 else:
-                    requested_attributes = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_values"]
+                    requested_attributes = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_attributes"]
 
                 if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_predicates") == None:
                     requested_predicates = {}
