@@ -131,21 +131,48 @@ def step_impl(context, verifier, prover):
                     }
                 }
 
-    presentation_proposal = {
-        "connection_id": context.connection_id_dict[verifier][prover],
-        "presentation_proposal": {
-            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-            "comment": "This is a comment for the request for presentation.",
-            "request_presentations~attach": {
-                "@id": "libindy-request-presentation-0",
-                "mime-type": "application/json",
-                "data":  data
+    if ('connectionless' in context) and (context.connectionless == True):
+        presentation_proposal = {
+            "presentation_proposal": {
+                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+                "comment": "This is a comment for the request for presentation.",
+                "request_presentations~attach": {
+                    "@id": "libindy-request-presentation-0",
+                    "mime-type": "application/json",
+                    "data":  data
+                }
             }
         }
-    }
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="create-send-connectionless-request", data=presentation_proposal)
+    else:
+        presentation_proposal = {
+            "connection_id": context.connection_id_dict[verifier][prover],
+            "presentation_proposal": {
+                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+                "comment": "This is a comment for the request for presentation.",
+                "request_presentations~attach": {
+                    "@id": "libindy-request-presentation-0",
+                    "mime-type": "application/json",
+                    "data":  data
+                }
+            }
+        }
 
-    # send presentation request
-    (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
+    # if ('connectionless' in context) and (context.connectionless == True):
+    #     resp_json = json.loads(resp_text)
+
+    #     presentation_proposal["~service"] = {
+    #             "recipientKeys": [
+    #                 resp_json["presentation_exchange_id"]
+    #             ],
+    #             "routingKeys": None,
+    #             "serviceEndpoint": context.verifier_url
+    #             }
+
+
+        # send presentation request
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
+    
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     # check the state of the presentation from the verifiers perspective
@@ -155,8 +182,12 @@ def step_impl(context, verifier, prover):
     context.presentation_thread_id = resp_json["thread_id"]
 
     # check the state of the presentation from the provers perspective
-    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
-    #assert present_proof_status(context.prover_url, context.presentation_thread_id, "request-received")
+    # if the protocol is connectionless then don't do this, the prover has not recieved anything yet.
+    if ('connectionless' not in context) or (context.connectionless == False):
+        assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
+    else:
+        # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
+        context.presentation_exchange_id = resp_json["presentation_exchange_id"]
 
 @when('"{verifier}" sends a {request_for_proof} presentation to "{prover}"')
 def step_impl(context, verifier, request_for_proof, prover):
@@ -212,6 +243,15 @@ def step_impl(context, prover):
             }
         }
 
+    # if this is happening connectionless, then add the service decorator to the presentation
+    if ('connectionless' in context) and (context.connectionless == True):
+        presentation["~service"] = {
+                "recipientKeys": [
+                    context.presentation_exchange_id
+                ],
+                "routingKeys": None,
+                "serviceEndpoint": context.verifier_url
+            }
 
     (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -249,3 +289,86 @@ def step_impl(context, verifier):
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
     assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
+
+@given('"{verifier}" and "{prover}" do not have a connection')
+def step_impl(context, verifier, prover):
+    context.connectionless = True
+
+@when('"{prover}" doesn’t want to reveal what was requested so makes a presentation proposal')
+def step_impl(context, prover):
+   
+    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
+    if "request_for_proof" in context:
+        data = context.request_for_proof
+    else:   
+        data = {
+                    "requested_values": {
+                        "attr_1": {
+                            "name": "attr_1",
+                            "restrictions": [
+                                {
+                                    "schema_name": "test_schema." + context.issuer_name,
+                                    "schema_version": "1.0.0"
+                                }
+                            ]
+                        }
+                    }
+                }
+
+    if ('connectionless' in context) and (context.connectionless == True):
+        presentation_proposal = {
+            "presentation_proposal": {
+                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+                "comment": "This is a comment for the request for presentation.",
+                "request_presentations~attach": {
+                    "@id": "libindy-request-presentation-0",
+                    "mime-type": "application/json",
+                    "data": data
+                }
+            }
+        }
+    else:
+        presentation_proposal = {
+            "connection_id": context.connection_id_dict[prover][context.verifier_name],
+            "presentation_proposal": {
+                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+                "comment": "This is a comment for the request for presentation.",
+                "request_presentations~attach": {
+                    "@id": "libindy-request-presentation-0",
+                    "mime-type": "application/json",
+                    "data": data
+                }
+            }
+        }
+
+        
+
+    # send presentation proposal
+    (resp_status, resp_text) = agent_backchannel_POST(context.prover_url + "/agent/command/", "proof", operation="send-proposal", data=presentation_proposal)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+    # check the state of the presentation from the verifiers perspective
+    assert resp_json["state"] == "proposal-sent"
+
+    # save off anything that is returned in the response to use later?
+    context.presentation_thread_id = resp_json["thread_id"]
+
+    # check the state of the presentation from the provers perspective
+    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "proposal-received")
+
+
+@when(u'"{verifier}" agrees to continue so sends a request for proof presentation')
+def step_impl(context, verifier):
+    # send presentation request
+    (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", id=context.presentation_thread_id, data=presentation_proposal)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+    # check the state of the presentation from the verifiers perspective
+    assert resp_json["state"] == "request-sent"
+
+    # save off anything that is returned in the response to use later?
+    context.presentation_thread_id = resp_json["thread_id"]
+
+    # check the state of the presentation from the provers perspective
+    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
+    #assert present_proof_status(context.prover_url, context.presentation_thread_id, "request-received")

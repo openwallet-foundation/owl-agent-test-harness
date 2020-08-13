@@ -72,5 +72,7 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0037 Present Proof,X,,proof,POST,send-request,Y,Y,Send a proof request in reference to a proposal,pres_exchange_id,proof_request,pres_exchange_id
 0037 Present Proof,X,,proof,POST,send-presentation,Y,Y,Send a proof presentation,pres_exchange_id,proof_presentation,pres_exchange_id
 0037 Present Proof,X,,proof,POST,verify-presentation,Y,,Verify a received proof presentation,pres_exchange_id,,status
+0037 Present Proof,X,,proof,POST,create-send-connectionless-request,,Y,Send a proof request in reference to a proposal,,proposal,pres_exchange_id
 0037 Present Proof,X,,proof,GET,,Y,,Get a stored presentation from the wallet ,presentation_id,,presentation
 0036 Present Proof,X,,proof,GET,,Y,,Fetch a specific credential by ID ,presentation_exchange_id,,presentation_exchange_id
+0037 Present Proof,X,,proof,POST,create-send-connectionless-request,,Y,Send a proof request in reference to a proposal,,proposal,pres_exchange_id

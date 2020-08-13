@@ -309,6 +309,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "proof":
             operation = op["operation"]
+            if operation == "create-send-connectionless-request":
+                operation = "create-request"
             if rec_id is None:
                 agent_operation = "/present-proof/" + operation
             else:
@@ -317,16 +319,23 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     or operation == "verify-presentation"
                     or operation == "remove"
                 ):
-                    #pres_ex_id = rec_id
-                    # swap thread id for pres ex id from the webhook
-                    pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+                    
+                    if (operation not in "send-presentation" or operation not in "send-request") and (data is None or "~service" not in data):
+                        # swap thread id for pres ex id from the webhook
+                        pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+                    else:
+                        # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
+                        pres_ex_id = data["~service"]["recipientKeys"][0]
                     agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
+
                 else:
                     agent_operation = "/present-proof/" + operation
             
             log_msg(agent_operation, data)
-            # Format the message data that came from the test, to what the Aca-py admin api expects.
-            data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
+
+            if data is not None:
+                # Format the message data that came from the test, to what the Aca-py admin api expects.
+                data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
 
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -630,7 +639,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         if topic == "proof":
 
-            if operation == "send-request":
+            if operation == "send-request" or operation == "create-request":
                 
                 if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_attributes") == None:
                     requested_attributes = {}
@@ -651,18 +660,30 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     proof_request_version = "1.0"
                 else:
                     proof_request_version = data["presentation_proposal"]["request_presentations~attach"]["data"]["version"]
-
-                admin_data = {
-                    "comment": data["presentation_proposal"]["comment"],
-                    "trace": False,
-                    "connection_id": data["connection_id"],
-                    "proof_request": {
-                        "name": proof_request_name,
-                        "version": proof_request_version,
-                        "requested_attributes": requested_attributes,
-                        "requested_predicates": requested_predicates
+                
+                if "connection_id" in data:
+                    admin_data = {
+                        "comment": data["presentation_proposal"]["comment"],
+                        "trace": False,
+                        "connection_id": data["connection_id"],
+                        "proof_request": {
+                            "name": proof_request_name,
+                            "version": proof_request_version,
+                            "requested_attributes": requested_attributes,
+                            "requested_predicates": requested_predicates
+                        }
                     }
-                }
+                else:
+                    admin_data = {
+                        "comment": data["presentation_proposal"]["comment"],
+                        "trace": False,
+                        "proof_request": {
+                            "name": proof_request_name,
+                            "version": proof_request_version,
+                            "requested_attributes": requested_attributes,
+                            "requested_predicates": requested_predicates
+                        }
+                    }
 
             elif operation == "send-presentation":
                 
@@ -690,6 +711,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             else:
                 admin_data = data
+
+            # Add on the service decorator if it exists.
+            if "~service" in data: 
+                admin_data["~service"] = data["~service"]
 
             return (admin_data)
 
