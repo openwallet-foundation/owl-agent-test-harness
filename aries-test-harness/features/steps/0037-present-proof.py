@@ -158,20 +158,20 @@ def step_impl(context, verifier, prover):
             }
         }
 
-    if ('connectionless' in context) and (context.connectionless == True):
-        resp_json = json.loads(resp_text)
+    # if ('connectionless' in context) and (context.connectionless == True):
+    #     resp_json = json.loads(resp_text)
 
-        presentation_proposal["~service"] = {
-                "recipientKeys": [
-                    resp_json["presentation_exchange_id"]
-                ],
-                "routingKeys": None,
-                "serviceEndpoint": context.verifier_url
-                }
+    #     presentation_proposal["~service"] = {
+    #             "recipientKeys": [
+    #                 resp_json["presentation_exchange_id"]
+    #             ],
+    #             "routingKeys": None,
+    #             "serviceEndpoint": context.verifier_url
+    #             }
 
 
-    # send presentation request
-    (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
+        # send presentation request
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
