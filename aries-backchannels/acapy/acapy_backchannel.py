@@ -319,10 +319,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     or operation == "verify-presentation"
                     or operation == "remove"
                 ):
-                    #pres_ex_id = rec_id
-                    # swap thread id for pres ex id from the webhook
-                    pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+                    if (operation not in "send-presentation" or operation not in "send-request") and "~service" not in data:
+                        # swap thread id for pres ex id from the webhook
+                        pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+                    else:
+                        # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
+                        pres_ex_id = data["~service"]["recipientKeys"][0]
                     agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
+
                 else:
                     agent_operation = "/present-proof/" + operation
             
