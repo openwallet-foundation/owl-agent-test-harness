@@ -158,8 +158,20 @@ def step_impl(context, verifier, prover):
             }
         }
 
-        # send presentation request
-        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
+    if ('connectionless' in context) and (context.connectionless == True):
+        resp_json = json.loads(resp_text)
+
+        presentation_proposal["~service"] = {
+                "recipientKeys": [
+                    resp_json["presentation_exchange_id"]
+                ],
+                "routingKeys": None,
+                "serviceEndpoint": context.verifier_url
+                }
+
+
+    # send presentation request
+    (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
@@ -170,7 +182,12 @@ def step_impl(context, verifier, prover):
     context.presentation_thread_id = resp_json["thread_id"]
 
     # check the state of the presentation from the provers perspective
-    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
+    # if the protocol is connectionless then don't do this, the prover has not recieved anything yet.
+    if ('connectionless' not in context) or (context.connectionless == False):
+        assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
+    else:
+        # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
+        context.presentation_exchange_id = resp_json["presentation_exchange_id"]
 
 @when('"{verifier}" sends a {request_for_proof} presentation to "{prover}"')
 def step_impl(context, verifier, request_for_proof, prover):
@@ -226,6 +243,15 @@ def step_impl(context, prover):
             }
         }
 
+    # if this is happening connectionless, then add the service decorator to the presentation
+    if ('connectionless' in context) and (context.connectionless == True):
+        presentation["~service"] = {
+                "recipientKeys": [
+                    context.presentation_exchange_id
+                ],
+                "routingKeys": None,
+                "serviceEndpoint": context.verifier_url
+            }
 
     (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
