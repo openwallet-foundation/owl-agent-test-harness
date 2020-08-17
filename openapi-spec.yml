@@ -6,7 +6,7 @@ servers:
       port:
         description: >
           The port to use for the backchannel
-            * Alice:    9020
+            * Acme:    9020
             * Bob:      9030
             * Faber:    9040
             * Mallory:  9050

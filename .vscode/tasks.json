@@ -43,7 +43,7 @@
       "label": "dotnet:docker-build:debug",
       "dependsOn": ["dotnet:build"],
       "dockerBuild": {
-        "tag": "dotnet-agent-backchannel:dev",
+        "tag": "dotnet-agent-backchannel:debug",
         "target": "base",
         "dockerfile": "${workspaceFolder}/aries-backchannels/dotnet/Dockerfile.dotnet",
         "context": "${workspaceFolder}/aries-backchannels",
@@ -55,19 +55,71 @@
     },
     {
       "type": "docker-run",
-      "label": "dotnet:docker-run:debug",
+      "label": "dotnet:debug:acme",
       "dependsOn": ["dotnet:docker-build:debug"],
       "dockerRun": {
+        "remove": true,
+        "containerName": "acme_agent",
+        "envFiles": ["${workspaceFolder}/.env"],
         "env": {
-          "DOCKERHOST": "${DOCKERHOST}",
-          "LEDGER_URL": "http://${DOCKERHOST}:9000"
+          "BACKCHANNEL_PORT": "9020"
         },
-        "ports": [
-          {
-            "containerPort": 9020,
-            "hostPort": 9020
-          }
-        ]
+        // Expects integer, but string works
+        "ports": [{ "containerPort": "9020-9029", "hostPort": "9020-9029" }]
+      },
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",
+        "enableDebugging": true
+      }
+    },
+    {
+      "type": "docker-run",
+      "label": "dotnet:debug:bob",
+      "dependsOn": ["dotnet:docker-build:debug"],
+      "dockerRun": {
+        "remove": true,
+        "envFiles": ["${workspaceFolder}/.env"],
+        "containerName": "bob_agent",
+        "env": {
+          "BACKCHANNEL_PORT": "9030"
+        },
+        "ports": [{ "containerPort": "9030-9039", "hostPort": "9030-9039" }]
+      },
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",
+        "enableDebugging": true
+      }
+    },
+    {
+      "type": "docker-run",
+      "label": "dotnet:debug:faber",
+      "dependsOn": ["dotnet:docker-build:debug"],
+      "dockerRun": {
+        "remove": true,
+        "envFiles": ["${workspaceFolder}/.env"],
+        "containerName": "faber_agent",
+        "env": {
+          "BACKCHANNEL_PORT": "9040"
+        },
+        "ports": [{ "containerPort": "9040-9049", "hostPort": "9040-9049" }]
+      },
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",
+        "enableDebugging": true
+      }
+    },
+    {
+      "type": "docker-run",
+      "label": "dotnet:debug:mallory",
+      "dependsOn": ["dotnet:docker-build:debug"],
+      "dockerRun": {
+        "remove": true,
+        "envFiles": ["${workspaceFolder}/.env"],
+        "containerName": "mallory_agent",
+        "env": {
+          "BACKCHANNEL_PORT": "9050"
+        },
+        "ports": [{ "containerPort": "9050-9059", "hostPort": "9050-9059" }]
       },
       "netCore": {
         "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj",

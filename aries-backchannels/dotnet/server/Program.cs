@@ -17,8 +17,16 @@ namespace DotNet.Backchannel
             // Catch all unhandled exceptions
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
-            Program.SetEnvironment(p).Wait();
-            CreateHostBuilder(p).Build().Run();
+            var port = p;
+
+            // When debugging with VSCode we can't pass the -p argument.
+            if (Environment.GetEnvironmentVariable("BACKCHANNEL_PORT") != null)
+            {
+                port = Int32.Parse(Environment.GetEnvironmentVariable("BACKCHANNEL_PORT"));
+            }
+
+            Program.SetEnvironment(port).Wait();
+            CreateHostBuilder(port).Build().Run();
         }
 
         public static async Task SetEnvironment(int port)

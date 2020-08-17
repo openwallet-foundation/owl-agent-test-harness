@@ -225,6 +225,21 @@ waitForAgent(){
   )
 }
 
+startAgent() {
+  local NAME=$1
+  local CONTAINER_NAME=$2
+  local IMAGE_NAME=$3
+  local PORT_RANGE=$4
+  local BACKCHANNEL_PORT=$5
+
+  if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+    echo "Starting ${NAME} Agent ..."
+    docker run -d --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false >/dev/null
+  else
+    echo "${NAME} Agent already running, skipping..."
+  fi
+}
+
 runTests() {
   runArgs=${@}
 
@@ -232,16 +247,12 @@ runTests() {
   export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
   export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
   export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
-  
-  echo "Starting Acme Agent ..."
-  docker run -d --rm --name acme_agent --expose 9020-9029 -p 9020-9029:9020-9029 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null  
-  echo "Starting Bob Agent ..."
-  docker run -d --rm --name bob_agent --expose 9030-9039 -p 9030-9039:9030-9039 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
-  echo "Starting Faber Agent ..."
-  docker run -d --rm --name faber_agent --expose 9040-9049 -p 9040-9049:9040-9049 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${FABER_AGENT} -p 9040  -i false >/dev/null
-  echo "Starting Mallory Agent ..."
-  docker run -d --rm --name mallory_agent --expose 9050-9059 -p 9050-9059:9050-9059 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${MALLORY_AGENT} -p 9050  -i false >/dev/null
- 
+
+  startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020
+  startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030
+  startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040
+  startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050
+
   echo
   waitForAgent Acme 9020
   waitForAgent Bob 9030

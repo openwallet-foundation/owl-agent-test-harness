@@ -5,16 +5,64 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": ".NET Core Attach",
-      "type": "coreclr",
-      "request": "attach",
-      "processId": "${command:pickProcess}"
+      "name": ".NET Backchannel - Acme",
+      "type": "docker",
+      "containerName": "acme_agent",
+      "request": "launch",
+      "serverReadyAction": {
+        "pattern": "NEVER_OPEN",
+        "uriFormat": "http://localhost:%s",
+        "action": "openExternally"
+      },
+      "preLaunchTask": "dotnet:debug:acme",
+      "removeContainerAfterDebug": true,
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj"
+      }
     },
     {
-      "name": "Docker .NET Core Launch",
+      "name": ".NET Backchannel - Bob",
       "type": "docker",
+      "containerName": "bob_agent",
       "request": "launch",
-      "preLaunchTask": "dotnet:docker-run:debug",
+      "serverReadyAction": {
+        "pattern": "NEVER_OPEN",
+        "uriFormat": "http://localhost:%s",
+        "action": "openExternally"
+      },
+      "preLaunchTask": "dotnet:debug:bob",
+      "removeContainerAfterDebug": true,
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj"
+      }
+    },
+    {
+      "name": ".NET Backchannel - Faber",
+      "type": "docker",
+      "containerName": "faber_agent",
+      "request": "launch",
+      "serverReadyAction": {
+        "pattern": "NEVER_OPEN",
+        "uriFormat": "http://localhost:%s",
+        "action": "openExternally"
+      },
+      "preLaunchTask": "dotnet:debug:faber",
+      "removeContainerAfterDebug": true,
+      "netCore": {
+        "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj"
+      }
+    },
+    {
+      "name": ".NET Backchannel - Mallory",
+      "type": "docker",
+      "containerName": "mallory_agent",
+      "request": "launch",
+      "serverReadyAction": {
+        "pattern": "NEVER_OPEN",
+        "uriFormat": "http://localhost:%s",
+        "action": "openExternally"
+      },
+      "preLaunchTask": "dotnet:debug:mallory",
       "removeContainerAfterDebug": true,
       "netCore": {
         "appProject": "${workspaceFolder}/aries-backchannels/dotnet/server/DotNet.Backchannel.csproj"
