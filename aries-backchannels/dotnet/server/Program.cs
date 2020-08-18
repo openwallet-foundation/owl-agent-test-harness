@@ -4,29 +4,44 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 
 namespace DotNet.Backchannel
 {
     public class Program
     {
-        /// <param name="p">Choose the starting port number to listen on</param>
-        /// <param name="i">Start agent interactively</param>
-        // TODO: Improve CLI argument handling / parsing
-        public static void Main(int p = 9020, bool i = false)
+        public static async Task<int> Main(params string[] args)
         {
             // Catch all unhandled exceptions
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
-            var port = p;
+            RootCommand rootCommand = new RootCommand(
+                description: "Start an .NET agent with backchannel"
+            ) {
+             new Option<int>(
+                new string[] { "--port", "-p" },
+                // When debugging with VSCode we can't pass the -p argument.
+                getDefaultValue: () => Int32.Parse(Environment.GetEnvironmentVariable("BACKCHANNEL_PORT") ?? "9020")
+            ) {
+                IsRequired = false
+            },
 
-            // When debugging with VSCode we can't pass the -p argument.
-            if (Environment.GetEnvironmentVariable("BACKCHANNEL_PORT") != null)
-            {
-                port = Int32.Parse(Environment.GetEnvironmentVariable("BACKCHANNEL_PORT"));
+             new Option<bool>(
+                new string[] { "--interactive", "-i" },
+                getDefaultValue: () => false
+            ) {
+                IsRequired = false
             }
+            };
 
-            Program.SetEnvironment(port).Wait();
-            CreateHostBuilder(port).Build().Run();
+            rootCommand.Handler = CommandHandler.Create<int, bool>((port, interactive) =>
+            {
+                Program.SetEnvironment(port).Wait();
+                CreateHostBuilder(port).Build().Run();
+            });
+
+            return await rootCommand.InvokeAsync(args);
         }
 
         public static async Task SetEnvironment(int port)
@@ -39,8 +54,6 @@ namespace DotNet.Backchannel
             var GENESIS_URL = Environment.GetEnvironmentVariable("GENESIS_URL");
             var GENESIS_FILE = Environment.GetEnvironmentVariable("GENESIS_FILE");
             var GENESIS_PATH = await LedgerUtils.GetGenesisPathAsync(GENESIS_FILE, GENESIS_URL, LEDGER_URL, DOCKER_HOST);
-
-
 
             await LedgerUtils.RegisterPublicDidAsync(LEDGER_URL, ISSUER_KEY_SEED, "dotnet-backchannel");
 
