@@ -88,8 +88,11 @@ namespace DotNet.Backchannel.Handlers
                             THCredentialExchange = _credentialCache.Get<TestHarnessCredentialExchange>(credentialProposal.GetThreadId());
                             credentialRecord = await _credentialService.GetByThreadIdAsync(agentContext, THCredentialExchange.ThreadId);
 
-                            // TODO: we should check if the proposal came from the same connection
-                            // if (messageContext.Connection?.Id == credentialRecord.ConnectionId)
+                            // check if the proposal came from the same connection
+                            if (messageContext.Connection?.Id != credentialRecord.ConnectionId)
+                            {
+                                throw new AriesFrameworkException(ErrorCode.RecordInInvalidState, "Connection from credential proposal is not same as previously stored record.");
+                            }
                         }
                         catch
                         {
@@ -209,14 +212,16 @@ namespace DotNet.Backchannel.Handlers
             var definitionId = offer["cred_def_id"].ToObject<string>();
             var schemaId = offer["schema_id"].ToObject<string>();
 
-            // TODO: does it throw or return nil
             // check if credential already exists
             CredentialRecord credentialRecord;
             try
             {
                 credentialRecord = await _credentialService.GetByThreadIdAsync(agentContext, credentialOffer.GetThreadId());
-                // TODO: check if same connection id
-                // credentialRecord.ConnectionId == connection.Id
+
+                if (credentialRecord.ConnectionId != connection.Id)
+                {
+                    throw new AriesFrameworkException(ErrorCode.InvalidRecordData, "Connection from credential offer is not same as previously stored record.");
+                }
             }
             catch
             {
@@ -238,7 +243,6 @@ namespace DotNet.Backchannel.Handlers
                     State = TestHarnessCredentialExchangeState.OfferReceived
                 };
 
-                // TODO: move away from handler.
                 _credentialCache.Set(THCredentialExchange.ThreadId, THCredentialExchange);
             }
 

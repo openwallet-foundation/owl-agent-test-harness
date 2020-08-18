@@ -87,14 +87,13 @@ namespace DotNet.Backchannel.Controllers
             var credentialPreview = proposal["credential_proposal"].ToObject<CustomCredentialPreviewMessage>();
             var credentialDefinitionId = (string)proposal["cred_def_id"];
             var schemaId = (string)proposal["schema_id"];
-            var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
+            var connection = await _connectionService.GetAsync(context, connectionId);
 
             var threadId = Guid.NewGuid().ToString();
 
             credentialPreview.Attributes = CleanCredentialPreviewAttributes(credentialPreview.Attributes);
 
-            // TODO: add support for v1.1 wich includes 'schema_issuer_did', 'schema_name', 'schema_version', 'issuer_did'
-            // TODO: should we support in response to previous message? Not possible with AATH atm I think.
+            // NOTE: Aries Framework .NET doesn't support v1.1 yet which includes 'schema_issuer_did', 'schema_name', 'schema_version', 'issuer_did'
             var credentialProposeMessage = new CustomCredentialProposeMessage
             {
                 Id = threadId,
@@ -142,9 +141,6 @@ namespace DotNet.Backchannel.Controllers
             var context = await _agentContextProvider.GetContextAsync();
             var issuer = await _provisionService.GetProvisioningAsync(context.Wallet);
             var threadId = body.Id;
-
-            // TODO: can we remove delay?
-            await Task.Delay(5000);
 
             string connectionId;
             TestHarnessCredentialExchange THCredentialExchange;
@@ -221,9 +217,8 @@ namespace DotNet.Backchannel.Controllers
                 _credentialCache.Set(THCredentialExchange.ThreadId, THCredentialExchange);
             }
 
-            var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
+            var connection = await _connectionService.GetAsync(context, connectionId);
 
-            // TODO: find better way to listen for changes. As the state can move to other statest than just RequestReceived
             // Listen for credential request to update the state
             UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.RequestReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.RequestCredential && _.ThreadId == THCredentialExchange.ThreadId);
 
@@ -243,11 +238,10 @@ namespace DotNet.Backchannel.Controllers
             var (credentialRequest, credentialRecord) = await _credentialService.CreateRequestAsync(context, THCredentialExchange.RecordId);
             THCredentialExchange.State = TestHarnessCredentialExchangeState.RequestSent;
 
-            // TODO: find better way to listen for changes. As the state can move to other statest than just CredentialReceived
             // Listen for issue credential to update the state
             UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.CredentialReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.IssueCredential && _.ThreadId == THCredentialExchange.ThreadId);
 
-            var connection = await _connectionService.GetAsync(context, credentialRecord.ConnectionId); // TODO: Handle AriesFrameworkException if connection not found
+            var connection = await _connectionService.GetAsync(context, credentialRecord.ConnectionId);
             await _messageService.SendAsync(context.Wallet, credentialRequest, connection);
 
             return Ok(THCredentialExchange);
@@ -256,13 +250,12 @@ namespace DotNet.Backchannel.Controllers
         [HttpPost("issue")]
         public async Task<IActionResult> IssueCredentialAsync(OperationBody body)
         {
-            await Task.Delay(5000);
-
             var threadId = body.Id;
             var context = await _agentContextProvider.GetContextAsync();
             var THCredentialExchange = _credentialCache.Get<TestHarnessCredentialExchange>(threadId);
 
-            // TODO: should we use body.Data? This can contain an optional comment.
+            // NOTE: We currently don't use the body from issue credential, but the data from the credential
+            // I think this must be the same, otherwise a new offer must be sent before issuing other data
             var (credentialIssueMessage, credentialRecord) = await _credentialService.CreateCredentialAsync(context, THCredentialExchange.RecordId);
             var connection = await _connectionService.GetAsync(context, credentialRecord.ConnectionId);
 
@@ -282,7 +275,6 @@ namespace DotNet.Backchannel.Controllers
             var credentialRecord = await _credentialService.GetAsync(context, THCredentialExchange.RecordId);
 
             THCredentialExchange.CredentialId = credentialRecord.CredentialId;
-            // TODO: Should we do some checks here??
             THCredentialExchange.State = TestHarnessCredentialExchangeState.Done;
 
             return Ok(THCredentialExchange);

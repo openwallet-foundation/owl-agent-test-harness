@@ -57,11 +57,10 @@ namespace DotNet.Backchannel.Controllers
             // Needed to construct credential definition id
             var schema = JObject.Parse(await _schemaService.LookupSchemaAsync(context, schemaId));
             var schemaSeqNo = (string)schema["seqNo"];
-            var signatureType = "CL"; // TODO: can we make this variable?
 
             // The test client sends multiple create credential definition requests with
             // the same parameters. First check whether the credential definition already exists.
-            var credentialDefinitionId = $"{issuer.IssuerDid}:3:{signatureType}:{schemaSeqNo}:{tag}";
+            var credentialDefinitionId = $"{issuer.IssuerDid}:3:CL:{schemaSeqNo}:{tag}";
             var credentialDefinitionString = await this.LookupCredentialDefinitionByIdAsync(credentialDefinitionId);
 
             // If the credential defintion doesn't already exists, create it

@@ -30,7 +30,6 @@ namespace DotNet.Backchannel.Middlewares
             // received trust ping comes from the connection we send the connection response to.
             // For this reason we handle this specific case through a middleware where we do have the
             // connection from which the trust ping message came
-            // TODO: should we also move the other events to here, or should we keep it as is for the rest?
             if (messageContext.GetMessageType() == MessageTypes.TrustPingMessageType)
             {
                 var message = messageContext.GetMessage<TrustPingMessage>();
@@ -42,6 +41,8 @@ namespace DotNet.Backchannel.Middlewares
                     THConnection.State = TestHarnessConnectionState.Complete;
                 }
             }
+            // When we receive a request presentation message we need to create a TestHarnessPresentationExchange and
+            // store it in the cache for future use. This allow us to keep track of the current state of the presentation exchange
             else if (messageContext.GetMessageType() == MessageTypes.PresentProofNames.RequestPresentation)
             {
                 var message = messageContext.GetMessage<RequestPresentationMessage>();

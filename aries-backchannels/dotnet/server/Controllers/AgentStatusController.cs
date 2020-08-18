@@ -9,7 +9,8 @@ namespace DotNet.Backchannel.Controllers
         [HttpGet]
         public IActionResult AgentStatus()
         {
-            // TODO: check whether agent is active
+            // NOTE: Because the agent runs inside the backchannel (not separate processes)
+            // The agent is active as long as the backchannel is active
             var active = true;
 
             if (active) return Ok(new { status = "active" });

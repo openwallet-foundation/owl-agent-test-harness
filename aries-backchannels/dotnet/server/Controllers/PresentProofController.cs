@@ -93,7 +93,7 @@ namespace DotNet.Backchannel.Controllers
         [HttpPost("send-request")]
         public async Task<IActionResult> SendPresentationRequestAsync(OperationBody body)
         {
-            // TODO: AATH doesn't yet support presentation request as response to other message
+            // NOTE: AATH can only start from presentation request, not respond to previous message
             var context = await _agentContextProvider.GetContextAsync();
 
             var presentationRequest = body.Data;
@@ -114,7 +114,7 @@ namespace DotNet.Backchannel.Controllers
 
             var (requestPresentationMessage, proofRecord) = await _proofService.CreateRequestAsync(context, proofRequest, connectionId);
 
-            var connection = await _connectionService.GetAsync(context, connectionId); // TODO: Handle AriesFrameworkException if connection not found
+            var connection = await _connectionService.GetAsync(context, connectionId);
 
             var THPresentationExchange = new TestHarnessPresentationExchange
             {
@@ -174,7 +174,6 @@ namespace DotNet.Backchannel.Controllers
 
             if (!isValid)
             {
-                // TODO: properly handle invalid proof
                 return Problem("Proof is not valid");
             }
 
