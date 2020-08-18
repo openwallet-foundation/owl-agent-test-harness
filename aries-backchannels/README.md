@@ -20,13 +20,15 @@ Once you have the backchannel, you need to define one or more docker files to cr
 
 The test harness interacts with each backchannel using a small set of standard set of web services. Endpoints are here:
 
-- POST /agent/command/{topic}/
+- POST /agent/command/{topic}/{operation}
 - GET /agent/command/{topic}/
 - GET /agent/command/{topic}/{id}
 
 That's all of the endpoints your agent has to handle. Of course, your backchannel also has to be able to communicate
 with the CUT (the agent or agent framework being tested). Likely that means being able to generate requests to the
 CUT (mostly based on requests from the endpoints above) and monitor events from the CUT.
+
+See the OpenAPI definition located [here](../openapi-spec.yml) for an overview of all current topics and operations.
 
 ### Standard Backchannel Topics and Operations
 
@@ -43,6 +45,8 @@ Although the number of endpoints is small, the number of topic and operation par
 The Google Sheet data can help guide the implementation of the backchannel, providing a to do list of operations to handle. As well, a code-friendly version of the data from the spreadsheet is made available in the docker image of the Test Agent as the file `backchannel_operations.csv`. We recommend that in writing a backchannel, any `Not Implemented` commands and operations return an HTTP `501` result code ("Not Implemented")and dump the data related to the operation from the `backchannel_operations.csv` to the console to help guide the work to be done in implementing the operation in the backchannel.
 
 Support for testing new protocols will extend the data file with additional `topics` and related `operations`, adding to the workload of the backchannel maintainer.
+
+As mentioned above there is also an OpenAPI definition [available](../openapi-spec.yml) that contains all current topics and operations. When setting up the API of your backchannel this can be helpful to know what parameters the ATTH client will send with each operation, and what parameters it expects in return.
 
 ### Backchannel/Agent Interaction
 
@@ -68,7 +72,7 @@ The following lists the requirements for building AATH compatible docker images:
   - The lowest port number is passed to the TA on startup and is used by the test harness to send HTTP requests to the running TA.
   - The next nine higher ports are exposed across the docker network and can be used as needed by the TA.
 
-Examples are provided for aca-py [(`Dockerfile.acapy`)](acapy/Dockerfile.acapy) and VCX [(`Dockerfile.vcx`)](vcx/Dockerfile.vcx).
+Examples are provided for aca-py [(`Dockerfile.acapy`)](acapy/Dockerfile.acapy), VCX [(`Dockerfile.vcx`)](vcx/Dockerfile.vcx) and .NET [(`Dockerfile.dotnet`)](dotnet/Dockerfile.dotnet).
 
 ### `./manage` Script Integration
 
