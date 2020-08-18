@@ -2,9 +2,9 @@
 
 # Aries Agent Test Harness: Let's Make Interoperability Boring<!-- omit in toc -->
 
-The Aries Agent Test Harness (AATH) is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development)-based test execution engine and set of tests for evaluating the interoperability of Aries Agents and Agent Frameworks. The tests are agnostic to the components under test but rather are designed based on   the [Aries RFCs](https://github.com/hyperledger/aries) and the interaction protocols documented there. The AATH enables the creation of an interop lab much like the [labs](https://www.iol.unh.edu/) used by the telcos when introducing new hardware into the markets&mdash;routers, switchers and the like. Aries agent and agent framework builders can easily incorporate these tests into the their CI/CD pipelines to ensure that interoperability is core to the development process.
+The Aries Agent Test Harness (AATH) is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development)-based test execution engine and set of tests for evaluating the interoperability of Aries Agents and Agent Frameworks. The tests are agnostic to the components under test but rather are designed based on the [Aries RFCs](https://github.com/hyperledger/aries) and the interaction protocols documented there. The AATH enables the creation of an interop lab much like the [labs](https://www.iol.unh.edu/) used by the telcos when introducing new hardware into the markets&mdash;routers, switchers and the like. Aries agent and agent framework builders can easily incorporate these tests into the their CI/CD pipelines to ensure that interoperability is core to the development process.
 
-Want to see the Aries Agent Test Harness in action?  Give it a try using using a git and bash enabled system, or run it in your browser using Play with Docker (startup instructions here).  Once you are in a bash shell, run the following commands to execute a set of RFC tests using the [Aries Cloud Agent - Python](https://github.com/hyperledger/aries-cloudagent-python):
+Want to see the Aries Agent Test Harness in action? Give it a try using a git and bash enabled system, or run it in your browser using Play with Docker (startup instructions here). Once you are in a bash shell, run the following commands to execute a set of RFC tests using the [Aries Cloud Agent - Python](https://github.com/hyperledger/aries-cloudagent-python):
 
 ```bash
 git clone https://github.com/bcgov/von-network
@@ -23,11 +23,11 @@ The commands take a while to run (you know...building modern apps always means d
 
 - The `von-network` commands are building and starting a docker-ized Hyperledger Indy network needed for some of the tests.
 - The AATH build command builds docker images for testing the ACA-Py agent framework and the test harness.
-- The AATH run command executes a set of tests (those tagged "AcceptanceTest" but not tagger "@wip") with the ACA-Py agent playing all of the roles&mdash;Acme, Bob and Mallory.
+- The AATH run command executes a set of tests (those tagged "AcceptanceTest" but not tagged "@wip") with the ACA-Py agent playing all of the roles&mdash;Acme, Bob, Faber and Mallory.
 
-It's that last part makes the AATH powerful. On every run, different AATH-enabled components can be assigned any role (Acme, Bob, Mallory and others to come, like Carol and Faber). For some initial pain (AATH-enabling a component), interoperability testing becomes routine, and we can make hit our goal: to make interoperability boring.
+It's that last part makes the AATH powerful. On every run, different AATH-enabled components can be assigned any role (Acme, Bob, Faber, Mallory and others to come, like Carol). For some initial pain (AATH-enabling a component), interoperability testing becomes routine, and we can make hit our goal: to make interoperability boring.
 
-Interesting to you?  Read on for more about the architecture, how to build tests, how to AATH-enable the Aries agents and agent frameworks that you are building and how you can run these tests on a continuous basis. For a brief set of slides covering the process and goals, check [this](https://docs.google.com/presentation/d/1tNttxlHE8iwyOr7LDOZ6VrCwh8AuINfzuI2Gl0WEld0/edit?usp=sharing) out.
+Interesting to you? Read on for more about the architecture, how to build tests, how to AATH-enable the Aries agents and agent frameworks that you are building and how you can run these tests on a continuous basis. For a brief set of slides covering the process and goals, check [this](https://docs.google.com/presentation/d/1tNttxlHE8iwyOr7LDOZ6VrCwh8AuINfzuI2Gl0WEld0/edit?usp=sharing) out.
 
 We'd love to have help in building out a full Aries interoperability lab.
 
@@ -56,8 +56,9 @@ The following diagram provides an overview of the architecture of the AATH.
 - The general roles of the test participants are:
   - Acme: an enterprise issuer/verifier
   - Bob: a holder/prover
+  - Faber: another enterprise issuer/verifier
   - Mallory: a malicious holder/prover
-  - Other roles are likely to be added, such as Carol (another holder/prover), Faber (another enterprise issuer/verifier) and perhaps even Thing (an IOT device).
+  - Other roles are likely to be added, such as Carol (another holder/prover) and perhaps even Thing (an IOT device).
 - The test harness is the Python [behave](https://behave.readthedocs.io/en/latest/) engine, with the "features" (as they are called in BDD-speak) written in [Gherkin](https://behave.readthedocs.io/en/latest/gherkin.html#gherkin-feature-testing-language) and the feature steps in Python.
 - Dockerfiles are used to package the backchannel and the component under test (an agent or agent framework) into a single container image with a pre-defined set of port mappings.
   - One of the ports is for the test harness to backchannel interface and the rest can be used as needed by the component under test and it's backchannel.
@@ -71,7 +72,7 @@ The following diagram provides an overview of the architecture of the AATH.
 There are a couple of layers of abstraction involved in the test harness architecture, and it's worth formalizing some terminology to make it easier to communicate about what's what when we are are running tests.
 
 - **Test Harness**: An engine that executes the selected tests and collects the results.
-- **Backchannel**: A piece of integration software that receives HTTP requests from the Test Harness and interacts with tanhe agent or agent framework under test to execute the requests. A backchannel is needed for each agent or agent framework. The same backchannel will likely work for multiple agent and agent framework versions and/or configurations.
+- **Backchannel**: A piece of integration software that receives HTTP requests from the Test Harness and interacts with the agent or agent framework under test to execute the requests. A backchannel is needed for each agent or agent framework. The same backchannel will likely work for multiple agent and agent framework versions and/or configurations.
 - **Components under Test (CUTs)**: external Aries agents or agent frameworks being tested.
   - The CUT might be an agent framework like aries-framework-dotnet or aries-cloudagent-python. In those cases, the backchannel is a controller that directly operates an instance of the agent framework.
   - The CUT might be a full agent; a combination of an agent framework instance and a controller. In those cases, the backchannel must be able to operate the controller, which in turn controls the agent framework. For example, a mobile agent has a user interface (a controller), perhaps with some automation rules. Its' AATH backchannel will interact with the controller, not the agent framework directly.
@@ -92,7 +93,7 @@ A further complication is that as tests are added to the test suite, the backcha
 
 Backchannels can be found in the [`aries-backchannels`](aries-backchannels) folder of this repo. For more information on building a backchannel, see the documentation in the [`aries-backchannels` README](aries-backchannels/README.md), and look at the code of the existing backchannels. To get help in building a backchannel for a component you want tested, please use GitHub issues and/or ask questions on the [Hyperledger Rocketchat](https://chat.hyperledger.org) `#aries-agent-test-harness` channel (free Linux Foundation account required).
 
-Two backchannels have been implemented, for the [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python) and [VCX](https://github.com/hyperledger/indy-sdk/tree/master/vcx) Aries agent frameworks. Both are built on a common Python base (./aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. The ACA-PY (./aries-backchannels/acapy/acapy_backchannel.py) and VCX (./aries-backchannels/vcx/vcx_backchannel.py) implementations extend the base to add support for their respective agent frameworks.
+Three backchannels have been implemented, for the [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python), [VCX](https://github.com/hyperledger/indy-sdk/tree/master/vcx) and [.NET](https://github.com/hyperledger/aries-framework-dotnet) Aries agent frameworks. The ACA-Py and VCX are built on a common Python base (./aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. The ACA-PY (./aries-backchannels/acapy/acapy_backchannel.py) and VCX (./aries-backchannels/vcx/vcx_backchannel.py) implementations extend the base to add support for their respective agent frameworks.
 
 ## The `manage` bash script
 

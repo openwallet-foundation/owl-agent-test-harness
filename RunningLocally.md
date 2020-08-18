@@ -2,6 +2,8 @@
 
 Note this is **not** recommended, however it may be desirable if you want to run outside of Docker containers. While this repo is in early iteration, we can only provide limited support in using this. These instructions cover what was done in initially setting up the ACA-Py and VCX backchannels before they were standardized. As such, they are included for historical purposes only, and may or may not still be accurate.
 
+> The backchannel for Aries Framework .NET only supports the standardized dockerized method for setting up backchannels. However the backchannel does support debugging the backchannel from inside the docker container, which is the most common reason for running locally. See [DEBUGGING.md](DEBUGGING.md) for more info on debugging.
+
 > We would **FAR** prefer help in being able in documenting the use of a debugger with the docker containers vs. documentation on running the test harness on bare-metal.
 
 To run each agent, install the appropriate pre-requisites (the VCX adapter requires a local install of indy-sdk and VCX) and then run as follows.
