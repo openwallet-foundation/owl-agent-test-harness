@@ -15,3 +15,6 @@ Thumbs.db
 
 # Agent log files
 .logs
+
+# Env file used for debugging
+.env
