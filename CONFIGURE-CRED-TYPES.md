@@ -13,7 +13,7 @@
 Initially the Aries Agent Interop Tests were written with hard coded Credential Type Definitions, Credential Data for issued cedentials, and a canned Proof Request and Presentation of that Proof. This default behaviour for the tests is fine for quick cursory assessment of the protocol, however it was always a goal to provide a method of having this credential and proof input external to the tests, and to be able to quickly construct tests with different credential and proof data, driven from that external data.
 Tests still remain that use the default hard coded credential input. Tests  like the Proof test below, make no mention of specific credentials or proofs. 
 ```
-@T001-API10-RFC0037  @P1  @AcceptanceTest  @Indy
+@T001-AIP10-RFC0037  @P1  @AcceptanceTest  @Indy
 Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged
 Given "2" agents
 | name  | role     |
@@ -51,7 +51,7 @@ Some conventions are in place here that make it workable.
 ### Handling Multiple Credentials in a Proof
 Proof Requests can contain requests from multiple credentials from the holder.  The Test Harness will create the credential types for as many credential types listed as tags for the scenario. For example, below is an example of a scenario that will utilize two credentials in its proofs; Biological Indicators and Health Consent.
 ```
-@T001.4-API10-RFC0037  @P1  @AcceptanceTest  @Schema_Biological_Indicators  @Schema_Health_Consent  @Indy
+@T001.4-AIP10-RFC0037  @P1  @AcceptanceTest  @Schema_Biological_Indicators  @Schema_Health_Consent  @Indy
 Scenario Outline: Present Proof of specific types and proof is acknowledged
 Given "2" agents
 | name  | role     |
