@@ -189,6 +189,7 @@ def step_impl(context, verifier, prover):
         # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
         context.presentation_exchange_id = resp_json["presentation_exchange_id"]
 
+@when('"{verifier}" agrees with the proposal so sends a {request_for_proof} presentation to "{prover}"')
 @when('"{verifier}" sends a {request_for_proof} presentation to "{prover}"')
 def step_impl(context, verifier, request_for_proof, prover):
     try:
@@ -298,50 +299,37 @@ def step_impl(context, verifier, prover):
 def step_impl(context, prover):
    
     # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
-    if "request_for_proof" in context:
-        data = context.request_for_proof
+    if "presentation_proposal" in context:
+        data = context.presentation_proposal
     else:   
         data = {
-                    "requested_values": {
-                        "attr_1": {
-                            "name": "attr_1",
-                            "restrictions": [
-                                {
-                                    "schema_name": "test_schema." + context.issuer_name,
-                                    "schema_version": "1.0.0"
-                                }
-                            ]
-                        }
-                    }
+            "requested_attributes": [
+                {
+                    "name": "attr_2",
+                    "cred_def_id": context.credential_definition_id_dict[context.schema["schema_name"]],
                 }
-
-    if ('connectionless' in context) and (context.connectionless == True):
-        presentation_proposal = {
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data": data
-                }
-            }
+            ]
         }
+    if data.get("requested_attributes") == None:
+        requested_attributes = []
     else:
-        presentation_proposal = {
-            "connection_id": context.connection_id_dict[prover][context.verifier_name],
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data": data
-                }
-            }
-        }
+        requested_attributes = data["requested_attributes"]
+    if data.get("requested_predicates") == None:
+        requested_predicates = []
+    else:
+        requested_predicates = data["requested_predicates"]
 
-        
+    presentation_proposal = {
+        "presentation_proposal": {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
+            "comment": "This is a comment for the presentation proposal.",
+            "requested_attributes": requested_attributes,
+            "requested_predicates": requested_predicates
+        }
+    }
+
+    if ('connectionless' not in context) or (context.connectionless != True):
+        presentation_proposal["connection_id"] = context.connection_id_dict[prover][context.verifier_name]
 
     # send presentation proposal
     (resp_status, resp_text) = agent_backchannel_POST(context.prover_url + "/agent/command/", "proof", operation="send-proposal", data=presentation_proposal)
@@ -359,16 +347,85 @@ def step_impl(context, prover):
 
 @when(u'"{verifier}" agrees to continue so sends a request for proof presentation')
 def step_impl(context, verifier):
+    # Construct the presentation request from the presention proposal.
+    # This should be removed in V2.0 since data is not required with a thread id.
+    data = {
+        "requested_attributes": {
+            "attr_2": {
+                "name": "attr_2",
+                "restrictions": [
+                    {
+                        "schema_name": "test_schema." + context.issuer_name,
+                        "schema_version": "1.0.0"
+                    }
+                ]
+            }
+        }
+    }
+
+    presentation_request = {
+            "presentation_proposal": {
+                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+                "comment": "This is a comment for the request for presentation.",
+                "request_presentations~attach": {
+                    "@id": "libindy-request-presentation-0",
+                    "mime-type": "application/json",
+                    "data":  data
+                }
+            }
+        }
+
+    if ('connectionless' not in context) or (context.connectionless != True):
+        presentation_request["connection_id"] = context.connection_id_dict[verifier][context.prover_name]
+    
     # send presentation request
-    (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", id=context.presentation_thread_id, data=presentation_proposal)
+    (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", id=context.presentation_thread_id, data=presentation_request)
+    
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     # check the state of the presentation from the verifiers perspective
     assert resp_json["state"] == "request-sent"
 
     # save off anything that is returned in the response to use later?
-    context.presentation_thread_id = resp_json["thread_id"]
+    #context.presentation_thread_id = resp_json["thread_id"]
 
     # check the state of the presentation from the provers perspective
     assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
     #assert present_proof_status(context.prover_url, context.presentation_thread_id, "request-received")
+
+@when('"{prover}" doesn’t want to reveal what was requested so makes a {proposal}')
+@when('"{prover}" makes a {proposal} to "{verifier}"')
+def step_impl(context, prover, proposal, verifier=None):
+    try:
+        proposal_json_file = open('features/data/' + proposal + '.json')
+        proposal_json = json.load(proposal_json_file)
+        context.presentation_proposal = proposal_json["presentation_proposal"]
+
+        # replace the cred_def_id with the actual id based on the cred type name
+        try:
+            for i in range(json.dumps(context.presentation_proposal["requested_attributes"]).count("cred_def_id")):
+                # Get the cred type name from the loaded presentation for each requested attributes
+                cred_type_name = context.presentation_proposal["requested_attributes"][i]["cred_type_name"]
+                context.presentation_proposal["requested_attributes"][i]["cred_def_id"] = context.credential_definition_id_dict[cred_type_name]
+                # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+                context.presentation_proposal["requested_attributes"][i].pop("cred_type_name")
+        except KeyError:
+            pass
+        
+        try:
+            for i in range(json.dumps(context.presentation_proposal["requested_predicates"]).count("cred_def_id")):
+                # Get the schema name from the loaded presentation for each requested predicates
+                cred_type_name = context.presentation_proposal["requested_predicates"][i]["cred_type_name"]
+                context.presentation_proposal["requested_predicates"][i]["cred_def_id"] = context.credential_definition_id_dict[cred_type_name] 
+                # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+                context.presentation_proposal["requested_predicates"][i].pop("cred_type_name")
+        except KeyError:
+            pass
+
+    except FileNotFoundError:
+        print(FileNotFoundError + ': features/data/' + proposal + '.json')
+
+    # Call the existing proposal step to make the proposal.
+    context.execute_steps('''
+        When "''' + prover + '''" doesn’t want to reveal what was requested so makes a presentation proposal
+    ''')

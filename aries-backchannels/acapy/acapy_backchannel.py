@@ -84,7 +84,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "request_sent": "request-sent",
             "request_received": "request-received",
             "proposal_sent": "proposal-sent",
-            "proposal_received": "proposal_received",
+            "proposal_received": "proposal-received",
             "presentation_sent": "presentation-sent",
             "presentation_received": "presentation-received",
             "reject_sent": "reject-sent",
@@ -640,33 +640,39 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if topic == "proof":
 
             if operation == "send-request" or operation == "create-request":
+                if operation == "send-proposal":
+                    request_type = "presentation_proposal"
+                    attachment = "presentations~attach"
+                else:
+                    request_type = "proof_request"
+                    attachment = "request_presentations~attach"
                 
-                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_attributes") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_attributes") == None:
                     requested_attributes = {}
                 else:
-                    requested_attributes = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_attributes"]
+                    requested_attributes = data["presentation_proposal"][attachment]["data"]["requested_attributes"]
 
-                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("requested_predicates") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_predicates") == None:
                     requested_predicates = {}
                 else:
-                    requested_predicates = data["presentation_proposal"]["request_presentations~attach"]["data"]["requested_predicates"]
+                    requested_predicates = data["presentation_proposal"][attachment]["data"]["requested_predicates"]
 
-                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("name") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("name") == None:
                     proof_request_name = "test proof"
                 else:
-                    proof_request_name = data["presentation_proposal"]["request_presentations~attach"]["data"]["name"]
+                    proof_request_name = data["presentation_proposal"][attachment]["data"]["name"]
 
-                if data.get("presentation_proposal", {}).get("request_presentations~attach", {}).get("data", {}).get("version") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("version") == None:
                     proof_request_version = "1.0"
                 else:
-                    proof_request_version = data["presentation_proposal"]["request_presentations~attach"]["data"]["version"]
+                    proof_request_version = data["presentation_proposal"][attachment]["data"]["version"]
                 
                 if "connection_id" in data:
                     admin_data = {
                         "comment": data["presentation_proposal"]["comment"],
                         "trace": False,
                         "connection_id": data["connection_id"],
-                        "proof_request": {
+                        request_type: {
                             "name": proof_request_name,
                             "version": proof_request_version,
                             "requested_attributes": requested_attributes,
@@ -677,13 +683,68 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     admin_data = {
                         "comment": data["presentation_proposal"]["comment"],
                         "trace": False,
-                        "proof_request": {
+                        request_type: {
                             "name": proof_request_name,
                             "version": proof_request_version,
                             "requested_attributes": requested_attributes,
                             "requested_predicates": requested_predicates
                         }
                     }
+
+                # # Make special provisions for proposal. The names are changed in this operation. Should be consistent imo.
+                # # this whole condition can be removed for V2.0 of the protocol. It will look like more of a send-request in 2.0.
+                # if operation == "send-proposal":
+                #     if data.get("presentation_proposal", {}).get("@type") is not None:
+                #         admin_data["presentation_proposal"]["@type"] = data["presentation_proposal"]["@type"]
+                #     if admin_data.get("presentation_proposal", {}).get("requested_attributes") is not None:
+                #         admin_data["presentation_proposal"]["attributes"] = admin_data["presentation_proposal"].pop("requested_attributes")
+                #     if admin_data.get("presentation_proposal", {}).get("requested_predicates") is not None:
+                #         admin_data["presentation_proposal"]["predicates"] = admin_data["presentation_proposal"].pop("requested_predicates")
+                #     if admin_data.get("presentation_proposal", {}).get("name") is not None:
+                #         admin_data["presentation_proposal"].pop("name")
+                #     if admin_data.get("presentation_proposal", {}).get("version") is not None:
+                #         admin_data["presentation_proposal"].pop("version")
+
+            # Make special provisions for proposal. The names are changed in this operation. Should be consistent imo.
+            # this whole condition can be removed for V2.0 of the protocol. It will look like more of a send-request in 2.0.
+            elif operation == "send-proposal":
+
+                request_type = "presentation_proposal"
+                
+                if data.get("presentation_proposal", {}).get("requested_attributes") == None:
+                    requested_attributes = []
+                else:
+                    requested_attributes = data["presentation_proposal"]["requested_attributes"]
+
+                if data.get("presentation_proposal", {}).get("requested_predicates") == None:
+                    requested_predicates = []
+                else:
+                    requested_predicates = data["presentation_proposal"]["requested_predicates"]
+                
+                admin_data = {
+                        "comment": data["presentation_proposal"]["comment"],
+                        "trace": False,
+                        request_type: {
+                            "@type": data["presentation_proposal"]["@type"],
+                            "attributes": requested_attributes,
+                            "predicates": requested_predicates
+                        }
+                    }
+
+                if "connection_id" in data:
+                    admin_data["connection_id"] = data["connection_id"]
+
+
+                # if data.get("presentation_proposal", {}).get("@type") is not None:
+                #     admin_data["presentation_proposal"]["@type"] = data["presentation_proposal"]["@type"]
+                # if admin_data.get("presentation_proposal", {}).get("requested_attributes") is not None:
+                #     admin_data["presentation_proposal"]["attributes"] = admin_data["presentation_proposal"].pop("requested_attributes")
+                # if admin_data.get("presentation_proposal", {}).get("requested_predicates") is not None:
+                #     admin_data["presentation_proposal"]["predicates"] = admin_data["presentation_proposal"].pop("requested_predicates")
+                # if admin_data.get("presentation_proposal", {}).get("name") is not None:
+                #     admin_data["presentation_proposal"].pop("name")
+                # if admin_data.get("presentation_proposal", {}).get("version") is not None:
+                #     admin_data["presentation_proposal"].pop("version")
 
             elif operation == "send-presentation":
                 

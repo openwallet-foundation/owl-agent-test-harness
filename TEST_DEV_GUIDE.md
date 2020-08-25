@@ -49,10 +49,9 @@ The test cases should use the test persona as follows:
 
 - `Acme`: an enterprise agent with issuer and verifier capabilities
 - `Bob`: a holder/prover person
-- `Faber` another enterprise agent with issuer and verifier capabilities
 - `Mallory`: a malicious holder/prover person
 
-As necessary, other persona will be added. We expect adding `Carol` (another holder/prover person) and perhaps `Thing` (an IOT thing, likely an issuer and verifier). Note that each additional persona requires updates to the running of tests (via the `./manage` script) and introduce operational overhead, so thought should be given before introducing new characters into the test suite.
+As necessary, other persona will be added. We expect adding `Carol` (another holder/prover person), `Faber` (another enterprise issuer and verifier) and perhaps `Thing` (an IOT thing, likely an issuer and verifier). Note that each additional persona requires updates to the running of tests (via the `./manage` script) and introduce operational overhead, so thought should be given before introducing new characters into the test suite.
 
 ## Using Tags
 
@@ -73,7 +72,7 @@ The test harness run script supports the use of [tags](https://behave.readthedoc
 - @wip - Tests that are a work in progress and incomplete
 - @Done - Finished tests that are expected to Pass if executed against an Agent.
 - @AIP10 - Aries Interop Profile version the tests are written for
-- @T01-API10-RFC0160 - Test Unique Identifier - Please use T for the test cases number, the API version number the test is written for, and the RFC number for the Protocol under test. 
+- @T01-AIP10-RFC0160 - Test Unique Identifier - Please use T for the test cases number, the API version number the test is written for, and the RFC number for the Protocol under test. 
 - @WillFail - Tests completed but because of an outstanding bug, they are expected to fail. The test harness looks for this to report on the next tag  
 - @OutstandingBug..###..url - When using @WillFail, this tag much also be used. It is comprised of 3 components, OutstandingBug, the bug number, and the bug url. These must be separated by double periods.
 
@@ -91,10 +90,10 @@ Defining specific tags should be discussed with the Aries Protocol test communit
 
 ## Defining Backchannel Operations
 
-Defining test steps require using and extending the commands and operations to be implemented by the backchannels. The commands and operations are documented in a Google Sheet, located [here](https://bit.ly/AriesTestHarnessScenarios). All operations are also documented in an OpenAPI Spec located [here](./openapi-spec.yml). The OpenAPI spec can be viewed using [Swagger UI](https://github.com/swagger-api/swagger-ui) locally or online using a tool like [Swagger Editor](https://editor.swagger.io/). As test developers add new steps to test cases, document the new operations on which they depend in the spreadsheet and the OpenAPI spec. The data from the Google Sheet is available to the backchannels and are used by some to implement the backchannel capabilities. Making the data available is currently a manual process that is done using the following process:
+Defining test steps require using and extending the commands and operations to be implemented by the backchannels. The commands and operations are documented in a Google Sheet, located [here](https://bit.ly/AriesTestHarnessScenarios). As test developers add new steps to test cases, document the new operations oon which they depend in the spreadsheet. The data from the Google Sheet is available to the backchannels and are used by some to implement the backchannel capabilities. Making the data available is currently a manual process that is done using the following process:
 
 - prepare a branch in your fork of the repo that will be a PR
-- export the Google Sheet, saving it into this file in the repo: [steps/Mapping Aries Protocols for Testing - Aries Agent Test Scripts.csv](./aries-test-harness/features/Mapping%20Aries%20Protocols%20for%20Testing%20-%20Aries%20Agent%20Test%20Scripts.csv)
+- export the Google Sheet, saving it into this file in the repo: [steps/Mapping Aries Protocols for Testing - Aries Agent Test Scripts.csv](steps/../aries-test-harness/features/Mapping%20Aries%20Protocols%20for%20Testing%20-%20Aries%20Agent%20Test%20Scripts.csv)
 - run the command in the `aries-test-harness/steps` folder: `./genBCdata Mapping\ Aries\ Protocols\ for\ Testing\ -\ Aries\ Agent\ Test\ Scripts.csv`
   - this will replace the current data file in the `aries-backchannels/data` folder
 - submit a PR to update the file
@@ -103,7 +102,7 @@ Defining test steps require using and extending the commands and operations to b
 
 ## Implementing Test Steps
 
-Follow standard best practices for implementing test steps in Behave, writing the test steps as if the feature is fully supported and then adding code at all levels to support the new test. The process is something like this:
+Follow standard best practices for implementing test steps in Behave, writing the test steps as if the feature is fully supported and then adding code at all levels to supprt the new test. The process is something like this:
 
 - Study the RFC and define the tests needed to cover at least the happy path requirements of the RFC
   - Raise as issues in the [Aries RFCs](https://github.com/hyperledger/aries-rfcs) repo any deficiencies in the RFC
@@ -111,7 +110,7 @@ Follow standard best practices for implementing test steps in Behave, writing th
   - Add new persona only if really, really needed
 - Execute the new tests, grabbing the skeleton code for the new, unimplemented steps from the behave output, and adding them to the `steps` Python code
 - Implement the steps code, defining as needed commands and operations to be added to the backchannel interface
-- Update the Google Sheet and OpenAPI spec to add the new commands and operations and regenerate the backchannel operations data file (see [subsection](#defining-backchannel-operations) above)
+- Update the Google Sheet to add the new commands and operations and regenerate the backchannel operations data file (see [subsection](#defining-backchannel-operations) above)
 - If you are also responsible for implementing one or more backchannels, extend the backchannel(s) to support the new commands and operations
 - Notify the community of backchannel maintainers of the new tests, commands and operations
 
@@ -124,4 +123,3 @@ See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in th
 ## Diving Deeper
 - [Accessing Connection ID in Test Code](ACCESS-CONNECTION-IDS.md)
 - [Configuring Tests with Credential Types and Proofs](CONFIGURE-CRED-TYPES.md)
-- [Debugging a Backchannel Running Inside a Docker Contaiener](DEBUGGING.md)
