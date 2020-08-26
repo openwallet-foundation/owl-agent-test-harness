@@ -73,7 +73,7 @@ The test harness run script supports the use of [tags](https://behave.readthedoc
 - @wip - Tests that are a work in progress and incomplete
 - @Done - Finished tests that are expected to Pass if executed against an Agent.
 - @AIP10 - Aries Interop Profile version the tests are written for
-- @T01-API10-RFC0160 - Test Unique Identifier - Please use T for the test cases number, the API version number the test is written for, and the RFC number for the Protocol under test. 
+- @T01-AIP10-RFC0160 - Test Unique Identifier - Please use T for the test cases number, the API version number the test is written for, and the RFC number for the Protocol under test. 
 - @WillFail - Tests completed but because of an outstanding bug, they are expected to fail. The test harness looks for this to report on the next tag  
 - @OutstandingBug..###..url - When using @WillFail, this tag much also be used. It is comprised of 3 components, OutstandingBug, the bug number, and the bug url. These must be separated by double periods.
 

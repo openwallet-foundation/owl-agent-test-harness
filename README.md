@@ -131,7 +131,7 @@ The test harness has utilized tags in the BDD feature files to be able to narrow
 - @wip - Tests that are a work in progress and incomplete
 - @Done - Finished tests that are expected to Pass if executed against an Agent.
 - @AIP10 - Aries Interop Profile version the tests are written for
-- @T01-API10-RFC0160 - Test Unique Identifier
+- @T01-AIP10-RFC0160 - Test Unique Identifier
 
 Proposed Connection Protocol Tags
 

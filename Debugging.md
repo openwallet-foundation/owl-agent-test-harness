@@ -14,6 +14,6 @@
    - .NET Backchannel - Faber
    - .NET Backchannel - Mallory
 4. Run the tests using the manage script. The manage script will automatically detect if any of the agents is already running and skip the startup. You must make sure the backchannels that are passed to the `./manage run` script are the same as the backchannels started with the debugger.
-   - If you now, for example, run `./manage run -d dotnet -t @T001-API10-RFC0160` it will run the tests using the backchannels you started from the debugger.
+   - If you now, for example, run `./manage run -d dotnet -t @T001-AIP10-RFC0160` it will run the tests using the backchannels you started from the debugger.
 
 For more information on debugging in VSCode see [the docs](https://code.visualstudio.com/docs/editor/debugging).
