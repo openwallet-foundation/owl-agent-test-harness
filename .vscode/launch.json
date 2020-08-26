@@ -89,7 +89,7 @@
         "cwd": "${workspaceFolder}/aries-test-harness",
         "args": [
             "${file}",
-            "--tags=@T002-API10-RFC0037",
+            "--tags=@T002-AIP10-RFC0037",
             "-k",
             "-D",
             "Acme=http://0.0.0.0:8020",
