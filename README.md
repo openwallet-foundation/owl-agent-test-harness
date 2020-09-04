@@ -1,6 +1,6 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-# Aries Agent Test Harness: Let's Make Interoperability Boring<!-- omit in toc -->
+# Aries Agent Test Harness: Smashing Complexity in Interoperability Testing<!-- omit in toc -->
 
 The Aries Agent Test Harness (AATH) is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development)-based test execution engine and set of tests for evaluating the interoperability of Aries Agents and Agent Frameworks. The tests are agnostic to the components under test but rather are designed based on the [Aries RFCs](https://github.com/hyperledger/aries) and the interaction protocols documented there. The AATH enables the creation of an interop lab much like the [labs](https://www.iol.unh.edu/) used by the telcos when introducing new hardware into the markets&mdash;routers, switchers and the like. Aries agent and agent framework builders can easily incorporate these tests into the their CI/CD pipelines to ensure that interoperability is core to the development process.
 
@@ -172,3 +172,6 @@ or all the ExceptionTests...
 To read more on how one can control the execution of test sets based on tags see the [behave documentation](https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags)
 
 The option `-i <inifile>` can be used to pass a file in the `behave.ini` format into behave. With that, any behave configuration settings can be specified to control how behave behaves. See the behave documentation about the `behave.ini` configuration file [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files).
+
+### Test Coverage
+To read about what protocols and features from Aries Interop Profile 1.0, see the [Test Coverage Matrix](./TEST-COVERAGE.md). 
