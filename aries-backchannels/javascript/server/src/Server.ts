@@ -7,12 +7,10 @@ export const rootDir = __dirname;
 @Configuration({
   rootDir,
   acceptMimes: ["application/json"],
-  httpPort: process.env.PORT || 9020,
-  httpsPort: false, // CHANGE
+  httpsPort: false,
   mount: {
     "/": [`${rootDir}/controllers/**/*.ts`],
   },
-  exclude: ["**/*.spec.ts"],
 })
 export class Server {
   @Inject()

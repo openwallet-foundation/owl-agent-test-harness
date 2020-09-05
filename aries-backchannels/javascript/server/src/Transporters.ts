@@ -5,6 +5,8 @@ import {
   Agent,
 } from "aries-framework-javascript";
 import { Express } from "express";
+import { post } from "./utils/httpUtils";
+import { $log } from "@tsed/common";
 
 export class HttpOutboundTransporter implements OutboundTransporter {
   public async sendMessage(
@@ -19,10 +21,8 @@ export class HttpOutboundTransporter implements OutboundTransporter {
       );
     }
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    $log.info(`sending agent message to ${endpoint}`, payload);
+    const response = await post(endpoint, payload);
 
     if (receiveReply) {
       return JSON.parse(await response.text());

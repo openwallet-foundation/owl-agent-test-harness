@@ -33,16 +33,17 @@ FROM base as final
 WORKDIR /src
 ENV RUN_MODE="docker"
 
-COPY server/package.json package.json
-COPY server/yarn.lock yarn.lock
-COPY aries-framework-javascript-v1.0.0.tgz ../aries-framework-javascript-v1.0.0
+COPY javascript/server/package.json package.json
+COPY javascript/server/yarn.lock yarn.lock
+COPY javascript/aries-framework-javascript-v1.0.0.tgz ../aries-framework-javascript-v1.0.0.tgz
 
 # Run install after copying only depdendency file
 # to make use of docker layer caching
 RUN yarn install
 
-# Copy other depdencies
-COPY . . 
+# Copy other depedencies
+COPY javascript/server .
 
-RUN yarn build
-ENTRYPOINT [ "node", "build/index.js" ]
+# For now we use ts-node. Compiling with typescript
+# doesn't work because indy-sdk types are not exported
+ENTRYPOINT [ "yarn", "ts-node", "src/index.ts" ]
