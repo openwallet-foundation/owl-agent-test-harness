@@ -2,7 +2,6 @@
 import indy from "indy-sdk";
 import { InitConfig, Agent } from "aries-framework-javascript";
 import express from "express";
-import * as bodyParser from "body-parser";
 import {
   HttpInboundTransporter,
   HttpOutboundTransporter,
@@ -25,7 +24,12 @@ export async function createAgent({
   };
 
   const app = express();
-  app.use(bodyParser.text());
+  app.use(
+    express.json({
+      type: "application/ssi-agent-wire",
+    })
+  );
+
   const inboundTransporter = new HttpInboundTransporter(app);
   const outboundTransporter = new HttpOutboundTransporter();
 

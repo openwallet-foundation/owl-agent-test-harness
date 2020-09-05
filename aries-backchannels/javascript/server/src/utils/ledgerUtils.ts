@@ -1,4 +1,4 @@
-import { post, get } from "./httpUtils";
+import { postJson, get } from "./httpUtils";
 import os from "os";
 import path from "path";
 import { promises as fs } from "fs";
@@ -14,7 +14,7 @@ export async function registerPublicDid(
     role: "TRUST_ANCHOR",
   };
 
-  await post(`${ledgerUrl}/register`, data);
+  await postJson(`${ledgerUrl}/register`, data);
 }
 
 export function getRandomSeed() {

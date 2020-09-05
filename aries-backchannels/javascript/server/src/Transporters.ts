@@ -5,7 +5,7 @@ import {
   Agent,
 } from "aries-framework-javascript";
 import { Express } from "express";
-import { post } from "./utils/httpUtils";
+import { postJson } from "./utils/httpUtils";
 import { $log } from "@tsed/common";
 
 export class HttpOutboundTransporter implements OutboundTransporter {
@@ -22,7 +22,11 @@ export class HttpOutboundTransporter implements OutboundTransporter {
     }
 
     $log.info(`sending agent message to ${endpoint}`, payload);
-    const response = await post(endpoint, payload);
+    const response = await postJson(endpoint, payload, {
+      headers: {
+        "Content-Type": "application/ssi-agent-wire",
+      },
+    });
 
     if (receiveReply) {
       return JSON.parse(await response.text());
@@ -40,8 +44,8 @@ export class HttpInboundTransporter implements InboundTransporter {
   public start(agent: Agent) {
     this.app.post("/msg", async (req, res) => {
       const message = req.body;
-      const packedMessage = JSON.parse(message);
-      const outboundMessage = await agent.receiveMessage(packedMessage);
+      $log.info("received agent message", message);
+      const outboundMessage = await agent.receiveMessage(message);
       if (outboundMessage) {
         res.status(200).json(outboundMessage.payload).end();
       } else {
