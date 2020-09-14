@@ -2,10 +2,7 @@ Feature: Aries agent issue credential functions RFC 0036
 
   Background: create a schema and credential definition in order to issue a credential
     Given "Acme" has a public did
-    When "Acme" creates a new schema
-    And "Acme" creates a new credential definition
-    Then "Acme" has an existing schema
-    And "Acme" has an existing credential definition
+    And "Acme" is ready to issue a credential
 
   @T001-AIP10-RFC0036 @AcceptanceTest @P1 @Indy
   Scenario: Issue a credential with the Holder beginning with a proposal
