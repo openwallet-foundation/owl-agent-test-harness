@@ -72,6 +72,7 @@ Feature: Aries agent present proof functions RFC 0037
          | issuer | credential_data      | request for proof            | presentation                |
          | Faber  | Data_BI_HealthValues | proof_request_health_consent | presentation_health_consent |
 
+
    # See issue #90 for when work on this test will resume - https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/bcgov/aries-agent-test-harness/90
    @T002-AIP10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview @Indy
    Scenario Outline: Present Proof where the prover and verifier are connectionless, the prover does not propose a presentation of the proof, and is acknowledged
@@ -160,13 +161,12 @@ Feature: Aries agent present proof functions RFC 0037
       And "Faber" and "Bob" have an existing connection
       And "Bob" has an issued credential from <issuer> with <credential_data>
       When "Faber" sends a <request_for_proof> presentation to "Bob"
-      And "Bob" makes the <presentation> of the proof incorrectly
-      And "Faber" rejects the proof so sends a presentation rejection
+      And "Bob" makes the <presentation> of the proof incorrectly so "Faber" rejects the proof
       Then "Bob" has the proof unacknowledged
 
       Examples:
-         | issuer | credential_data   | request_for_proof        | presentation                |
-         | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_age_over_19 |
+         | issuer | credential_data   | request_for_proof        | presentation                      |
+         | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_incorrect_address |
 
 
    @T006-AIP10-RFC0037 @P3 @AcceptanceTest @Schema_Health_ID @Indy

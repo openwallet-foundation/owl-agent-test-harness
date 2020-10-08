@@ -327,6 +327,16 @@ def step_impl(context, holder):
     # This is returning none instead of Done. Should this be the case. Needs investigation.
     #assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "done")
 
+    # if the credential supports revocation, get the Issuers webhook callback JSON from the store command
+    # From that JSON save off the credential revocation identifier, and the revocation registry identifier.
+    if context.support_revocation:
+        (resp_status, resp_text) = agent_backchannel_GET(context.config.userdata.get(context.issuer_name) + "/agent/response/", "revocation-registry", id=context.cred_thread_id)
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+        resp_json = json.loads(resp_text)
+        context.cred_rev_id = resp_json["revocation_id"]
+        context.rev_reg_id = resp_json["revoc_reg_id"]
+        
+
 @then('"{holder}" has the credential issued')
 def step_impl(context, holder):
 
