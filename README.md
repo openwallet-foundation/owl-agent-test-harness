@@ -18,6 +18,12 @@ cd aries-agent-test-harness
 ./manage run -d acapy -t @AcceptanceTest -t ~@wip
 
 ```
+If running the Credential Revocation tests, which the `./manage run -d acapy -t @AcceptanceTest -t ~@wip` command does, make sure the Tail Server is running.
+```bash
+git clone https://github.com/bcgov/indy-tails-server
+cd indy-tails-server/docker
+./manage start
+```
 
 The commands take a while to run (you know...building modern apps always means downloading half the internet...), so while you wait, here's what's happening:
 

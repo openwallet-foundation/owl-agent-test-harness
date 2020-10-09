@@ -1,22 +1,26 @@
-Feature: Aries agent credential revocation and revocation notification RFC 0011 & 0183
+Feature: Aries agent credential revocation and revocation notification RFC 0011 0183
 
-   @T001-RFC0011 @P1 @AcceptanceTest @Schema_DriversLicense_Revoc @wip @NeedsReview
+   Background: create a schema and credential definition in order to issue a credential
+      Given "Acme" has a public did
+      And "Acme" is ready to issue a credential
+
+   @T001-RFC0011 @P1 @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential revoked by Issuer and Holder attempts to prove
-      Given "3" agents
+      Given "2" agents
          | name  | role     |
-         | Acme  | issuer   |
-         | Bob   | holder   |
+         | Bob   | prover   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      When “Acme” revokes the credential
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      When <issuer> revokes the credential
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
+      And "Faber" acknowledges the proof
       Then "Bob" has the proof unacknowledged
 
       Examples:
-         | issuer | credential_data   | request_for_proof        | presentation            |
-         | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_address |
+         | issuer | credential_data   | request_for_proof              | presentation                  |
+         | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
    @T002-RFC0011 @P1 @AcceptanceTest @Schema_DriversLicense_Revoc @wip @NeedsReview
@@ -27,9 +31,9 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      When “Acme” revokes the credential
-      And “Acme”issues a new credential to “Bob” with <credential_data_new>
+      And "Bob" has an issued credential from "Acme" with <credential_data>
+      When "Acme" revokes the credential
+      And "Acme" issues a new credential to “Bob” with <credential_data_new>
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
@@ -48,9 +52,9 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      When "Faber" sends a <request_for_proof> presentation to “Bob"
-      And “Acme” revokes the credential
+      And "Bob" has an issued credential from "Acme" with <credential_data>
+      When "Faber" sends a <request_for_proof> presentation to "Bob"
+      And "Acme" revokes the credential
       And "Bob" makes the <presentation> of the proof
       Then "Bob" has the proof unacknowledged
 
@@ -67,9 +71,9 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      When “Acme” revokes the credential
-      And “Acme”issues a new credential to “Bob” with <credential_data_new>
+      And "Bob" has an issued credential from "Acme" with <credential_data>
+      When "Acme" revokes the credential
+      And "Acme" issues a new credential to "Bob" with <credential_data_new>
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof with the revoked credential
       Then "Bob" has the proof unacknowledged
@@ -87,9 +91,9 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from “Acme" with <credential_data>
-      And “Acme” has revoked the credential within <timeframe>
-      When "Faber" sends a <request_for_proof> presentation to “Bob” with credential validity during <timeframe>
+      And "Bob" had an issued credential from "Acme" with <credential_data>
+      And "Acme" has revoked the credential within <timeframe>
+      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       And "Faber" acknowledges the proof
       Then "Bob" has the proof acknowledged
@@ -107,9 +111,9 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from “Acme" with <credential_data>
-      And “Acme” has revoked the credential before <timeframe>
-      When "Faber" sends a <request_for_proof> presentation to “Bob” with credential validity during <timeframe>
+      And "Bob" had an issued credential from "Acme" with <credential_data>
+      And "Acme" has revoked the credential before <timeframe>
+      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       Then "Bob" has the proof unacknowledged
 
@@ -126,9 +130,9 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from “Acme" with <credential_data>
-      And “Acme” has revoked the credential after <timeframe>
-      When "Faber" sends a <request_for_proof> presentation to “Bob” with credential validity during <timeframe>
+      And "Bob" had an issued credential from "Acme" with <credential_data>
+      And "Acme" has revoked the credential after <timeframe>
+      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       And "Faber" acknowledges the proof
       Then "Bob" has the proof acknowledged
@@ -146,9 +150,9 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from “Acme" with <credential_data>
-      And “Acme” has revoked the credential within <timeframe>
-      When "Faber" sends a <request_for_proof> presentation to “Bob” with credential validity during <timeframe>
+      And "Bob" had an issued credential from "Acme" with <credential_data>
+      And "Acme" has revoked the credential within <timeframe>
+      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       And "Faber" acknowledges the proof
       Then "Bob" has the proof acknowledged
@@ -167,10 +171,10 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
+      And "Bob" has an issued credential from "Acme" with <credential_data>
       When <role> revokes the credential
       Then <role> will get an error stating ...
-      And “Bob” can make a proof with the credential
+      And "Bob" can make a proof with the credential
 
       Examples:
          | issuer | credential_data   | role     | request_for_proof        | presentation            |
@@ -186,10 +190,10 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      When “Acme” revokes the credential
-      Then “Acme” receives an error stating …
-      And “Bob” can make a proof with the credential
+      And "Bob" has an issued credential from "Acme" with <credential_data>
+      When "Acme" revokes the credential
+      Then "Acme" receives an error stating …
+      And "Bob" can make a proof with the credential
 
       Examples:
          | issuer | credential_data   | request_for_proof        | presentation            |
@@ -204,12 +208,12 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      And “Faber” has an issued credential from “Acme" with <credential_data_2>
-      When “Acme” revokes “Bob’s: credential
-      And “Acme” revokes “Faber’s” credential
-      Then “Bob” cannot make a proof with the credential
-      And “Faber” cannot make a proof with the credential
+      And "Bob" has an issued credential from "Acme" with <credential_data>
+      And "Faber" has an issued credential from "Acme" with <credential_data_2>
+      When "Acme" revokes "Bob’s" credential
+      And "Acme" revokes "Faber’s" credential
+      Then "Bob" cannot make a proof with the credential
+      And "Faber" cannot make a proof with the credential
 
       Examples:
          | issuer | credential_data   | request_for_proof        | presentation            |
@@ -224,11 +228,11 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      When “Acme” revokes the credential
-      And “Acme” sends a revocation notification
-      Then “Bob” receives the revocation notification
-      And “Bob" cannot make a proof with the credential
+      And "Bob" has an issued credential from "Acme" with <credential_data>
+      When "Acme" revokes the credential
+      And "Acme" sends a revocation notification
+      Then "Bob" receives the revocation notification
+      And "Bob" cannot make a proof with the credential
 
       Examples:
          | issuer | credential_data   | request_for_proof        | presentation            |
@@ -242,16 +246,16 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Bob   | holder   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from “Acme" with <credential_data>
-      And “Faber” has an issued credential from “Acme" with <credential_data_2>
-      When “Acme” revokes “Bob’s: credential
-      And “Acme” sends a revocation notification to Bob
-      And “Acme” revokes “Faber’s” credential
-      And “Acme” sends a revocation notification to Faber
-      Then “Bob” receives the revocation notification
-      And “Faber” receives the revocation notification
-      And “Bob” cannot make a proof with the credential
-      And “Faber” cannot make a proof with the credential
+      And "Bob" has an issued credential from "Acme" with <credential_data>
+      And “Faber” has an issued credential from "Acme" with <credential_data_2>
+      When "Acme" revokes "Bob’s" credential
+      And "Acme" sends a revocation notification to "Bob"
+      And "Acme" revokes "Faber’s" credential
+      And "Acme" sends a revocation notification to "Faber"
+      Then "Bob" receives the revocation notification
+      And "Faber" receives the revocation notification
+      And "Bob" cannot make a proof with the credential
+      And "Faber" cannot make a proof with the credential
 
       Examples:
          | issuer | credential_data   | request_for_proof        | presentation            |
