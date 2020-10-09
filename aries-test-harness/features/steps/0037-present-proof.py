@@ -286,6 +286,10 @@ def step_impl(context, verifier):
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "done"
 
+    if "support_revocation" in context:
+        if context.support_revocation:
+            assert resp_json["verified"] == "false"
+
 @then('"{prover}" has the proof acknowledged')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
@@ -429,3 +433,66 @@ def step_impl(context, prover, proposal, verifier=None):
     context.execute_steps('''
         When "''' + prover + '''" doesn’t want to reveal what was requested so makes a presentation proposal
     ''')
+
+
+#
+# Step Definitions to complete the presentation rejection test scenario - T005-AIP10-RFC0037
+#
+@when(u'"{prover}" makes the {presentation} of the proof incorrectly so "{verifier}" rejects the proof')
+def step_impl(context, prover, presentation, verifier):
+    try:
+        presentation_json_file = open('features/data/' + presentation + '.json')
+        presentation_json = json.load(presentation_json_file)
+        context.presentation = presentation_json["presentation"]
+
+    except FileNotFoundError:
+        print(FileNotFoundError + ': features/data/' + presentation + '.json')
+
+    presentation = context.presentation
+    # Find the cred ids and add the actual cred id into the presentation
+    # try:
+    #     for i in range(json.dumps(presentation["requested_attributes"]).count("cred_id")):
+    #         # Get the schema name from the loaded presentation for each requested attributes
+    #         cred_type_name = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_type_name"]
+    #         #presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name]
+    #         presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = '0' 
+    #         # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+    #         presentation["requested_attributes"][list(presentation["requested_attributes"])[i]].pop("cred_type_name")
+    # except KeyError:
+    #     pass
+    
+    # try:
+    #     for i in range(json.dumps(presentation["requested_predicates"]).count("cred_id")):
+    #         # Get the schema name from the loaded presentation for each requested predicates
+    #         cred_type_name = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_type_name"]
+    #         #presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name]
+    #         presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = '1' 
+    #         # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+    #         presentation["requested_predicates"][list(presentation["requested_predicates"])[i]].pop("cred_type_name")
+    # except KeyError:
+    #     pass
+
+    # Change something in the presentation data to cause a problem report
+
+
+    (resp_status, resp_text) = agent_backchannel_POST(context.prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
+    assert resp_status == 400, f'resp_status {resp_status} is not 400; {resp_text}'
+
+    # check the state of the presentation from the verifier's perspective
+    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "presentation-received")
+
+    # context.execute_steps('''
+    #     When "''' + prover + '''" makes the ''' + presentation + ''' of the proof
+    # ''')
+
+# @when(u'"{verifier}" rejects the proof so sends a presentation rejection')
+# def step_impl(context, verifier):
+#     pass
+#     #raise NotImplementedError(u'STEP: When "Faber" rejects the proof so sends a presentation rejection')
+
+@then(u'"{prover}" has the proof unacknowledged')
+def step_impl(context, prover):
+    # check the state of the presentation from the prover's perspective
+    # in the unacknowledged case, the state of the prover is still done. There probably should be something else to check.
+    # like having the verified: false in the repsonse. Change this if agents start to report the verified state. 
+    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")

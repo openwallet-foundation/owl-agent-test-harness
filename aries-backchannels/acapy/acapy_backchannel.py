@@ -124,6 +124,21 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
         if self.webhook_url:
             result.append(("--webhook-url", self.webhook_url))
+        
+        # This code for Tails Server is included here because aca-py does not support the env var directly yet. 
+        # when it does (and there is talk of supporting YAML) then this code can be removed. 
+        if os.getenv('TAILS_SERVER_URL') is not None:
+            # if the env var is set for tails server then use that.
+            result.append(("--tails-server-base-url", os.getenv('TAILS_SERVER_URL')))
+        else:
+            # if the tails server env is not set use the gov.bc TEST tails server.
+            result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
+        
+        # This code for log level is included here because aca-py does not support the env var directly yet. 
+        # when it does (and there is talk of supporting YAML) then this code can be removed. 
+        if os.getenv('LOG_LEVEL') is not None:
+            result.append(("--log-level", os.getenv('LOG_LEVEL')))
+
         #if self.extra_args:
         #    result.extend(self.extra_args)
 
@@ -157,7 +172,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             handler = f"handle_{topic}"
             method = getattr(self, handler, None)
             # put a log message here
-            log_msg('Passing payload to handler ' + handler + ' payload is: ' + json.dumps(payload))
+            log_msg('Passing webhook payload to handler ' + handler)
             if method:
                 await method(payload)
             else:
@@ -172,22 +187,35 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
         push_resource(connection_id, "connection-msg", message)
-        # put a log message here (all the handle_ )
-        # TODO wait here to determine the response to the web hook?????
+        log_msg('Recieved a Connection Webhook message: ' + json.dumps(message))
         pass
 
     async def handle_issue_credential(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "credential-msg", message)
-        # put a log message here (all the handle_ )
-        # TODO wait here to determine the response to the web hook?????
+        log_msg('Recieved Issue Credential Webhook message: ' + json.dumps(message)) 
+        if "revocation_id" in message: # also push as a revocation message 
+            push_resource(thread_id, "revocation-registry-msg", message)
+            log_msg('Issue Credential Webhook message contains revocation info') 
         pass
 
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "presentation-msg", message)
-        # put a log message here (all the handle_ )
-        # TODO wait here to determine the response to the web hook?????
+        log_msg('Recieved a Present Proof Webhook message: ' + json.dumps(message))
+        pass
+
+    async def handle_revocation_registry(self, message):
+        # No thread id in the webhook for revocation registry messages
+        cred_def_id = message["cred_def_id"]
+        push_resource(cred_def_id, "revocation-registry-msg", message)
+        log_msg('Recieved Revocation Registry Webhook message: ' + json.dumps(message)) 
+        pass
+
+    async def handle_problem_report(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "problem-report-msg", message)
+        log_msg('Recieved Problem Report Webhook message: ' + json.dumps(message)) 
         pass
 
     async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
@@ -296,12 +324,36 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     # swap thread id for cred ex id from the webhook
                     cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
                     agent_operation = "/issue-credential/records/" + cred_ex_id + "/" + operation
+                # Make Special provisions for revoke since it is passing multiple query params not just one id.
+                elif (operation == "revoke"):
+                    cred_rev_id = rec_id
+                    rev_reg_id = data["rev_registry_id"]
+                    publish = data["publish_immediately"]
+                    agent_operation = "/issue-credential/" + operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
+                    data = None
                 else:
                     agent_operation = "/issue-credential/" + operation
             
             log_msg(agent_operation, data)
             
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            log_msg(resp_status, resp_text)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "revocation":
+            #set the acapyversion to master since work to set it is not complete. Remove when master report proper version
+            #self.acapy_version = "0.5.5-RC"
+            operation = op["operation"]
+            agent_operation, admin_data = await self.get_agent_operation_acapy_version_based(op["topic"], operation, rec_id, data)
+            
+            log_msg(agent_operation, admin_data)
+            
+            if admin_data == None:
+                (resp_status, resp_text) = await self.admin_POST(agent_operation)
+            else:
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, admin_data)
 
             log_msg(resp_status, resp_text)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
@@ -518,6 +570,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             
             return (resp_status, resp_text)
 
+        elif topic == "revocation-registry" and rec_id:
+            revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
+            i = 0
+            while revocation_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
+                i = i + 1
+
+            resp_status = 200
+            if revocation_msg:
+                resp_text = json.dumps(revocation_msg)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     def _process(self, args, env, loop):
@@ -581,6 +649,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         try:
             status = json.loads(status_text)
             ok = isinstance(status, dict) and "version" in status
+            if ok:
+                self.acapy_version= status["version"]
+                print("ACA-py Backchannel running with ACA-py version:", self.acapy_version)
         except json.JSONDecodeError:
             pass
         if not ok:
@@ -814,9 +885,59 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 elif topic == "issue-credential":
                     data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
                 elif topic == "proof":
-                    data = data.replace(agent_state, self.presentProofStateTranslationDict[agent_state])
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
             return (data)
 
+    async def get_agent_operation_acapy_version_based(self, topic, operation, rec_id=None, data=None):
+        # Admin api calls may change with acapy releases. For example revocation related calls change
+        # between 0.5.4 and 0.5.5. To be able to handle this the backchannel is made aware of the acapy version
+        # and constructs the calls based off that version
+
+        # construct some number to compare to with > or < instead of listing out the version number
+        # if it starts with zero strip it off
+        # if it ends in alpha or RC, change it to .1 or 1
+        # strip all dots
+        # Does that work if I'm testing 0.5.5.1 hot fix? Just strip off the .1 since there won't be a major change here.
+        descriptiveTrailer = "-RC"
+        comparibleVersion = self.acapy_version
+        if comparibleVersion.startswith("0"):
+            comparibleVersion = comparibleVersion[len("0"):]
+        if "." in comparibleVersion:
+            stringParts = comparibleVersion.split(".")
+            comparibleVersion = "".join(stringParts)
+        if comparibleVersion.endswith(descriptiveTrailer):
+            # This means its not an offical release and came from Master/Main
+            # replace with a .1 so that the number is higher than an offical release
+            comparibleVersion = comparibleVersion.replace(descriptiveTrailer, ".1")
+        #  Make it a number. At this point "0.5.5-RC" should be 55.1. "0.5.4" should be 54.
+        comparibleVersion = float(comparibleVersion)
+
+
+        if (topic == "revocation"):
+            if comparibleVersion > 54:
+                agent_operation = "/revocation/" + operation
+                if "cred_ex_id" in data:
+                    admindata = {
+                        "cred_ex_ed": data["cred_ex_id"],
+                    }
+                else:
+                    admindata = {
+                        "cred_rev_id": data["cred_rev_id"],
+                        "rev_reg_id": data["rev_registry_id"],
+                        "publish": str(data["publish_immediately"]).lower(),
+                    }
+                data = admindata
+            else:
+                agent_operation = "/issue-credential/" + operation
+
+                if (data is not None): # Data should be included with 0.5.4 or lower acapy. Then it takes them as inline parameters.
+                    cred_rev_id = data["cred_rev_id"]
+                    rev_reg_id = data["rev_registry_id"]
+                    publish = data["publish_immediately"]
+                    agent_operation = agent_operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
+                    data = None
+
+        return agent_operation, data
 
 async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
 

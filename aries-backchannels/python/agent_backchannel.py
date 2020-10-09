@@ -222,6 +222,7 @@ class AgentBackchannel:
                         data = payload["data"]
                     else:
                         data = None
+                        
                     if "id" in payload:
                         rec_id = payload["id"]
                     elif "cred_ex_id" in payload:
