@@ -218,6 +218,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         log_msg('Recieved Problem Report Webhook message: ' + json.dumps(message)) 
         pass
 
+    async def handle_revocation_registry(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "revocation-registry-msg", message)
+        log_msg('Recieved Revocation Registry Webhook message: ' + message) 
+        pass
+
+    async def handle_problem_report(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "problem-report-msg", message)
+        log_msg('Recieved Problem Report Webhook message: ' + message) 
+        pass
+
     async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
         await asyncio.sleep(2)
         msg = get_resource(thread_id, data_type)
