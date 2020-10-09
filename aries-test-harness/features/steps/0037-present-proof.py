@@ -286,14 +286,9 @@ def step_impl(context, verifier):
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "done"
 
-<<<<<<< HEAD
     if "support_revocation" in context:
         if context.support_revocation:
             assert resp_json["verified"] == "false"
-=======
-    if context.support_revocation:
-        assert resp_json["verified"] == "false"
->>>>>>> 4eb243abbcb2de5113c093173d5be85e35e9fc76
 
 @then('"{prover}" has the proof acknowledged')
 def step_impl(context, prover):
