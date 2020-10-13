@@ -40,3 +40,13 @@ def step_impl(context, issuer):
     (resp_status, resp_text) = agent_backchannel_GET(context.config.userdata.get(context.holder_name) + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
+
+@when('"{prover}" makes the {presentation} of the proof with the revoked credential')
+def step_impl(context, prover, presentation):
+    # swap previous cred ID with current?
+
+    # Then call prover makes the presentation of the proof
+    context.execute_steps('''
+        When "''' + prover + '''" makes the {presentation} of the proof
+    '''.format(presentation=presentation))
+

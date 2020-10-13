@@ -3,6 +3,7 @@ import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
 from time import sleep
 
+@when('{issuer} issues a new credential to "{prover}" with {credential_data}')
 @given('"{prover}" has an issued credential from {issuer} with {credential_data}')
 def step_impl(context, prover, issuer, credential_data):
     #assign the credential data to the context for use in the credential offer or proposal. 
@@ -288,12 +289,20 @@ def step_impl(context, verifier):
 
     if "support_revocation" in context:
         if context.support_revocation:
-            assert resp_json["verified"] == "false"
+            # Add the verified property returned to the credential verification dictionary to check in subsequent steps. Key by presentation thread id
+            if "credential_verification_dict" in context:
+                context.credential_verification_dict[context.presentation_thread_id] = resp_json["verified"]
+            else:
+                context.credential_verification_dict = {context.presentation_thread_id: resp_json["verified"]}
 
 @then('"{prover}" has the proof acknowledged')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
     assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
+
+    # Check the status of the verification in the verify-presentation call. Should be True
+    if 'credential_verification_dict' in context:
+        assert context.credential_verification_dict[context.presentation_thread_id] == "true"
 
 @given('"{verifier}" and "{prover}" do not have a connection')
 def step_impl(context, verifier, prover):
@@ -496,3 +505,7 @@ def step_impl(context, prover):
     # in the unacknowledged case, the state of the prover is still done. There probably should be something else to check.
     # like having the verified: false in the repsonse. Change this if agents start to report the verified state. 
     assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
+
+    # Check the status of the verification in the verify-presentation call. Should be False
+    if 'credential_verification_dict' in context:
+        assert context.credential_verification_dict[context.presentation_thread_id] == "false"
