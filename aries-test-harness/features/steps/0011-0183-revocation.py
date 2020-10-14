@@ -16,8 +16,8 @@
 # -----------------------------------------------------------
 
 from behave import *
-import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
+#import json
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST#, expected_agent_state
 
 @when('{issuer} revokes the credential')
 def step_impl(context, issuer):
