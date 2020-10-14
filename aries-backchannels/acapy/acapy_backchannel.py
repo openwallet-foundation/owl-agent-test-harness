@@ -187,12 +187,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
         push_resource(connection_id, "connection-msg", message)
-        log_msg('Recieved a Connection Webhook message: ' + json.dumps(message))
+        log_msg('Received a Connection Webhook message: ' + json.dumps(message))
 
     async def handle_issue_credential(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "credential-msg", message)
-        log_msg('Recieved Issue Credential Webhook message: ' + json.dumps(message)) 
+        log_msg('Received Issue Credential Webhook message: ' + json.dumps(message)) 
         if "revocation_id" in message: # also push as a revocation message 
             push_resource(thread_id, "revocation-registry-msg", message)
             log_msg('Issue Credential Webhook message contains revocation info') 
@@ -200,18 +200,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "presentation-msg", message)
-        log_msg('Recieved a Present Proof Webhook message: ' + json.dumps(message))
+        log_msg('Received a Present Proof Webhook message: ' + json.dumps(message))
 
     async def handle_revocation_registry(self, message):
         # No thread id in the webhook for revocation registry messages
         cred_def_id = message["cred_def_id"]
         push_resource(cred_def_id, "revocation-registry-msg", message)
-        log_msg('Recieved Revocation Registry Webhook message: ' + json.dumps(message)) 
+        log_msg('Received Revocation Registry Webhook message: ' + json.dumps(message)) 
 
     async def handle_problem_report(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "problem-report-msg", message)
-        log_msg('Recieved Problem Report Webhook message: ' + json.dumps(message)) 
+        log_msg('Received Problem Report Webhook message: ' + json.dumps(message)) 
 
     async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
         await asyncio.sleep(2)
