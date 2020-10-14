@@ -31,7 +31,7 @@ def before_scenario(context, scenario):
         print ('NOTE: Test \"' + scenario.name + '\" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
 
     # Check for Present Froof Feature to be able to handle the loading of schemas and credential definitions before the scenarios.
-    if 'present proof' in context.feature.name:
+    if 'present proof' in context.feature.name or 'revocation' in context.feature.name:
             # get the tag with "Schema_".
             for tag in context.tags:
                 if 'Schema_' in tag:
