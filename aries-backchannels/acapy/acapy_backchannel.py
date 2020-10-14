@@ -188,7 +188,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         connection_id = message["connection_id"]
         push_resource(connection_id, "connection-msg", message)
         log_msg('Recieved a Connection Webhook message: ' + json.dumps(message))
-        pass
 
     async def handle_issue_credential(self, message):
         thread_id = message["thread_id"]
@@ -197,39 +196,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if "revocation_id" in message: # also push as a revocation message 
             push_resource(thread_id, "revocation-registry-msg", message)
             log_msg('Issue Credential Webhook message contains revocation info') 
-        pass
 
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "presentation-msg", message)
         log_msg('Recieved a Present Proof Webhook message: ' + json.dumps(message))
-        pass
 
     async def handle_revocation_registry(self, message):
         # No thread id in the webhook for revocation registry messages
         cred_def_id = message["cred_def_id"]
         push_resource(cred_def_id, "revocation-registry-msg", message)
         log_msg('Recieved Revocation Registry Webhook message: ' + json.dumps(message)) 
-        pass
 
     async def handle_problem_report(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "problem-report-msg", message)
         log_msg('Recieved Problem Report Webhook message: ' + json.dumps(message)) 
-        pass
-
-    async def handle_revocation_registry(self, message):
-        # registry revoction webhook messages do not contain thread ids.
-        cred_def_id = message["cred_def_id"]
-        push_resource(cred_def_id, "revocation-registry-msg", message)
-        log_msg('Recieved Revocation Registry Webhook message: ' + json.dumps(message)) 
-        pass
-
-    async def handle_problem_report(self, message):
-        thread_id = message["thread_id"]
-        push_resource(thread_id, "problem-report-msg", message)
-        log_msg('Recieved Problem Report Webhook message: ' + json.dumps(message)) 
-        pass
 
     async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
         await asyncio.sleep(2)
@@ -363,7 +345,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             
             log_msg(agent_operation, admin_data)
             
-            if admin_data == None:
+            if admin_data is None:
                 (resp_status, resp_text) = await self.admin_POST(agent_operation)
             else:
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, admin_data)
