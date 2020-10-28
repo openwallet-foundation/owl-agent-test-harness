@@ -2,6 +2,7 @@ from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
 from time import sleep
+import time
 
 # This step is defined in another feature file
 # Given "Acme" and "Bob" have an existing connection
@@ -94,7 +95,11 @@ def step_impl(context, issuer):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    #context.credential_definition_id = resp_json["credential_definition_id"]
+    if "support_revocation" in context:
+        # Could make a call to get the rev reg creation time for calculating non revocation intervals
+        #context.cred_rev_creation_time = resp_json["created"]
+        context.cred_rev_creation_time = time.time()
+
     if 'credential_definition_id_dict' in context:
         context.credential_definition_id_dict[context.schema['schema_name']] = resp_json["credential_definition_id"]
     else:
@@ -319,9 +324,12 @@ def step_impl(context, holder):
     assert resp_json["state"] == "done"
     #context.credential_id = resp_json["credential_id"]
     if 'credential_id_dict' in context:
-        context.credential_id_dict[context.schema['schema_name']] = resp_json["credential_id"]
+        try:
+            context.credential_id_dict[context.schema['schema_name']].append(resp_json["credential_id"])
+        except KeyError:
+            context.credential_id_dict[context.schema['schema_name']] = [resp_json["credential_id"]]
     else:
-        context.credential_id_dict = {context.schema['schema_name']: resp_json["credential_id"]}
+        context.credential_id_dict = {context.schema['schema_name']: [resp_json["credential_id"]]}
 
     # Verify issuer status
     # This is returning none instead of Done. Should this be the case. Needs investigation.
@@ -343,10 +351,10 @@ def step_impl(context, holder):
 
         holder_url = context.config.userdata.get(holder)
         # get the credential from the holders wallet
-        (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
+        (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
-        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']]
+        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
         assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
         assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 

@@ -16,7 +16,7 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof unacknowledged
+      Then "Bob" has the proof unverified
 
       Examples:
          | issuer | credential_data   | request_for_proof              | presentation                  |
@@ -36,7 +36,7 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data   | new_credential_data | request_for_proof              | presentation                  |
@@ -55,14 +55,14 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
       And <issuer> revokes the credential
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof unacknowledged
+      Then "Bob" has the proof unverified
 
       Examples:
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T004-RFC0011 @P2 @ExceptionTest @Schema_DriversLicense_Revoc @wip @Indy
+   @T004-RFC0011 @P2 @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy @delete_cred_from_wallet @wip
    Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential but presents the revoked credential
       Given "2" agents
          | name  | role     |
@@ -74,91 +74,93 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
       And <issuer> issues a new credential to "Bob" with <new_credential_data>
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof with the revoked credential
-      Then "Bob" has the proof acknowledged
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data   | new_credential_data | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MinValues | Data_DL_MaxValues   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T005-RFC0011 @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @wip @NeedsReview
+   @T005-RFC0011 @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential is revoked inside the timeframe
-      Given "3" agents
+      Given "2" agents
          | name  | role     |
-         | Acme  | issuer   |
-         | Bob   | holder   |
+         | Bob   | prover   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from "Acme" with <credential_data>
-      And "Acme" has revoked the credential within <timeframe>
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      And <issuer> has revoked the credential within <timeframe>
       When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof unverified
 
       Examples:
-         | issuer | credential_data   | timeframe                      | request_for_proof        | presentation            |
-         | Acme   | Data_DL_MinValues | calculated from execution time | proof_request_DL_address | presentation_DL_address |
+         | issuer | credential_data   | timeframe       | request_for_proof              | presentation                  |
+         | Acme   | Data_DL_MinValues | -86400:+86400   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+         | Acme   | Data_DL_MinValues | -604800:now       | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+         | Acme   | Data_DL_MinValues | -604800:+604800 | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T006-RFC0011 @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @wip @NeedsReview
+   @T006-RFC0011 @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential is revoked before the timeframe
-      Given "3" agents
+      Given "2" agents
          | name  | role     |
-         | Acme  | issuer   |
-         | Bob   | holder   |
+         | Bob   | prover   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from "Acme" with <credential_data>
-      And "Acme" has revoked the credential before <timeframe>
-      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
-      And "Bob" makes the <presentation> of the proof with the revoked credential
-      Then "Bob" has the proof unacknowledged
-
-      Examples:
-         | issuer | credential_data   | timeframe                      | request_for_proof        | presentation            |
-         | Acme   | Data_DL_MinValues | calculated from execution time | proof_request_DL_address | presentation_DL_address |
-
-
-   @T007-RFC0011 @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @wip @NeedsReview
-   Scenario Outline: Credential is revoked after the timeframe
-      Given "3" agents
-         | name  | role     |
-         | Acme  | issuer   |
-         | Bob   | holder   |
-         | Faber | verifier |
-      And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from "Acme" with <credential_data>
-      And "Acme" has revoked the credential after <timeframe>
-      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      And <issuer> has revoked the credential before <timeframe>
+      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity before <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof unverified
 
       Examples:
-         | issuer | credential_data   | timeframe                      | request_for_proof        | presentation            |
-         | Acme   | Data_DL_MinValues | calculated from execution time | proof_request_DL_address | presentation_DL_address |
+         | issuer | credential_data   | timeframe  | request_for_proof              | presentation                  |
+         | Acme   | Data_DL_MaxValues | 0:+86400   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+         | Acme   | Data_DL_MinValues | -1:+604800 | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+         | Acme   | Data_DL_MinValues | now:now    | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T008-RFC0011 @P2 @DerivedTest @Schema_DriversLicense_Revoc @wip @NeedsReview
+   @T007-RFC0011 @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @wip @NeedsReview
+   Scenario Outline: Credential is revoked after the timeframe 
+      Given "2" agents
+         | name  | role     |
+         | Bob   | prover   |
+         | Faber | verifier |
+      And "Faber" and "Bob" have an existing connection
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      And <issuer> has revoked the credential after <timeframe>
+      When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity after <timeframe>
+      And "Bob" makes the <presentation> of the proof with the revoked credential
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof verified
+
+      Examples:
+         | issuer | credential_data   | timeframe | request_for_proof              | presentation                  |
+         | Acme   | Data_DL_MaxValues | -60:-30   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+
+
+   @T008-RFC0011 @P2 @DerivedTest @Schema_DriversLicense_Revoc  @Indy
    Scenario Outline: Credential is revoked during a timeframe with an open ended FROM or TO date
-      Given "3" agents
+      Given "2" agents
          | name  | role     |
-         | Acme  | issuer   |
-         | Bob   | holder   |
+         | Bob   | prover   |
          | Faber | verifier |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" had an issued credential from "Acme" with <credential_data>
-      And "Acme" has revoked the credential within <timeframe>
+      And "Bob" has an issued credential from <issuer> with <credential_data>@wip
+      And <issuer> has revoked the credential within <timeframe>
       When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity during <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof unverified
 
       Examples:
-         | issuer | credential_data   | timeframe       | request_for_proof        | presentation            |
-         | Acme   | Data_DL_MinValues | Open Ended TO   | proof_request_DL_address | presentation_DL_address |
-         | Acme   | Data_DL_MinValues | Open Ended FROM | proof_request_DL_address | presentation_DL_address |
+         | issuer | credential_data   | timeframe | request_for_proof              | presentation                  |
+         | Acme   | Data_DL_MinValues | :now      | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+         | Acme   | Data_DL_MinValues | now:      | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
    @T009-RFC0011 @P3 @DerivedTest @NegativeTest @Schema_DriversLicense_Revoc @wip @NeedsReview
