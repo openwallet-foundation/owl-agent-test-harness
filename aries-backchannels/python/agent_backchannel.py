@@ -165,6 +165,10 @@ class AgentBackchannel:
         app.add_routes([web.get("/agent/command/{topic}", self._get_command_backchannel)])
         app.add_routes([web.get("/agent/command/{topic}/{id}/", self._get_command_backchannel)])
         app.add_routes([web.get("/agent/command/{topic}/{id}", self._get_command_backchannel)])
+        app.add_routes([web.get("/agent/command/{topic}/{operation}/{id}/", self._get_command_backchannel)])
+        app.add_routes([web.get("/agent/command/{topic}/{operation}/{id}", self._get_command_backchannel)])
+        app.add_routes([web.delete("/agent/command/{topic}/{id}/", self._delete_command_backchannel)])
+        app.add_routes([web.delete("/agent/command/{topic}/{id}", self._delete_command_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}/", self._get_response_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}", self._get_response_backchannel)])
         app.add_routes([web.get("/agent/response/{topic}/{id}/", self._get_response_backchannel)])
@@ -188,13 +192,22 @@ class AgentBackchannel:
             if "data" in payload:
                 data = payload["data"]
         for op in self.operations:
-            if (op["topic"] == topic and op["method"] == method and
-                ((rec_id and op["id"] == "Y") or (rec_id is None)) and
-                ((method == "GET") or (operation and op["operation"] == operation) or (operation is None)) and
-                ((data and op["data"] == "Y") or (data is None))
-            ):
-                print("Matched operation:", op)
-                return op
+            if operation is not None:
+                if (op["topic"] == topic and op["method"] == method and
+                    ((rec_id and op["id"] == "Y") or (rec_id is None)) and
+                    ((operation and op["operation"] == operation)) and
+                    ((data and op["data"] == "Y") or (data is None))
+                ):
+                    print("Matched operation:", op)
+                    return op
+            else:
+                if (op["topic"] == topic and op["method"] == method and
+                    ((rec_id and op["id"] == "Y") or (rec_id is None)) and
+                    ((method == "GET") or (operation and op["operation"] == operation) or (operation is None)) and
+                    ((data and op["data"] == "Y") or (data is None))
+                ):
+                    print("Matched operation:", op)
+                    return op
 
         return None
 
@@ -255,14 +268,16 @@ class AgentBackchannel:
         Post a GET command to the agent.
         """
         topic = request.match_info["topic"]
+        topic_operation = request.match_info["operation"] if "operation" in request.match_info else None
+
 
         if "id" in request.match_info:
             rec_id = request.match_info["id"]
         else:
             rec_id = None
-
+        
         try:
-            operation = self.match_operation(topic, "GET", rec_id=rec_id)
+            operation = self.match_operation(topic, "GET", operation=topic_operation, rec_id=rec_id)
             if operation:
                 try:
                     (resp_status, resp_text) = await self.make_agent_GET_request(operation, rec_id=rec_id)
@@ -285,34 +300,69 @@ class AgentBackchannel:
             traceback.print_exc()
             return web.Response(body=str(e), status=500)
 
-    async def _get_response_backchannel(self, request: ClientRequest):
+    async def _delete_command_backchannel(self, request: ClientRequest):
             """
-            Get a response from the (remote) agent.
+            Post a DELETE command to the agent.
             """
             topic = request.match_info["topic"]
+
             if "id" in request.match_info:
                 rec_id = request.match_info["id"]
             else:
                 rec_id = None
 
             try:
-                (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
+                operation = self.match_operation(topic, "DELETE", rec_id=rec_id)
+                if operation:
+                    try:
+                        (resp_status, resp_text) = await self.make_agent_DELETE_request(operation, rec_id=rec_id)
 
-                if resp_status == 200:
-                    return web.Response(text=resp_text, status=resp_status)
-                elif resp_status == 404:
-                    return self.not_found_response(topic)
-                elif resp_status == 501:
-                    return self.not_implemented_response(topic)
-                else:
-                    return web.Response(body=resp_text, status=resp_status)
+                        if resp_status == 200:
+                            return web.Response(text=resp_text, status=resp_status)
+                        elif resp_status == 404:
+                            return self.not_found_response(json.dumps(operation))
+                        elif resp_status == 501:
+                            return self.not_implemented_response(json.dumps(operation))
+                        else:
+                            return web.Response(body=resp_text, status=resp_status)
+                    except NotImplementedError as ni_e:
+                        return self.not_implemented_response(json.dumps(operation))
 
-            except NotImplementedError as ni_e:
-                return self.not_implemented_response(topic)
+                return self.not_found_response(topic)
+
             except Exception as e:
                 print("Exception:", e)
                 traceback.print_exc()
                 return web.Response(body=str(e), status=500)
+
+    async def _get_response_backchannel(self, request: ClientRequest):
+        """
+        Get a response from the (remote) agent.
+        """
+        topic = request.match_info["topic"]
+        if "id" in request.match_info:
+            rec_id = request.match_info["id"]
+        else:
+            rec_id = None
+
+        try:
+            (resp_status, resp_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id)
+
+            if resp_status == 200:
+                return web.Response(text=resp_text, status=resp_status)
+            elif resp_status == 404:
+                return self.not_found_response(topic)
+            elif resp_status == 501:
+                return self.not_implemented_response(topic)
+            else:
+                return web.Response(body=resp_text, status=resp_status)
+
+        except NotImplementedError as ni_e:
+            return self.not_implemented_response(topic)
+        except Exception as e:
+            print("Exception:", e)
+            traceback.print_exc()
+            return web.Response(body=str(e), status=500)
 
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None
