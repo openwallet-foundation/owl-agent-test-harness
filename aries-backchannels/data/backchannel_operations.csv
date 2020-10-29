@@ -18,6 +18,7 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0036 Issue Credential,X,,schema,GET,,Y,,Fetch a specific schema by ID ,schema_id,,schema_id
 0036 Issue Credential,X,,credential-definition,POST,,,Y,Register a cred def on the ledger ,,"credential_definition = {
 }",credential_definition_id
+0036 Issue Credential,X,,credential,DELETE,,Y,,Delete a Cred from the Wallet,credential_id,,credential_id
 0036 Issue Credential,X,,credential-definition,GET,,Y,,Fetch a specific cred def by ID ,credential_definition_id,,credential_definition_id
 0036 Issue Credential,X,,issue-credential,POST,send-proposal,Y,Y,Send a credential proposal,connection_id,"proposal = {
     ""comment"": ""some comment"",
@@ -79,8 +80,12 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
     ""rev_registry_id"": ""revocation registry id string"",
     ""publish_immediately"": ""Publish revocation now or queue""
 }",cred_exchange_id
+0011 Revocation,X,,revocation,GET,credential-record,,Y,get a credential record,cred_rev_id,"revocation = {
+    ""rev_registry_id"": ""revocation registry id string""
+}",cred_exchange_id
 0011 Revocation,X,,revocation-registry,GET,,Y,,Get revocation info from issuers webhook ,thread_id,,revocation_registry
 0036 Issue Credential,X,,credential,GET,,Y,,Get a stored credential from the holders wallet ,credential_id,,credential
+0036 Issue Credential,X,,credential,GET,revoked,Y,,Get a credentials revoked status ,credential_id,,revoked
 0037 Present Proof,X,,proof,POST,send-proposal,Y,Y,Send a proof proposal,connection_id,proposal,pres_exchange_id
 0037 Present Proof,X,,proof,POST,send-request,Y,Y,Send a proof request in reference to a proposal,pres_exchange_id,proof_request,pres_exchange_id
 0037 Present Proof,X,,proof,POST,send-presentation,Y,Y,Send a proof presentation,pres_exchange_id,proof_presentation,pres_exchange_id

@@ -117,6 +117,8 @@ def step_impl(context, verifier, prover):
     # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
     if "request_for_proof" in context:
         data = context.request_for_proof
+        if "non_revoked_timeframe" in context:
+             data["non_revoked"] = context.non_revoked_timeframe["non_revoked"]
     else:   
         data = {
                     "requested_attributes": {
@@ -218,7 +220,7 @@ def step_impl(context, prover):
             for i in range(json.dumps(presentation["requested_attributes"]).count("cred_id")):
                 # Get the schema name from the loaded presentation for each requested attributes
                 cred_type_name = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_type_name"]
-                presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name]
+                presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1]
                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
                 presentation["requested_attributes"][list(presentation["requested_attributes"])[i]].pop("cred_type_name")
         except KeyError:
@@ -228,7 +230,7 @@ def step_impl(context, prover):
             for i in range(json.dumps(presentation["requested_predicates"]).count("cred_id")):
                 # Get the schema name from the loaded presentation for each requested predicates
                 cred_type_name = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_type_name"]
-                presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name] 
+                presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1] 
                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
                 presentation["requested_predicates"][list(presentation["requested_predicates"])[i]].pop("cred_type_name")
         except KeyError:
@@ -240,7 +242,7 @@ def step_impl(context, prover):
             "requested_attributes": {
                 "attr_1": {
                     "revealed": True,
-                    "cred_id": context.credential_id_dict[context.schema['schema_name']]
+                    "cred_id": context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
                 }
             }
         }
@@ -295,7 +297,7 @@ def step_impl(context, verifier):
             else:
                 context.credential_verification_dict = {context.presentation_thread_id: resp_json["verified"]}
 
-@then('"{prover}" has the proof acknowledged')
+@then('"{prover}" has the proof verified')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
     assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
@@ -499,7 +501,7 @@ def step_impl(context, prover, presentation, verifier):
 #     pass
 #     #raise NotImplementedError(u'STEP: When "Faber" rejects the proof so sends a presentation rejection')
 
-@then(u'"{prover}" has the proof unacknowledged')
+@then(u'"{prover}" has the proof unverified')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
     # in the unacknowledged case, the state of the prover is still done. There probably should be something else to check.

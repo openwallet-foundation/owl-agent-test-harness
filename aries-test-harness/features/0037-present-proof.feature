@@ -11,7 +11,7 @@ Feature: Aries agent present proof functions RFC 0037
       When "Faber" sends a request for proof presentation to "Bob"
       And "Bob" makes the presentation of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer |
@@ -30,7 +30,7 @@ Feature: Aries agent present proof functions RFC 0037
       When "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data   | request_for_proof            | presentation                |
@@ -49,7 +49,7 @@ Feature: Aries agent present proof functions RFC 0037
       When "Faber" sends a <request for proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data          | request for proof                    | presentation                        |
@@ -66,7 +66,7 @@ Feature: Aries agent present proof functions RFC 0037
       When "Faber" sends a <request for proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data      | request for proof            | presentation                |
@@ -85,7 +85,7 @@ Feature: Aries agent present proof functions RFC 0037
       When "Faber" sends a request for proof presentation to "Bob"
       And "Bob" makes the presentation of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer |
@@ -104,7 +104,7 @@ Feature: Aries agent present proof functions RFC 0037
       And "Faber" agrees with the proposal so sends a <proposal_based_request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data   | request_for_proof            | presentation_proposal   | proposal_based_request_for_proof | presentation                |
@@ -124,7 +124,7 @@ Feature: Aries agent present proof functions RFC 0037
       And "Faber" agrees with the proposal so sends a <proposal_based_request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data                | request_for_proof           | presentation_proposal  | proposal_based_request_for_proof | presentation               |
@@ -145,7 +145,7 @@ Feature: Aries agent present proof functions RFC 0037
       And "Faber" agrees to continue so sends a request for proof presentation
       And "Bob" makes the presentation of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer |
@@ -162,7 +162,7 @@ Feature: Aries agent present proof functions RFC 0037
       And "Bob" has an issued credential from <issuer> with <credential_data>
       When "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof incorrectly so "Faber" rejects the proof
-      Then "Bob" has the proof unacknowledged
+      Then "Bob" has the proof unverified
 
       Examples:
          | issuer | credential_data   | request_for_proof        | presentation                      |
@@ -181,7 +181,7 @@ Feature: Aries agent present proof functions RFC 0037
       And "Faber" sends a <request for proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
-      Then "Bob" has the proof acknowledged
+      Then "Bob" has the proof verified
 
       Examples:
          | issuer | credential_data                | presentation_proposal  | request for proof           | presentation               |
