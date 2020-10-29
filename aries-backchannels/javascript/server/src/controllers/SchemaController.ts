@@ -13,7 +13,7 @@ export class SchemaController {
   @Get("/:schemaId")
   async getSchemaById(@PathParams("schemaId") schemaId: string) {
     try {
-      const [, schema] = await this.agent.ledger.getSchema(schemaId);
+      const schema = await this.agent.ledger.getSchema(schemaId);
 
       return schema;
     } catch (error) {

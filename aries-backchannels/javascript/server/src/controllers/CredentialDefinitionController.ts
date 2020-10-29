@@ -15,10 +15,7 @@ export class CredentialDefinitionController {
     @PathParams("credentialDefinitionId") credentialDefinitionId: string
   ) {
     try {
-      const [
-        ,
-        credentialDefinition,
-      ] = await this.agent.ledger.getCredentialDefinition(
+      const credentialDefinition = await this.agent.ledger.getCredentialDefinition(
         credentialDefinitionId
       );
 
@@ -33,7 +30,7 @@ export class CredentialDefinitionController {
 
       // All other errors
       throw new InternalServerError(
-        `Error while retrieving credential definition  with id ${credentialDefinitionId}`,
+        `Error while retrieving credential definition with id ${credentialDefinitionId}`,
         error
       );
     }
@@ -42,11 +39,11 @@ export class CredentialDefinitionController {
   @Post()
   async createCredentialDefinition(@BodyParams("data") data: any) {
     // TODO: handle schema not found exception
-    const [, schema] = await this.agent.ledger.getSchema(data.schema_id);
+    const schema = await this.agent.ledger.getSchema(data.schema_id);
 
     const [
-      credentialDefinition,
       credentialDefinitionId,
+      credentialDefinition,
     ] = await this.agent.ledger.registerCredentialDefinition({
       tag: data.tag,
       config: {

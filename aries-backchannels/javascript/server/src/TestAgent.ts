@@ -27,6 +27,8 @@ export async function createAgent({
     publicDidSeed,
     url,
     port,
+    poolName: "aries-framework-javascript-pool",
+    genesisPath,
   };
 
   const app = express();
@@ -47,13 +49,6 @@ export async function createAgent({
   );
 
   await agent.init();
-
-  // Connect to ledger
-  const poolName = "aries-framework-javascript-pool";
-  const poolConfig = {
-    genesis_txn: genesisPath,
-  };
-  await agent.ledger.connect(poolName, poolConfig);
 
   app.listen(port, async () => {
     inboundTransporter.start(agent);
