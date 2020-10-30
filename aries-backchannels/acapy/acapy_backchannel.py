@@ -214,9 +214,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         log_msg('Received Problem Report Webhook message: ' + json.dumps(message)) 
 
     async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
-        await asyncio.sleep(4)
-        msg = get_resource(thread_id, data_type)
-        ex_id = msg[0][id_txt]
+        timeout = 0
+        webcall_returned = None
+        while webcall_returned is None or timeout == 20:
+            msg = get_resource(thread_id, data_type)
+            try:
+                ex_id = msg[0][id_txt]
+                webcall_returned = True
+            except TypeError:
+                await asyncio.sleep(1)
+                timeout += 1
+        if timeout == 20:
+            raise TimeoutError('Timeout waiting for web callback to retrieve the thread id based on the exchange id')
         return ex_id
 
     async def make_admin_request(
@@ -649,7 +658,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
-        text = None
+        #text = None
 
         async def fetch_swagger(url: str, timeout: float):
             text = None
@@ -748,27 +757,27 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     request_type = "proof_request"
                     attachment = "request_presentations~attach"
                 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_attributes") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_attributes") is None:
                     requested_attributes = {}
                 else:
                     requested_attributes = data["presentation_proposal"][attachment]["data"]["requested_attributes"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_predicates") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_predicates") is None:
                     requested_predicates = {}
                 else:
                     requested_predicates = data["presentation_proposal"][attachment]["data"]["requested_predicates"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("name") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("name") is None:
                     proof_request_name = "test proof"
                 else:
                     proof_request_name = data["presentation_proposal"][attachment]["data"]["name"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("version") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("version") is None:
                     proof_request_version = "1.0"
                 else:
                     proof_request_version = data["presentation_proposal"][attachment]["data"]["version"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("non_revoked") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("non_revoked") is None:
                     non_revoked = None
                 else:
                     non_revoked = data["presentation_proposal"][attachment]["data"]["non_revoked"]
@@ -946,12 +955,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         cred_rev_id = data["cred_rev_id"]
                         rev_reg_id = data["rev_registry_id"]
                         publish = data["publish_immediately"]
-                        agent_operation = agent_operation + "?cred_ex_id=" + cred_ex_id
+                        agent_operation = agent_operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + rev_reg_id + str(publish).lower()
                         data = None
             elif operation == "credential-record":
                     agent_operation = "/revocation/" + operation
                     if "cred_ex_id" in data:
                         cred_ex_id = data["cred_ex_id"]
+                        agent_operation = agent_operation + "?cred_ex_id=" + cred_ex_id
                     else:
                         cred_rev_id = data["cred_rev_id"]
                         rev_reg_id = data["rev_registry_id"]

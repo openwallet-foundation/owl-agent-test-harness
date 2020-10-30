@@ -17,7 +17,6 @@
 
 from behave import *
 import json
-import time
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, agent_backchannel_DELETE#, expected_agent_state
 from agent_test_utils import create_non_revoke_interval
 
