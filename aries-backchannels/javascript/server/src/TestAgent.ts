@@ -2,25 +2,33 @@
 import indy from "indy-sdk";
 import { InitConfig, Agent } from "aries-framework-javascript";
 import express from "express";
+import { $log } from "@tsed/common";
+
 import {
   HttpInboundTransporter,
   HttpOutboundTransporter,
 } from "./Transporters";
-import { $log } from "@tsed/common";
 
 export async function createAgent({
   port,
   url,
+  publicDidSeed,
+  genesisPath,
 }: {
   port: number;
   url: string;
+  publicDidSeed: string;
+  genesisPath: string;
 }) {
   const agentConfig: InitConfig = {
     label: "javascript",
     walletConfig: { id: `aath-javascript-${Date.now()}` },
     walletCredentials: { key: "00000000000000000000000000000Test01" },
+    publicDidSeed,
     url,
     port,
+    poolName: "aries-framework-javascript-pool",
+    genesisPath,
   };
 
   const app = express();

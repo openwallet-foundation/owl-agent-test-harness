@@ -85,6 +85,7 @@ export class ConnectionController {
     return {
       state: connection.state.toLowerCase(),
       connection_id: connection.id,
+      connection,
     };
   }
 }

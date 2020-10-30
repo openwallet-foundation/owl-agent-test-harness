@@ -33,6 +33,10 @@ FROM base as final
 WORKDIR /src
 ENV RUN_MODE="docker"
 
+# Prints logs to CLI, nog log file.
+# Let's wait with this until we have properly implemented logging in AFJ
+# ENV DEBUG="aries-framework-javascript"
+
 COPY javascript/server/package.json package.json
 COPY javascript/server/yarn.lock yarn.lock
 COPY javascript/aries-framework-javascript-v1.0.0.tgz ../aries-framework-javascript-v1.0.0.tgz
