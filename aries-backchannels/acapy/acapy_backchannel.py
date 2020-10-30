@@ -8,7 +8,6 @@ import random
 import subprocess
 import sys
 import uuid
-import time
 from timeit import default_timer
 from time import sleep
 from operator import itemgetter
@@ -217,7 +216,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
         timeout = 0
         webcall_returned = None
-        while webcall_returned == None or timeout == 20:
+        while webcall_returned is None or timeout == 20:
             msg = get_resource(thread_id, data_type)
             try:
                 ex_id = msg[0][id_txt]
@@ -659,7 +658,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
-        text = None
+        #text = None
 
         async def fetch_swagger(url: str, timeout: float):
             text = None
