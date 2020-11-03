@@ -21,14 +21,14 @@ jobs:
       - name: checkout-indy-tails-server
         uses: actions/checkout@v2
         with:
-          repository: bcgov/indy-tails-server
+          repository: ianco/indy-tails-server
           path: indy-tails-server
       - name: build-indy-tails-server
         run: ./manage build
-        working-directory: indy-tails-server
+        working-directory: indy-tails-server/docker
       - name: run-indy-tails-server
         run: ./manage start
-        working-directory: indy-tails-server
+        working-directory: indy-tails-server/docker
       - name: checkout-test-harness
         uses: actions/checkout@v2
         with:
