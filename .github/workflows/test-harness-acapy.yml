@@ -1,5 +1,8 @@
 name: test-harness-acapy-acapy
 on: push
+defaults:
+  run:
+    shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -11,12 +14,10 @@ jobs:
           path: von-network
       - name: build-von-network
         run: ./manage build
-          shell: bash
-          working-directory: von-network
+        working-directory: von-network
       - name: run-von-network
         run: ./manage start
-          shell: bash
-          working-directory: von-network
+        working-directory: von-network
       - name: checkout-indy-tails-server
         uses: actions/checkout@v2
         with:
@@ -24,21 +25,17 @@ jobs:
           path: indy-tails-server
       - name: build-indy-tails-server
         run: ./manage build
-          shell: bash
-          working-directory: indy-tails-server
+        working-directory: indy-tails-server
       - name: run-indy-tails-server
         run: ./manage start
-          shell: bash
-          working-directory: indy-tails-server
+        working-directory: indy-tails-server
       - name: checkout-test-harness
         uses: actions/checkout@v2
         with:
           path: test-harness
       - name: build-test-harness
         run: ./manage build -a acapy 
-          shell: bash
-          working-directory: test-harness/docker
+        working-directory: test-harness/docker
       - name: run-test-harness-acapy
         run: ./manage run -d acapy -t @AcceptanceTest -t ~@wip
-          shell: bash
-          working-directory: test-harness/docker
+        working-directory: test-harness/docker
