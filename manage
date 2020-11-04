@@ -19,7 +19,7 @@ fi
 
 export INTERACTIVE="-it"
 if [[ "$NO_TTY" == "1" ]]; then
-  INTERACTIVE=""
+  unset INTERACTIVE
 fi
 
 #Running on Play with Docker?
