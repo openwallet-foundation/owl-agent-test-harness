@@ -305,8 +305,6 @@ startAgent() {
   local IMAGE_NAME=$3
   local PORT_RANGE=$4
   local BACKCHANNEL_PORT=$5
-  local LEDGER_URL=$6
-  local TAILS_SERVER_URL=$7
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "Starting ${NAME} Agent ..."
@@ -351,6 +349,7 @@ runTests() {
   cp ${BEHAVE_INI} ${BEHAVE_INI_TMP}
 
   ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+  local docker_result=$?
   rm ${BEHAVE_INI_TMP}
 
   # Export agent logs
@@ -366,6 +365,10 @@ runTests() {
   docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
   printf "Done\n"
 
+  if [ ! "${docker_result}" == "0" ]; then
+    echoRed "\nExit with error code ${docker_result}\n"
+    exit ${docker_result}
+  fi
 }
 
 isAgent() {
