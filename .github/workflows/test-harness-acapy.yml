@@ -37,7 +37,7 @@ jobs:
         run: ./manage build -a acapy
         working-directory: test-harness
       - name: run-test-harness-acapy
-        run: ./manage run -d acapy -t @T007-AIP10-RFC0160
+        run: ./manage run -d acapy -t @AcceptanceTest -t ~@wip
         env:
           NO_TTY: "1"
         working-directory: test-harness
