@@ -7,32 +7,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout-von-network
-        uses: actions/checkout@v2
-        with:
-          repository: bcgov/von-network
-          path: von-network
-      - name: build-von-network
-        run: ./manage build
-        working-directory: von-network
-      - name: run-von-network
-        run: ./manage start
-        working-directory: von-network
-      - name: checkout-indy-tails-server
-        uses: actions/checkout@v2
-        with:
-          repository: ianco/indy-tails-server
-          path: indy-tails-server
-      - name: build-indy-tails-server
-        run: ./manage build
-        working-directory: indy-tails-server/docker
-      - name: run-indy-tails-server
-        run: ./manage start
-        working-directory: indy-tails-server/docker
       - name: checkout-test-harness
         uses: actions/checkout@v2
         with:
           path: test-harness
+      - name: run-von-network
+        uses: ./test-harness/actions/run-von-network
+      - name: run-indy-tails-server
+        uses: ./test-harness/actions/run-indy-tails-server
       - name: build-test-harness
         run: ./manage build -a acapy
         working-directory: test-harness
