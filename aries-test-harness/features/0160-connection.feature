@@ -126,7 +126,7 @@ Feature: Aries agent connection functions RFC 0160
       And "Bob" and "Acme" complete the connection process
       Then "Acme" and "Bob" have another connection
 
-   @T007-AIP10-RFC0160 @P2 @ExceptionTest @SingleTryOnException @NeedsReview @RFC0160
+   @T007-AIP10-RFC0160 @P2 @ExceptionTest @SingleTryOnException @NeedsReview @wip @RFC0160
    Scenario Outline: Establish a connection between two agents but gets a request not accepted report problem message
       Given we have "2" agents
          | name  | role    |
