@@ -16,6 +16,11 @@ if [[ "$OSTYPE" == "msys" ]]; then
   terminalEmu="winpty"
 fi
 
+export INTERACTIVE="-it"
+if [[ "$NO_TTY" == "1" ]]; then
+  INTERACTIVE=""
+fi
+
 #Running on Play with Docker?
 if [ "${PWD_HOST_FQDN}" != "" ]; then
   if [ "${PWD_HOST_FQDN}" == "labs.play-with-docker.com" ]; then
@@ -264,7 +269,7 @@ runTests() {
   export BEHAVE_INI_TMP="${PWD}/behave.ini.tmp"
   cp ${BEHAVE_INI} ${BEHAVE_INI_TMP}
 
-  ${terminalEmu} docker run -it --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+  ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   rm ${BEHAVE_INI_TMP}
 
   # Export agent logs

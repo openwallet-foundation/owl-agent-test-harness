@@ -34,8 +34,10 @@ jobs:
         with:
           path: test-harness
       - name: build-test-harness
-        run: ./manage build -a acapy 
+        run: ./manage build -a acapy
         working-directory: test-harness
       - name: run-test-harness-acapy
         run: ./manage run -d acapy -t @AcceptanceTest -t ~@wip
+        with:
+          NO_TTY: "1"
         working-directory: test-harness
