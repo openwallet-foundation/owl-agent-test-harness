@@ -10,6 +10,7 @@ export DOCKERHOST=${APPLICATION_URL-$(docker run --rm --net=host eclipse/che-ip)
 SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
 export AGENT_TIMEOUT=30
+export LEDGER_TIMEOUT=60
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
   # Prefix interactive terminal commands ...
@@ -194,6 +195,74 @@ buildImages() {
     -f 'aries-test-harness/Dockerfile.harness' 'aries-test-harness/'
 }
 
+pingLedger(){
+  ledger_url=${1}
+
+  # ping ledger web browser for genesis txns
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${ledger_url}/genesis)
+  if (( ${rtnCd} == 200 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForLedger(){
+  (
+    # Wait for tails server to start ...
+    local startTime=${SECONDS}
+    local LEDGER_URL=http://localhost:9000
+    local rtnCd=0
+    printf "waiting for ledger to start"
+    while ! pingLedger "$LEDGER_URL"; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nThe Indy Ledger failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
+pingTailsServer(){
+  tails_server_url=${1}
+
+  # ping tails server (ask for a non-existant registry and should return 404)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${tails_server_url}/404notfound)
+  if (( ${rtnCd} == 404 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForTailsServer(){
+  (
+    # Wait for tails server to start ...
+    local startTime=${SECONDS}
+    local TAILS_SERVER_URL=http://localhost:6543
+    local rtnCd=0
+    printf "waiting for tails server to start"
+    while ! pingTailsServer "$TAILS_SERVER_URL"; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nThe tails server failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
 pingAgent(){
   name=${1}
   port=${2}
@@ -236,6 +305,8 @@ startAgent() {
   local IMAGE_NAME=$3
   local PORT_RANGE=$4
   local BACKCHANNEL_PORT=$5
+  local LEDGER_URL=$6
+  local TAILS_SERVER_URL=$7
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "Starting ${NAME} Agent ..."
@@ -247,6 +318,16 @@ startAgent() {
 
 runTests() {
   runArgs=${@}
+
+  if ! waitForLedger; then
+    echoRed "\nThe Indy Ledger is not running.\n"
+    exit 1
+  fi
+
+  if ! waitForTailsServer; then
+    echoRed "\nThe Indy Tails Server is not running.\n"
+    exit 1
+  fi
 
   export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
   export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
@@ -282,7 +363,6 @@ runTests() {
   echo
   echo "Cleanup:"
   echo "  - Shutting down all the agents ..."
-  # printf "    - Acme: "
   docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
   printf "Done\n"
 
@@ -429,4 +509,4 @@ case "${COMMAND}" in
 
 esac
 
-popd >/dev/null
+popd > /dev/null

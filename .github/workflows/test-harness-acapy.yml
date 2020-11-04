@@ -21,7 +21,7 @@ jobs:
       - name: checkout-indy-tails-server
         uses: actions/checkout@v2
         with:
-          repository: ianco/indy-tails-server
+          repository: bcgov/indy-tails-server
           path: indy-tails-server
       - name: build-indy-tails-server
         run: ./manage build
