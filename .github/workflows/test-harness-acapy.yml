@@ -21,7 +21,7 @@ jobs:
       - name: checkout-indy-tails-server
         uses: actions/checkout@v2
         with:
-          repository: bcgov/indy-tails-server
+          repository: ianco/indy-tails-server
           path: indy-tails-server
       - name: build-indy-tails-server
         run: ./manage build
@@ -37,7 +37,7 @@ jobs:
         run: ./manage build -a acapy
         working-directory: test-harness
       - name: run-test-harness-acapy
-        run: ./manage run -d acapy -t @AcceptanceTest -t ~@wip @T007-AIP10-RFC0160
-        env:
+        run: ./manage run -d acapy -t @AcceptanceTest -t ~@wip -t @T007-AIP10-RFC0160
+        with:
           NO_TTY: "1"
         working-directory: test-harness
