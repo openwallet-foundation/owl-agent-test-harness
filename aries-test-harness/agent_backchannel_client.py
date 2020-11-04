@@ -54,8 +54,10 @@ async def make_agent_backchannel_request(
         return (resp_status, resp_text)
 
 
-def agent_backchannel_GET(url, topic, id=None, data=None) -> (int, str):
+def agent_backchannel_GET(url, topic, operation=None, id=None) -> (int, str):
     agent_url = url + topic + "/"
+    if operation:
+        agent_url = agent_url + operation + "/"
     if id:
         agent_url = agent_url + id
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "GET", agent_url)
@@ -77,6 +79,12 @@ def agent_backchannel_POST(url, topic, operation=None, id=None, data=None) -> (i
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "POST", agent_url, data=payload)
     return (resp_status, resp_text)
 
+def agent_backchannel_DELETE(url, topic, id=None, data=None) -> (int, str):
+    agent_url = url + topic + "/"
+    if id:
+        agent_url = agent_url + id
+    (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "DELETE", agent_url)
+    return (resp_status, resp_text)
 
 def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt):
     sleep(0.2)

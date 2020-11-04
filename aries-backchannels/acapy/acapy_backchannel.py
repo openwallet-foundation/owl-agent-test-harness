@@ -214,9 +214,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         log_msg('Received Problem Report Webhook message: ' + json.dumps(message)) 
 
     async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
-        await asyncio.sleep(2)
-        msg = get_resource(thread_id, data_type)
-        ex_id = msg[0][id_txt]
+        timeout = 0
+        webcall_returned = None
+        while webcall_returned is None or timeout == 20:
+            msg = get_resource(thread_id, data_type)
+            try:
+                ex_id = msg[0][id_txt]
+                webcall_returned = True
+            except TypeError:
+                await asyncio.sleep(1)
+                timeout += 1
+        if timeout == 20:
+            raise TimeoutError('Timeout waiting for web callback to retrieve the thread id based on the exchange id')
         return ex_id
 
     async def make_admin_request(
@@ -235,6 +244,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return await self.make_admin_request("GET", path, None, text, params)
         except ClientError as e:
             self.log(f"Error during GET {path}: {str(e)}")
+            raise
+
+    async def admin_DELETE(self, path, text=False, params=None) -> (int, str):
+        try:
+            return await self.make_admin_request("DELETE", path, None, text, params)
+        except ClientError as e:
+            self.log(f"Error during DELETE {path}: {str(e)}")
             raise
 
     async def admin_POST(
@@ -481,7 +497,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "credential":
-            agent_operation = "/credential/" + rec_id
+            operation = op["operation"]
+            if operation == 'revoked':
+                agent_operation = "/credential/" + operation + "/" + rec_id
+            else:
+                agent_operation = "/credential/" + rec_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             return (resp_status, resp_text)
@@ -492,6 +512,30 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = "/present-proof/records/" + pres_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "revocation":
+            operation = op["operation"]
+            agent_operation, admin_data = await self.get_agent_operation_acapy_version_based(op["topic"], operation, rec_id, data=None)
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            return (resp_status, resp_text)
+
+        return (501, '501: Not Implemented\n\n'.encode('utf8'))
+
+    async def make_agent_DELETE_request(
+        self, op, rec_id=None, data=None, text=False, params=None
+    ) -> (int, str):
+        if op["topic"] == "credential" and rec_id:
+            # swap thread id for cred ex id from the webhook
+            # cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
+            agent_operation = "/credential/" + rec_id
+            #operation = op["operation"]
+            #agent_operation, admin_data = await self.get_agent_operation_acapy_version_based(op["topic"], operation, rec_id, data)
+            log_msg(agent_operation)
+
+            (resp_status, resp_text) = await self.admin_DELETE(agent_operation)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
@@ -614,7 +658,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
-        text = None
+        #text = None
 
         async def fetch_swagger(url: str, timeout: float):
             text = None
@@ -713,25 +757,30 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     request_type = "proof_request"
                     attachment = "request_presentations~attach"
                 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_attributes") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_attributes") is None:
                     requested_attributes = {}
                 else:
                     requested_attributes = data["presentation_proposal"][attachment]["data"]["requested_attributes"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_predicates") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_predicates") is None:
                     requested_predicates = {}
                 else:
                     requested_predicates = data["presentation_proposal"][attachment]["data"]["requested_predicates"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("name") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("name") is None:
                     proof_request_name = "test proof"
                 else:
                     proof_request_name = data["presentation_proposal"][attachment]["data"]["name"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("version") == None:
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("version") is None:
                     proof_request_version = "1.0"
                 else:
                     proof_request_version = data["presentation_proposal"][attachment]["data"]["version"]
+
+                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("non_revoked") is None:
+                    non_revoked = None
+                else:
+                    non_revoked = data["presentation_proposal"][attachment]["data"]["non_revoked"]
                 
                 if "connection_id" in data:
                     admin_data = {
@@ -756,20 +805,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                             "requested_predicates": requested_predicates
                         }
                     }
-
-                # # Make special provisions for proposal. The names are changed in this operation. Should be consistent imo.
-                # # this whole condition can be removed for V2.0 of the protocol. It will look like more of a send-request in 2.0.
-                # if operation == "send-proposal":
-                #     if data.get("presentation_proposal", {}).get("@type") is not None:
-                #         admin_data["presentation_proposal"]["@type"] = data["presentation_proposal"]["@type"]
-                #     if admin_data.get("presentation_proposal", {}).get("requested_attributes") is not None:
-                #         admin_data["presentation_proposal"]["attributes"] = admin_data["presentation_proposal"].pop("requested_attributes")
-                #     if admin_data.get("presentation_proposal", {}).get("requested_predicates") is not None:
-                #         admin_data["presentation_proposal"]["predicates"] = admin_data["presentation_proposal"].pop("requested_predicates")
-                #     if admin_data.get("presentation_proposal", {}).get("name") is not None:
-                #         admin_data["presentation_proposal"].pop("name")
-                #     if admin_data.get("presentation_proposal", {}).get("version") is not None:
-                #         admin_data["presentation_proposal"].pop("version")
+                if non_revoked is not None:
+                    admin_data[request_type]["non_revoked"] = non_revoked
 
             # Make special provisions for proposal. The names are changed in this operation. Should be consistent imo.
             # this whole condition can be removed for V2.0 of the protocol. It will look like more of a send-request in 2.0.
@@ -799,18 +836,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if "connection_id" in data:
                     admin_data["connection_id"] = data["connection_id"]
-
-
-                # if data.get("presentation_proposal", {}).get("@type") is not None:
-                #     admin_data["presentation_proposal"]["@type"] = data["presentation_proposal"]["@type"]
-                # if admin_data.get("presentation_proposal", {}).get("requested_attributes") is not None:
-                #     admin_data["presentation_proposal"]["attributes"] = admin_data["presentation_proposal"].pop("requested_attributes")
-                # if admin_data.get("presentation_proposal", {}).get("requested_predicates") is not None:
-                #     admin_data["presentation_proposal"]["predicates"] = admin_data["presentation_proposal"].pop("requested_predicates")
-                # if admin_data.get("presentation_proposal", {}).get("name") is not None:
-                #     admin_data["presentation_proposal"].pop("name")
-                # if admin_data.get("presentation_proposal", {}).get("version") is not None:
-                #     admin_data["presentation_proposal"].pop("version")
 
             elif operation == "send-presentation":
                 
@@ -909,28 +934,41 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
 
         if (topic == "revocation"):
-            if comparibleVersion > 54:
-                agent_operation = "/revocation/" + operation
-                if "cred_ex_id" in data:
-                    admindata = {
-                        "cred_ex_ed": data["cred_ex_id"],
-                    }
+            if operation == "revoke":
+                if comparibleVersion > 54:
+                    agent_operation = "/revocation/" + operation
+                    if "cred_ex_id" in data:
+                        admindata = {
+                            "cred_ex_ed": data["cred_ex_id"],
+                        }
+                    else:
+                        admindata = {
+                            "cred_rev_id": data["cred_rev_id"],
+                            "rev_reg_id": data["rev_registry_id"],
+                            "publish": str(data["publish_immediately"]).lower(),
+                        }
+                    data = admindata
                 else:
-                    admindata = {
-                        "cred_rev_id": data["cred_rev_id"],
-                        "rev_reg_id": data["rev_registry_id"],
-                        "publish": str(data["publish_immediately"]).lower(),
-                    }
-                data = admindata
-            else:
-                agent_operation = "/issue-credential/" + operation
+                    agent_operation = "/issue-credential/" + operation
 
-                if (data is not None): # Data should be included with 0.5.4 or lower acapy. Then it takes them as inline parameters.
-                    cred_rev_id = data["cred_rev_id"]
-                    rev_reg_id = data["rev_registry_id"]
-                    publish = data["publish_immediately"]
-                    agent_operation = agent_operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
-                    data = None
+                    if (data is not None): # Data should be included with 0.5.4 or lower acapy. Then it takes them as inline parameters.
+                        cred_rev_id = data["cred_rev_id"]
+                        rev_reg_id = data["rev_registry_id"]
+                        publish = data["publish_immediately"]
+                        agent_operation = agent_operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + rev_reg_id + str(publish).lower()
+                        data = None
+            elif operation == "credential-record":
+                    agent_operation = "/revocation/" + operation
+                    if "cred_ex_id" in data:
+                        cred_ex_id = data["cred_ex_id"]
+                        agent_operation = agent_operation + "?cred_ex_id=" + cred_ex_id
+                    else:
+                        cred_rev_id = data["cred_rev_id"]
+                        rev_reg_id = data["rev_registry_id"]
+                        agent_operation = agent_operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id
+                        data = None
+        #elif (topic == "credential"):
+
 
         return agent_operation, data
 

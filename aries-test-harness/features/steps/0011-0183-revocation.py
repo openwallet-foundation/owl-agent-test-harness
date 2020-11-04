@@ -16,8 +16,9 @@
 # -----------------------------------------------------------
 
 from behave import *
-#import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST#, expected_agent_state
+import json
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, agent_backchannel_DELETE#, expected_agent_state
+from agent_test_utils import create_non_revoke_interval
 
 @when('{issuer} revokes the credential')
 def step_impl(context, issuer):
@@ -37,16 +38,57 @@ def step_impl(context, issuer):
     # Check the Holder wallet for the credential
     # Should be a 200 since the revoke doesn't remove the cred from the holders wallet. 
     # What else to check?
-    (resp_status, resp_text) = agent_backchannel_GET(context.config.userdata.get(context.holder_name) + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
+    (resp_status, resp_text) = agent_backchannel_GET(context.config.userdata.get(context.holder_name) + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    # if this is ACA-py then there is provision for the holder to check the revocation status of the cred then they can take action,
+    # like delete it from thier wallet. This should be done, since the algorithm that 
+    if "delete_cred_from_wallet" in context.tags:
+        # Call the revocation status api
+        #(resp_status, resp_text) = agent_backchannel_GET(context.prover_url + "/agent/command/", "revocation", operation="credential-record", data=credential_revocation)
+        (resp_status, resp_text) = agent_backchannel_GET(context.prover_url + "/agent/command/", "credential", operation="revoked", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+        # get the credential status verified out of the response
+        # Could also add the cred status to the cred id dict. Maybe later if needed.
+        resp_json = json.loads(resp_text)
+        revoked = resp_json["revoked"]
+        if revoked == True:
+            # Call the delete on the credential in the wallet 
+            (resp_status, resp_text) = agent_backchannel_DELETE(context.prover_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
+            assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
 
 @when('"{prover}" makes the {presentation} of the proof with the revoked credential')
 def step_impl(context, prover, presentation):
-    # swap previous cred ID with current?
+    # Swap previous cred ID that was revoked with current in the credential id dict. 
+    context.credential_id_dict[context.schema['schema_name']].reverse()
 
-    # Then call prover makes the presentation of the proof
+    # Call prover makes the presentation of the proof
     context.execute_steps('''
         When "''' + prover + '''" makes the {presentation} of the proof
     '''.format(presentation=presentation))
+
+@given('{issuer} has revoked the credential after {timeframe}')
+@given('{issuer} has revoked the credential before {timeframe}')
+@given('{issuer} has revoked the credential within {timeframe}')
+def step_impl(context, issuer, timeframe):
+    #keeping this step here just in case there is a reason to use the timframe here instead of just the request for proof.
+
+    # context.execute_steps(u'''
+    #     When "''' + issuer + '''" revokes the credential
+    #  ''')
+    context.execute_steps(u'''
+        When {issuer} revokes the credential
+     '''.format(issuer=issuer))
+
+@when('"{verifier}" sends a {request_for_proof} presentation to "{prover}" with credential validity after {timeframe}')
+@when('"{verifier}" sends a {request_for_proof} presentation to "{prover}" with credential validity before {timeframe}')
+@when('"{verifier}" sends a {request_for_proof} presentation to "{prover}" with credential validity during {timeframe}')
+def step_impl(context, verifier, request_for_proof, prover, timeframe):
+    
+    context.non_revoked_timeframe = create_non_revoke_interval(timeframe)
+
+    context.execute_steps('''
+        When "''' + verifier + '''" sends a ''' + request_for_proof + ''' presentation to "''' + prover + '''"
+    ''')
 
