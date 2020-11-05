@@ -18,5 +18,5 @@ jobs:
       - name: run-test-harness
         uses: ./test-harness/actions/run-test-harness
         with:
-          DEFAULT_AGENT: acapy
-          BOB_AGENT: dotnet
+          DEFAULT_AGENT: acapy-master
+          BOB_AGENT: dotnet-master
