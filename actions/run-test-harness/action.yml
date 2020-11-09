@@ -22,7 +22,7 @@ runs:
       shell: bash
       working-directory: test-harness
     - name: run-test-harness-acapy
-      run: ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} {{ inputs.TEST_SCOPE }}
+      run: ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.TEST_SCOPE }}
       shell: bash
       env:
         NO_TTY: "1"
