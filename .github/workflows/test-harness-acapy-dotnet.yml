@@ -1,6 +1,5 @@
 name: test-harness-acapy-dotnet
 on:
-  push:
   schedule:
     - cron: "0 0 * * *"
 defaults:

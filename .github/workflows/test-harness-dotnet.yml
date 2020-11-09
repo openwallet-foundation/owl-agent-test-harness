@@ -1,6 +1,5 @@
 name: test-harness-dotnet-dotnet
 on:
-  push:
   schedule:
     - cron: "0 0 * * *"
 defaults:
@@ -23,4 +22,4 @@ jobs:
         with:
           DEFAULT_AGENT: dotnet-master
           BOB_AGENT: dotnet-master
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@RFC0011 -t ~@"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@RFC0011"
