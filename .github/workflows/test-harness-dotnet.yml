@@ -22,3 +22,4 @@ jobs:
         with:
           DEFAULT_AGENT: dotnet-master
           BOB_AGENT: dotnet-master
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@RFC0011 -t ~@ProofProposal"
