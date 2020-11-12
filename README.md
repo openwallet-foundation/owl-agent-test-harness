@@ -4,7 +4,7 @@
 
 The Aries Agent Test Harness (AATH) is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development)-based test execution engine and set of tests for evaluating the interoperability of Aries Agents and Agent Frameworks. The tests are agnostic to the components under test but rather are designed based on the [Aries RFCs](https://github.com/hyperledger/aries) and the interaction protocols documented there. The AATH enables the creation of an interop lab much like the [labs](https://www.iol.unh.edu/) used by the telcos when introducing new hardware into the markets&mdash;routers, switchers and the like. Aries agent and agent framework builders can easily incorporate these tests into the their CI/CD pipelines to ensure that interoperability is core to the development process.
 
-Want to see the Aries Agent Test Harness in action? Give it a try using a git and bash enabled system, or run it in your browser using Play with Docker (startup instructions here). Once you are in a bash shell, run the following commands to execute a set of RFC tests using the [Aries Cloud Agent - Python](https://github.com/hyperledger/aries-cloudagent-python):
+Want to see the Aries Agent Test Harness in action? Give it a try using a git and bash enabled system, or run it in your browser using Play with Docker (startup instructions [here](https://github.com/cloudcompass/ToIPLabs/blob/master/docs/LFS173x/RunningLabs.md#running-on-play-with-docker)). Once you are in a bash shell (local or using Play with Docker), run the following commands to execute a set of RFC tests using the [Aries Cloud Agent - Python](https://github.com/hyperledger/aries-cloudagent-python):
 
 ```bash
 git clone https://github.com/bcgov/von-network
@@ -14,8 +14,8 @@ cd von-network
 cd ..
 git clone https://github.com/bcgov/aries-agent-test-harness
 cd aries-agent-test-harness
-./manage build -a acapy
-./manage run -d acapy -t @AcceptanceTest -t ~@wip
+./manage build -a acapy -a dotnet
+./manage run -d acapy -b dotnet -t @AcceptanceTest -t ~@wip
 
 ```
 If running the Credential Revocation tests, which the `./manage run -d acapy -t @AcceptanceTest -t ~@wip` command does, make sure the Tail Server is running.
@@ -28,8 +28,8 @@ cd indy-tails-server/docker
 The commands take a while to run (you know...building modern apps always means downloading half the internet...), so while you wait, here's what's happening:
 
 - The `von-network` commands are building and starting a docker-ized Hyperledger Indy network needed for some of the tests.
-- The AATH build command builds docker images for testing the ACA-Py agent framework and the test harness.
-- The AATH run command executes a set of tests (those tagged "AcceptanceTest" but not tagged "@wip") with the ACA-Py agent playing all of the roles&mdash;Acme, Bob, Faber and Mallory.
+- The AATH `./manage build` command builds docker images for testing the ACA-Py and .NET agent frameworks and the test harness.
+- The AATH `./manage run` command executes a set of tests (those tagged "AcceptanceTest" but not tagged "@wip") with the ACA-Py test agent playing most of the roles&mdash;Acme, Faber and Mallory, while the .NET test agent plays the role of Bob.
 
 It's that last part makes the AATH powerful. On every run, different AATH-enabled components can be assigned any role (Acme, Bob, Faber, Mallory and others to come, like Carol). For some initial pain (AATH-enabling a component), interoperability testing becomes routine, and we can make hit our goal: to make interoperability boring.
 
