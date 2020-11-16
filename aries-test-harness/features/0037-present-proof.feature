@@ -1,10 +1,6 @@
 Feature: Aries agent present proof functions RFC 0037
 
-<<<<<<< HEAD
-   @T001-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Indy
-=======
-   @T001-AIP10-RFC0037 @P1 @AcceptanceTest @Indy @RFC0037
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T001-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Indy @RFC0037
    Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged
       Given "2" agents
          | name  | role     |
@@ -23,11 +19,7 @@ Feature: Aries agent present proof functions RFC 0037
          | Faber  |
 
 
-<<<<<<< HEAD
-   @T001.2-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Indy
-=======
-   @T001.2-AIP10-RFC0037 @P1 @AcceptanceTest @Schema_DriversLicense @Indy @RFC0037
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T001.2-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Indy @RFC0037
    Scenario Outline: Present Proof of specific types and proof is acknowledged
       Given "2" agents
          | name  | role     |
@@ -46,11 +38,7 @@ Feature: Aries agent present proof functions RFC 0037
          | Faber  | Data_DL_MinValues | proof_request_DL_age_over_19 | presentation_DL_age_over_19 |
 
 
-<<<<<<< HEAD
-   @T001.3-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Indy
-=======
-   @T001.3-AIP10-RFC0037 @P1 @AcceptanceTest @Schema_Biological_Indicators @Indy @RFC0037
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T001.3-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Indy @RFC0037
    Scenario Outline: Present Proof of specific types and proof is acknowledged
       Given "2" agents
          | name  | role     |
@@ -67,11 +55,7 @@ Feature: Aries agent present proof functions RFC 0037
          | issuer | credential_data          | request for proof                    | presentation                        |
          | Acme   | Data_BI_NormalizedValues | proof_request_biological_indicator_a | presentation_biological_indicator_a |
 
-<<<<<<< HEAD
-   @T001.4-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Schema_Health_Consent @Indy
-=======
-   @T001.4-AIP10-RFC0037 @P1 @AcceptanceTest @Schema_Biological_Indicators @Schema_Health_Consent @Indy @RFC0037
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T001.4-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Schema_Health_Consent @Indy @RFC0037
    Scenario Outline: Present Proof of specific types and proof is acknowledged
       Given "2" agents
          | name  | role     |
@@ -90,11 +74,7 @@ Feature: Aries agent present proof functions RFC 0037
 
 
    # See issue #90 for when work on this test will resume - https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/bcgov/aries-agent-test-harness/90
-<<<<<<< HEAD
-   @T002-AIP10-RFC0037 @P1 @critical @AcceptanceTest @wip @NeedsReview @Indy
-=======
-   @T002-AIP10-RFC0037 @P1 @AcceptanceTest @wip @NeedsReview @Indy @RFC0037
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T002-AIP10-RFC0037 @P1 @critical @AcceptanceTest @wip @NeedsReview @Indy @RFC0037
    Scenario Outline: Present Proof where the prover and verifier are connectionless, the prover does not propose a presentation of the proof, and is acknowledged
       Given "2" agents
          | name  | role     |

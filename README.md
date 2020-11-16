@@ -184,3 +184,6 @@ The option `-i <inifile>` can be used to pass a file in the `behave.ini` format 
 
 ### Test Coverage
 To read about what protocols and features from Aries Interop Profile 1.0, see the [Test Coverage Matrix](./TEST-COVERAGE.md). 
+
+### Test Reporting
+For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST-REPORTING.md).

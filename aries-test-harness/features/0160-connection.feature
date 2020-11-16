@@ -1,10 +1,6 @@
 Feature: Aries agent connection functions RFC 0160
 
-<<<<<<< HEAD
-   @T001-AIP10-RFC0160 @P1 @critical @AcceptanceTest
-=======
-   @T001-AIP10-RFC0160 @P1 @AcceptanceTest @RFC0160
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T001-AIP10-RFC0160 @P1 @critical @AcceptanceTest @RFC0160
    Scenario Outline: establish a connection between two agents
       Given we have "2" agents
          | name  | role    |
@@ -26,11 +22,7 @@ Feature: Aries agent connection functions RFC 0160
                         # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
                         # the agents under test implement acks.
 
-<<<<<<< HEAD
-   @T001.2-AIP10-RFC0160 @P1 @critical @AcceptanceTest
-=======
-   @T001.2-AIP10-RFC0160 @P1 @AcceptanceTest @RFC0160
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T001.2-AIP10-RFC0160 @P1 @critical @AcceptanceTest @RFC0160
    Scenario Outline: establish a connection between two agents with role reversal
       Given we have "2" agents
          | name  | role    |
@@ -53,11 +45,7 @@ Feature: Aries agent connection functions RFC 0160
                         # the agents under test implement acks.
 
 
-<<<<<<< HEAD
-   @T002-AIP10-RFC0160 @P1 @critical @AcceptanceTest
-=======
-   @T002-AIP10-RFC0160 @P1 @AcceptanceTest @RFC0160
->>>>>>> ab109e907b988c3009f79138ba14d487db4871b6
+   @T002-AIP10-RFC0160 @P1 @critical @AcceptanceTest @RFC0160
    Scenario Outline: Connection established between two agents but inviter sends next message to establish full connection state
       Given we have "2" agents
          | name  | role    |
