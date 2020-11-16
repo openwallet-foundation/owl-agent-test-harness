@@ -91,6 +91,7 @@ Feature: Aries agent present proof functions RFC 0037
          | issuer |
          | Acme   |
 
+
    @T003-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Indy @RFC0037 @ProofProposal
    Scenario Outline: Present Proof where the prover has proposed the presentation of proof in response to a presentation request and is acknowledged
       Given "2" agents
@@ -110,6 +111,7 @@ Feature: Aries agent present proof functions RFC 0037
          | issuer | credential_data   | request_for_proof            | presentation_proposal   | proposal_based_request_for_proof | presentation                |
          | Acme   | Data_DL_MaxValues | proof_request_DL_address     | proposal_DL_age_over_19 | proof_request_DL_age_over_19     | presentation_DL_age_over_19 |
          | Faber  | Data_DL_MinValues | proof_request_DL_age_over_19 | proposal_DL_address     | proof_request_DL_address         | presentation_DL_address     |
+
 
    @T003.1-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Schema_Health_ID @Indy @RFC0037 @ProofProposal
    Scenario Outline: Present Proof where the prover has proposed the presentation of proof from a different credential in response to a presentation request and is acknowledged

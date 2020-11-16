@@ -238,7 +238,8 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | issuer | credential_data   | request_for_proof        | presentation            |
          | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_address |
 
-   @T002-RFC0183 @RFC0183  @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @wip @NeedsReview
+
+   @T002-RFC0183 @RFC0183 @P2 @AcceptanceTest @Schema_DriversLicense_Revoc @wip @NeedsReview
    Scenario Outline: Issuer revokes multiple credentials for multiple holders and sends notification
       Given "3" agents
          | name  | role     |

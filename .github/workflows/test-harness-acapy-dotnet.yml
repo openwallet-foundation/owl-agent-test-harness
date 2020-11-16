@@ -22,3 +22,4 @@ jobs:
         with:
           DEFAULT_AGENT: acapy-master
           BOB_AGENT: dotnet-master
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal"
