@@ -23,8 +23,8 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T002-RFC0011 @RFC0011 @P1 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @allure.lable.owner:me
-   Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential
+   @T002-RFC0011 @RFC0011 @P1 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
+   Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential with timesstamp
       Given "2" agents
          | name  | role     |
          | Bob   | prover   |
@@ -39,8 +39,27 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
       Then "Bob" has the proof verified
 
       Examples:
-         | issuer | credential_data   | new_credential_data | request_for_proof              | presentation                  |
-         | Acme   | Data_DL_MinValues | Data_DL_MaxValues   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+         | issuer | credential_data   | new_credential_data | request_for_proof              | presentation                       |
+         | Acme   | Data_DL_MinValues | Data_DL_MaxValues   | proof_request_DL_revoc_address | presentation_DL_revoc_address_w_ts |
+
+   @T002.1-RFC0011 @RFC0011 @P2 @normal @NegativeTest @AcceptanceTest @Schema_Health_Consent_Revoc @Indy @wip
+   Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential with no timestamp
+      Given "2" agents
+         | name  | role     |
+         | Bob   | prover   |
+         | Faber | verifier |
+      And "Faber" and "Bob" have an existing connection
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      When <issuer> revokes the credential
+      And <issuer> issues a new credential to "Bob" with <new_credential_data>
+      And "Faber" sends a <request_for_proof> presentation to "Bob"
+      And "Bob" makes the <presentation> of the proof
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof unverified
+
+      Examples:
+         | issuer | credential_data      | new_credential_data          | request_for_proof                         | presentation                             |
+         | Acme   | Data_BI_HealthValues | Data_BI_HealthValues_Reissue | proof_request_health_consent_revoc_expiry | presentation_health_consent_revoc_expiry |
 
 
    @T003-RFC0011 @RFC0011 @P2 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
@@ -99,7 +118,7 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
       Examples:
          | issuer | credential_data   | timeframe       | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MinValues | -86400:+86400   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
-         | Acme   | Data_DL_MinValues | -604800:now       | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+         | Acme   | Data_DL_MinValues | -604800:now     | proof_request_DL_revoc_address | presentation_DL_revoc_address |
          | Acme   | Data_DL_MinValues | -604800:+604800 | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
@@ -125,7 +144,7 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
 
 
    @T007-RFC0011 @RFC0011 @P2 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @wip @NeedsReview
-   Scenario Outline: Credential is revoked after the timeframe 
+   Scenario Outline: Credential is revoked after the timeframe
       Given "2" agents
          | name  | role     |
          | Bob   | prover   |
