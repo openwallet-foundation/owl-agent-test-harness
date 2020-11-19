@@ -314,6 +314,38 @@ startAgent() {
   fi
 }
 
+writeEnvProperties() {
+  ACME_VERSION=$(getAgentVersion 9020) 
+  BOB_VERSION=$(getAgentVersion 9030)
+  FABER_VERSION=$(getAgentVersion 9040)
+  MALLORY_VERSION=$(getAgentVersion 9050)
+
+  env_file="${PWD}/aries-test-harness/reports/environment.properties"
+  declare -a env_array
+  env_array+=("role.acme=$ACME_AGENT")
+  env_array+=("acme.agent.version=$ACME_VERSION")
+  env_array+=("role.bob=$BOB_AGENT")
+  env_array+=("bob.agent.version=$BOB_VERSION")
+  env_array+=("role.faber=$FABER_AGENT")
+  env_array+=("faber.agent.version=$FABER_VERSION")
+  env_array+=("role.mallory=$MALLORY_AGENT")
+  env_array+=("mallory.agent.version=$MALLORY_VERSION")
+  printf "%s\n" "${env_array[@]}" > $env_file
+
+}
+
+getAgentVersion(){
+  port=${1}
+  # get agent version using a backchannel-exposed api
+  version=$(curl -s http://localhost:${port}/agent/command/version/)
+  echo "$version"
+  # if (( ${rtnCd} == 200 )); then
+  #   echo "$version"
+  # else
+  #   echo "unknown"
+  # fi
+}
+
 runTests() {
   runArgs=${@}
 
@@ -344,11 +376,20 @@ runTests() {
   waitForAgent Mallory 9050
 
   echo
+  # Allure Reports environment.properties file handling
+  writeEnvProperties
+
+  echo
   # Behave.ini file handling
   export BEHAVE_INI_TMP="${PWD}/behave.ini.tmp"
   cp ${BEHAVE_INI} ${BEHAVE_INI_TMP}
 
-  ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+  if [[ "${REPORT}" = "allure" ]]; then
+      echo "Executing tests with Allure Reports. No ouput will be shown until tests are complete."
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v ${PWD}/aries-test-harness/reports:/aries-test-harness/reports/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./reports -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+  else
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+  fi
   local docker_result=$?
   rm ${BEHAVE_INI_TMP}
 
@@ -399,13 +440,15 @@ if [[ "${COMMAND}" == "run" ]]; then
   TAGS=""
   BEHAVE_INI=aries-test-harness/behave.ini
 
-  while getopts "ha:b:c:f:m:d:t:i:" FLAG; do
+  while getopts "ha:b:c:f:m:r:d:t:i:" FLAG; do
     case $FLAG in
         h ) usage ;;
         : ) usage ;;
         \? ) #unrecognized option - show help
         echo -e \\n"Invalid script option: -${OPTARG}"\\n
         usage
+            ;;
+        r ) export REPORT=${OPTARG}
             ;;
         a ) export ACME=${OPTARG}
             ;;

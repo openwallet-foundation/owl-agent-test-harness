@@ -415,6 +415,17 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             status = 200 if self.ACTIVE else 418
             status_msg = "Active" if self.ACTIVE else "Inactive"
             return (status, json.dumps({"status": status_msg}))
+        
+        if op["topic"] == "version":
+            if self.acapy_version is not None:
+                status = 200
+                #status_msg = json.dumps({"version": self.acapy_version})
+                status_msg = self.acapy_version
+            else:
+                status = 404
+                #status_msg = json.dumps({"version": "not found"})
+                status_msg = "not found"
+            return (status, status_msg)
 
         elif op["topic"] == "connection":
             if rec_id:
