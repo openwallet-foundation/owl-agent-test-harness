@@ -1,6 +1,7 @@
 from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
+from agent_test_utils import get_relative_timestamp_to_epoch
 from time import sleep
 
 @when('{issuer} issues a new credential to "{prover}" with {credential_data}')
@@ -221,6 +222,10 @@ def step_impl(context, prover):
                 # Get the schema name from the loaded presentation for each requested attributes
                 cred_type_name = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_type_name"]
                 presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1]
+                # If there is a timestamp, calculate it from the instruction in the file. Can be 'now' or + - relative to now.
+                if ("timestamp" in presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]):
+                    relative_timestamp = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["timestamp"]
+                    presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["timestamp"] = get_relative_timestamp_to_epoch(relative_timestamp)
                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
                 presentation["requested_attributes"][list(presentation["requested_attributes"])[i]].pop("cred_type_name")
         except KeyError:
@@ -231,6 +236,10 @@ def step_impl(context, prover):
                 # Get the schema name from the loaded presentation for each requested predicates
                 cred_type_name = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_type_name"]
                 presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1] 
+                # If there is a timestamp, calculate it from the instruction in the file. Can be 'now' or + - relative to now.
+                if ("timestamp" in presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]):
+                    relative_timestamp = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["timestamp"]
+                    presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["timestamp"] = get_relative_timestamp_to_epoch(relative_timestamp)
                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
                 presentation["requested_predicates"][list(presentation["requested_predicates"])[i]].pop("cred_type_name")
         except KeyError:

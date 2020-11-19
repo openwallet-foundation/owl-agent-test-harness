@@ -38,3 +38,17 @@ def create_non_revoke_interval(timeframe):
         }
     }
 
+def get_relative_timestamp_to_epoch(timestamp):
+    # timestamps are always relative to now. + or - is represented in seconds from Unix Epoch.
+    # Valid timestsamps are 
+    #  now
+    #  +###### ie +86400
+    #  -###### ie -86400
+
+    if (timestamp == 'now'):
+        epoch_time = int(time.time())
+    else:
+        epoch_time = int(timestamp) + int(time.time())
+
+    return epoch_time
+
