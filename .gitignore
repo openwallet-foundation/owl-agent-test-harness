@@ -18,3 +18,7 @@ Thumbs.db
 
 # Env file used for debugging
 .env
+
+# Reports
+reports/
+allure-report/
