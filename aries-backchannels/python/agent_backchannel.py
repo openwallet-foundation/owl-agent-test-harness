@@ -1,5 +1,5 @@
 import asyncio
-import asyncpg
+#import asyncpg
 import functools
 import json
 import logging

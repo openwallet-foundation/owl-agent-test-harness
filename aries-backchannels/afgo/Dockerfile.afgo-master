@@ -1,0 +1,61 @@
+#
+# Copyright SecureKey Technologies Inc. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+ARG GO_VER=1.15
+ARG ALPINE_VER=3.12
+
+FROM golang:${GO_VER}-alpine${ALPINE_VER} as golang
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    git \
+    libtool \
+    bash \
+    make;
+ADD . $GOPATH/src/github.com/hyperledger
+WORKDIR $GOPATH/src/github.com/hyperledger
+ENV EXECUTABLES go git
+
+RUN git clone https://github.com/hyperledger/aries-framework-go.git
+WORKDIR $GOPATH/src/github.com/hyperledger/aries-framework-go
+
+FROM golang as aries-framework
+ARG GO_TAGS=
+ARG GOPROXY=
+RUN GO_TAGS=${GO_TAGS} GOPROXY=${GOPROXY} make agent-rest
+
+#
+# Install the test harness backchannel
+#
+
+ENV PYTHONUNBUFFERED=1
+RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+RUN apk add --update --no-cache python3-dev
+RUN python3 -m ensurepip
+RUN pip3 install --no-cache --upgrade pip setuptools
+
+RUN mkdir -p $GOPATH/aries-backchannels
+WORKDIR $GOPATH/aries-backchannels
+
+ENV RUNMODE=docker
+
+COPY python/requirements.txt python/
+RUN pip install -r python/requirements.txt
+
+# Copy the necessary files from the AATH Backchannel sub-folders
+COPY python python
+COPY afgo afgo
+COPY data ./
+
+# aries-agent-rest is in $GOPATH/src/github.com/hyperledger/aries-framework-go/build/bin. 
+# The Backchannel is looking for it in ./bin, create a link to it in ./bin
+RUN mkdir -p ./bin
+RUN ln -s $GOPATH/src/github.com/hyperledger/aries-framework-go/build/bin/aries-agent-rest ./bin/aries-agent-rest
+ENV PYTHONPATH=/aries-backchannels
+
+
+#ENTRYPOINT ["python", "afgo/afgo_backchannel.py"]
+
