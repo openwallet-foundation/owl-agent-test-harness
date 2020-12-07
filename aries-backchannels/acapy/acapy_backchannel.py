@@ -57,6 +57,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             params
         )
 
+        # get aca-py version if available
+        self.acapy_version = None
+        try:
+            with open('./acapy-version.txt', 'r') as file:
+                self.acapy_version = file.readline()
+        except:
+            # ignore errors
+            pass
+
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
             "invitation": "invited",
@@ -91,6 +100,31 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "presentation_acked": "done"
         }
 
+    def get_acapy_version_as_float(self):
+        # construct some number to compare to with > or < instead of listing out the version number
+        # if it starts with zero strip it off
+        # if it ends in alpha or RC (or "-<anything>"), change it to .1 or 1
+        # strip all dots
+        # Does that work if I'm testing 0.5.5.1 hot fix? Just strip off the .1 since there won't be a major change here.
+
+        if not self.acapy_version or 0 == len(self.acapy_version):
+            return 0.0
+
+        descriptiveTrailer = "-"
+        comparibleVersion = self.acapy_version
+        if comparibleVersion.startswith("0"):
+            comparibleVersion = comparibleVersion[len("0"):]
+        if "." in comparibleVersion:
+            stringParts = comparibleVersion.split(".")
+            comparibleVersion = "".join(stringParts)
+        if descriptiveTrailer in comparibleVersion:
+            # This means its not an offical release and came from Master/Main
+            # replace with a .1 so that the number is higher than an offical release
+            comparibleVersion = comparibleVersion.split(descriptiveTrailer)[0] + ".1"
+
+        #  Make it a number. At this point "0.5.5-RC" should be 55.1. "0.5.4" should be 54.
+        return float(comparibleVersion)
+
     def get_agent_args(self):
         result = [
             ("--endpoint", self.endpoint),
@@ -106,9 +140,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-type", self.wallet_type),
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
-            "--auto-provision",
-            "--recreate-wallet",
         ]
+
+        if self.get_acapy_version_as_float() > 56:
+            result.append(("--auto-provision", "--recreate-wallet"))
+
         if self.genesis_data:
             result.append(("--genesis-transactions", self.genesis_data))
         if self.seed:
@@ -701,7 +737,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             status = json.loads(status_text)
             ok = isinstance(status, dict) and "version" in status
             if ok:
-                self.acapy_version= status["version"]
+                self.acapy_version = status["version"]
                 print("ACA-py Backchannel running with ACA-py version:", self.acapy_version)
         except json.JSONDecodeError:
             pass
@@ -926,24 +962,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # and constructs the calls based off that version
 
         # construct some number to compare to with > or < instead of listing out the version number
-        # if it starts with zero strip it off
-        # if it ends in alpha or RC, change it to .1 or 1
-        # strip all dots
-        # Does that work if I'm testing 0.5.5.1 hot fix? Just strip off the .1 since there won't be a major change here.
-        descriptiveTrailer = "-RC"
-        comparibleVersion = self.acapy_version
-        if comparibleVersion.startswith("0"):
-            comparibleVersion = comparibleVersion[len("0"):]
-        if "." in comparibleVersion:
-            stringParts = comparibleVersion.split(".")
-            comparibleVersion = "".join(stringParts)
-        if comparibleVersion.endswith(descriptiveTrailer):
-            # This means its not an offical release and came from Master/Main
-            # replace with a .1 so that the number is higher than an offical release
-            comparibleVersion = comparibleVersion.replace(descriptiveTrailer, ".1")
-        #  Make it a number. At this point "0.5.5-RC" should be 55.1. "0.5.4" should be 54.
-        comparibleVersion = float(comparibleVersion)
-
+        comparibleVersion = self.get_acapy_version_as_float()
 
         if (topic == "revocation"):
             if operation == "revoke":
