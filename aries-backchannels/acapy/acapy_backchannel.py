@@ -106,6 +106,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-type", self.wallet_type),
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
+            "--auto-provision",
+            "--recreate-wallet",
         ]
         if self.genesis_data:
             result.append(("--genesis-transactions", self.genesis_data))
