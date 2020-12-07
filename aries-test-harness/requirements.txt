@@ -1,3 +1,2 @@
-asyncpg~=0.18.0
 behave
 allure-behave
