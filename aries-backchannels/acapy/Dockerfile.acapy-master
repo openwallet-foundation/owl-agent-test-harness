@@ -28,5 +28,6 @@ RUN mkdir -p ./bin
 RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
 ENV PYTHONPATH=/aries-backchannels
 
+RUN ./bin/aca-py --version > ./acapy-version.txt
 
 ENTRYPOINT ["python", "acapy/acapy_backchannel.py"]

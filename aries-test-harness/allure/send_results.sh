@@ -182,14 +182,15 @@ curl -X POST "$ALLURE_SERVER/allure-docker-service/send-results?project_id=$PROJ
 
 
 #If you want to generate reports on demand use the endpoint `GET /generate-report` and disable the Automatic Execution >> `CHECK_RESULTS_EVERY_SECONDS: NONE`
-#echo "------------------GENERATE-REPORT------------------"
+echo "------------------GENERATE-REPORT------------------"
 #EXECUTION_NAME='execution_from_my_bash_script'
 #EXECUTION_FROM='http://google.com'
 #EXECUTION_TYPE='bamboo'
 
 #You can try with a simple curl
 #RESPONSE=$(curl -X GET "$ALLURE_SERVER/allure-docker-service/generate-report?project_id=$PROJECT_ID&execution_name=$EXECUTION_NAME&execution_from=$EXECUTION_FROM&execution_type=$EXECUTION_TYPE" $FILES)
-#ALLURE_REPORT=$(grep -o '"report_url":"[^"]*' <<< "$RESPONSE" | grep -o '[^"]*$')
+RESPONSE=$(curl -X GET "$ALLURE_SERVER/allure-docker-service/generate-report?project_id=$PROJECT_ID" $FILES)
+ALLURE_REPORT=$(grep -o '"report_url":"[^"]*' <<< "$RESPONSE" | grep -o '[^"]*$')
 
 #OR You can use JQ to extract json values -> https://stedolan.github.io/jq/download/
 #ALLURE_REPORT=$(echo $RESPONSE | jq '.data.report_url')

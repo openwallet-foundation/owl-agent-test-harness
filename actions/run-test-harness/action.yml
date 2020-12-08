@@ -10,6 +10,10 @@ inputs:
     description: "Specific agent image for the bob role"
     required: false
     default: "acapy"
+  REPORTING:
+    description: "Use formal reporting engine"
+    required: false
+    default: "-r allure"
   TEST_SCOPE:
     description: "Set of flags that defines the test scope"
     required: false
@@ -22,7 +26,7 @@ runs:
       shell: bash
       working-directory: test-harness
     - name: run-test-harness-acapy
-      run: ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.TEST_SCOPE }}
+      run: ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.REPORTING }} ${{ inputs.TEST_SCOPE }}
       shell: bash
       env:
         NO_TTY: "1"

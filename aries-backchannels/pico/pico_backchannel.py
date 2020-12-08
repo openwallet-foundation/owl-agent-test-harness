@@ -11,7 +11,6 @@ https://github.com/Picolab/aries-cloudagent-pico
 """
 
 import asyncio
-import asyncpg
 import functools
 import json
 import logging

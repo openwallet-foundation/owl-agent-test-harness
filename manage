@@ -320,7 +320,7 @@ writeEnvProperties() {
   FABER_VERSION=$(getAgentVersion 9040)
   MALLORY_VERSION=$(getAgentVersion 9050)
 
-  env_file="${PWD}/aries-test-harness/reports/environment.properties"
+  env_file="${PWD}/aries-test-harness/allure/allure-results/environment.properties"
   declare -a env_array
   env_array+=("role.acme=$ACME_AGENT")
   env_array+=("acme.agent.version=$ACME_VERSION")
@@ -386,7 +386,8 @@ runTests() {
 
   if [[ "${REPORT}" = "allure" ]]; then
       echo "Executing tests with Allure Reports. No ouput will be shown until tests are complete."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ -v ${PWD}/aries-test-harness/reports:/aries-test-harness/reports/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./results -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ -v ${PWD}/aries-test-harness/reports:/aries-test-harness/reports/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      #${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ -v ${PWD}/aries-test-harness/reports:/aries-test-harness/reports/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./results -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   else
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi

@@ -21,7 +21,7 @@ from aiohttp import (
 )
 
 from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
-from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
+from python.utils import flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
 from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
 
 #from helpers.jsonmapper.json_mapper import JsonMapper
@@ -40,7 +40,7 @@ elif RUN_MODE == "pwd":
     DEFAULT_BIN_PATH = "./bin"
     DEFAULT_PYTHON_PATH = "."
 
-class AcaPyAgentBackchannel(AgentBackchannel):
+class AfGoAgentBackchannel(AgentBackchannel):
     def __init__(
         self, 
         ident: str,
@@ -56,15 +56,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             genesis_data,
             params
         )
-
-        # get aca-py version if available
-        self.acapy_version = None
-        try:
-            with open('./acapy-version.txt', 'r') as file:
-                self.acapy_version = file.readline()
-        except:
-            # ignore errors
-            pass
 
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
@@ -100,81 +91,62 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "presentation_acked": "done"
         }
 
-    def get_acapy_version_as_float(self):
-        # construct some number to compare to with > or < instead of listing out the version number
-        # if it starts with zero strip it off
-        # if it ends in alpha or RC (or "-<anything>"), change it to .1 or 1
-        # strip all dots
-        # Does that work if I'm testing 0.5.5.1 hot fix? Just strip off the .1 since there won't be a major change here.
-
-        if not self.acapy_version or 0 == len(self.acapy_version):
-            return 0.0
-
-        descriptiveTrailer = "-"
-        comparibleVersion = self.acapy_version
-        if comparibleVersion.startswith("0"):
-            comparibleVersion = comparibleVersion[len("0"):]
-        if "." in comparibleVersion:
-            stringParts = comparibleVersion.split(".")
-            comparibleVersion = "".join(stringParts)
-        if descriptiveTrailer in comparibleVersion:
-            # This means its not an offical release and came from Master/Main
-            # replace with a .1 so that the number is higher than an offical release
-            comparibleVersion = comparibleVersion.split(descriptiveTrailer)[0] + ".1"
-
-        #  Make it a number. At this point "0.5.5-RC" should be 55.1. "0.5.4" should be 54.
-        return float(comparibleVersion)
-
     def get_agent_args(self):
+        # FOR EXAMPLE:
+        # ./bin/aries-agent-rest start \
+        #    --inbound-host-external "http@http://192.168.65.3:8001/" \
+        #    --agent-default-label ian-agent \
+        #    --inbound-host "http@0.0.0.0:8002" \
+        #    --outbound-transport http \
+        #    --api-host "0.0.0.0:8010" \
+        #    --database-type mem \
+        #    --webhook-url "http://192.168.65.3:8020"
+
         result = [
-            ("--endpoint", self.endpoint),
-            ("--label", self.label),
+            ("--inbound-host-external", "http@" + self.endpoint),
+            ("--agent-default-label", self.label),
             #"--auto-ping-connection",
             #"--auto-accept-invites", 
             #"--auto-accept-requests", 
             #"--auto-respond-messages",
-            ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
+            ("--inbound-host", "http@0.0.0.0:" + str(self.http_port)),
             ("--outbound-transport", "http"),
-            ("--admin", "0.0.0.0", str(self.admin_port)),
-            "--admin-insecure-mode",
-            ("--wallet-type", self.wallet_type),
-            ("--wallet-name", self.wallet_name),
-            ("--wallet-key", self.wallet_key),
+            ("--api-host", "0.0.0.0:" + str(self.admin_port)),
+            ("--database-type", "mem",)
+            #("--wallet-type", self.wallet_type),
+            #("--wallet-name", self.wallet_name),
+            #("--wallet-key", self.wallet_key),
         ]
-
-        if self.get_acapy_version_as_float() > 56:
-            result.append(("--auto-provision", "--recreate-wallet"))
-
-        if self.genesis_data:
-            result.append(("--genesis-transactions", self.genesis_data))
-        if self.seed:
-            result.append(("--seed", self.seed))
-        if self.storage_type:
-            result.append(("--storage-type", self.storage_type))
-        if self.postgres:
-            result.extend(
-                [
-                    ("--wallet-storage-type", "postgres_storage"),
-                    ("--wallet-storage-config", json.dumps(self.postgres_config)),
-                    ("--wallet-storage-creds", json.dumps(self.postgres_creds)),
-                ]
-            )
+        #if self.genesis_data:
+        #    result.append(("--genesis-transactions", self.genesis_data))
+        #if self.seed:
+        #    result.append(("--seed", self.seed))
+        #if self.storage_type:
+        #    result.append(("--storage-type", self.storage_type))
+        #if self.postgres:
+        #    result.extend(
+        #        [
+        #            ("--wallet-storage-type", "postgres_storage"),
+        #            ("--wallet-storage-config", json.dumps(self.postgres_config)),
+        #            ("--wallet-storage-creds", json.dumps(self.postgres_creds)),
+        #        ]
+        #    )
         if self.webhook_url:
             result.append(("--webhook-url", self.webhook_url))
         
         # This code for Tails Server is included here because aca-py does not support the env var directly yet. 
         # when it does (and there is talk of supporting YAML) then this code can be removed. 
-        if os.getenv('TAILS_SERVER_URL') is not None:
-            # if the env var is set for tails server then use that.
-            result.append(("--tails-server-base-url", os.getenv('TAILS_SERVER_URL')))
-        else:
-            # if the tails server env is not set use the gov.bc TEST tails server.
-            result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
+        #if os.getenv('TAILS_SERVER_URL') is not None:
+        #    # if the env var is set for tails server then use that.
+        #    result.append(("--tails-server-base-url", os.getenv('TAILS_SERVER_URL')))
+        #else:
+        #    # if the tails server env is not set use the gov.bc TEST tails server.
+        #    result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
         
         # This code for log level is included here because aca-py does not support the env var directly yet. 
         # when it does (and there is talk of supporting YAML) then this code can be removed. 
-        if os.getenv('LOG_LEVEL') is not None:
-            result.append(("--log-level", os.getenv('LOG_LEVEL')))
+        #if os.getenv('LOG_LEVEL') is not None:
+        #    result.append(("--log-level", os.getenv('LOG_LEVEL')))
 
         #if self.extra_args:
         #    result.extend(self.extra_args)
@@ -696,17 +668,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         return proc
 
     def get_process_args(self, bin_path: str = None):
-        #TODO aca-py needs to be in the path so no need to give it a cmd_path
-        cmd_path = "aca-py"
+        #TODO aries-agent-rest needs to be in the path so no need to give it a cmd_path
+        cmd_path = "aries-agent-rest"
         if bin_path is None:
             bin_path = DEFAULT_BIN_PATH
         if bin_path:
             cmd_path = os.path.join(bin_path, cmd_path)
-        print ('Location of ACA-Py: ' + cmd_path)
-        if self.get_acapy_version_as_float() > 56:
-            return list(flatten(([cmd_path, "start"], self.get_agent_args())))
-        else:
-            return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
+        print ('Location of aries-agent-rest: ' + cmd_path)
+        return list(flatten(([cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
         #text = None
@@ -726,7 +695,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     await asyncio.sleep(0.5)
             return text
 
-        status_url = self.admin_url + "/status"
+        status_url = self.admin_url + "/connections"
         status_text = await fetch_swagger(status_url, START_TIMEOUT)
         print("Agent running with admin url", self.admin_url)
 
@@ -735,15 +704,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 "Timed out waiting for agent process to start. "
                 + f"Admin URL: {status_url}"
             )
-        ok = False
-        try:
-            status = json.loads(status_text)
-            ok = isinstance(status, dict) and "version" in status
-            if ok:
-                self.acapy_version = status["version"]
-                print("ACA-py Backchannel running with ACA-py version:", self.acapy_version)
-        except json.JSONDecodeError:
-            pass
+        #ok = False
+        ok = True
+        #try:
+        #    status = json.loads(status_text)
+        #    ok = isinstance(status, dict) and "version" in status
+        #    if ok:
+        #        self.acapy_version= status["version"]
+        #        print("AF-go Backchannel running with AF-go version:", self.acapy_version)
+        #except json.JSONDecodeError:
+        #    pass
         if not ok:
             raise Exception(
                 f"Unexpected response from agent process. Admin URL: {status_url}"
@@ -965,7 +935,24 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # and constructs the calls based off that version
 
         # construct some number to compare to with > or < instead of listing out the version number
-        comparibleVersion = self.get_acapy_version_as_float()
+        # if it starts with zero strip it off
+        # if it ends in alpha or RC, change it to .1 or 1
+        # strip all dots
+        # Does that work if I'm testing 0.5.5.1 hot fix? Just strip off the .1 since there won't be a major change here.
+        descriptiveTrailer = "-RC"
+        comparibleVersion = self.acapy_version
+        if comparibleVersion.startswith("0"):
+            comparibleVersion = comparibleVersion[len("0"):]
+        if "." in comparibleVersion:
+            stringParts = comparibleVersion.split(".")
+            comparibleVersion = "".join(stringParts)
+        if comparibleVersion.endswith(descriptiveTrailer):
+            # This means its not an offical release and came from Master/Main
+            # replace with a .1 so that the number is higher than an offical release
+            comparibleVersion = comparibleVersion.replace(descriptiveTrailer, ".1")
+        #  Make it a number. At this point "0.5.5-RC" should be 55.1. "0.5.4" should be 54.
+        comparibleVersion = float(comparibleVersion)
+
 
         if (topic == "revocation"):
             if operation == "revoke":
@@ -1008,15 +995,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
 async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
 
-    genesis = await default_genesis_txns()
-    if not genesis:
-        print("Error retrieving ledger genesis transactions")
-        sys.exit(1)
+    genesis = None # await default_genesis_txns()
+    #if not genesis:
+    #    print("Error retrieving ledger genesis transactions")
+    #    sys.exit(1)
 
     agent = None
 
     try:
-        agent = AcaPyAgentBackchannel(
+        agent = AfGoAgentBackchannel(
             "aca-py", start_port+1, start_port+2, genesis_data=genesis
         )
 
@@ -1025,7 +1012,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
         # start aca-py agent sub-process and listen for web hooks
         await agent.listen_webhooks(start_port+3)
-        await agent.register_did()
+        # await agent.register_did()
 
         await agent.start_process()
         agent.activate()
@@ -1087,8 +1074,6 @@ if __name__ == "__main__":
         help="Start agent interactively",
     )
     args = parser.parse_args()
-
-    require_indy()
 
     try:
         asyncio.get_event_loop().run_until_complete(main(start_port=args.port, interactive=args.interactive))
