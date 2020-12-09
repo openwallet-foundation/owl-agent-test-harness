@@ -23,3 +23,7 @@ jobs:
           DEFAULT_AGENT: acapy-master
           BOB_AGENT: dotnet-master
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal"
+      - name: run-send-gen-test-results
+        uses: ./test-harness/actions/run-send-gen-test-results
+        with:
+          REPORT_PROJECT: acapy-b-dotnet

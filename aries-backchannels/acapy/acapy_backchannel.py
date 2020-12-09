@@ -703,7 +703,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if bin_path:
             cmd_path = os.path.join(bin_path, cmd_path)
         print ('Location of ACA-Py: ' + cmd_path)
-        return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
+        if self.get_acapy_version_as_float() > 56:
+            return list(flatten(([cmd_path, "start"], self.get_agent_args())))
+        else:
+            return list(flatten((["python3", cmd_path, "start"], self.get_agent_args())))
 
     async def detect_process(self):
         #text = None

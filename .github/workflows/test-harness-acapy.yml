@@ -1,5 +1,5 @@
 name: test-harness-acapy-acapy
-on:
+on:   
   schedule:
     - cron: "0 0 * * *"
 defaults:
@@ -22,3 +22,7 @@ jobs:
         with:
           DEFAULT_AGENT: acapy-master
           BOB_AGENT: acapy-master
+      - name: run-send-gen-test-results
+        uses: ./test-harness/actions/run-send-gen-test-results
+        with:
+          REPORT_PROJECT: acapy  
