@@ -23,3 +23,7 @@ jobs:
           DEFAULT_AGENT: dotnet-master
           BOB_AGENT: dotnet-master
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@RFC0011 -t ~@ProofProposal"
+      - name: run-send-gen-test-results
+        uses: ./test-harness/actions/run-send-gen-test-results
+        with:
+          REPORT_PROJECT: dotnet
