@@ -51,9 +51,10 @@ For debugging or developing purposes you may not want to always be running the t
 behave -f allure_behave.formatter:AllureFormatter -o ./reports -t @AcceptanceTest -t ~@wip --no-skipped -D Acme=http://0.0.0.0:8020 -D Bob=http://0.0.0.0:8030 -D Faber=http://0.0.0.0:8050
 ```
 ### Using Allure with CI
-TBD (Github actions, etc)
-
-  
+The AATH is executed with varying configurations and Aries Agent types at pre-determined intervals to make find issues and track deltas between builds of these agents. You can find the Allure reports for these test runs at the following links.
+[Acapy to Acapy Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy/reports/latest)
+[Acapy to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
+[Dotnet to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet/reports/latest)
 
 ## Other Reporting Options
 
