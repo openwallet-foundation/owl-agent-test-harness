@@ -126,7 +126,7 @@ namespace DotNet.Backchannel.Controllers
             // Listen for connection response to update the state
             UpdateStateOnMessage(THConnection, TestHarnessConnectionState.Responded, _ => _.MessageType == MessageTypes.ConnectionResponse && _.RecordId == connection.Id);
 
-            await _messageService.SendAsync(context.Wallet, THConnection.Request, connection);
+            await _messageService.SendAsync(context, THConnection.Request, connection);
 
             THConnection.State = TestHarnessConnectionState.Requested;
 
@@ -145,7 +145,7 @@ namespace DotNet.Backchannel.Controllers
             if (THConnection == null) return NotFound(); // Return early if not found
 
             var (response, connection) = await _connectionService.CreateResponseAsync(context, connectionId);
-            await _messageService.SendAsync(context.Wallet, response, connection);
+            await _messageService.SendAsync(context, response, connection);
 
             THConnection.State = TestHarnessConnectionState.Responded;
 
@@ -170,7 +170,7 @@ namespace DotNet.Backchannel.Controllers
             {
                 Comment = (string)data["comment"]
             };
-            await _messageService.SendAsync(context.Wallet, message, connection);
+            await _messageService.SendAsync(context, message, connection);
 
             THConnection.State = TestHarnessConnectionState.Complete;
 

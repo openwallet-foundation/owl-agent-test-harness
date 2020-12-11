@@ -130,7 +130,7 @@ namespace DotNet.Backchannel.Controllers
             // Listen for credential offer to update the state
             UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.OfferReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.OfferCredential && _.ThreadId == THCredentialExchange.ThreadId);
 
-            await _messageService.SendAsync(context.Wallet, credentialProposeMessage, connection);
+            await _messageService.SendAsync(context, credentialProposeMessage, connection);
 
             return Ok(THCredentialExchange);
         }
@@ -222,7 +222,7 @@ namespace DotNet.Backchannel.Controllers
             // Listen for credential request to update the state
             UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.RequestReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.RequestCredential && _.ThreadId == THCredentialExchange.ThreadId);
 
-            await _messageService.SendAsync(context.Wallet, credentialOffer, connection);
+            await _messageService.SendAsync(context, credentialOffer, connection);
 
             return Ok(THCredentialExchange);
         }
@@ -242,7 +242,7 @@ namespace DotNet.Backchannel.Controllers
             UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.CredentialReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.IssueCredential && _.ThreadId == THCredentialExchange.ThreadId);
 
             var connection = await _connectionService.GetAsync(context, credentialRecord.ConnectionId);
-            await _messageService.SendAsync(context.Wallet, credentialRequest, connection);
+            await _messageService.SendAsync(context, credentialRequest, connection);
 
             return Ok(THCredentialExchange);
         }
@@ -259,7 +259,7 @@ namespace DotNet.Backchannel.Controllers
             var (credentialIssueMessage, credentialRecord) = await _credentialService.CreateCredentialAsync(context, THCredentialExchange.RecordId);
             var connection = await _connectionService.GetAsync(context, credentialRecord.ConnectionId);
 
-            await _messageService.SendAsync(context.Wallet, credentialIssueMessage, connection);
+            await _messageService.SendAsync(context, credentialIssueMessage, connection);
 
             THCredentialExchange.State = TestHarnessCredentialExchangeState.CredentialIssued;
 

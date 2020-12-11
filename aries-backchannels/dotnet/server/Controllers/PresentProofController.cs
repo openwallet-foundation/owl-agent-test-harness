@@ -128,7 +128,7 @@ namespace DotNet.Backchannel.Controllers
 
             _logger.LogDebug("Send Presentation Request {requestPresentationMessage}", requestPresentationMessage.ToJson());
 
-            await _messageService.SendAsync(context.Wallet, requestPresentationMessage, connection);
+            await _messageService.SendAsync(context, requestPresentationMessage, connection);
 
             return Ok(THPresentationExchange);
         }
@@ -154,7 +154,7 @@ namespace DotNet.Backchannel.Controllers
 
             _logger.LogDebug("Send Presentation {presentationMessage}", presentationMessage.ToJson());
 
-            await _messageService.SendAsync(context.Wallet, presentationMessage, connection);
+            await _messageService.SendAsync(context, presentationMessage, connection);
 
             return Ok(THPresentationExchange);
         }
@@ -185,7 +185,7 @@ namespace DotNet.Backchannel.Controllers
 
             ackPresentationMessage.ThreadFrom(threadId);
 
-            await _messageService.SendAsync(context.Wallet, ackPresentationMessage, connectionRecord);
+            await _messageService.SendAsync(context, ackPresentationMessage, connectionRecord);
 
             return Ok(THPresentationExchange);
         }
