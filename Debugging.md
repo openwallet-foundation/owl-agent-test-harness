@@ -17,3 +17,23 @@
    - If you now, for example, run `./manage run -d dotnet -t @T001-AIP10-RFC0160` it will run the tests using the backchannels you started from the debugger.
 
 For more information on debugging in VSCode see [the docs](https://code.visualstudio.com/docs/editor/debugging).
+
+#### Troubleshooting
+
+##### Process 'dotnet dev-certs https --check --trust'
+
+If you get the following error:
+
+```shell
+Error: Process 'dotnet dev-certs https --check --trust' exited with code 9
+Error:
+```
+
+This means the ASP.NET Core development certificate is not quite working. Running the following should fix the problem:
+
+```shell
+dotnet dev-certs https --clean
+dotnet dev-certs https --trust
+```
+
+See: https://github.com/microsoft/vscode-docker/issues/1761

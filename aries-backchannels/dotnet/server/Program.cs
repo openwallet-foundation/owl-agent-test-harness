@@ -38,6 +38,7 @@ namespace DotNet.Backchannel
             rootCommand.Handler = CommandHandler.Create<int, bool>((port, interactive) =>
             {
                 Program.SetEnvironment(port).Wait();
+                LogUtils.EnableIndyLogging();
                 CreateHostBuilder(port).Build().Run();
             });
 
