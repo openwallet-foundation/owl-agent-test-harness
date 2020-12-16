@@ -49,6 +49,15 @@ def step_impl(context, n):
             context.prover_url = context.config.userdata.get(row['name'])
             context.prover_name = row['name']
             assert context.prover_url is not None and 0 < len(context.prover_url)
+        # This step is used across protocols, this adds roles for DID Exchange
+        elif row['role'] == 'requester':
+            context.requester_url = context.config.userdata.get(row['name'])
+            context.requester_name = row['name']
+            assert context.requester_url is not None and 0 < len(context.requester_url)
+        elif row['role'] == 'responder':
+            context.responder_url = context.config.userdata.get(row['name'])
+            context.responder_name = row['name']
+            assert context.responder_url is not None and 0 < len(context.responder_url)
         else:
             print("Data table in step contains an unrecognized role, must be inviter, invitee, inviteinterceptor, issuer, or holder")
 

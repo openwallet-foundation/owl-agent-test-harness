@@ -100,6 +100,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "presentation_acked": "done"
         }
 
+        # Aca-py : RFC
+        self.didExchangeTranslationDict = {
+            "initial": "invitation-sent",
+            "?recieved": "invitation-received",
+            "?sent": "request-sent",
+            "proposal_received": "request-received",
+            "?sent": "response-sent",
+            "?received": "response-received",
+            "?": "abandoned",
+            "done": "completed"
+        }
+
     def get_acapy_version_as_float(self):
         # construct some number to compare to with > or < instead of listing out the version number
         # if it starts with zero strip it off
@@ -207,6 +219,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_webhook(self, topic: str, payload):
         if topic != "webhook":  # would recurse
             handler = f"handle_{topic}"
+
+            # Remove this handler change when bug is fixed. 
+            if handler == "handle_oob-invitation":
+                handler = "handle_oob_invitation"
+
             method = getattr(self, handler, None)
             # put a log message here
             log_msg('Passing webhook payload to handler ' + handler)
@@ -244,6 +261,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         cred_def_id = message["cred_def_id"]
         push_resource(cred_def_id, "revocation-registry-msg", message)
         log_msg('Received Revocation Registry Webhook message: ' + json.dumps(message)) 
+
+    async def handle_oob_invitation(self, message):
+        # No thread id in the webhook for revocation registry messages
+        invitation_id = message["invitation_id"]
+        push_resource(invitation_id, "oob-inviation-msg", message)
+        log_msg('Received Out of Band Invitation Webhook message: ' + json.dumps(message)) 
 
     async def handle_problem_report(self, message):
         thread_id = message["thread_id"]
@@ -442,8 +465,33 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg(resp_status, resp_text)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
+        
+        # Handle out of band POST operations 
+        elif op["topic"] == "out-of-band":
+            (resp_status, resp_text) = await self.handle_out_of_band_POST(op, data=data)
+            return (resp_status, resp_text)
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
+
+
+    async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
+        operation = op["operation"]
+        if operation == "send-invitation-message":
+            #http://localhost:8022/out-of-band/create-invitation?auto_accept=false&multi_use=false
+            # TODO Check the data for auto_accept and multi_use. If it exists use those values then pop them out, otherwise false.
+            auto_accept = "false"
+            multi_use = "false"
+            agent_operation = "/out-of-band/" + "create-invitation" + "?auto_accept=" + auto_accept + "&multi_use=" + multi_use
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            # extract invitation from the agent's response
+            #invitation_resp = json.loads(resp_text)
+            #resp_text = json.dumps(invitation_resp)
+
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+            return (resp_status, resp_text)
+
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
@@ -957,6 +1005,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
                 elif topic == "proof":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
+                elif topic == "out-of-band":
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.didExchangeTranslationDict[agent_state] + '"')
             return (data)
 
     async def get_agent_operation_acapy_version_based(self, topic, operation, rec_id=None, data=None):
