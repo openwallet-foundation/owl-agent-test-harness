@@ -104,8 +104,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         self.didExchangeTranslationDict = {
             "initial": "invitation-sent",
             "invitation": "invitation-received",
-            "?sent": "request-sent",
-            "proposal_received": "request-received",
+            "request": "request-sent",
+            "request": "request-received",
             "?sent": "response-sent",
             "?received": "response-received",
             "?": "abandoned",
@@ -471,6 +471,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.handle_out_of_band_POST(op, data=data)
             return (resp_status, resp_text)
 
+        # Handle did exchange POST operations
+        elif op["topic"] == "did-exchange":
+            (resp_status, resp_text) = await self.handle_did_exchange_POST(op, rec_id=rec_id, data=data)
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
 
@@ -492,12 +497,25 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
             #return (resp_status, resp_text)
-        if operation == "receive-invitation":
+        elif operation == "receive-invitation":
             # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
             # TODO change back to /out-of-band/ when reveive-invitation works. 
             #agent_operation = agent_operation + "receive-invitation"
             agent_operation = "/didexchange/" + "receive-invitation"
+        
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+        return (resp_status, resp_text)
 
+
+    async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
+        operation = op["operation"]
+        agent_operation = "/didexchange/"
+        if operation == "send-request":
+            agent_operation = agent_operation + rec_id + "/accept-invitation"
+
+        elif operation == "receive-invitation":
+            agent_operation = agent_operation + "accept_request"
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -1017,6 +1035,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 elif topic == "proof":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
                 elif topic == "out-of-band":
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.didExchangeTranslationDict[agent_state] + '"')
+                elif topic == "did-exchange":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.didExchangeTranslationDict[agent_state] + '"')
             return (data)
 

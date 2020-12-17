@@ -86,28 +86,33 @@ def step_impl(context, requester, responder):
     #responder_connection_id = context.connection_id_dict[responder][requester]
 
     # get connection and verify status
-    assert expected_agent_state(context.requester_url, "didexchange", requester_connection_id, "invitation-recieved")
+    #assert expected_agent_state(context.requester_url, "didexchange", requester_connection_id, "invitation-received")
     #assert expected_agent_state(responder_url, "connection", responder_connection_id, "invitation-sent")
 
-    (resp_status, resp_text) = agent_backchannel_POST(requester_url + "/agent/command/", "didexchange", operation="send-request", id=requester_connection_id)
+    (resp_status, resp_text) = agent_backchannel_POST(context.requester_url + "/agent/command/", "did-exchange", operation="send-request", id=requester_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
+    resp_json = json.loads(resp_text)
+    assert resp_json["state"] == "request-sent"
+
     # get connection and verify status
-    assert expected_agent_state(requester_url, "connection", requester_connection_id, "request-sent")
+    #assert expected_agent_state(context.requester_url, "connection", requester_connection_id, "request-sent")
 
 
 @when('"{responder}" receives the request')
 def step_impl(context, responder):
-    responder_url = context.config.userdata.get(responder)
     responder_connection_id = context.connection_id_dict[responder][context.requester_name]
 
-    # responder already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
+    # responder already recieved the connection request in the send-request call so get connection and verify status.
     #assert expected_agent_state(responder_url, "didexchange", responder_connection_id, "request-recieved")
-    (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "didexchange", operation="recieve-request", id=responder_connection_id)
+    (resp_status, resp_text) = agent_backchannel_POST(context.responder_url + "/agent/command/", "didexchange", operation="receive-request", id=responder_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
+    resp_json = json.loads(resp_text)
+    assert resp_json["state"] == "request-received"
+
     # get connection and verify status
-    assert expected_agent_state(requester_url, "connection", requester_connection_id, "request-recieved")
+    #assert expected_agent_state(requester_url, "connection", requester_connection_id, "request-recieved")
 
 
 @when('"{responder}" sends a response to "{requester}"')
