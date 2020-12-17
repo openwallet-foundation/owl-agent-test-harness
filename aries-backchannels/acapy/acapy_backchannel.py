@@ -103,7 +103,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # Aca-py : RFC
         self.didExchangeTranslationDict = {
             "initial": "invitation-sent",
-            "?recieved": "invitation-received",
+            "invitation": "invitation-received",
             "?sent": "request-sent",
             "proposal_received": "request-received",
             "?sent": "response-sent",
@@ -476,21 +476,32 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
     async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
+        agent_operation = "/out-of-band/"
         if operation == "send-invitation-message":
             #http://localhost:8022/out-of-band/create-invitation?auto_accept=false&multi_use=false
             # TODO Check the data for auto_accept and multi_use. If it exists use those values then pop them out, otherwise false.
             auto_accept = "false"
             multi_use = "false"
-            agent_operation = "/out-of-band/" + "create-invitation" + "?auto_accept=" + auto_accept + "&multi_use=" + multi_use
+            agent_operation = agent_operation + "create-invitation" + "?auto_accept=" + auto_accept + "&multi_use=" + multi_use
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            #(resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
             # extract invitation from the agent's response
             #invitation_resp = json.loads(resp_text)
             #resp_text = json.dumps(invitation_resp)
 
-            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
-            return (resp_status, resp_text)
+            #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+            #return (resp_status, resp_text)
+        if operation == "receive-invitation":
+            # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
+            # TODO change back to /out-of-band/ when reveive-invitation works. 
+            #agent_operation = agent_operation + "receive-invitation"
+            agent_operation = "/didexchange/" + "receive-invitation"
+
+
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+        return (resp_status, resp_text)
 
 
     async def make_agent_GET_request(

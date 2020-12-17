@@ -27,7 +27,9 @@ def step_impl(context, responder):
 
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "invitation-sent"
+    assert "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/v1.0" in resp_text
     context.responder_invitation = resp_json["invitation"]
+    # TODO drill into the handshake protocol in the invitation and remove anything else besides didexchange.
 
     # check and see if the connection_id_dict exists
     # if it does, it was probably used to create another connection in a 3+ agent scenario
@@ -51,10 +53,11 @@ def step_impl(context, responder):
 def step_impl(context, requester):
 
     data = context.responder_invitation
-    (resp_status, resp_text) = agent_backchannel_POST(context.requester_url + "/agent/command/", "out-of-band", operation="recieve-invitation", data=data)
+    (resp_status, resp_text) = agent_backchannel_POST(context.requester_url + "/agent/command/", "out-of-band", operation="receive-invitation", data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
+    assert resp_json["state"] == "invitation-received"
 
     if not hasattr(context, 'connection_id_dict'):
         context.connection_id_dict = {}
@@ -63,29 +66,27 @@ def step_impl(context, requester):
     context.connection_id_dict[requester][context.responder_name] = resp_json["connection_id"]
 
     # Also add the responder into the main connection_id_dict. if the len is 0 that means its already been cleared and this may be Mallory.
-    if len(context.temp_connection_id_dict) != 0:
-        context.connection_id_dict[context.responder_name] = {requester: context.temp_connection_id_dict[context.responder_name]}
+    #if len(context.temp_connection_id_dict) != 0:
+    #    context.connection_id_dict[context.responder_name] = {requester: context.temp_connection_id_dict[context.responder_name]}
         #clear the temp connection id dict used in the initial step. We don't need it anymore.
-        context.temp_connection_id_dict.clear()
+    #    context.temp_connection_id_dict.clear()
 
     # Check to see if the requester_name exists in context. If not, antother suite is using it so set the requester name and url
-    if not hasattr(context, 'requester_name'):
-        context.requester_url = requester_url
-        context.requester_name = requester
+    #if not hasattr(context, 'requester_name'):
+    #    context.requester_url = requester_url
+    #    context.requester_name = requester
 
     # get connection and verify status
-    assert expected_agent_state(requester_url, "didexchange", context.connection_id_dict[requester][context.responder_name], "invited")
+    #assert expected_agent_state(requester_url, "didexchange", context.connection_id_dict[requester][context.responder_name], "invited")
 
 
 @when('"{requester}" sends the request to "{responder}"')
 def step_impl(context, requester, responder):
-    requester_url = context.config.userdata.get(requester)
     requester_connection_id = context.connection_id_dict[requester][responder]
-    responder_url = context.config.userdata.get(responder)
-    responder_connection_id = context.connection_id_dict[responder][requester]
+    #responder_connection_id = context.connection_id_dict[responder][requester]
 
     # get connection and verify status
-    assert expected_agent_state(requester_url, "didexchange", requester_connection_id, "invitation-recieved")
+    assert expected_agent_state(context.requester_url, "didexchange", requester_connection_id, "invitation-recieved")
     #assert expected_agent_state(responder_url, "connection", responder_connection_id, "invitation-sent")
 
     (resp_status, resp_text) = agent_backchannel_POST(requester_url + "/agent/command/", "didexchange", operation="send-request", id=requester_connection_id)
