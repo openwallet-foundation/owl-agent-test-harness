@@ -1,6 +1,6 @@
 Feature: Establishing DID Based Relationships RFC 0023
 
-   @T001-RFC0023 @P1 @critical @AcceptanceTest @RFC0023
+   @T001-RFC0023 @P1 @critical @AcceptanceTest @RFC0023 @wip
    Scenario: Establish a DID based connection between two agents with an explicit invitation
       Given we have "2" agents
          | name | role      |
