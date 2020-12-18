@@ -80,8 +80,8 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T004-RFC0011 @RFC0011 @P2 @normal @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy @delete_cred_from_wallet @willfail
-   Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential but presents the revoked credential
+   @T004-RFC0011 @RFC0011 @P2 @normal @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy @delete_cred_from_wallet @wip
+   Scenario Outline: Credential revoked and replaced with a new updated credential, get possible credentials from agent wallet
       Given "2" agents
          | name  | role     |
          | Bob   | prover   |
