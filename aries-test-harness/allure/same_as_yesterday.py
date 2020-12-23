@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 
 
 if __name__ == "__main__":
@@ -37,5 +38,7 @@ if __name__ == "__main__":
 
     if overall_results:
         print("Same as yesterday")
+        sys.exit(0)
     else:
         print("Different from yesterday")
+        sys.exit(1)

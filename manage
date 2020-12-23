@@ -69,7 +69,7 @@ usage () {
   rebuild [ -a agent ]* args
     Same as build, but adds the --no-cache option to force building from scratch
 
-  run [ -a/b/m/d agent ] [ -i <ini file> ] [ -o <output file> ] [ -t tags ]*
+  run [ -a/b/m/d agent ] [-r allure [-e comparison]] [ -i <ini file> ] [ -o <output file> ] [ -t tags ]*
     Run the tagged tests using the specified agents for Acme, Bob, Faber and Mallory.
       Select the agents for the roles of Acme (-a), Bob (-b), Faber (-f) and Mallory (-m).
       - For all to be set to the same, use "-d" for default.
@@ -79,6 +79,10 @@ usage () {
         For not running tagged tests, specify a ~ before the tag, e.g. "-t ~@wip" runs tests that don't have the "@wip" tag
       Use the -i option to use the specified file as the behave.ini file for the run
       - Default is the behave.ini file in the "aries-test-harness" folder
+      Use the -r option to output to allure
+        (allure is the only suppoted option)
+      Use the -e option to compare current results to Known Good Results (KGR)
+        (comparison is the only suppoted option)
 
     Examples:
     $0 run -a acapy -b vcx -f vcx -m acapy  - Run all the tests using the specified agents per role
@@ -387,7 +391,6 @@ runTests() {
   if [[ "${REPORT}" = "allure" ]]; then
       echo "Executing tests with Allure Reports. No ouput will be shown until tests are complete."
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ -v ${PWD}/aries-test-harness/reports:/aries-test-harness/reports/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
-      #${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ -v ${PWD}/aries-test-harness/reports:/aries-test-harness/reports/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./results -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   else
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
@@ -406,6 +409,15 @@ runTests() {
   echo "  - Shutting down all the agents ..."
   docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
   printf "Done\n"
+
+  if [[ "${REPORT}" = "allure" ]]; then
+    if [[ "${REPORT_ERROR_TYPE}" = "comparison" ]]; then
+      # TODO run the same_as_yesterday.py script and capture the result
+      echo "Checking results vs KGR ..."
+      ${terminalEmu} docker run -it --rm -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ --entrypoint /aries-test-harness/allure/same_as_yesterday.sh aries-test-harness
+      docker_result=$?
+    fi
+  fi
 
   if [ ! "${docker_result}" == "0" ]; then
     echoRed "\nExit with error code ${docker_result}\n"
@@ -441,7 +453,7 @@ if [[ "${COMMAND}" == "run" ]]; then
   TAGS=""
   BEHAVE_INI=aries-test-harness/behave.ini
 
-  while getopts "ha:b:c:f:m:r:d:t:i:" FLAG; do
+  while getopts "ha:b:c:f:m:r:e:d:t:i:" FLAG; do
     case $FLAG in
         h ) usage ;;
         : ) usage ;;
@@ -450,6 +462,8 @@ if [[ "${COMMAND}" == "run" ]]; then
         usage
             ;;
         r ) export REPORT=${OPTARG}
+            ;;
+        e ) export REPORT_ERROR_TYPE=${OPTARG}
             ;;
         a ) export ACME=${OPTARG}
             ;;
