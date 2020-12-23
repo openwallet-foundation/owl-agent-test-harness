@@ -106,8 +106,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "invitation": "invitation-received",
             "request": "request-sent",
             "request": "request-received",
-            "?sent": "response-sent",
-            "?received": "response-received",
+            "response": "response-sent",
+            "response": "response-received",
             "?": "abandoned",
             "done": "completed"
         }
@@ -239,8 +239,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg('in webhook, topic is: ' + topic + ' payload is: ' + json.dumps(payload))
 
     async def handle_connections(self, message):
-        connection_id = message["connection_id"]
-        push_resource(connection_id, "connection-msg", message)
+        if "invitation_msg_id" in message:
+            invitation_id = message["invitation_msg_id"]
+            push_resource(invitation_id, "didexchange-msg", message)
+        else:
+            connection_id = message["connection_id"]
+            push_resource(connection_id, "connection-msg", message)
         log_msg('Received a Connection Webhook message: ' + json.dumps(message))
 
     async def handle_issue_credential(self, message):
@@ -515,7 +519,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = agent_operation + rec_id + "/accept-invitation"
 
         elif operation == "receive-invitation":
-            agent_operation = agent_operation + "accept_request"
+            agent_operation = agent_operation + operation
+
+        elif operation == "send-response":
+            agent_operation = agent_operation + rec_id + "accept_request"
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -680,6 +687,23 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_status = 200
             if connection_msg:
                 resp_text = json.dumps(connection_msg)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
+        if topic == "did-exchange" and rec_id:
+            didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+            i = 0
+            while didexchange_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+                i = i + 1
+
+            resp_status = 200
+            if didexchange_msg:
+                resp_text = json.dumps(didexchange_msg)
+                resp_text = self.agent_state_translation(topic, None, resp_text)
             else:
                 resp_text = "{}"
 
