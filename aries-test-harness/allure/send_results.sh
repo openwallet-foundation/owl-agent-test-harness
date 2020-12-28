@@ -177,6 +177,10 @@ for FILE in $FILES_TO_SEND; do
 done
 
 set -o xtrace
+
+echo "------------------CLEANING-RESULTS------------------"
+curl -X GET "$ALLURE_SERVER/allure-docker-service/clean-results?project_id=$PROJECT_ID" -H  "accept: */*"
+
 echo "------------------SEND-RESULTS------------------"
 curl -X POST "$ALLURE_SERVER/allure-docker-service/send-results?project_id=$PROJECT_ID" -H 'Content-Type: multipart/form-data' $FILES -ik
 

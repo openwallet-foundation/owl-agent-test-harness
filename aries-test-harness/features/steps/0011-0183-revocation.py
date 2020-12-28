@@ -17,6 +17,7 @@
 
 from behave import *
 import json
+from time import sleep
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, agent_backchannel_DELETE#, expected_agent_state
 from agent_test_utils import create_non_revoke_interval
 
@@ -86,6 +87,8 @@ def step_impl(context, issuer, timeframe):
 @when('"{verifier}" sends a {request_for_proof} presentation to "{prover}" with credential validity during {timeframe}')
 def step_impl(context, verifier, request_for_proof, prover, timeframe):
     
+    # Sleep here just to give a little space between the revocation and the request.
+    sleep(2)
     context.non_revoked_timeframe = create_non_revoke_interval(timeframe)
 
     context.execute_steps('''

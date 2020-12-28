@@ -27,7 +27,7 @@ Each time tests are executed with the -r allure option, and those results need t
 
 ```sh
 
-./send_results.sh -d ../results -s http://localhost:5050 -p ACAPY
+./send_results.sh ./allure-results http://localhost:5050 -p acapy
 
 ```
 

@@ -23,6 +23,7 @@ jobs:
         with:
           DEFAULT_AGENT: acapy-master
           BOB_AGENT: acapy-master
+        continue-on-error: true
       - name: run-send-gen-test-results
         uses: ./test-harness/actions/run-send-gen-test-results
         with:
