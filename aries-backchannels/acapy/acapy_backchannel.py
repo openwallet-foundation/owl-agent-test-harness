@@ -101,15 +101,23 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         }
 
         # Aca-py : RFC
-        self.didExchangeTranslationDict = {
-            "initial": "invitation-sent",
-            "invitation": "invitation-received",
-            "request": "request-sent",
-            "request": "request-received",
-            "response": "response-sent",
-            "response": "response-received",
+        self.didExchangeResponderStateTranslationDict = {
+            "initial": "invitation-sent", # responder
+            "invitation": "invitation-received", # requester
+            "request": "request-received", # responder
+            "response": "response-sent", # responder
             "?": "abandoned",
-            "done": "completed"
+            "active": "completed"
+        }
+
+        # Aca-py : RFC
+        self.didExchangeRequesterStateTranslationDict = {
+            "initial": "invitation-sent", # responder
+            "invitation": "invitation-received", # requester
+            "request": "request-sent", # requester
+            "response": "response-received", # requester
+            "?": "abandoned",
+            "active": "completed"
         }
 
     def get_acapy_version_as_float(self):
@@ -522,7 +530,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = agent_operation + operation
 
         elif operation == "send-response":
-            agent_operation = agent_operation + rec_id + "accept_request"
+            agent_operation = agent_operation + rec_id + "/accept-request"
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -1052,16 +1060,32 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # Check to see if state is in the json
             if "state" in resp_json:
                 agent_state = resp_json["state"]
+
+                # Check the thier_role property in the data and set the calling method to swap states to the correct role for DID Exchange
+                if "their_role" in data:
+                    #if resp_json["connection"]["their_role"] == "invitee":
+                    if "invitee" in data:
+                        de_state_trans_method = self.didExchangeResponderStateTranslationDict
+                    elif "inviter" in data:
+                        de_state_trans_method = self.didExchangeRequesterStateTranslationDict
+                else:
+                    # make the trans method any one, since it doesn't matter. It's probably Out of Band.
+                    de_state_trans_method = self.didExchangeResponderStateTranslationDict
+
                 if topic == "connection":
-                    data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
+                    # if the response contains invitation id, swap out the connection states for the did exchange states
+                    if "invitation_msg_id" in data:
+                        data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + de_state_trans_method[agent_state] + '"')
+                    else:
+                        data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
                 elif topic == "issue-credential":
                     data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
                 elif topic == "proof":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
                 elif topic == "out-of-band":
-                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.didExchangeTranslationDict[agent_state] + '"')
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + de_state_trans_method[agent_state] + '"')
                 elif topic == "did-exchange":
-                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.didExchangeTranslationDict[agent_state] + '"')
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + de_state_trans_method[agent_state] + '"')
             return (data)
 
     async def get_agent_operation_acapy_version_based(self, topic, operation, rec_id=None, data=None):
