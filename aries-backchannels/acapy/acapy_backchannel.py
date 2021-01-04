@@ -102,20 +102,20 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         # Aca-py : RFC
         self.didExchangeResponderStateTranslationDict = {
-            "initial": "invitation-sent", # responder
-            "invitation": "invitation-received", # requester
-            "request": "request-received", # responder
-            "response": "response-sent", # responder
+            "initial": "invitation-sent",
+            "invitation": "invitation-received",
+            "request": "request-received",
+            "response": "response-sent", 
             "?": "abandoned",
             "active": "completed"
         }
 
         # Aca-py : RFC
         self.didExchangeRequesterStateTranslationDict = {
-            "initial": "invitation-sent", # responder
-            "invitation": "invitation-received", # requester
-            "request": "request-sent", # requester
-            "response": "response-received", # requester
+            "initial": "invitation-sent", 
+            "invitation": "invitation-received",
+            "request": "request-sent", 
+            "response": "response-received", 
             "?": "abandoned",
             "active": "completed"
         }

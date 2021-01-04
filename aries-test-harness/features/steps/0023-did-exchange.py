@@ -154,18 +154,4 @@ def step_impl(context, requester, responder):
     # assert expected_agent_state(requester_url, "connection", requester_connection_id, "completed")
 
 
-@then('"{requester}" and "{responder}" have a DID based connection')
-def step_impl(context, requester, responder):
-    responder_connection_id = context.connection_id_dict[responder][requester]
-    requester_connection_id = context.connection_id_dict[requester][responder]
-
-    #(resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "did-exchange", operation="recieved-complete", id=requester_connection_id, data=data)
-    #assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-
-    # get connection and verify status for requester
-    assert expected_agent_state(context.requester_url, "connection", requester_connection_id, "completed")
-
-    # get connection and verify status for responder
-    assert expected_agent_state(context.responder_url, "connection", responder_connection_id, "completed")
-
 

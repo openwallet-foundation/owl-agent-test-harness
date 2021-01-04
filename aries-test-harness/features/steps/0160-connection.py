@@ -232,11 +232,17 @@ def step_impl(context, inviter, invitee):
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
+    # Check to see if this is a DID Exchange connection to set the state to check appropriatly for that protocol.
+    if "responder_url" in context:
+        state_to_assert = "completed"
+    else:
+        state_to_assert = "complete"
+
     # get connection and verify status for inviter
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "complete")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, state_to_assert)
 
     # get connection and verify status for invitee
-    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, state_to_assert)
 
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):
