@@ -80,9 +80,9 @@ usage () {
       Use the -i option to use the specified file as the behave.ini file for the run
       - Default is the behave.ini file in the "aries-test-harness" folder
       Use the -r option to output to allure
-        (allure is the only suppoted option)
+        (allure is the only supported option)
       Use the -e option to compare current results to Known Good Results (KGR)
-        (comparison is the only suppoted option)
+        (comparison is the only supported option)
 
     Examples:
     $0 run -a acapy -b vcx -f vcx -m acapy  - Run all the tests using the specified agents per role
@@ -368,6 +368,8 @@ runTests() {
   export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
   export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
 
+  export PROJECT_ID=${PROJECT_ID:-general}
+
   startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020
   startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030
   startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040
@@ -414,7 +416,7 @@ runTests() {
     if [[ "${REPORT_ERROR_TYPE}" = "comparison" ]]; then
       # TODO run the same_as_yesterday.py script and capture the result
       echo "Checking results vs KGR ..."
-      ${terminalEmu} docker run -it --rm -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ --entrypoint /aries-test-harness/allure/same_as_yesterday.sh aries-test-harness
+      ${terminalEmu} docker run -it --rm -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ --entrypoint /aries-test-harness/allure/same_as_yesterday.sh -e PROJECT_ID=${PROJECT_ID} aries-test-harness
       docker_result=$?
     fi
   fi

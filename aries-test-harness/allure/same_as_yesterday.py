@@ -2,10 +2,13 @@ import os
 import json
 import sys
 
+PROJECT_ID = os.getenv("PROJECT_ID", "general")
 
 if __name__ == "__main__":
     kgr_results = {}
-    with open("./The-KGR-file.json", 'r') as tkf:
+    kgr_file_name = "./The-KGR-file-" + PROJECT_ID + ".json"
+    print("Comparing KGR results from: ", kgr_file_name)
+    with open(kgr_file_name, 'r') as tkf:
         json_kgr_results = tkf.read()
         kgr_results = json.loads(json_kgr_results)
 
@@ -32,7 +35,9 @@ if __name__ == "__main__":
                     print("KGR missing for:", fullName)
                     overall_results = False
 
-    with open("./New-KGR-File.json", 'w') as tnkf:
+    new_kgr_file_name = "./New-KGR-File-" + PROJECT_ID + ".json"
+    print("Saving NEW KGR results to: ", new_kgr_file_name)
+    with open(new_kgr_file_name, 'w') as tnkf:
         json_kgr_results = json.dumps(new_kgr_results)
         tnkf.write(json_kgr_results)
 
