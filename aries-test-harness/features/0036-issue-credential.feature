@@ -18,6 +18,20 @@ Feature: Aries agent issue credential functions RFC 0036
     And "Bob" acknowledges the credential issue
     Then "Bob" has the credential issued
 
+  @T001.1-AIP10-RFC0036 @AcceptanceTest @P1 @critical @Indy @RFC0036 @DIDExchangeConnection
+  Scenario: Issue a credential with the Holder beginning with a proposal
+    Given "2" agents
+      | name  | role   |
+      | Acme  | issuer |
+      | Bob   | holder |
+    And "Acme" and "Bob" have an existing connection
+    When "Bob" proposes a credential to "Acme"
+    And "Acme" offers a credential
+    And "Bob" requests the credential
+    And "Acme" issues the credential
+    And "Bob" acknowledges the credential issue
+    Then "Bob" has the credential issued
+
   @T002-AIP10-RFC0036 @AcceptanceTest @P2 @normal @Indy @RFC0036
     Scenario: Issue a credential with the Holder beginning with a proposal with negotiation
     Given "2" agents

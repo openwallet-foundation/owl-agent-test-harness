@@ -511,9 +511,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             #return (resp_status, resp_text)
         elif operation == "receive-invitation":
             # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
-            # TODO change back to /out-of-band/ when reveive-invitation works. 
-            #agent_operation = agent_operation + "receive-invitation"
-            agent_operation = "/didexchange/" + "receive-invitation"
+            auto_accept = "false"
+            agent_operation = agent_operation + "receive-invitation" + "?auto_accept=" + auto_accept
+            #agent_operation = "/didexchange/" + "receive-invitation"
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
