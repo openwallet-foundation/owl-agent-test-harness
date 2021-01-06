@@ -415,7 +415,54 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
+        # Handle out of band POST operations 
+        elif op["topic"] == "out-of-band":
+            (resp_status, resp_text) = await self.handle_out_of_band_POST(op, data=data)
+            return (resp_status, resp_text)
+
+        # Handle did exchange POST operations
+        elif op["topic"] == "did-exchange":
+            (resp_status, resp_text) = await self.handle_did_exchange_POST(op, rec_id=rec_id, data=data)
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
+
+    async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
+        operation = op["operation"]
+        agent_operation = "/outofband/"
+        if operation == "send-invitation-message":
+            #http://localhost:8022/out-of-band/create-invitation?auto_accept=false&multi_use=false
+            # TODO Check the data for auto_accept and multi_use. If it exists use those values then pop them out, otherwise false.
+            auto_accept = "false"
+            multi_use = "false"
+            agent_operation = agent_operation + "create-invitation" + "?auto_accept=" + auto_accept + "&multi_use=" + multi_use
+
+        elif operation == "receive-invitation":
+            # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
+            # TODO change back to /out-of-band/ when reveive-invitation works. 
+            #agent_operation = agent_operation + "receive-invitation"
+            agent_operation = "/didexchange/" + "receive-invitation"
+        
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+        return (resp_status, resp_text)
+
+
+    async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
+        operation = op["operation"]
+        agent_operation = "/didexchange/"
+        if operation == "send-request":
+            agent_operation = agent_operation + rec_id + "/accept-invitation"
+
+        elif operation == "receive-invitation":
+            agent_operation = agent_operation + operation
+
+        elif operation == "send-response":
+            agent_operation = agent_operation + rec_id + "/accept-request"
+
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+        return (resp_status, resp_text)
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None

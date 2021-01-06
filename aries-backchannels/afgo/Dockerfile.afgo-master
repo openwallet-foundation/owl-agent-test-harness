@@ -57,5 +57,4 @@ RUN ln -s $GOPATH/src/github.com/hyperledger/aries-framework-go/build/bin/aries-
 ENV PYTHONPATH=/aries-backchannels
 
 
-#ENTRYPOINT ["python", "afgo/afgo_backchannel.py"]
-
+ENTRYPOINT ["python", "afgo/afgo_backchannel.py"]

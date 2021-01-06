@@ -26,6 +26,7 @@ def step_impl(context, responder):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
+    print(resp_json)
     assert resp_json["state"] == "invitation-sent"
     assert "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/v1.0" in resp_text
     context.responder_invitation = resp_json["invitation"]
@@ -152,6 +153,3 @@ def step_impl(context, requester, responder):
 
     # # get connection and verify status
     # assert expected_agent_state(requester_url, "connection", requester_connection_id, "completed")
-
-
-
