@@ -49,6 +49,15 @@ def step_impl(context, n):
             context.prover_url = context.config.userdata.get(row['name'])
             context.prover_name = row['name']
             assert context.prover_url is not None and 0 < len(context.prover_url)
+        # This step is used across protocols, this adds roles for DID Exchange
+        elif row['role'] == 'requester':
+            context.requester_url = context.config.userdata.get(row['name'])
+            context.requester_name = row['name']
+            assert context.requester_url is not None and 0 < len(context.requester_url)
+        elif row['role'] == 'responder':
+            context.responder_url = context.config.userdata.get(row['name'])
+            context.responder_name = row['name']
+            assert context.responder_url is not None and 0 < len(context.responder_url)
         else:
             print("Data table in step contains an unrecognized role, must be inviter, invitee, inviteinterceptor, issuer, or holder")
 
@@ -223,11 +232,17 @@ def step_impl(context, inviter, invitee):
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
+    # Check to see if this is a DID Exchange connection to set the state to check appropriatly for that protocol.
+    if "responder_url" in context:
+        state_to_assert = "completed"
+    else:
+        state_to_assert = "complete"
+
     # get connection and verify status for inviter
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "complete")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, state_to_assert)
 
     # get connection and verify status for invitee
-    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, state_to_assert)
 
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):
