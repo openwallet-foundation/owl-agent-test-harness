@@ -416,7 +416,7 @@ runTests() {
     if [[ "${REPORT_ERROR_TYPE}" = "comparison" ]]; then
       # TODO run the same_as_yesterday.py script and capture the result
       echo "Checking results vs KGR ..."
-      ${terminalEmu} docker run -it --rm -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ --entrypoint /aries-test-harness/allure/same_as_yesterday.sh -e PROJECT_ID=${PROJECT_ID} aries-test-harness
+      ${terminalEmu} docker run ${INTERACTIVE} --rm -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ --entrypoint /aries-test-harness/allure/same_as_yesterday.sh -e PROJECT_ID=${PROJECT_ID} aries-test-harness
       docker_result=$?
     fi
   fi
