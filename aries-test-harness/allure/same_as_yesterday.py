@@ -35,7 +35,7 @@ if __name__ == "__main__":
                     print("KGR missing for:", fullName)
                     overall_results = False
 
-    new_kgr_file_name = "./New-KGR-File-" + PROJECT_ID + ".json"
+    new_kgr_file_name = "./allure-results/New-KGR-File-" + PROJECT_ID + ".json-new"
     print("Saving NEW KGR results to: ", new_kgr_file_name)
     with open(new_kgr_file_name, 'w') as tnkf:
         json_kgr_results = json.dumps(new_kgr_results)
