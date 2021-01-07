@@ -30,7 +30,7 @@ runs:
       shell: bash
       working-directory: test-harness
     - name: run-test-harness-acapy
-      run: PROJECT_ID=${{REPORT_PROJECT}} ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.REPORTING }} ${{ inputs.TEST_SCOPE }}
+      run: PROJECT_ID=${{inputs.REPORT_PROJECT}} ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.REPORTING }} ${{ inputs.TEST_SCOPE }}
       shell: bash
       env:
         NO_TTY: "1"
