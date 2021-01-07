@@ -14,6 +14,10 @@ inputs:
     description: "Use formal reporting engine"
     required: false
     default: "-r allure"
+  REPORT_PROJECT:
+    description: "Name of the project the Allure Service is using to store these results"
+    required: false
+    default: "general"
   TEST_SCOPE:
     description: "Set of flags that defines the test scope"
     required: false
@@ -26,7 +30,7 @@ runs:
       shell: bash
       working-directory: test-harness
     - name: run-test-harness-acapy
-      run: ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.REPORTING }} ${{ inputs.TEST_SCOPE }}
+      run: PROJECT_ID=${{REPORT_PROJECT}} ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.REPORTING }} ${{ inputs.TEST_SCOPE }}
       shell: bash
       env:
         NO_TTY: "1"
