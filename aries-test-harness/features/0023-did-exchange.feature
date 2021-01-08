@@ -14,5 +14,4 @@ Feature: Establishing Connections with DID Exchange RFC 0023
       And "Acme" receives the response
       And "Acme" sends complete to "Bob"
       Then "Acme" and "Bob" have a connection
-      #Then "Acme" and "Bob" have a connection facilitated with DID Exchange
 
