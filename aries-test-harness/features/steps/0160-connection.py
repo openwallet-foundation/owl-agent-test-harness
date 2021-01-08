@@ -36,19 +36,31 @@ def step_impl(context, n):
             context.issuer_url = context.config.userdata.get(row['name'])
             context.issuer_name = row['name']
             assert context.issuer_url is not None and 0 < len(context.issuer_url)
+            if "DIDExchangeConnection" in context.tags:
+                context.responder_url = context.issuer_url
+                context.responder_name = context.issuer_name
         elif row['role'] == 'holder':
             context.holder_url = context.config.userdata.get(row['name'])
             context.holder_name = row['name']
             assert context.holder_url is not None and 0 < len(context.holder_url)
+            if "DIDExchangeConnection" in context.tags:
+                context.requester_url = context.holder_url
+                context.requester_name = context.holder_name
         # This step is used across protocols, this adds roles for present proof
         elif row['role'] == 'verifier':
             context.verifier_url = context.config.userdata.get(row['name'])
             context.verifier_name = row['name']
             assert context.verifier_url is not None and 0 < len(context.verifier_url)
+            if "DIDExchangeConnection" in context.tags:
+                context.responder_url = context.verifier_url
+                context.responder_name = context.verifier_name
         elif row['role'] == 'prover':
             context.prover_url = context.config.userdata.get(row['name'])
             context.prover_name = row['name']
             assert context.prover_url is not None and 0 < len(context.prover_url)
+            if "DIDExchangeConnection" in context.tags:
+                context.requester_url = context.prover_url
+                context.requester_name = context.prover_name
         # This step is used across protocols, this adds roles for DID Exchange
         elif row['role'] == 'requester':
             context.requester_url = context.config.userdata.get(row['name'])
@@ -259,16 +271,29 @@ def step_impl(context, inviter, invitee):
 
 @given('"{sender}" and "{receiver}" have an existing connection')
 def step_impl(context, sender, receiver):
-    context.execute_steps(u'''
-        When "''' + sender + '''" generates a connection invitation
-         And "''' + receiver + '''" receives the connection invitation
-         And "''' + receiver + '''" sends a connection request to "''' + sender + '''"
-         And "''' + sender + '''" receives the connection request
-         And "''' + sender + '''" sends a connection response to "''' + receiver + '''"
-         And "''' + receiver + '''" receives the connection response
-         And "''' + receiver + '''" sends trustping to "''' + sender + '''"
-        Then "''' + sender + '''" and "''' + receiver + '''" have a connection
-    ''')
+    if "DIDExchangeConnection" in context.tags:
+        context.execute_steps(u'''
+            When "''' + sender + '''" sends an explicit invitation
+            And "''' + receiver + '''" receives the invitation
+            And "''' + receiver + '''" sends the request to "''' + sender + '''"
+            And "''' + sender + '''" receives the request
+            And "''' + sender + '''" sends a response to "''' + receiver + '''"
+            And "''' + receiver + '''" receives the response
+            And "''' + receiver + '''" sends complete to "''' + sender + '''"
+            Then "''' + sender + '''" and "''' + receiver + '''" have a connection
+        ''')
+
+    else:
+        context.execute_steps(u'''
+            When "''' + sender + '''" generates a connection invitation
+            And "''' + receiver + '''" receives the connection invitation
+            And "''' + receiver + '''" sends a connection request to "''' + sender + '''"
+            And "''' + sender + '''" receives the connection request
+            And "''' + sender + '''" sends a connection response to "''' + receiver + '''"
+            And "''' + receiver + '''" receives the connection response
+            And "''' + receiver + '''" sends trustping to "''' + sender + '''"
+            Then "''' + sender + '''" and "''' + receiver + '''" have a connection
+        ''')
 
 @when(u'"{sender}" sends a trust ping')
 def step_impl(context, sender):
