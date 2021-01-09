@@ -7,6 +7,7 @@ PROJECT_ID = os.getenv("PROJECT_ID", "general")
 if __name__ == "__main__":
     kgr_results = {}
     kgr_file_name = "./The-KGR-file-" + PROJECT_ID + ".json"
+    print("(Note that KGR filenames are relative to <AATH repo>/aries-test-harness/allure/)")
     print("Comparing KGR results from: ", kgr_file_name)
     with open(kgr_file_name, 'r') as tkf:
         json_kgr_results = tkf.read()
@@ -46,4 +47,8 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         print("Different from yesterday")
+        print("To 'fix' the results for the next run:")
+        print("  - copy the " + new_kgr_file_name + " file to " + kgr_file_name)
+        print("  - check this file into github")
+        print("  - PR to the main repository")
         sys.exit(1)

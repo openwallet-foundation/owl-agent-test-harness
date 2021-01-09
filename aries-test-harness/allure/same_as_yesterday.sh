@@ -13,6 +13,6 @@ python ./same_as_yesterday.py
 docker_result=$?
 
 if [ ! "${docker_result}" == "0" ]; then
-  echo "\nExit with error code ${docker_result}\n"
+  echo "Exit with error code ${docker_result}"
   exit ${docker_result}
 fi

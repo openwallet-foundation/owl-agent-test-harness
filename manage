@@ -422,7 +422,7 @@ runTests() {
   fi
 
   if [ ! "${docker_result}" == "0" ]; then
-    echoRed "\nExit with error code ${docker_result}\n"
+    echo "Exit with error code ${docker_result}"
     exit ${docker_result}
   fi
 }
