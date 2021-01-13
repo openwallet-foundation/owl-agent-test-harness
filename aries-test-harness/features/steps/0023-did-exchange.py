@@ -87,7 +87,7 @@ def step_impl(context, responder):
 
     data = {
         "include_handshake": True,
-        "use_public_did": False
+        "use_public_did": True
     }
 
     (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "out-of-band", operation="send-invitation-message", data=data)
