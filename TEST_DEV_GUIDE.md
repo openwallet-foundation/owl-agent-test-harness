@@ -117,6 +117,26 @@ Follow standard best practices for implementing test steps in Behave, writing th
 
 Existing backchannels will throw a "NotImplementedException" for any steps that are not implemented in the backchannels, and should include information from the above-mentioned data file.
 
+### Github Actions and Comparing Test Results Day-To-Day
+
+AATH has the capability of checking whether the test results change from day-to-day (in addition to checking that *all* tests have passed).
+
+To enable this checking run AATH as follows:
+
+```bash
+PROJECT_ID=acapy ./manage run -d acapy-master -r allure -e comparison -t @AcceptanceTest -t ~@wip
+```
+
+In the above, `PROJECT_ID` is the name of the Allure project (`acapy` in the example above), the parameter `-e comparison` is what invokes the comparison (can only be used with the `-r allure` option) and the test scope (the `-t` parameters) must match what is expected for the specified `PROJECT_ID` (as used in the automated GitHub actions).
+
+This comparison is done using a "Known Good Results" ("KGR") file that is checked into GitHub.
+
+When adding a new test, or if a different set of tests is expected to pass or fail, this KGR file must be updated.
+
+The KGR files are checked into [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/master/aries-test-harness/allure).
+
+To update the file, run the test suite locally (as in the above command) - it will create a "NEW-*" KGR file in [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/master/aries-test-harness/allure/allure-results) - just copy this file to replace the existing "The-KGR-File-*" for the `PROJECT_ID` under test, and check into GitHub.
+
 ## Implementing the Backchannel
 
 See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in the [aries-backchannels](../aries-agent-test-harness/aries-backchannels) folder for details on writing backchannels.

@@ -22,3 +22,6 @@ Thumbs.db
 # Reports
 reports/
 allure-report/
+allure-results/
+New-KGR-File.json
+
