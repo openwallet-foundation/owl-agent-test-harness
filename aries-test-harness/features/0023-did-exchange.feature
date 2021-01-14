@@ -61,7 +61,7 @@ Feature: Establishing Connections with DID Exchange RFC 0023
       Then "Bob" and "Acme" have a connection
 
    @T005-RFC0023 @P3 @normal @AcceptanceTest @ExceptionTest @RFC0023 @wip
-   Scenario Outline: Establish a connection with DID Exchange between two agents with an explicit invitation but invitation is rejected and connection process restarted
+   Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation but invitation is rejected and connection process restarted
       Given we have "2" agents
          | name | role      |
          | Acme | requester |
@@ -73,7 +73,7 @@ Feature: Establishing Connections with DID Exchange RFC 0023
       Then a successful connection can be established between "Acme" and "Bob"
 
    @T006-RFC0023 @P3 @normal @AcceptanceTest @ExceptionTest @RFC0023 @wip
-   Scenario Outline: Establish a connection with DID Exchange between two agents with an explicit invitation but invitation is rejected and connection process abandoned
+   Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation but invitation is rejected and connection process abandoned
       Given we have "2" agents
          | name | role      |
          | Acme | requester |
@@ -85,7 +85,7 @@ Feature: Establishing Connections with DID Exchange RFC 0023
       Then a connection can be established between "Acme" and "Bob" given that invitation
 
    @T007-RFC0023 @P3 @normal @AcceptanceTest @NegativeTest @ExceptionTest @RFC0023
-   Scenario Outline: Establish a connection with DID Exchange between two agents with attempt to continue after protocol is completed
+   Scenario: Establish a connection with DID Exchange between two agents with attempt to continue after protocol is completed
       Given we have "2" agents
          | name | role      |
          | Acme | requester |
@@ -97,12 +97,11 @@ Feature: Establishing Connections with DID Exchange RFC 0023
       And "Bob" sends a response to "Acme"
       And "Acme" receives the response
       And "Acme" sends complete to "Bob"
-      And "Bob" sends a response to "Acme"
-      Then "Acme" sends a problem_report to "Bob"
-      And "Acme" and "Bob" still have a completed connection
+      And "Bob" sends a response to "Acme" which produces a problem_report
+      Then "Acme" and "Bob" still have a completed connection
 
    @T008-RFC0023 @P3 @normal @AcceptanceTest @ExceptionTest @NegativeTest @RFC0023 @wip
-   Scenario: Establish a connection with DID Exchange and responder rejects the request
+   Scenario Outline: Establish a connection with DID Exchange and responder rejects the request
       Given we have "2" agents
          | name | role      |
          | Acme | requester |
@@ -127,7 +126,7 @@ Feature: Establishing Connections with DID Exchange RFC 0023
          | unknown processing error                |
 
    @T009-RFC0023 @P3 @normal @AcceptanceTest @ExceptionTest @NegativeTest @RFC0023 @wip
-   Scenario: Establish a connection with DID Exchange and requester rejects the response
+   Scenario Outline: Establish a connection with DID Exchange and requester rejects the response
       Given we have "2" agents
          | name | role      |
          | Acme | requester |

@@ -207,6 +207,15 @@ def step_impl(context, responder, requester):
     #assert expected_agent_state(context.responder_url, "connection", responder_connection_id, "response-sent")
 
 
+@when('"{responder}" sends a response to "{requester}" which produces a problem_report')
+def step_impl(context, responder, requester):
+    responder_connection_id = context.connection_id_dict[responder][requester]
+    responder_url = context.config.userdata.get(responder)
+
+    (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "did-exchange", operation="send-response", id=responder_connection_id)
+    assert resp_status == 400, f'resp_status {resp_status} is not 400; {resp_text}'
+
+
 @when('"{requester}" receives the response')
 def step_impl(context, requester):
     requester_connection_id = context.connection_id_dict[requester][context.responder_name]
