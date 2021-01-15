@@ -16,13 +16,14 @@ from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_PO
 
 @when('"{responder}" sends an explicit invitation')
 def step_impl(context, responder):
+    responder_url = context.config.userdata.get(responder)
 
     data = {
         "include_handshake": True,
         "use_public_did": False
     }
 
-    (resp_status, resp_text) = agent_backchannel_POST(context.responder_url + "/agent/command/", "out-of-band", operation="send-invitation-message", data=data)
+    (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "out-of-band", operation="send-invitation-message", data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
@@ -35,15 +36,89 @@ def step_impl(context, responder):
     # setup the initial connection id dictionary if one doesn't exist.
     if not hasattr(context, 'connection_id_dict'):
         context.connection_id_dict = {}
+
+    # Check for responder key existing in dict
+    if responder not in context.connection_id_dict:
         context.connection_id_dict[responder] = {}
     
     # Get the responders's connection id from the above request's response webhook in the backchannel
     invitation_id = context.responder_invitation["@id"]
-    (resp_status, resp_text) = agent_backchannel_GET(context.responder_url + "/agent/response/", "did-exchange", id=invitation_id)
+    (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/response/", "did-exchange", id=invitation_id)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+
+    # Some agents (afgo) do not have a webhook that give a connection id at this point in the protocol. 
+    # IF it is not here, skit this and check for one later in the process and add it then.
+    if "connection_id" in resp_text:
+        context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
+
+    # Check to see if the responder name is the same as this person. If not, it is a 3rd person acting as an issuer that needs a connection
+    if context.responder_name != responder:
+        context.responder_name = responder
+
+
+@when('"{responder}" publishes a public DID')
+def step_impl(context, responder):
+    responder_url = context.config.userdata.get(responder)
+
+    (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/command/", "did")
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    resp_json = json.loads(resp_text)
+    responder_did = resp_json
+
+    context.responder_public_did = responder_did["did"]
+
+    # if "schema" not in context:
+    #     # check for a schema already loaded in the context. If it is not, load the template
+    #     if "schema" not in context:
+    #         context.schema = SCHEMA_TEMPLATE.copy()
+    #         context.schema["schema_name"] = context.schema["schema_name"] + issuer
+
+    # if 'issuer_did_dict' in context:
+    #     context.issuer_did_dict[context.schema['schema_name']] = issuer_did["did"]
+    # else:
+    #     context.issuer_did_dict = {context.schema['schema_name']: issuer_did["did"]}
+
+
+
+@when('"{responder}" sends an implicit invitation')
+def step_impl(context, responder):
+    responder_url = context.config.userdata.get(responder)
+
+    data = {
+        "include_handshake": True,
+        "use_public_did": False
+    }
+
+    (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "out-of-band", operation="send-invitation-message", data=data)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    resp_json = json.loads(resp_text)
+    assert resp_json["state"] == "invitation-sent"
+    assert "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/v1.0" in resp_text
+    context.responder_invitation = resp_json["invitation"]
+    # TODO drill into the handshake protocol in the invitation and remove anything else besides didexchange.
+
+    # setup the initial connection id dictionary if one doesn't exist.
+    if not hasattr(context, 'connection_id_dict'):
+        context.connection_id_dict = {}
+
+    # Check for responder key existing in dict
+    if responder not in context.connection_id_dict:
+        context.connection_id_dict[responder] = {}
+    
+    # Get the responders's connection id from the above request's response webhook in the backchannel
+    invitation_id = context.responder_invitation["@id"]
+    (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/response/", "did-exchange", id=invitation_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
 
     context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
+
+    # Check to see if the responder name is the same as this person. If not, it is a 3rd person acting as an issuer that needs a connection
+    if context.responder_name != responder:
+        context.responder_name = responder
 
 
 @when('"{requester}" receives the invitation')
@@ -58,6 +133,9 @@ def step_impl(context, requester):
 
     if not hasattr(context, 'connection_id_dict'):
         context.connection_id_dict = {}
+
+    # Check for responder key existing in dict
+    if requester not in context.connection_id_dict:
         context.connection_id_dict[requester] = {}
 
     context.connection_id_dict[requester] = {context.responder_name: resp_json["connection_id"]}
@@ -94,11 +172,12 @@ def step_impl(context, requester, responder):
 @when('"{responder}" receives the request')
 def step_impl(context, responder):
     responder_connection_id = context.connection_id_dict[responder][context.requester_name]
+    responder_url = context.config.userdata.get(responder)
 
     # responder already recieved the connection request in the send-request call so get connection and verify status.
     #assert expected_agent_state(responder_url, "didexchange", responder_connection_id, "request-recieved")
     #invitation_id = context.responder_invitation["@id"]
-    assert expected_agent_state(context.responder_url, "connection", responder_connection_id, "request-received")
+    assert expected_agent_state(responder_url, "connection", responder_connection_id, "request-received")
     #(resp_status, resp_text) = agent_backchannel_GET(context.responder_url + "/agent/response/", "did-exchange", id=invitation_id)
     #(resp_status, resp_text) = agent_backchannel_POST(context.responder_url + "/agent/command/", "did-exchange", operation="receive-request", id=responder_connection_id)
     #assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -113,13 +192,13 @@ def step_impl(context, responder):
 @when('"{responder}" sends a response to "{requester}"')
 def step_impl(context, responder, requester):
     responder_connection_id = context.connection_id_dict[responder][requester]
-    #requester_connection_id = context.connection_id_dict[requester][responder]
+    responder_url = context.config.userdata.get(responder)
 
     # get connection and verify status
     #assert expected_agent_state(responder_url, "connection", responder_connection_id, "request-recieved")
     #assert expected_agent_state(requester_url, "connection", requester_connection_id, "request-sent")
 
-    (resp_status, resp_text) = agent_backchannel_POST(context.responder_url + "/agent/command/", "did-exchange", operation="send-response", id=responder_connection_id)
+    (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "did-exchange", operation="send-response", id=responder_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)

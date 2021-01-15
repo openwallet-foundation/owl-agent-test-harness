@@ -18,6 +18,23 @@ Feature: Aries agent present proof functions RFC 0037
          | Acme   |
          | Faber  |
 
+   @T001.1-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Indy @RFC0037 @DIDExchangeConnection
+   Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged
+      Given "2" agents
+         | name  | role     |
+         | Faber | verifier |
+         | Bob   | prover   |
+      And "Faber" and "Bob" have an existing connection
+      And "Bob" has an issued credential from <issuer>
+      When "Faber" sends a request for proof presentation to "Bob"
+      And "Bob" makes the presentation of the proof
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof verified
+
+      Examples:
+         | issuer |
+         | Acme   |
+         | Faber  |
 
    @T001.2-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Indy @RFC0037
    Scenario Outline: Present Proof of specific types and proof is acknowledged

@@ -1,4 +1,4 @@
-name: test-harness-acapy-acapy
+name: test-harness-acapy-full
 on:
   workflow_dispatch:
   schedule:
@@ -23,8 +23,11 @@ jobs:
         with:
           DEFAULT_AGENT: acapy-master
           BOB_AGENT: acapy-master
+          TEST_SCOPE: ""
+          REPORTING: "-r allure -e comparison"
+          REPORT_PROJECT: acapy-full
         continue-on-error: true
       - name: run-send-gen-test-results
         uses: ./test-harness/actions/run-send-gen-test-results
         with:
-          REPORT_PROJECT: acapy  
+          REPORT_PROJECT: acapy-full
