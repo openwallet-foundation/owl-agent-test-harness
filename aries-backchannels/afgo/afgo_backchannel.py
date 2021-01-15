@@ -41,6 +41,8 @@ elif RUN_MODE == "pwd":
     DEFAULT_PYTHON_PATH = "."
 
 class AfGoAgentBackchannel(AgentBackchannel):
+    afgo_version = None
+
     def __init__(
         self, 
         ident: str,
@@ -60,9 +62,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
             "invitation": "invited",
-            "request": "requested",
+            "requested": "invitation-received",
             "response": "responded",
-            "active": "complete"
+            "completed": "complete"
         }
 
         # Aca-py : RFC
@@ -91,6 +93,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "presentation_acked": "done"
         }
 
+        self.map_test_ops_to_bachchannel = {
+            "send-invitation-message": "create-invitation",
+            "receive-invitation": "accept-invitation"
+        }
+
     def get_agent_args(self):
         # FOR EXAMPLE:
         # ./bin/aries-agent-rest start \
@@ -117,7 +124,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             #("--wallet-name", self.wallet_name),
             #("--wallet-key", self.wallet_key),
         ]
-        #if self.genesis_data:
+        #if self.genesisTask_data:
         #    result.append(("--genesis-transactions", self.genesis_data))
         #if self.seed:
         #    result.append(("--seed", self.seed))
@@ -364,9 +371,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "revocation":
             #set the acapyversion to master since work to set it is not complete. Remove when master report proper version
-            #self.acapy_version = "0.5.5-RC"
+            #self.afgo_version = "0.5.5-RC"
             operation = op["operation"]
-            agent_operation, admin_data = await self.get_agent_operation_acapy_version_based(op["topic"], operation, rec_id, data)
+            agent_operation, admin_data = await self.get_agent_operation_afgo_version_based(op["topic"], operation, rec_id, data)
             
             log_msg(agent_operation, admin_data)
             
@@ -429,19 +436,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
     async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
-        agent_operation = "/outofband/"
-        if operation == "send-invitation-message":
-            #http://localhost:8022/out-of-band/create-invitation?auto_accept=false&multi_use=false
-            # TODO Check the data for auto_accept and multi_use. If it exists use those values then pop them out, otherwise false.
-            auto_accept = "false"
-            multi_use = "false"
-            agent_operation = agent_operation + "create-invitation" + "?auto_accept=" + auto_accept + "&multi_use=" + multi_use
+        agent_operation = "outofband"
 
-        elif operation == "receive-invitation":
-            # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
-            # TODO change back to /out-of-band/ when reveive-invitation works. 
-            #agent_operation = agent_operation + "receive-invitation"
-            agent_operation = "/didexchange/" + "receive-invitation"
+        agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -450,19 +447,56 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
     async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
-        agent_operation = "/didexchange/"
+        agent_operation = "didexchange"
+
         if operation == "send-request":
-            agent_operation = agent_operation + rec_id + "/accept-invitation"
+            agent_operation = f"/connections/{rec_id}/accept-request"
+
+        elif operation == "send-message":
+
+            (resp_status, resp_text) = 200, '{ "state": "request-sent" }'
+            return (resp_status, resp_text)
 
         elif operation == "receive-invitation":
-            agent_operation = agent_operation + operation
+            agent_operation = f"/{agent_operation}/{operation}"
 
         elif operation == "send-response":
-            agent_operation = agent_operation + rec_id + "/accept-request"
-
+            #agent_operation = f"/{agent_operation}/{rec_id}/accept-request"
+            (resp_status, resp_text) = 200, '{ "state": "response-sent" }'
+            return (resp_status, resp_text)
+        
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+        if resp_status == 200: resp_text = self.add_state(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
+
+    async def handle_introduce_POST(self, op, rec_id=None, data=None):
+        pass
+
+    async def handle_issue_credentiatial_POST(self, op, rec_id=None, data=None):
+        pass
+
+    async def handle_kms_POST(self, op, rec_id=None, data=None):
+        pass
+
+    async def handle_mediator_POST(self, op, rec_id=None, data=None):
+        pass
+
+    async def handle_message_POST(self, op, rec_id=None, data=None):
+        pass
+
+    async def handle_present_proof_POST(self, op, rec_id=None, data=None):
+        pass
+
+    async def handle_verifiable_POST(self, op, rec_id=None, data=None):
+        pass
+
+    def add_state(self, topic, operation, response):
+
+        resp_json = json.loads(response)
+        resp_json['state'] = 'request-sent'
+
+        return json.dumps(resp_json)
+
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
@@ -473,10 +507,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (status, json.dumps({"status": status_msg}))
         
         if op["topic"] == "version":
-            if self.acapy_version is not None:
+            if self.afgo_version is not None:
                 status = 200
-                #status_msg = json.dumps({"version": self.acapy_version})
-                status_msg = self.acapy_version
+                #status_msg = json.dumps({"version": self.afgo_version})
+                status_msg = self.afgo_version
             else:
                 status = 404
                 #status_msg = json.dumps({"version": "not found"})
@@ -500,13 +534,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             resp_json = json.loads(resp_text)
             if rec_id:
-                connection_info = {"connection_id": resp_json["connection_id"], "state": resp_json["state"], "connection": resp_json}
+                connection_info = { "connection_id": resp_json["result"]["ConnectionID"], "state": resp_json["result"]["State"], "connection": resp_json }
                 resp_text = json.dumps(connection_info)
             else:
                 resp_json = resp_json["results"]
                 connection_infos = []
                 for connection in resp_json:
-                    connection_info = {"connection_id": connection["connection_id"], "state": connection["state"], "connection": connection}
+                    connection_info = {"connection_id": connection["ConnectionID"], "state": connection["State"], "connection": connection}
                     connection_infos.append(connection_info)
                 resp_text = json.dumps(connection_infos)
             # translate the state from that the agent gave to what the tests expect
@@ -584,7 +618,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "revocation":
             operation = op["operation"]
-            agent_operation, admin_data = await self.get_agent_operation_acapy_version_based(op["topic"], operation, rec_id, data=None)
+            agent_operation, admin_data = await self.get_agent_operation_afgo_version_based(op["topic"], operation, rec_id, data=None)
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             return (resp_status, resp_text)
@@ -599,7 +633,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
             agent_operation = "/credential/" + rec_id
             #operation = op["operation"]
-            #agent_operation, admin_data = await self.get_agent_operation_acapy_version_based(op["topic"], operation, rec_id, data)
+            #agent_operation, admin_data = await self.get_agent_operation_afgo_version_based(op["topic"], operation, rec_id, data)
             log_msg(agent_operation)
 
             (resp_status, resp_text) = await self.admin_DELETE(agent_operation)
@@ -622,6 +656,23 @@ class AfGoAgentBackchannel(AgentBackchannel):
             resp_status = 200
             if connection_msg:
                 resp_text = json.dumps(connection_msg)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
+        elif topic == "did-exchange" and rec_id:
+            didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+            i = 0
+            while didexchange_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+                i = i + 1
+
+            resp_status = 200
+            if didexchange_msg:
+                resp_text = json.dumps(didexchange_msg)
+                resp_text = self.agent_state_translation(topic, None, resp_text)
             else:
                 resp_text = "{}"
 
@@ -692,6 +743,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             return (resp_status, resp_text)
 
+        elif topic == "pass-registry" and rec_id:
+            pass
+        
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     def _process(self, args, env, loop):
@@ -757,8 +811,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
         #    status = json.loads(status_text)
         #    ok = isinstance(status, dict) and "version" in status
         #    if ok:
-        #        self.acapy_version= status["version"]
-        #        print("AF-go Backchannel running with AF-go version:", self.acapy_version)
+        #        self.afgo_version= status["version"]
+        #        print("AF-go Backchannel running with AF-go version:", self.afgo_version)
         #except json.JSONDecodeError:
         #    pass
         if not ok:
@@ -943,14 +997,14 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # test harness expects. The test harness expects states to be as they are written in the Protocol's RFC.
             # the following is what the tests/rfc expect vs what aca-py communicates
             # Connection Protocol:
-            # Tests/RFC         |   Aca-py
+            # Tests/RFC         |   Afgo
             # invited           |   invitation
             # requested         |   request
             # responded         |   response
             # complete          |   active
             #
             # Issue Credential Protocol:
-            # Tests/RFC         |   Aca-py
+            # Tests/RFC         |   Afgo
             # proposal-sent     |   proposal_sent
             # proposal-received |   proposal_received
             # offer-sent        |   offer_sent
@@ -962,21 +1016,35 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # done              |   credential_acked
             #
             # Present Proof Protocol:
-            # Tests/RFC         |   Aca-py
+            # Tests/RFC         |   Afgo
 
             resp_json = json.loads(data)
+
             # Check to see if state is in the json
             if "state" in resp_json:
                 agent_state = resp_json["state"]
+
                 if topic == "connection":
                     data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
                 elif topic == "issue-credential":
                     data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
                 elif topic == "proof":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
+                elif topic == "out-of-band":
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionStateTranslationDict[agent_state] + '"')
+                elif topic == "did-exchange":
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionStateTranslationDict[agent_state] + '"')
+
+            else:
+                if topic == "out-of-band":
+                    if operation == "send-invitation-message":
+                        resp_json["state"] = "invitation-sent"
+                        resp_json["service"] = '["did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/v1.0"]'
+                        data = json.dumps(resp_json)
+
             return (data)
 
-    async def get_agent_operation_acapy_version_based(self, topic, operation, rec_id=None, data=None):
+    async def get_agent_operation_afgo_version_based(self, topic, operation, rec_id=None, data=None):
         # Admin api calls may change with acapy releases. For example revocation related calls change
         # between 0.5.4 and 0.5.5. To be able to handle this the backchannel is made aware of the acapy version
         # and constructs the calls based off that version
@@ -987,7 +1055,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         # strip all dots
         # Does that work if I'm testing 0.5.5.1 hot fix? Just strip off the .1 since there won't be a major change here.
         descriptiveTrailer = "-RC"
-        comparibleVersion = self.acapy_version
+        comparibleVersion = self.afgo_version
         if comparibleVersion.startswith("0"):
             comparibleVersion = comparibleVersion[len("0"):]
         if "." in comparibleVersion:
@@ -1073,7 +1141,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
                     break
         else:
             print("Press Ctrl-C to exit ...")
-            remaining_tasks = asyncio.Task.all_tasks()
+            remaining_tasks = asyncio.all_tasks()
             await asyncio.gather(*remaining_tasks)
 
     finally:
