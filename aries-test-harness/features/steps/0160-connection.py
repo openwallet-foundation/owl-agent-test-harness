@@ -237,6 +237,7 @@ def step_impl(context, inviter):
     # get connection and verify status
     assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "complete")
 
+@then('"{inviter}" and "{invitee}" still have a completed connection')
 @then('"{inviter}" and "{invitee}" have a connection')
 def step_impl(context, inviter, invitee):
     inviter_url = context.config.userdata.get(inviter)
