@@ -62,9 +62,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
             "invitation": "invited",
-            "requested": "invitation-received",
+            "requested": "request-received",
             "response": "responded",
-            "completed": "complete"
+            "completed": "completed"
         }
 
         # Aca-py : RFC
@@ -438,35 +438,63 @@ class AfGoAgentBackchannel(AgentBackchannel):
         operation = op["operation"]
         agent_operation = "outofband"
 
+        if operation == "send-invitation-message":
+            # replace data
+            data = {
+                "label": "Bob"
+            }
+
+        elif operation == "receive-invitation":
+            data = self.enrich_receive_invitation_data_request(data)
+
+            agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+            
+            resp_text = self.enrich_receive_invitation_data_response(resp_text)
+            return (resp_status, resp_text)
+
         agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
-        
+
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
 
+    def enrich_receive_invitation_data_request(self, data):
+
+        data = { "invitation": data }
+        data["my_label"] = data["invitation"]["label"] #enrichment
+
+        return data
+
+    def enrich_receive_invitation_data_response(self, resp):
+        data = json.loads(resp)
+        data['state'] = 'invitation-received'
+
+        return json.dumps(data)
 
     async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
         agent_operation = "didexchange"
 
-        if operation == "send-request":
+        if operation == "send-message":
             agent_operation = f"/connections/{rec_id}/accept-request"
 
-        elif operation == "send-message":
-
+        elif operation == "send-request":
             (resp_status, resp_text) = 200, '{ "state": "request-sent" }'
             return (resp_status, resp_text)
 
-        elif operation == "receive-invitation":
-            agent_operation = f"/{agent_operation}/{operation}"
+        # elif operation == "receive-invitation":
+        #     agent_operation = f"/{agent_operation}/{operation}"
 
         elif operation == "send-response":
-            #agent_operation = f"/{agent_operation}/{rec_id}/accept-request"
-            (resp_status, resp_text) = 200, '{ "state": "response-sent" }'
-            return (resp_status, resp_text)
+            agent_operation = f"/connections/{rec_id}/accept-request"
+            #(resp_status, resp_text) = 200, '{ "state": "response-sent" }'
+            #return (resp_status, resp_text)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-        if resp_status == 200: resp_text = self.add_state(op["topic"], operation, resp_text)
+        if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
         return (resp_status, resp_text)
 
     async def handle_introduce_POST(self, op, rec_id=None, data=None):
@@ -490,13 +518,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
     async def handle_verifiable_POST(self, op, rec_id=None, data=None):
         pass
 
-    def add_state(self, topic, operation, response):
-
-        resp_json = json.loads(response)
-        resp_json['state'] = 'request-sent'
+    def add_did_exchange_state_to_response(self, operation, raw_response):
+        resp_json = json.loads(raw_response)
+        
+        if operation == 'send-response':
+            resp_json['state'] = 'response-sent'
+        elif operation == 'send-message':
+            resp_json['state'] = 'request-sent'
 
         return json.dumps(resp_json)
-
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
