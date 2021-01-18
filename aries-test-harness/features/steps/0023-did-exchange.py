@@ -48,7 +48,7 @@ def step_impl(context, responder):
     resp_json = json.loads(resp_text)
 
     # Some agents (afgo) do not have a webhook that give a connection id at this point in the protocol. 
-    # IF it is not here, skit this and check for one later in the process and add it then.
+    # If it is not here, skip this and check for one later in the process and add it then.
     if "connection_id" in resp_text:
         context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
 
@@ -88,7 +88,7 @@ def step_impl(context, responder):
 
     data = {
         "include_handshake": True,
-        "use_public_did": False
+        "use_public_did": True
     }
 
     (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "out-of-band", operation="send-invitation-message", data=data)
@@ -171,8 +171,27 @@ def step_impl(context, requester, responder):
 
 @when('"{responder}" receives the request')
 def step_impl(context, responder):
-    responder_connection_id = context.connection_id_dict[responder][context.requester_name]
     responder_url = context.config.userdata.get(responder)
+
+    # If the connection id dict is not populated for the responder to requester relationship, it means the agent in use doesn't 
+    # support giving the responders connection_id before the send-request
+    # Make a call to the responder for the connection id and add it to the collection
+    if context.requester_name not in context.connection_id_dict[responder]:
+        # One way (maybe preferred) to get the connection id is to get it from the probable webhook that the controller gets because of the previous step
+        invitation_id = context.responder_invitation["@id"]
+        (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/response/", "did-exchange", id=invitation_id)
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+        resp_json = json.loads(resp_text)
+
+        # The second way to do this is to call the connection protocol for the connection id given the invitation_id or a thread id.
+        # This method is disabled for now, will be enabled if afgo can't get the connection id for the webhook above. 
+        #(resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/command/", connections, id=invitation_id)
+
+        if "connection_id" in resp_text:
+            context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
+
+    
+    responder_connection_id = context.connection_id_dict[responder][context.requester_name]
 
     # responder already recieved the connection request in the send-request call so get connection and verify status.
     #assert expected_agent_state(responder_url, "didexchange", responder_connection_id, "request-recieved")
@@ -206,6 +225,15 @@ def step_impl(context, responder, requester):
 
     # get connection and verify status
     #assert expected_agent_state(context.responder_url, "connection", responder_connection_id, "response-sent")
+
+
+@when('"{responder}" sends a response to "{requester}" which produces a problem_report')
+def step_impl(context, responder, requester):
+    responder_connection_id = context.connection_id_dict[responder][requester]
+    responder_url = context.config.userdata.get(responder)
+
+    (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "did-exchange", operation="send-response", id=responder_connection_id)
+    assert resp_status == 400, f'resp_status {resp_status} is not 400; {resp_text}'
 
 
 @when('"{requester}" receives the response')
