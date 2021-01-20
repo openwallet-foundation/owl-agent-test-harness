@@ -26,8 +26,3 @@ jobs:
           TEST_SCOPE: ""
           REPORTING: "-r allure -e comparison"
           REPORT_PROJECT: acapy-full
-        continue-on-error: true
-      - name: run-send-gen-test-results
-        uses: ./test-harness/actions/run-send-gen-test-results
-        with:
-          REPORT_PROJECT: acapy-full
