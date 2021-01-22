@@ -6,15 +6,15 @@ services:
     environment:
       SECURITY_USER: "my_username"
       SECURITY_PASS: "my_password"
-      SECURITY_ENABLED: 0
+      SECURITY_ENABLED: 1
+      MAKE_VIEWER_ENDPOINTS_PUBLIC: 1
+      TLS: 1
       CHECK_RESULTS_EVERY_SECONDS: NONE
       KEEP_HISTORY: 1
     ports:
       - "5050:5050"
     volumes:
       - ${PWD}/projects:/projects
-      #- ${PWD}/allure-results:/app/allure-results
-      #- ${PWD}/allure-reports:/app/default-reports
 
   allure-ui:
     image: "frankescobar/allure-docker-service-ui"
