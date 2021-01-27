@@ -1,4 +1,4 @@
-gimport functools
+import functools
 import json
 import os
 import sys
