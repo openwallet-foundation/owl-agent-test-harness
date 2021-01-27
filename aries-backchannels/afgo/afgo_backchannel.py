@@ -42,6 +42,7 @@ elif RUN_MODE == "pwd":
 
 class AfGoAgentBackchannel(AgentBackchannel):
     afgo_version = None
+    current_webhook_topic = None
 
     def __init__(
         self, 
@@ -169,7 +170,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 f"http://{self.external_host}:{str(webhook_port)}/webhooks"
             )
         app = web.Application()
-        app.add_routes([web.post("/webhooks/topic/{topic}/", self._receive_webhook)])
+        app.add_routes([web.post("/webhooks", self._receive_webhook)])
         runner = web.AppRunner(app)
         await runner.setup()
         self.webhook_site = web.TCPSite(runner, "0.0.0.0", webhook_port)
@@ -177,7 +178,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         print("Listening to web_hooks on port", webhook_port)
 
     async def _receive_webhook(self, request: ClientRequest):
-        topic = request.match_info["topic"]
+        topic = self.current_webhook_topic
         payload = await request.json()
         await self.handle_webhook(topic, payload)
         # TODO web hooks don't require a response???
@@ -199,6 +200,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 )
         else:
             log_msg('in webhook, topic is: ' + topic + ' payload is: ' + json.dumps(payload))
+
+    async def handle_out_of_band(self, message):
+        connection_id = message["message"]["Properties"]["invitationID"]
+        push_resource(connection_id, "didexchange-msg", message)
+        log_msg(f'Received a Connection Webhook message: {json.dumps(message)}')
 
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
@@ -435,14 +441,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
+        self.current_webhook_topic = op["topic"].replace('-', '_')
         operation = op["operation"]
         agent_operation = "outofband"
 
         if operation == "send-invitation-message":
             # replace data
-            data = {
-                "label": "Bob"
-            }
+            data = { "label": "Bob" }
 
         elif operation == "receive-invitation":
             data = self.enrich_receive_invitation_data_request(data)
@@ -578,17 +583,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "did":
-            agent_operation = "/wallet/did/public"
+            # agent_operation = "/wallet/did/public"
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status != 200:
-                return (resp_status, resp_text)
+            # (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            # if resp_status != 200:
+            #     return (resp_status, resp_text)
 
-            resp_json = json.loads(resp_text)
-            did = resp_json["result"]
+            # resp_json = json.loads(resp_text)
+            # did = resp_json["result"]
 
-            resp_text = json.dumps(did)
-            return (resp_status, resp_text)
+            # resp_text = json.dumps(did)
+            # return (resp_status, resp_text)
+            return (411, {})
 
         elif op["topic"] == "schema":
             schema_id = rec_id
@@ -655,6 +661,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
+    async def handle_issue_credential_GET(self, op, rec_id=None, data=None):
+        pass
+
     async def make_agent_DELETE_request(
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
@@ -703,6 +712,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if didexchange_msg:
                 resp_text = json.dumps(didexchange_msg)
                 resp_text = self.agent_state_translation(topic, None, resp_text)
+
+                if 'message' in didexchange_msg:
+                    conn_id = didexchange_msg['message']['Properties']['connectionID']
+                    resp_text = json.dumps({ 'connection_id': conn_id, 'data': didexchange_msg })
+
             else:
                 resp_text = "{}"
 

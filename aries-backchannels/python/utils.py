@@ -1,4 +1,4 @@
-import functools
+gimport functools
 import json
 import os
 import sys
@@ -115,6 +115,9 @@ def print_ext(
 
 
 def output_reader(handle, callback, *args, **kwargs):
+    if handle == None:
+        return
+        
     for line in iter(handle.readline, b""):
         if not line:
             break
@@ -299,5 +302,3 @@ def file_ext():
 
 def create_uuid():
     return str(uuid.uuid4())
-
-

@@ -10,7 +10,7 @@
 # -----------------------------------------------------------
 
 from behave import given, when, then
-import json
+import json, time
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
 
 
@@ -27,7 +27,6 @@ def step_impl(context, responder):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    print(resp_json)
     assert resp_json["state"] == "invitation-sent"
     assert "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/v1.0" in resp_text
     context.responder_invitation = resp_json["invitation"]
@@ -114,7 +113,8 @@ def step_impl(context, responder):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
 
-    context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
+    if "connection_id" in resp_text:
+        context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
 
     # Check to see if the responder name is the same as this person. If not, it is a 3rd person acting as an issuer that needs a connection
     if context.responder_name != responder:
@@ -179,7 +179,8 @@ def step_impl(context, responder):
     if context.requester_name not in context.connection_id_dict[responder]:
         # One way (maybe preferred) to get the connection id is to get it from the probable webhook that the controller gets because of the previous step
         invitation_id = context.responder_invitation["@id"]
-        (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/response/", "did-exchange", id=invitation_id)
+        time.sleep(0.5) # delay for webhook to execute
+        (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/response/", "did-exchange", id=invitation_id) # {}
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
 
@@ -190,7 +191,7 @@ def step_impl(context, responder):
         if "connection_id" in resp_text:
             context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
 
-    
+
     responder_connection_id = context.connection_id_dict[responder][context.requester_name]
 
     # responder already recieved the connection request in the send-request call so get connection and verify status.
