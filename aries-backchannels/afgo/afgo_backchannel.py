@@ -202,9 +202,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
             log_msg('in webhook, topic is: ' + topic + ' payload is: ' + json.dumps(payload))
 
     async def handle_out_of_band(self, message):
-        connection_id = message["message"]["Properties"]["invitationID"]
-        push_resource(connection_id, "didexchange-msg", message)
-        log_msg(f'Received a Connection Webhook message: {json.dumps(message)}')
+        invitation_id = message["message"]["Properties"]["invitationID"]
+        push_resource(invitation_id, "didexchange-msg", message)
+        log_msg(f'Received a out-of-band Webhook message: {json.dumps(message)}')
 
     async def handle_connections(self, message):
         connection_id = message["connection_id"]
