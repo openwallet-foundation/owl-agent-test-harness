@@ -24,10 +24,7 @@ jobs:
           DEFAULT_AGENT: afgo-master
           BOB_AGENT: afgo-master
           TEST_SCOPE: "-t @RFC0023 -t ~@wip"
-        continue-on-error: true
-      - name: run-send-gen-test-results-secure
-        uses: ./test-harness/actions/run-send-gen-test-results-secure
-        with:
           REPORT_PROJECT: afgo 
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
+        continue-on-error: true

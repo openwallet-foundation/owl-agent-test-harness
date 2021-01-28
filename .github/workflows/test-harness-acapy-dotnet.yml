@@ -24,14 +24,7 @@ jobs:
           DEFAULT_AGENT: acapy-master
           BOB_AGENT: dotnet-master
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal"
-        continue-on-error: true
-      - name: run-send-gen-test-results
-        uses: ./test-harness/actions/run-send-gen-test-results
-        with:
-          REPORT_PROJECT: acapy-b-dotnet
-      - name: run-send-gen-test-results-secure
-        uses: ./test-harness/actions/run-send-gen-test-results-secure
-        with:
           REPORT_PROJECT: acapy-b-dotnet
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
+        continue-on-error: true

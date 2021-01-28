@@ -23,14 +23,7 @@ jobs:
         with:
           DEFAULT_AGENT: acapy-master
           BOB_AGENT: acapy-master
-        continue-on-error: true
-      - name: run-send-gen-test-results
-        uses: ./test-harness/actions/run-send-gen-test-results
-        with:
-          REPORT_PROJECT: acapy  
-      - name: run-send-gen-test-results-secure
-        uses: ./test-harness/actions/run-send-gen-test-results-secure
-        with:
           REPORT_PROJECT: acapy  
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
+        continue-on-error: true
