@@ -1,4 +1,4 @@
-name: test-harness-acapy-full
+name: test-harness-afgo-afgo
 on:
   workflow_dispatch:
   schedule:
@@ -21,19 +21,13 @@ jobs:
       - name: run-test-harness
         uses: ./test-harness/actions/run-test-harness
         with:
-          DEFAULT_AGENT: acapy-master
-          BOB_AGENT: acapy-master
-          TEST_SCOPE: ""
-          REPORTING: "-r allure -e comparison"
-          REPORT_PROJECT: acapy-full
+          DEFAULT_AGENT: afgo-master
+          BOB_AGENT: afgo-master
+          TEST_SCOPE: "-t @RFC0023 -t ~@wip"
         continue-on-error: true
-      - name: run-send-gen-test-results
-        uses: ./test-harness/actions/run-send-gen-test-results
-        with:
-          REPORT_PROJECT: acapy-full
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy-full
+          REPORT_PROJECT: afgo 
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}

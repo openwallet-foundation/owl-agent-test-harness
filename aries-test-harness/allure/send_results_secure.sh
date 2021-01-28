@@ -6,6 +6,8 @@
 # ARG_POSITIONAL_SINGLE([results_location],[location of the generated allure results],[])
 # ARG_POSITIONAL_SINGLE([allure_server],[URL of the Allure Server],[])
 # ARG_OPTIONAL_SINGLE([test_project],[p],[Name of the project in the Allure Service to send results to])
+# ARG_POSITIONAL_SINGLE([admin_user],[Username of the Allure Administrator],[])
+# ARG_POSITIONAL_SINGLE([admin_pw],[Password of the Allure Administrator],[])
 # ARG_HELP([This script is used to send Allure generated test results up to the AATH Allure Server for formal reporting])
 # ARGBASH_GO()
 # needed because of Argbash --> m4_ignore([
@@ -58,6 +60,8 @@ print_help()
 	printf 'Usage: %s [-p|--test_project <arg>] [-h|--help] <results_location> <allure_server>\n' "$0"
 	printf '\t%s\n' "<results_location>: location of the generated allure results"
 	printf '\t%s\n' "<allure_server>: URL of the Allure Server"
+	printf '\t%s\n' "<admin_user>: Username of the Allure Administrator"
+	printf '\t%s\n' "<admin_pw>: Password of the Allure Administrator"
 	printf '\t%s\n' "-p, --test_project: Name of the project in the Allure Service to send results to (no default)"
 	printf '\t%s\n' "-h, --help: Prints help"
 }
@@ -124,9 +128,9 @@ parse_commandline()
 # and 2 if we have too much arguments
 handle_passed_args_count()
 {
-	local _required_args_string="'results_location' and 'allure_server'"
-	test "${_positionals_count}" -ge 2 || _PRINT_HELP=yes die "FATAL ERROR: Not enough positional arguments - we require exactly 2 (namely: $_required_args_string), but got only ${_positionals_count}." 1
-	test "${_positionals_count}" -le 2 || _PRINT_HELP=yes die "FATAL ERROR: There were spurious positional arguments --- we expect exactly 2 (namely: $_required_args_string), but got ${_positionals_count} (the last one was: '${_last_positional}')." 1
+	local _required_args_string="'results_location', 'allure_server', 'admin_user' and 'admin_pw'"
+	test "${_positionals_count}" -ge 4 || _PRINT_HELP=yes die "FATAL ERROR: Not enough positional arguments - we require exactly 4 (namely: $_required_args_string), but got only ${_positionals_count}." 1
+	test "${_positionals_count}" -le 4 || _PRINT_HELP=yes die "FATAL ERROR: There were spurious positional arguments --- we expect exactly 4 (namely: $_required_args_string), but got ${_positionals_count} (the last one was: '${_last_positional}')." 1
 }
 
 
@@ -135,10 +139,7 @@ handle_passed_args_count()
 assign_positional_args()
 {
 	local _positional_name _shift_for=$1
-	# We have an array of variables to which we want to save positional args values.
-	# This array is able to hold array elements as targets.
-	# As variables don't contain spaces, they may be held in space-separated string.
-	_positional_names="_arg_results_location _arg_allure_server "
+	_positional_names="_arg_results_location _arg_allure_server _arg_admin_user _arg_admin_pw "
 
 	shift "$_shift_for"
 	for _positional_name in ${_positional_names}
@@ -164,6 +165,9 @@ ALLURE_SERVER=$_arg_allure_server
 #PROJECT_ID='acapy'
 PROJECT_ID=$_arg_test_project
 #PROJECT_ID='my-project-id'
+# Set SECURITY_USER & SECURITY_PASS according to Allure container configuration
+SECURITY_USER=$_arg_admin_user
+SECURITY_PASS=$_arg_admin_pw
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 FILES_TO_SEND=$(ls -dp $DIR/$ALLURE_RESULTS_DIRECTORY/* | grep -v /$)
@@ -178,22 +182,34 @@ done
 
 set -o xtrace
 
+echo "------------------LOGGING-INTO-ALLURE-SERVICE------------------"
+curl -X POST "$ALLURE_SERVER/allure-docker-service/login" \
+  -H 'Content-Type: application/json' \
+  -d "{
+    "\""username"\"": "\""$SECURITY_USER"\"",
+    "\""password"\"": "\""$SECURITY_PASS"\""
+}" -c cookiesFile -ik
+
+echo "------------------EXTRACTING-CSRF-ACCESS-TOKEN------------------"
+CRSF_ACCESS_TOKEN_VALUE=$(cat cookiesFile | grep -o 'csrf_access_token.*' | cut -f2)
+echo "csrf_access_token value: $CRSF_ACCESS_TOKEN_VALUE"
+
+
 echo "------------------CLEANING-RESULTS------------------"
-curl -X GET "$ALLURE_SERVER/allure-docker-service/clean-results?project_id=$PROJECT_ID" -H  "accept: */*"
+curl -X GET "$ALLURE_SERVER/allure-docker-service/clean-results?project_id=$PROJECT_ID" -H  "accept: */*" -b cookiesFile -ik
 
 echo "------------------SEND-RESULTS------------------"
-curl -X POST "$ALLURE_SERVER/allure-docker-service/send-results?project_id=$PROJECT_ID" -H 'Content-Type: multipart/form-data' $FILES -ik
+curl -X POST "$ALLURE_SERVER/allure-docker-service/send-results?project_id=$PROJECT_ID" \
+  -H 'Content-Type: multipart/form-data' \
+  -H "X-CSRF-TOKEN: $CRSF_ACCESS_TOKEN_VALUE" \
+  -b cookiesFile $FILES -ik
 
 
-#If you want to generate reports on demand use the endpoint `GET /generate-report` and disable the Automatic Execution >> `CHECK_RESULTS_EVERY_SECONDS: NONE`
+# If you want to generate reports on demand use the endpoint `GET /generate-report` and disable the Automatic Execution >> `CHECK_RESULTS_EVERY_SECONDS: NONE`
 echo "------------------GENERATE-REPORT------------------"
-#EXECUTION_NAME='execution_from_my_bash_script'
-#EXECUTION_FROM='http://google.com'
-#EXECUTION_TYPE='bamboo'
-
-#You can try with a simple curl
 #RESPONSE=$(curl -X GET "$ALLURE_SERVER/allure-docker-service/generate-report?project_id=$PROJECT_ID&execution_name=$EXECUTION_NAME&execution_from=$EXECUTION_FROM&execution_type=$EXECUTION_TYPE" $FILES)
-RESPONSE=$(curl -X GET "$ALLURE_SERVER/allure-docker-service/generate-report?project_id=$PROJECT_ID" $FILES)
+#RESPONSE=$(curl -X GET "$ALLURE_SERVER/allure-docker-service/generate-report?project_id=$PROJECT_ID" $FILES)
+RESPONSE=$(curl -X GET "$ALLURE_SERVER/allure-docker-service/generate-report?project_id=$PROJECT_ID" -H "X-CSRF-TOKEN: $CRSF_ACCESS_TOKEN_VALUE" -b cookiesFile $FILES)
 ALLURE_REPORT=$(grep -o '"report_url":"[^"]*' <<< "$RESPONSE" | grep -o '[^"]*$')
 
 #OR You can use JQ to extract json values -> https://stedolan.github.io/jq/download/
