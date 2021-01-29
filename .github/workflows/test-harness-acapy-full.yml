@@ -26,3 +26,5 @@ jobs:
           TEST_SCOPE: ""
           REPORTING: "-r allure -e comparison"
           REPORT_PROJECT: acapy-full
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}

@@ -19,7 +19,7 @@ Feature: Aries agent present proof functions RFC 0037
          | Faber  |
 
    @T001.1-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Indy @RFC0037 @DIDExchangeConnection
-   Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged
+   Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged with a DID Exchange Connection
       Given "2" agents
          | name  | role     |
          | Faber | verifier |
@@ -37,7 +37,7 @@ Feature: Aries agent present proof functions RFC 0037
          | Faber  |
 
    @T001.2-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Indy @RFC0037
-   Scenario Outline: Present Proof of specific types and proof is acknowledged
+   Scenario Outline: Present Proof of specific types and proof is acknowledged with a Drivers License credential type
       Given "2" agents
          | name  | role     |
          | Faber | verifier |
@@ -56,7 +56,7 @@ Feature: Aries agent present proof functions RFC 0037
 
 
    @T001.3-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Indy @RFC0037
-   Scenario Outline: Present Proof of specific types and proof is acknowledged
+   Scenario Outline: Present Proof of specific types and proof is acknowledged with a Biological Indicators credential type
       Given "2" agents
          | name  | role     |
          | Faber | verifier |
@@ -73,7 +73,7 @@ Feature: Aries agent present proof functions RFC 0037
          | Acme   | Data_BI_NormalizedValues | proof_request_biological_indicator_a | presentation_biological_indicator_a |
 
    @T001.4-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Schema_Health_Consent @Indy @RFC0037
-   Scenario Outline: Present Proof of specific types and proof is acknowledged
+   Scenario Outline: Present Proof of specific types and proof is acknowledged with multiple credential types
       Given "2" agents
          | name  | role     |
          | Faber | verifier |
@@ -189,7 +189,7 @@ Feature: Aries agent present proof functions RFC 0037
 
 
    @T006-AIP10-RFC0037 @P3 @minor @AcceptanceTest @Schema_Health_ID @Indy @RFC0037 @ProofProposal
-   Scenario Outline: Present Proof where the prover starts with a proposed the presentation of proof and is acknowledged
+   Scenario Outline: Present Proof where the prover starts with a proposal the presentation of proof and is acknowledged
       Given "2" agents
          | name  | role     |
          | Faber | verifier |

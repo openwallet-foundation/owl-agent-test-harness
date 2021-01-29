@@ -25,4 +25,6 @@ jobs:
           BOB_AGENT: dotnet-master
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal"
           REPORT_PROJECT: acapy-b-dotnet
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}
         continue-on-error: true

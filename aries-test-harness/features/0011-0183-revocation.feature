@@ -23,7 +23,7 @@ Feature: Aries agent credential revocation and revocation notification RFC 0011 
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
    @T001.1-RFC0011 @RFC0011 @P2 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @DIDExchangeConnection
-   Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked
+   Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked with a DID Exchange connection
       Given "2" agents
          | name  | role     |
          | Bob   | prover   |
