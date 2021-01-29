@@ -54,8 +54,7 @@ COPY data ./
 # The Backchannel is looking for it in ./bin, create a link to it in ./bin
 RUN mkdir -p ./bin
 RUN ln -s $GOPATH/src/github.com/hyperledger/aries-framework-go/build/bin/aries-agent-rest ./bin/aries-agent-rest
-ENV PYTHONPATH=/aries-backchannels
+ENV PYTHONPATH=$GOPATH/aries-backchannels
 
 
-#ENTRYPOINT ["python", "afgo/afgo_backchannel.py"]
-
+ENTRYPOINT ["python", "afgo/afgo_backchannel.py"]
