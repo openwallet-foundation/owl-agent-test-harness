@@ -19,7 +19,6 @@ def step_impl(context, responder):
     responder_url = context.config.userdata.get(responder)
 
     data = {
-        "include_handshake": True,
         "use_public_did": False
     }
 

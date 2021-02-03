@@ -505,14 +505,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             multi_use = "false"
             agent_operation = agent_operation + "create-invitation" + "?auto_accept=" + auto_accept + "&multi_use=" + multi_use
 
-            #(resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            # Add handshake protocols to message body
+            admindata = {
+                "handshake_protocols": [
+                    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0"
+                ],
+                "use_public_did": data["use_public_did"]
+            }
+            data = admindata
 
-            # extract invitation from the agent's response
-            #invitation_resp = json.loads(resp_text)
-            #resp_text = json.dumps(invitation_resp)
-
-            #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
-            #return (resp_status, resp_text)
         elif operation == "receive-invitation":
             # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
             auto_accept = "false"
