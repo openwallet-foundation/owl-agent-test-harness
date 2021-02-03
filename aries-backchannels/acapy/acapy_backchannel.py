@@ -191,6 +191,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the tails server env is not set use the gov.bc TEST tails server.
             result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
         
+        if os.getenv('EMIT-NEW-DIDCOMM-PREFIX') is not None:
+            # if the env var is set for tails server then use that.
+            result.append(("--emit-new-didcomm-prefix"))
+
         # This code for log level is included here because aca-py does not support the env var directly yet. 
         # when it does (and there is talk of supporting YAML) then this code can be removed. 
         if os.getenv('LOG_LEVEL') is not None:
