@@ -18,7 +18,7 @@ jobs:
         uses: ./test-harness/actions/run-von-network
       - name: run-indy-tails-server
         uses: ./test-harness/actions/run-indy-tails-server
-      - name: run-test-harness
+      - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness
         with:
           DEFAULT_AGENT: afgo-master
