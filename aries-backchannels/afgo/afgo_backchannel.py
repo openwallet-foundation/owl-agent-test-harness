@@ -503,7 +503,14 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return (resp_status, resp_text)
 
     async def handle_introduce_POST(self, op, rec_id=None, data=None):
-        pass
+        operation = op["operation"]
+        agent_operation = "did"
+
+        if operation == "":
+            pass
+
+        return (resp_status, resp_text)
+
 
     async def handle_issue_credentiatial_POST(self, op, rec_id=None, data=None):
         pass
@@ -544,12 +551,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if op["topic"] == "version":
             if self.afgo_version is not None:
                 status = 200
-                #status_msg = json.dumps({"version": self.afgo_version})
                 status_msg = self.afgo_version
             else:
-                status = 404
-                #status_msg = json.dumps({"version": "not found"})
-                status_msg = "not found"
+                status = 200
+                status_msg = "unknown"
+
             return (status, status_msg)
 
         elif op["topic"] == "connection":
@@ -583,18 +589,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "did":
-            # agent_operation = "/wallet/did/public"
+            agent_operation = "/issuecredential/actions"
 
-            # (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            # if resp_status != 200:
-            #     return (resp_status, resp_text)
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
 
-            # resp_json = json.loads(resp_text)
-            # did = resp_json["result"]
-
-            # resp_text = json.dumps(did)
-            # return (resp_status, resp_text)
-            return (411, {})
+            return (resp_status, resp_text)
 
         elif op["topic"] == "schema":
             schema_id = rec_id
