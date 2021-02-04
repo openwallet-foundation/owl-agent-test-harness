@@ -490,27 +490,20 @@ class AfGoAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = 200, '{ "state": "request-sent" }'
             return (resp_status, resp_text)
 
+        # elif operation == "receive-invitation":
+        #     agent_operation = f"/{agent_operation}/{operation}"
+
         elif operation == "send-response":
             agent_operation = f"/connections/{rec_id}/accept-request"
+            #(resp_status, resp_text) = 200, '{ "state": "response-sent" }'
+            #return (resp_status, resp_text)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
-
-        if resp_status == 500 and 'code' in resp_text:
-            resp_json = json.loads(resp_text)
-            if resp_json["code"] == 2005: resp_status = 400
-
         return (resp_status, resp_text)
 
     async def handle_introduce_POST(self, op, rec_id=None, data=None):
-        operation = op["operation"]
-        agent_operation = "did"
-
-        if operation == "":
-            pass
-
-        return (resp_status, resp_text)
-
+        pass
 
     async def handle_issue_credentiatial_POST(self, op, rec_id=None, data=None):
         pass
@@ -555,7 +548,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             else:
                 status = 200
                 status_msg = "unknown"
-
             return (status, status_msg)
 
         elif op["topic"] == "connection":
@@ -589,13 +581,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "did":
-            agent_operation = "/issuecredential/actions"
+            # agent_operation = "/wallet/did/public"
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status != 200:
-                return (resp_status, resp_text)
+            # (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            # if resp_status != 200:
+            #     return (resp_status, resp_text)
 
-            return (resp_status, resp_text)
+            # resp_json = json.loads(resp_text)
+            # did = resp_json["result"]
+
+            # resp_text = json.dumps(did)
+            # return (resp_status, resp_text)
+            return (411, {})
 
         elif op["topic"] == "schema":
             schema_id = rec_id
