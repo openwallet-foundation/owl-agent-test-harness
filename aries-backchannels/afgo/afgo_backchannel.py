@@ -544,12 +544,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if op["topic"] == "version":
             if self.afgo_version is not None:
                 status = 200
-                #status_msg = json.dumps({"version": self.afgo_version})
                 status_msg = self.afgo_version
             else:
-                status = 404
-                #status_msg = json.dumps({"version": "not found"})
-                status_msg = "not found"
+                status = 200
+                status_msg = "unknown"
             return (status, status_msg)
 
         elif op["topic"] == "connection":
