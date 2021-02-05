@@ -500,6 +500,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
+
+        if resp_status == 500 and 'code' in resp_text:
+            resp_json = json.loads(resp_text)
+            if resp_json["code"] == 2005: resp_status = 400
+
         return (resp_status, resp_text)
 
     async def handle_introduce_POST(self, op, rec_id=None, data=None):
