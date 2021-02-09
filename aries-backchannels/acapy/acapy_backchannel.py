@@ -22,7 +22,7 @@ from aiohttp import (
 
 from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
-from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
+from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource, pop_resource_latest
 
 #from helpers.jsonmapper.json_mapper import JsonMapper
 
@@ -157,6 +157,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--outbound-transport", "http"),
             ("--admin", "0.0.0.0", str(self.admin_port)),
             "--admin-insecure-mode",
+            "--public-invites",
             ("--wallet-type", self.wallet_type),
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
@@ -252,6 +253,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
     async def handle_connections(self, message):
         if "invitation_msg_id" in message:
+            # This is an did-exchange message based on a Non-Public DID invitation
             invitation_id = message["invitation_msg_id"]
             push_resource(invitation_id, "didexchange-msg", message)
         else:
@@ -666,6 +668,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             return (resp_status, resp_text)
+        
+        elif op["topic"] == "did-exchange":
+            
+            connection_id = rec_id
+            agent_operation = "/connections/" + connection_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            return (resp_status, resp_text)
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
@@ -711,6 +722,25 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             while didexchange_msg is None and i < MAX_TIMEOUT:
                 sleep(1)
                 didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+                i = i + 1
+
+            resp_status = 200
+            if didexchange_msg:
+                resp_text = json.dumps(didexchange_msg)
+                resp_text = self.agent_state_translation(topic, None, resp_text)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
+        # Poping webhook messages wihtout an id is unusual. This code may be removed when issue 944 is fixed
+        # see https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/hyperledger/aries-cloudagent-python/944
+        if topic == "did-exchange" and rec_id is None:
+            didexchange_msg = pop_resource_latest("connection-msg")
+            i = 0
+            while didexchange_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                didexchange_msg = pop_resource_latest("connection-msg")
                 i = i + 1
 
             resp_status = 200

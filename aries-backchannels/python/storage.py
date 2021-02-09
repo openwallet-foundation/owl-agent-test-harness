@@ -78,3 +78,16 @@ def pop_resource(data_id, data_type):
     finally:
         storage_lock.release()
 
+def pop_resource_latest(data_type):
+    storage_lock.acquire()
+    try:
+        data_ids = list(storage.keys())
+        data_id = data_ids[len(data_ids) - 1]
+        if data_type in storage[data_id]:
+            if 0 < len(storage[data_id][data_type]):
+                data = storage[data_id][data_type][0]
+                del storage[data_id][data_type][0]
+                return data
+        return None
+    finally:
+        storage_lock.release()
