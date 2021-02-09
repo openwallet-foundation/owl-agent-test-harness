@@ -1,4 +1,4 @@
-Feature: Aries agent present proof functions RFC 0037
+Feature: RFC 0037 Aries agent present proof
 
    @T001-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Indy @RFC0037
    Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged

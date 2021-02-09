@@ -1,4 +1,4 @@
-Feature: Aries agent connection functions RFC 0160
+Feature: RFC 0160 Aries agent connection functions
 
    @T001-AIP10-RFC0160 @P1 @critical @AcceptanceTest @RFC0160
    Scenario Outline: establish a connection between two agents

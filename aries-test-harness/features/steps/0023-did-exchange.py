@@ -54,18 +54,18 @@ def step_impl(context, responder):
     if context.responder_name != responder:
         context.responder_name = responder
 
+#@given('"{requester}" has a public DID')
+@when('"{requester}" publishes a public DID')
+def step_impl(context, requester):
+    requester_url = context.config.userdata.get(requester)
 
-@when('"{responder}" publishes a public DID')
-def step_impl(context, responder):
-    responder_url = context.config.userdata.get(responder)
-
-    (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/command/", "did")
+    (resp_status, resp_text) = agent_backchannel_GET(requester_url + "/agent/command/", "did")
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
     responder_did = resp_json
 
-    context.responder_public_did = responder_did["did"]
+    context.requester_public_did = responder_did["did"]
 
     # if "schema" not in context:
     #     # check for a schema already loaded in the context. If it is not, load the template
@@ -80,7 +80,7 @@ def step_impl(context, responder):
 
 
 
-@when('"{responder}" sends an implicit invitation')
+@when('"{responder}" sends an explicit invitation with a public DID')
 def step_impl(context, responder):
     responder_url = context.config.userdata.get(responder)
 
@@ -189,16 +189,18 @@ def step_impl(context, responder):
         if "connection_id" in resp_text:
             context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
         else:
+            assert False, f'Could not retreive responders connection_id'
+
             # It is probably the case that we are dealing with a Public DID invitation that does not have the webhook message keyed on 
             # invitation_id. In this case, try to grab the latest unkeyed message off of the webhook queue. 
             # see issue 944 for full details https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/hyperledger/aries-cloudagent-python/944
-            (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/response/", "did-exchange")
-            assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-            resp_json = json.loads(resp_text)
-            if "connection_id" in resp_text:
-                context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
-            else:
-                assert False, f'Could not retreive responders connection_id'
+            # (resp_status, resp_text) = agent_backchannel_GET(responder_url + "/agent/response/", "did-exchange")
+            # assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+            # resp_json = json.loads(resp_text)
+            # if "connection_id" in resp_text:
+            #     context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
+            # else:
+            #     assert False, f'Could not retreive responders connection_id'
 
     responder_connection_id = context.connection_id_dict[responder][context.requester_name]
 

@@ -78,8 +78,6 @@ def pop_resource(data_id, data_type):
     finally:
         storage_lock.release()
 
-# Poping webhook messages wihtout an id is unusual. This code may be removed when issue 944 is fixed
-# see https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/hyperledger/aries-cloudagent-python/944
 def pop_resource_latest(data_type):
     storage_lock.acquire()
     try:

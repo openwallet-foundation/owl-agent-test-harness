@@ -1,4 +1,4 @@
-Feature: Aries agent issue credential functions RFC 0036
+Feature: RFC 0036 Aries agent issue credential
 
   Background: create a schema and credential definition in order to issue a credential
     Given "Acme" has a public did

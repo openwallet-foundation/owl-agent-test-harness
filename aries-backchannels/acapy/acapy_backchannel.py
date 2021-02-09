@@ -256,10 +256,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # This is an did-exchange message based on a Non-Public DID invitation
             invitation_id = message["invitation_msg_id"]
             push_resource(invitation_id, "didexchange-msg", message)
-        # elif "invitation_key" in message and "request_id" in message: #<-don't know how to uniquely identify this
-        #     # This is an did-exchange message based on a Public DID invitation
-        #     id = "unkeyed"
-        #     push_resource(id, "didexchange-msg", message)
         else:
             connection_id = message["connection_id"]
             push_resource(connection_id, "connection-msg", message)
@@ -740,7 +736,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # Poping webhook messages wihtout an id is unusual. This code may be removed when issue 944 is fixed
         # see https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/hyperledger/aries-cloudagent-python/944
         if topic == "did-exchange" and rec_id is None:
-            rec_id = "unkeyed"
             didexchange_msg = pop_resource_latest("connection-msg")
             i = 0
             while didexchange_msg is None and i < MAX_TIMEOUT:
