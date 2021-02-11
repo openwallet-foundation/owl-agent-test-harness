@@ -555,7 +555,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 status_msg = "unknown"
             return (status, status_msg)
 
-        elif op["topic"] == "connection":
+        elif op["topic"] == "connection" or op["topic"] == "did-exchange":
             if rec_id:
                 connection_id = rec_id
                 agent_operation = "/connections/" + connection_id
