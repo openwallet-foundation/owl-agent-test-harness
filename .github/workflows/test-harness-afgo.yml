@@ -23,7 +23,7 @@ jobs:
         with:
           DEFAULT_AGENT: afgo-master
           BOB_AGENT: afgo-master
-          TEST_SCOPE: "-t @RFC0023 -t ~@wip"
+          TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: afgo 
         continue-on-error: true
       - name: run-send-gen-test-results-secure
