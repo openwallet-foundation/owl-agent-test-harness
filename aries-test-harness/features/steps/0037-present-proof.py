@@ -48,10 +48,13 @@ def step_impl(context, prover, issuer, credential_data):
 @given('"{prover}" has an issued credential from {issuer}')
 def step_impl(context, prover, issuer):
     # create the Connection between the prover and the issuer
-    # TODO: May need to check for an existing connection here instead of creating one.
-    context.execute_steps('''
-        Given "''' + issuer + '''" and "''' + prover + '''" have an existing connection
-    ''')
+    # TODO: May need to check for an existing connection established from other tests here instead of creating one.
+    # Check if a connection between the players has already been established in this test. 
+    if prover not in context.connection_id_dict or issuer not in context.connection_id_dict[prover]:
+        context.execute_steps('''
+            Given "''' + issuer + '''" and "''' + prover + '''" have an existing connection
+        ''')
+
 
     # make sure the issuer has the credential definition
     # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
