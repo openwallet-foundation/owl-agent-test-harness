@@ -454,10 +454,33 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
-            
-            resp_text = self.enrich_receive_invitation_data_response(resp_text)
+            (resp_status_ri, resp_text_ri) = await self.admin_POST(agent_operation, data)
+            if resp_status_ri == 200: resp_text_ri = self.agent_state_translation(op["topic"], operation, resp_text_ri)
+
+            # check state
+            if resp_status_ri == 200:
+                resp_json_ri = json.loads(resp_text_ri)
+                connection_id = resp_json_ri["connection_id"]
+
+                (resp_status_conn, resp_text_conn) = await self.admin_GET(f'/connections/{connection_id}')
+
+                # merge request
+                if resp_status_conn == 200:
+                    resp_json = json.loads(resp_text_ri)
+                    resp_json["full_state"] = json.loads(resp_text_conn)
+
+                    # interprete state
+                    if resp_json["full_state"]["result"]["State"] == "invited":
+                        resp_status = 200
+                        resp_text = json.dumps(resp_json)
+
+                        # interprete state for test
+                        resp_text = self.enrich_receive_invitation_data_response(resp_text)
+            else:
+                # send actual response
+                resp_status = resp_status_ri
+                resp_text = resp_text_ri
+
             return (resp_status, resp_text)
 
         agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
