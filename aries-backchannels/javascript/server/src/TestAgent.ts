@@ -1,4 +1,3 @@
-// @ts-ignore
 import indy from "indy-sdk";
 import { InitConfig, Agent } from "aries-framework-javascript";
 import express from "express";
@@ -25,7 +24,7 @@ export async function createAgent({
     walletConfig: { id: `aath-javascript-${Date.now()}` },
     walletCredentials: { key: "00000000000000000000000000000Test01" },
     publicDidSeed,
-    url,
+    host: url,
     port,
     poolName: "aries-framework-javascript-pool",
     genesisPath,
