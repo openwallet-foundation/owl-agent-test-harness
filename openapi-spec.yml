@@ -71,6 +71,20 @@ paths:
                   status:
                     type: string
                     enum: [inactive]
+  /agent/command/version:
+    get:
+      summary: Get agent/backchannel version
+      operationId: StatusGet
+      tags:
+        - Status
+      responses:
+        200:
+          description: Agent version
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 0.6.0
 
   /agent/command/connection:
     get:
@@ -726,6 +740,48 @@ paths:
                 $ref: "#/components/schemas/PresentProofOperationResponse"
         404:
           description: Presentation exchange record not found
+
+  /agent/command/proof/send-proposal:
+    post:
+      tags:
+        - Present Proof
+      summary: Send presentation proposal
+      description: >
+        Send a `propose-presentation` message to connection with `connection_id` in body.
+        When the backchannel sends a `send-proposal` operation to a backchannel it sends an `presentation-preview` inner message.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#propose-presentation
+      operationId: PresentProofSendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - presentation_proposal
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    presentation_proposal:
+                      $ref: "#/components/schemas/PresentationPreview"
+      responses:
+        200:
+          description: Presentation proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
 
   /agent/command/proof/send-request:
     post:

@@ -33,9 +33,14 @@ Each time tests are executed with the -r allure option, and those results need t
 
 ## CONITNUOUS INTEGRATION
 The AATH is executed with varying configurations and Aries Agent types at pre-determined intervals to make find issues and track deltas between builds of these agents. You can find the Allure reports for these test runs at the following links.
-[Acapy to Acapy Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy/reports/latest)
-[Acapy to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
-[Dotnet to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet/reports/latest)
+
+- [Acapy to Acapy Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy/reports/latest)
+- [Full Acapy to Acapy Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-full/reports/latest)
+- [Acapy to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
+- [Acapy to JavaScript Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-javascript/reports/latest)
+- [Dotnet to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet/reports/latest)
+- [JavaScript to JavaScript Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/javascript/reports/latest)
+- [JavaScript to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-dotnet/reports/latest)
 
 
 ## REFERENCES

@@ -1,9 +1,9 @@
 import { Controller, Get, Res } from "@tsed/common";
 
-@Controller("/agent/command/status")
+@Controller("/agent/command")
 export class AgentStatusController {
-  @Get()
-  get(@Res() response: Res) {
+  @Get("/status")
+  getStatus(@Res() response: Res) {
     // NOTE: Because the agent runs inside the backchannel (not separate processes)
     // The agent is active as long as the backchannel is active
     const active = true;
@@ -18,5 +18,11 @@ export class AgentStatusController {
     return {
       status: "active",
     };
+  }
+
+  @Get("/version")
+  getVersion(@Res() response: Res) {
+    // TODO: return actual version
+    return "1.0.0";
   }
 }

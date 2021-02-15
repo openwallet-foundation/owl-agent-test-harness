@@ -1,6 +1,11 @@
 import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
 import { NotFound } from "@tsed/exceptions";
-import { Agent, ConnectionRecord } from "aries-framework-javascript";
+import {
+  Agent,
+  ConnectionRecord,
+  ConnectionInvitationMessage,
+  JsonTransformer,
+} from "aries-framework-javascript";
 
 @Controller("/agent/command/connection")
 export class ConnectionController {
@@ -32,11 +37,14 @@ export class ConnectionController {
 
   @Post("/create-invitation")
   async createInvitation() {
-    const connection = await this.agent.connections.createConnection();
+    const {
+      invitation,
+      connectionRecord,
+    } = await this.agent.connections.createConnection();
 
     return {
-      ...this.mapConnection(connection),
-      invitation: connection.invitation?.toJSON(),
+      ...this.mapConnection(connectionRecord),
+      invitation: invitation.toJSON(),
     };
   }
 
@@ -45,7 +53,7 @@ export class ConnectionController {
     @BodyParams("data") invitation: Record<string, unknown>
   ) {
     const connection = await this.agent.connections.receiveInvitation(
-      invitation
+      JsonTransformer.fromJSON(invitation, ConnectionInvitationMessage)
     );
 
     return this.mapConnection(connection);

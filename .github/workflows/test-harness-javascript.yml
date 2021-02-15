@@ -1,0 +1,33 @@
+name: test-harness-javascript-javascript
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+defaults:
+  run:
+    shell: bash
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-test-harness
+        uses: actions/checkout@v2
+        with:
+          path: test-harness
+      - name: run-von-network
+        uses: ./test-harness/actions/run-von-network
+      - name: run-indy-tails-server
+        uses: ./test-harness/actions/run-indy-tails-server
+      - name: run-test-harness-wo-reports
+        uses: ./test-harness/actions/run-test-harness
+        with:
+          DEFAULT_AGENT: javascript
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@RFC0011 -t ~@RFC0023 -t ~@DIDExchangeConnection"
+          REPORT_PROJECT: javascript
+        continue-on-error: true
+      - name: run-send-gen-test-results-secure
+        uses: ./test-harness/actions/run-send-gen-test-results-secure
+        with:
+          REPORT_PROJECT: javascript
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}
