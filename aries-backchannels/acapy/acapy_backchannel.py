@@ -196,6 +196,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-prefix"))
 
+        if os.getenv('EMIT-NEW-DIDCOMM-MIME-TYPE') is not None:
+            # if the env var is set for tails server then use that.
+            result.append(("--emit-new-didcomm-mime-type"))
+
         # This code for log level is included here because aca-py does not support the env var directly yet. 
         # when it does (and there is talk of supporting YAML) then this code can be removed. 
         if os.getenv('LOG_LEVEL') is not None:

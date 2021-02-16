@@ -53,12 +53,6 @@ runs:
       env:
         NO_TTY: "1"
       working-directory: test-harness
-    - name: run-send-gen-test-results
-      run: ./aries-test-harness/allure/send_results.sh ${{ inputs.RESULTS_LOCATION }} ${{ inputs.ALLURE_SERVER }} -p ${{ inputs.REPORT_PROJECT }}
-      shell: bash
-      env:
-        NO_TTY: "1"
-      working-directory: test-harness
     - name: run-send-gen-test-results-secure
       run: ./aries-test-harness/allure/send_results_secure.sh ${{ inputs.RESULTS_LOCATION }} ${{ inputs.ALLURE_SERVER_SECURE }} -p ${{ inputs.REPORT_PROJECT }} ${{ inputs.ADMIN_USER }} ${{ inputs.ADMIN_PW }}
       shell: bash
