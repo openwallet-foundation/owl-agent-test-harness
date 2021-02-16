@@ -25,6 +25,9 @@ jobs:
           BOB_AGENT: afgo-master
           TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: acapy-b-afgo
+        env:
+          EMIT-NEW-DIDCOMM-PREFIX: true
+          EMIT-NEW-DIDCOMM-MIME-TYPE: true
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
