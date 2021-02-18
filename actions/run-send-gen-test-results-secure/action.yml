@@ -9,7 +9,7 @@ inputs:
   ALLURE_SERVER:
     description: "URL of the Allure Service"
     required: true
-    default: "https://allure-von.apps.silver.devops.gov.bc.ca/api"
+    default: "https://allure.vonx.io/api"
   REPORT_PROJECT:
     description: "Name of the project the Allure Service is using to store these results"
     required: true
