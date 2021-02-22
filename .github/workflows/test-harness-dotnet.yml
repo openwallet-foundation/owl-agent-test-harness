@@ -24,7 +24,7 @@ jobs:
         with:
           DEFAULT_AGENT: dotnet-master
           BOB_AGENT: dotnet-master
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@RFC0011 -t ~@ProofProposal -t ~@RFC0023"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@ProofProposal -t ~@RFC0023"
           REPORT_PROJECT: dotnet
         continue-on-error: true
       - name: run-send-gen-test-results-secure
