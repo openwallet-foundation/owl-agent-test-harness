@@ -1,0 +1,5 @@
+{
+  "RunSetName" : "acapy",
+  "RunSetDescription" : "acapy plays all roles",
+  "RunSetSummaryContext" : "What features are run. Explain the failures. Give the run command with tags"
+}

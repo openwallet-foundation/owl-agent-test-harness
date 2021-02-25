@@ -1,0 +1,25 @@
+[ {
+  "values" : [ "acapy-master-agent-backchannel" ],
+  "name" : "role.acme"
+}, {
+  "values" : [ "0.6.0-rc1" ],
+  "name" : "acme.agent.version"
+}, {
+  "values" : [ "acapy-master-agent-backchannel" ],
+  "name" : "role.bob"
+}, {
+  "values" : [ "0.6.0-rc1" ],
+  "name" : "bob.agent.version"
+}, {
+  "values" : [ "acapy-master-agent-backchannel" ],
+  "name" : "role.faber"
+}, {
+  "values" : [ "0.6.0-rc1" ],
+  "name" : "faber.agent.version"
+}, {
+  "values" : [ "acapy-master-agent-backchannel" ],
+  "name" : "role.mallory"
+}, {
+  "values" : [ "0.6.0-rc1" ],
+  "name" : "mallory.agent.version"
+} ]
