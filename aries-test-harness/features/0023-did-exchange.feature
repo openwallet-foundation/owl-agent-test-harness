@@ -65,29 +65,31 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Bob" sends complete to "Acme"
       Then "Bob" and "Acme" have a connection
 
-   @T005-RFC0023 @critical @AcceptanceTest @wip
+   @T005-RFC0023 @critical @AcceptanceTest
    Scenario: Establish a connection with DID Exchange between two agents with an implicit invitation
       Given we have "2" agents
          | name | role      |
          | Acme | requester |
          | Bob  | responder |
-      And "Acme" has a public DID
-      When "Acme" sends the request to "Bob" with a public DID
-      And "Bob" receives the request
-      And "Bob" sends a response to "Acme"
+      And "Bob" has a resolvable DID
+      And "Acme" aquires the resolvable DID
+      When "Acme" sends the request to "Bob" with the public DID
+      And "Bob" receives the request with their public DID
+      When "Bob" sends a response to "Acme"
       And "Acme" receives the response
       And "Acme" sends complete to "Bob"
       Then "Acme" and "Bob" have a connection
 
-   @T006-RFC0023 @critical @AcceptanceTest @wip
+   @T006-RFC0023 @critical @AcceptanceTest
    Scenario: Establish a connection with DID Exchange between two agents with an implicit invitation with role reversal
       Given we have "2" agents
          | name | role      |
          | Acme | responder |
          | Bob  | requester |
-      And "Bob" has a public DID
-      When "Bob" sends the request to "Acme" with a public DID
-      And "Acme" receives the request
+      And "Acme" has a resolvable DID
+      And "Bob" aquires the resolvable DID
+      When "Bob" sends the request to "Acme" with the public DID
+      And "Acme" receives the request with their public DID
       And "Acme" sends a response to "Bob"
       And "Bob" receives the response
       And "Bob" sends complete to "Acme"

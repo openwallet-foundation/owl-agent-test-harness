@@ -248,14 +248,16 @@ def step_impl(context, inviter, invitee):
     # Check to see if this is a DID Exchange connection to set the state to check appropriatly for that protocol.
     if "responder_url" in context:
         state_to_assert = "completed"
+        topic = "did-exchange"
     else:
         state_to_assert = "complete"
+        topic = "connection"
 
     # get connection and verify status for inviter
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, state_to_assert)
+    assert expected_agent_state(inviter_url, topic, inviter_connection_id, state_to_assert)
 
     # get connection and verify status for invitee
-    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, state_to_assert)
+    assert expected_agent_state(invitee_url, topic, invitee_connection_id, state_to_assert)
 
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):

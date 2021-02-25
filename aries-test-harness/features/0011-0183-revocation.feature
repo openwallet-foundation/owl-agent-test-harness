@@ -1,5 +1,5 @@
 @revocation
-Feature: RFC 0011 0183 Aries agent credential revocation and revocation notification
+Feature: RFC 0183 Aries agent credential revocation and revocation notification
 
    Background: create a schema and credential definition in order to issue a credential
       Given "Acme" has a public did

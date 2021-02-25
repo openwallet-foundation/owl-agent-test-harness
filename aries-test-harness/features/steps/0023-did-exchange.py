@@ -54,8 +54,7 @@ def step_impl(context, responder):
     if context.responder_name != responder:
         context.responder_name = responder
 
-#@given('"{requester}" has a public DID')
-@when('"{requester}" publishes a public DID')
+@given('"{requester}" has a resolvable DID')
 def step_impl(context, requester):
     requester_url = context.config.userdata.get(requester)
 
@@ -63,21 +62,77 @@ def step_impl(context, requester):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
+    context.requester_public_did = resp_json
+
+    # to make it real world. Set the endpoint on the did. 
+    #/wallet/set-did-endpoint
+
+
+@given('"{responder}" aquires the resolvable DID')
+def step_impl(context, responder):
+    # Get the Reponders public did. 
+    context.requester_did = context.requester_public_did['did']
+
+
+@when('"{requester}" sends the request to "{responder}" with the public DID')
+def step_impl(context, requester, responder):
+    requester_url = context.config.userdata.get(requester)
+
+    requester_did = context.requester_did
+
+    data = {
+        "their_public_did": requester_did
+    }
+
+    (resp_status, resp_text) = agent_backchannel_POST(requester_url + "/agent/command/", "did-exchange", operation="create-request-resolvable-did", data=data)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    resp_json = json.loads(resp_text)
+    requester_did_doc = resp_json
+
+    context.requester_public_did_doc = requester_did_doc
+
+    # get the requesters connection id
+    request_id = context.requester_public_did_doc["@id"]
+    (resp_status, resp_text) = agent_backchannel_GET(requester_url + "/agent/response/", "did-exchange", id=request_id)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+
+    # setup the initial connection id dictionary if one doesn't exist.
+    if not hasattr(context, 'connection_id_dict'):
+        context.connection_id_dict = {}
+
+    # Check for responder key existing in dict
+    if responder not in context.connection_id_dict:
+        context.connection_id_dict[requester] = {}
+
+    # Some agents (afgo) do not have a webhook that give a connection id at this point in the protocol. 
+    # If it is not here, skip this and check for one later in the process and add it then.
+    if "connection_id" in resp_text:
+        context.connection_id_dict[requester][context.responder_name] = resp_json["connection_id"]
+
+
+@when('"{responder}" receives the request with their public DID')
+def step_impl(context, responder):
+    responder_url = context.config.userdata.get(responder)
+
+    (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "did-exchange", operation="receive-request-resolvable-did", data=context.requester_public_did_doc)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+
+    resp_json = json.loads(resp_text)
     responder_did = resp_json
 
-    context.requester_public_did = responder_did["did"]
+    # setup the initial connection id dictionary if one doesn't exist.
+    if not hasattr(context, 'connection_id_dict'):
+        context.connection_id_dict = {}
 
-    # if "schema" not in context:
-    #     # check for a schema already loaded in the context. If it is not, load the template
-    #     if "schema" not in context:
-    #         context.schema = SCHEMA_TEMPLATE.copy()
-    #         context.schema["schema_name"] = context.schema["schema_name"] + issuer
+    # Check for responder key existing in dict
+    if responder not in context.connection_id_dict:
+        context.connection_id_dict[responder] = {}
 
-    # if 'issuer_did_dict' in context:
-    #     context.issuer_did_dict[context.schema['schema_name']] = issuer_did["did"]
-    # else:
-    #     context.issuer_did_dict = {context.schema['schema_name']: issuer_did["did"]}
-
+    # If it is not here, skip this and check for one later in the process and add it then.
+    if "connection_id" in resp_text:
+        context.connection_id_dict[responder][context.requester_name] = resp_json["connection_id"]
 
 
 @when('"{responder}" sends an explicit invitation with a public DID')
@@ -137,34 +192,17 @@ def step_impl(context, requester):
         context.connection_id_dict[requester] = {}
 
     context.connection_id_dict[requester] = {context.responder_name: resp_json["connection_id"]}
-    #context.connection_id_dict[requester][context.responder_name] = resp_json["connection_id"]
-
-    # Check to see if the requester_name exists in context. If not, antother suite is using it so set the requester name and url
-    #if not hasattr(context, 'requester_name'):
-    #    context.requester_url = requester_url
-    #    context.requester_name = requester
-
-    # get connection and verify status
-    #assert expected_agent_state(requester_url, "didexchange", context.connection_id_dict[requester][context.responder_name], "invited")
 
 
 @when('"{requester}" sends the request to "{responder}"')
 def step_impl(context, requester, responder):
     requester_connection_id = context.connection_id_dict[requester][responder]
-    #responder_connection_id = context.connection_id_dict[responder][requester]
-
-    # get connection and verify status
-    #assert expected_agent_state(context.requester_url, "didexchange", requester_connection_id, "invitation-received")
-    #assert expected_agent_state(responder_url, "connection", responder_connection_id, "invitation-sent")
 
     (resp_status, resp_text) = agent_backchannel_POST(context.requester_url + "/agent/command/", "did-exchange", operation="send-request", id=requester_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "request-sent"
-
-    # get connection and verify status
-    #assert expected_agent_state(context.requester_url, "connection", requester_connection_id, "request-sent")
 
 
 @when('"{responder}" receives the request')
@@ -206,17 +244,7 @@ def step_impl(context, responder):
 
     # responder already recieved the connection request in the send-request call so get connection and verify status.
     assert expected_agent_state(responder_url, "did-exchange", responder_connection_id, "request-received")
-    #invitation_id = context.responder_invitation["@id"]
-    #assert expected_agent_state(responder_url, "connection", responder_connection_id, "request-received")
-    #(resp_status, resp_text) = agent_backchannel_GET(context.responder_url + "/agent/response/", "did-exchange", id=invitation_id)
-    #(resp_status, resp_text) = agent_backchannel_POST(context.responder_url + "/agent/command/", "did-exchange", operation="receive-request", id=responder_connection_id)
-    #assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
-    #resp_json = json.loads(resp_text)
-    #assert resp_json["state"] == "request-received"
-
-    # get connection and verify status
-    #assert expected_agent_state(requester_url, "connection", requester_connection_id, "request-recieved")
 
 
 @when('"{responder}" sends a response to "{requester}"')
@@ -224,18 +252,11 @@ def step_impl(context, responder, requester):
     responder_connection_id = context.connection_id_dict[responder][requester]
     responder_url = context.config.userdata.get(responder)
 
-    # get connection and verify status
-    #assert expected_agent_state(responder_url, "connection", responder_connection_id, "request-recieved")
-    #assert expected_agent_state(requester_url, "connection", requester_connection_id, "request-sent")
-
     (resp_status, resp_text) = agent_backchannel_POST(responder_url + "/agent/command/", "did-exchange", operation="send-response", id=responder_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "response-sent"
-
-    # get connection and verify status
-    #assert expected_agent_state(context.responder_url, "connection", responder_connection_id, "response-sent")
 
 
 @when('"{responder}" sends a response to "{requester}" which produces a problem_report')
@@ -252,7 +273,8 @@ def step_impl(context, requester):
     requester_connection_id = context.connection_id_dict[requester][context.responder_name]
 
     # This should be response-received but is completed. Chat with SKlump on this issue.
-    assert expected_agent_state(context.requester_url, "connection", requester_connection_id, "completed")
+    #assert expected_agent_state(context.requester_url, "connection", requester_connection_id, "completed")
+    assert expected_agent_state(context.requester_url, "did-exchange", requester_connection_id, "completed")
 
 
 @when('"{requester}" sends complete to "{responder}"')
