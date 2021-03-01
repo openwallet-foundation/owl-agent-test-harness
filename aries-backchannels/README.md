@@ -61,7 +61,7 @@ The following lists the requirements for building AATH compatible docker images:
 - the Dockerfile for each Test Agent (TA) must be called `Dockerfile.<TA>`. For example `Dockerfile.acapy`, `Dockerfile.vcx`.
   - The `./manage` script uses the `<TA>` to validate command line arguments, to tag the agent, and for invoking docker build and run operations.
   - A backchannel may have multiple TA configurations and versions, each based on a different Dockerfile.
-    - See the `acapy` backchannel where there the `Dockerfile.acapy` builds the latest released version of ACA-Py, where `Dockerfile.acapy-master` builds from the ACA-Py `master` branch.
+    - See the `acapy` backchannel where there the `Dockerfile.acapy` builds the latest released version of ACA-Py, where `Dockerfile.acapy-main` builds from the ACA-Py `main` branch.
   - TAs docker images are tagged with their `<TA>` name.
 - The Dockerfiles must be located in a predefined location in this repo, currently in folders in the `aries-backchannels` folder.
   - The `./manage` script looks for the TA Dockerfiles in those folders.

@@ -15,8 +15,8 @@ ENV RUNMODE=docker
 
 COPY python/requirements.txt python/
 RUN pip install -r python/requirements.txt
-COPY acapy/requirements-master.txt acapy/
-RUN pip install -r acapy/requirements-master.txt
+COPY acapy/requirements-main.txt acapy/
+RUN pip install -r acapy/requirements-main.txt
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 COPY python python
