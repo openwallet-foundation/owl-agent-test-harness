@@ -20,7 +20,7 @@ jobs:
       - name: run-indy-tails-server
         uses: ./test-harness/actions/run-indy-tails-server
       - name: run-test-harness-wo-reports
-        uses: ./test-harness/actions/run-test-harness
+        uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
           DEFAULT_AGENT: dotnet-master
           BOB_AGENT: dotnet-master

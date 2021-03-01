@@ -22,8 +22,8 @@ jobs:
       - name: run-test-harness
         uses: ./test-harness/actions/run-test-harness
         with:
-          DEFAULT_AGENT: acapy-master
-          BOB_AGENT: acapy-master
+          DEFAULT_AGENT: acapy-main
+          BOB_AGENT: acapy-main
           TEST_SCOPE: ""
           REPORTING: "-r allure -e comparison"
           REPORT_PROJECT: acapy-full

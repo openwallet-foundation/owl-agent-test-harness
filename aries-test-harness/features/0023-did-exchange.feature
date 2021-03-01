@@ -1,4 +1,4 @@
-@RFC0023
+@RFC0023 @AIP20
 Feature: RFC 0023 Establishing Connections with DID Exchange
    In order establish a connection with two parties,
    As a responder or a requester,

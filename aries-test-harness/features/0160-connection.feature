@@ -1,6 +1,7 @@
+@RFC0160 @AIP10
 Feature: RFC 0160 Aries agent connection functions
 
-   @T001-RFC0160 @AIP10 @RFC0160 @critical @AcceptanceTest
+   @T001-RFC0160 @AIP10 @critical @AcceptanceTest
    Scenario Outline: establish a connection between two agents
       Given we have "2" agents
          | name  | role    |
@@ -22,7 +23,7 @@ Feature: RFC 0160 Aries agent connection functions
                         # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
                         # the agents under test implement acks.
 
-   @T001.2-RFC0160 @AIP10 @RFC0160 @critical @AcceptanceTest
+   @T001.2-RFC0160 @critical @AcceptanceTest
    Scenario Outline: establish a connection between two agents with role reversal
       Given we have "2" agents
          | name  | role    |
@@ -45,7 +46,7 @@ Feature: RFC 0160 Aries agent connection functions
                         # the agents under test implement acks.
 
 
-   @T002-RFC0160 @AIP10 @RFC0160 @critical @AcceptanceTest
+   @T002-RFC0160 @critical @AcceptanceTest
    Scenario Outline: Connection established between two agents but inviter sends next message to establish full connection state
       Given we have "2" agents
          | name  | role    |
@@ -67,7 +68,7 @@ Feature: RFC 0160 Aries agent connection functions
                         # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
                         # the agents under test implement acks.
 
-   @T003-RFC0160 @AIP10 @RFC0160 @normal @SingleUseInvite @ExceptionTest @allure.issue:https://github.com/hyperledger/aries-cloudagent-python/issues/418
+   @T003-RFC0160 @normal @SingleUseInvite @ExceptionTest @allure.issue:https://github.com/hyperledger/aries-cloudagent-python/issues/418
    Scenario: Inviter Sends invitation for one agent second agent tries after connection
       Given we have "3" agents
          | name    | role              |
@@ -84,7 +85,7 @@ Feature: RFC 0160 Aries agent connection functions
       When "Mallory" sends a connection request to "Acme" based on the connection invitation
       Then "Acme" sends a request_not_accepted error
 
-   @T004-RFC0160 @AIP10 @RFC0160 @normal @SingleUseInvite @ExceptionTest @allure.issue:https://github.com/hyperledger/aries-cloudagent-python/issues/418
+   @T004-RFC0160 @normal @SingleUseInvite @ExceptionTest @allure.issue:https://github.com/hyperledger/aries-cloudagent-python/issues/418
    Scenario: Inviter Sends invitation for one agent second agent tries during first share phase
       Given we have "3" agents
          | name    | role              |
@@ -97,7 +98,7 @@ Feature: RFC 0160 Aries agent connection functions
       When "Mallory" sends a connection request to "Acme" based on the connection invitation
       Then "Acme" sends a request_not_accepted error
 
-   @T005-RFC0160 @AIP10 @RFC0160 @wip @minor @MultiUseInvite @DerivedFunctionalTest @NeedsReview
+   @T005-RFC0160 @wip @minor @MultiUseInvite @DerivedFunctionalTest @NeedsReview
    Scenario: Inviter Sends invitation for multiple agents
       Given we have "3" agents
          | name    | role              |
@@ -114,7 +115,7 @@ Feature: RFC 0160 Aries agent connection functions
    #And "Acme" and "Bob" are able to complete the connection
    #And "Acme" and "Mallory" are able to complete the connection
 
-   @T006-RFC0160 @AIP10 @RFC0160 @trivial @DerivedFunctionalTest
+   @T006-RFC0160 @trivial @DerivedFunctionalTest
    Scenario: Establish a connection between two agents who already have a connection initiated from invitee
       Given we have "2" agents
          | name  | role    |
@@ -125,7 +126,7 @@ Feature: RFC 0160 Aries agent connection functions
       And "Bob" and "Acme" complete the connection process
       Then "Acme" and "Bob" have another connection
 
-   @T007-RFC0160 @AIP10 @RFC0160 @wip @normal @ExceptionTest @SingleTryOnException @NeedsReview
+   @T007-RFC0160 @wip @normal @ExceptionTest @SingleTryOnException @NeedsReview
    Scenario Outline: Establish a connection between two agents but gets a request not accepted report problem message
       Given we have "2" agents
          | name  | role    |
