@@ -124,7 +124,7 @@ AATH has the capability of checking whether the test results change from day-to-
 To enable this checking run AATH as follows:
 
 ```bash
-PROJECT_ID=acapy ./manage run -d acapy-master -r allure -e comparison -t @AcceptanceTest -t ~@wip
+PROJECT_ID=acapy ./manage run -d acapy-main -r allure -e comparison -t @AcceptanceTest -t ~@wip
 ```
 
 In the above, `PROJECT_ID` is the name of the Allure project (`acapy` in the example above), the parameter `-e comparison` is what invokes the comparison (can only be used with the `-r allure` option) and the test scope (the `-t` parameters) must match what is expected for the specified `PROJECT_ID` (as used in the automated GitHub actions).

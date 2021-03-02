@@ -260,6 +260,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # This is an did-exchange message based on a Non-Public DID invitation
             invitation_id = message["invitation_msg_id"]
             push_resource(invitation_id, "didexchange-msg", message)
+        elif "request_id" in message:
+            # This is a did-exchange message based on a Public DID non-invitation
+            request_id = message["request_id"]
+            push_resource(request_id, "didexchange-msg", message)
         else:
             connection_id = message["connection_id"]
             push_resource(connection_id, "connection-msg", message)
@@ -544,6 +548,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif operation == "send-response":
             agent_operation = agent_operation + rec_id + "/accept-request"
+
+        elif operation == "create-request-resolvable-did":
+            their_public_did = data["their_public_did"]
+            agent_operation = agent_operation + "create-request?their_public_did=" + their_public_did
+            data = None
+
+        elif operation == "receive-request-resolvable-did":
+            agent_operation = agent_operation + "receive-request"
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -1102,6 +1114,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             if "state" in resp_json:
                 agent_state = resp_json["state"]
 
+                # if "did_exchange" in topic:
+                #     if "rfc23_state" in resp_json:
+                #         rfc_state = resp_json["rfc23_state"]
+                #     else:
+                #         rfc_state = resp_json["connection"]["rfc23_state"]
+                #     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + rfc_state + '"')
+                # else:
                 # Check the thier_role property in the data and set the calling method to swap states to the correct role for DID Exchange
                 if "their_role" in data:
                     #if resp_json["connection"]["their_role"] == "invitee":

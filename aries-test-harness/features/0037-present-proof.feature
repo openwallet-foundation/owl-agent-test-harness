@@ -1,6 +1,7 @@
+@RFC0037
 Feature: RFC 0037 Aries agent present proof
 
-   @T001-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Indy @RFC0037
+   @T001-RFC0037 @AIP10 @critical @AcceptanceTest @Indy
    Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged
       Given "2" agents
          | name  | role     |
@@ -18,7 +19,7 @@ Feature: RFC 0037 Aries agent present proof
          | Acme   |
          | Faber  |
 
-   @T001.1-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Indy @RFC0037 @DIDExchangeConnection
+   @T001.1-RFC0037 @AIP20 @critical @AcceptanceTest @Indy @DIDExchangeConnection
    Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged with a DID Exchange Connection
       Given "2" agents
          | name  | role     |
@@ -36,7 +37,7 @@ Feature: RFC 0037 Aries agent present proof
          | Acme   |
          | Faber  |
 
-   @T001.2-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Indy @RFC0037
+   @T001.2-RFC0037 @AIP10 @critical @AcceptanceTest @Schema_DriversLicense @Indy
    Scenario Outline: Present Proof of specific types and proof is acknowledged with a Drivers License credential type
       Given "2" agents
          | name  | role     |
@@ -55,7 +56,7 @@ Feature: RFC 0037 Aries agent present proof
          | Faber  | Data_DL_MinValues | proof_request_DL_age_over_19 | presentation_DL_age_over_19 |
 
 
-   @T001.3-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Indy @RFC0037
+   @T001.3-RFC0037 @AIP10 @critical @AcceptanceTest @Schema_Biological_Indicators @Indy
    Scenario Outline: Present Proof of specific types and proof is acknowledged with a Biological Indicators credential type
       Given "2" agents
          | name  | role     |
@@ -72,7 +73,7 @@ Feature: RFC 0037 Aries agent present proof
          | issuer | credential_data          | request for proof                    | presentation                        |
          | Acme   | Data_BI_NormalizedValues | proof_request_biological_indicator_a | presentation_biological_indicator_a |
 
-   @T001.4-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_Biological_Indicators @Schema_Health_Consent @Indy @RFC0037
+   @T001.4-RFC0037 @AIP10 @critical @AcceptanceTest @Schema_Biological_Indicators @Schema_Health_Consent @Indy
    Scenario Outline: Present Proof of specific types and proof is acknowledged with multiple credential types
       Given "2" agents
          | name  | role     |
@@ -91,7 +92,7 @@ Feature: RFC 0037 Aries agent present proof
 
 
    # See issue #90 for when work on this test will resume - https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/bcgov/aries-agent-test-harness/90
-   @T002-AIP10-RFC0037 @P1 @critical @AcceptanceTest @wip @NeedsReview @Indy @RFC0037
+   @T002-RFC0037 @AIP10 @wip @critical @AcceptanceTest @NeedsReview @Indy
    Scenario Outline: Present Proof where the prover and verifier are connectionless, the prover does not propose a presentation of the proof, and is acknowledged
       Given "2" agents
          | name  | role     |
@@ -109,7 +110,7 @@ Feature: RFC 0037 Aries agent present proof
          | Acme   |
 
 
-   @T003-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Indy @RFC0037 @ProofProposal
+   @T003-RFC0037 @AIP10 @critical @AcceptanceTest @Schema_DriversLicense @Indy @ProofProposal
    Scenario Outline: Present Proof where the prover has proposed the presentation of proof in response to a presentation request and is acknowledged
       Given "2" agents
          | name  | role     |
@@ -130,7 +131,7 @@ Feature: RFC 0037 Aries agent present proof
          | Faber  | Data_DL_MinValues | proof_request_DL_age_over_19 | proposal_DL_address     | proof_request_DL_address         | presentation_DL_address     |
 
 
-   @T003.1-AIP10-RFC0037 @P1 @critical @AcceptanceTest @Schema_DriversLicense @Schema_Health_ID @Indy @RFC0037 @ProofProposal
+   @T003.1-RFC0037 @AIP10 @critical @AcceptanceTest @Schema_DriversLicense @Schema_Health_ID @Indy @ProofProposal
    Scenario Outline: Present Proof where the prover has proposed the presentation of proof from a different credential in response to a presentation request and is acknowledged
       Given "2" agents
          | name  | role     |
@@ -151,7 +152,7 @@ Feature: RFC 0037 Aries agent present proof
          | Faber  | Data_HealthID_NormalizedValues | proof_request_Health_ID_Num | proposal_DL_address    | proof_request_DL_address         | presentation_DL_address    |
 
    # See issue #90 for when work on this test will resume - https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/bcgov/aries-agent-test-harness/90
-   @T004-AIP10-RFC0037 @P1 @critical @AcceptanceTest @wip @NeedsReview @RFC0037
+   @T004-RFC0037 @AIP10 @wip @critical @AcceptanceTest @NeedsReview
    Scenario Outline: Present Proof where the verifier and prover are connectionless, prover has proposed the presentation of proof, and is acknowledged
       Given "2" agents
          | name  | role     |
@@ -171,7 +172,7 @@ Feature: RFC 0037 Aries agent present proof
          | Acme   |
          | Faber  |
 
-   @T005-AIP10-RFC0037 @AcceptanceTest @ExceptionTest @P2 @normal @Schema_DriversLicense @Indy @wip @NeedsReview @RFC0037
+   @T005-RFC0037 @AIP10 @wip @normal @AcceptanceTest @ExceptionTest @Schema_DriversLicense @Indy @NeedsReview
    Scenario Outline: Present Proof where the verifier rejects the presentation of the proof
       Given "2" agents
          | name  | role     |
@@ -188,7 +189,7 @@ Feature: RFC 0037 Aries agent present proof
          | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_incorrect_address |
 
 
-   @T006-AIP10-RFC0037 @P3 @minor @AcceptanceTest @Schema_Health_ID @Indy @RFC0037 @ProofProposal
+   @T006-RFC0037 @AIP10 @minor @AcceptanceTest @Schema_Health_ID @Indy @ProofProposal
    Scenario Outline: Present Proof where the prover starts with a proposal the presentation of proof and is acknowledged
       Given "2" agents
          | name  | role     |

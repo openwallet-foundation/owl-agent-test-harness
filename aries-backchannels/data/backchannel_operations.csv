@@ -90,6 +90,8 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0036 Issue Credential,X,,credential,GET,revoked,Y,,Get a credentials revoked status ,credential_id,,revoked
 0434 Out of Band,X,,out-of-band,POST,send-invitation-message,,Y,Create an OOB invitation ,,invitation,invitation
 0434 Out of Band,X,,out-of-band,POST,receive-invitation,,Y,Receive invitation,,invitation,"state, connection_id"
+0023 DID Exchange,X,,did-exchange,POST,create-request-resolvable-did,,Y,create a public did,,responders_public_did,did_doc
+0023 DID Exchange,X,,did-exchange,POST,receive-request-resolvable-did,,Y,receive or get the public did,,did_doc,connection_record
 0023 DID Exchange,X,,did-exchange,POST,send-request,Y,,Accept invitation and send a request,connection_id,,state
 0023 DID Exchange,X,,did-exchange,POST,send-response,Y,,Send a did exchange response,connection_id,,state
 0023 DID Exchange,X,,did-exchange,GET,,Y,,Fetch a specific DID Exchange connection record by ID,connection_id,,connection_record

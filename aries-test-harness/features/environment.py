@@ -9,21 +9,24 @@ import json
 
 def before_scenario(context, scenario):
     
-    # Check if the @WillFail tag exists
-    if 'WillFail' in context.tags :
-        
-        # if so get the @OutstandingBug..bug#..bugURL tag
-        s_issue_info = [i for i in context.tags if 'OutstandingBug' in i] 
-        s_issue_info = s_issue_info[0]
-        
-        # Parse out the Bug number and the URL based on the double . separator.
-        l_issue_info = s_issue_info.split("..")
-        s_issue_num = l_issue_info[1]
-        s_issue_url = l_issue_info[2]
+    # Check if the scenario has an issue associated
+    for tag in context.tags:
+        if '.issue:' in tag:
+            
+            # Parse out the URL in the issue tag.
+            l_issue_info = tag.split(":")
+            s_issue_url = 'https:' + l_issue_info[2]
 
-        # Tell the user the scenario will fail, the bug number, and the URL to the bug
-        print ('NOTE: Test \"' + scenario.name + '\" WILL FAIL due to an outstanding issue, ' + s_issue_num + ', not yet resolved.')
-        print ('For more information see issue details at ' + s_issue_url)
+            #get the test id for this scenario
+            for tag in context.tags:
+                if tag.startswith("T"):
+                    test_id = tag
+                    break
+
+            # Tell the user the scenario will fail and the URL to the issue
+            print ('NOTE: Test ' + test_id + ':' + scenario.name + ', WILL FAIL due to an outstanding issue not yet resolved.')
+            print ('For more information see issue details at ' + s_issue_url)
+            break
 
     # Check if the @MultiUseInvite tag exists
     if 'MultiUseInvite' in context.tags :
