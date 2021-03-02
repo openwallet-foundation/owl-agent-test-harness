@@ -96,7 +96,8 @@ def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt):
         if resp_status == 200:
             resp_json = json.loads(resp_text)
             state = resp_json["state"]
-            return state in status_txt
+            if state in status_txt:
+                return True
         sleep(0.2)
 
     print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
