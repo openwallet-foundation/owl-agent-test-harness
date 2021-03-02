@@ -768,7 +768,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             #resp_text = json.dumps(credential_definition)
             #return (resp_status, resp_text)
-            #TODO: change to actual method call
             return (200, '{ "id": "111" }')
 
         elif op["topic"] == "issue-credential":
@@ -788,9 +787,14 @@ class AfGoAgentBackchannel(AgentBackchannel):
             else:
                 agent_operation = "/verifiable/credential"# + rec_id
 
+            #No quivalent GET in afgo
+            #afgo only provides /actions GET
             #(resp_status, resp_text) = await self.admin_GET(agent_operation)
             #return (resp_status, resp_text)
-            return (200, '{"referent": "111", "schema_id": "111", "cred_def_id": "222"}')
+
+            # prepare dummy response
+            resp_json = {"referent": None, "schema_id": None, "cred_def_id": None}
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "proof":
            #   # swap thread id for pres ex id from the webhook
