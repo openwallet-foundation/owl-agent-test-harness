@@ -44,6 +44,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
     afgo_version = None
     current_webhook_topic = None
     did_data = None
+    t_state = 0
 
     def __init__(
         self, 
@@ -337,8 +338,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             #log_msg(resp_status, resp_text)
             #return (resp_status, resp_text)
-            #TODO: change to method call
-            return (200, '{ "schema_id": "111" }')
+
+            resp_json = { "schema_id": "" }
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "credential-definition":
             # POST operation is to create a new cred def
@@ -349,8 +351,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             #log_msg(resp_status, resp_text)
             #return (resp_status, resp_text)
-            #TODO: change to method call
-            return (200, '{ "credential_definition_id": "222" }')
+            resp_json = { "credential_definition_id": "" }
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "issue-credential":
             (resp_status, resp_text) = await self.handle_issue_credential_POST(op, rec_id=rec_id, data=data)
@@ -633,12 +635,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if operation == "send-request":
                 agent_operation = f"/presentproof/{operation}-presentation"
 
-                return (200, '{"state": "request-sent", "thread_id": "111"}')
-
-            #elif operation == "send-presentation":
-            #    agent_operation = f"/presentproof/{operation}"
-
-            #    return (200, '{"state": "presentation-sent"}')
+                resp_json = {"state": "request-sent", "thread_id": ""}
+                return (200, json.dumps(resp_json))
 
         else:
             if operation == "remove":
@@ -748,27 +746,31 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "schema":
             schema_id = rec_id
-            agent_operation = "/schemas/" + schema_id
 
-            # afgo has not did schema
+            if schema_id is None:
+                agent_operation = "/schemas/schemas"
+            else:
+                agent_operation = "/schemas/" + schema_id
+
+            # afgo not have did schema
             # dummy schema
             schema = { "id": "did:", "name": "", "version": self.afgo_version } 
             return (200, json.dumps(schema))
 
         elif op["topic"] == "credential-definition":
             cred_def_id = rec_id
-            agent_operation = "/credential-definitions/" + cred_def_id
+
+            if cred_def_id is None:
+                agent_operation = "/credential-definitions/"
+            else:
+                agent_operation = "/credential-definitions/" + cred_def_id
 
             #(resp_status, resp_text) = await self.admin_GET(agent_operation)
             #if resp_status != 200:
             #    return (resp_status, resp_text)
 
-            #resp_json = json.loads(resp_text)
-            #credential_definition = resp_json["credential_definition"]
-
-            #resp_text = json.dumps(credential_definition)
-            #return (resp_status, resp_text)
-            return (200, '{ "id": "111" }')
+            resp_json = {"id": None }
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "issue-credential":
             # swap thread id for cred ex id from the webhook
@@ -778,7 +780,17 @@ class AfGoAgentBackchannel(AgentBackchannel):
             #(resp_status, resp_text) = await self.admin_GET(agent_operation)
             #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             #return (resp_status, resp_text)
-            return (200, '{"state": "offer-received"}')
+
+            if self.t_state == 0:
+                resp_json = {"state": "offer-received"}
+            elif self.t_state == 1:
+                resp_json = {"state": "request-received"}
+            else:
+                resp_json = {"state": "credential-received"}
+
+            self.t_state = self.t_state + 1
+
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "credential":
             operation = op["operation"]
@@ -793,7 +805,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             #return (resp_status, resp_text)
 
             # prepare dummy response
-            resp_json = {"referent": None, "schema_id": None, "cred_def_id": None}
+            resp_json = {"referent": rec_id, "schema_id": "", "cred_def_id": ""}
             return (200, json.dumps(resp_json))
 
         elif op["topic"] == "proof":
@@ -805,8 +817,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             #  if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             #  return (resp_status, resp_text)
 
-            #TODO: change to method call
-            return (200, '{"state": "request-received"}')
+            resp_json = {"state": "request-received"}
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "revocation":
             operation = op["operation"]
