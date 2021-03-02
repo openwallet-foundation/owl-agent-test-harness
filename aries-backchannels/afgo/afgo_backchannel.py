@@ -505,7 +505,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         if rec_id is None:
             if data is None:
-                agent_operation = f"/issue-credential/{operation}"
+                agent_operation = f"/{topic}/{operation}"
             else:
                 if operation == "send-proposal":
                     created_data = self.did_data
@@ -527,48 +527,53 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
                     return (resp_status, resp_text)
 
-                elif operation == "send-offer":
-                    created_data = self.did_data
-                    created_data["offer_credential"] = data
-
-                    data = created_data
-                    agent_operation = f"/issuecredential/{operation}"
-               
-                    log_msg(agent_operation, data)
-                    (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
-                    log_msg(resp_status, resp_text)
-                    resp_json = json.loads(resp_text)
-
-                    if resp_status == 200:
-                        print(resp_text)
-                        resp_json["state"] = "offer-sent"
-                        resp_json["thread_id"] = None #resp_json["piid"]
-
-                        resp_text = json.dumps(resp_json)
-
-                    return (resp_status, resp_text)
-
-               #   elif operation == "send-request":
-                    #  agent_operation = "/issuecredential/accept-request"
-                    #  return (200, '{"state": "request-sent"}')
-
         else:
-            if operation == "store":
+            if operation == "send-offer":
+                created_data = self.did_data
+                created_data["offer_credential"] = {}
+
+                data = created_data
+                agent_operation = f"/{topic}/{operation}"
+
+                log_msg(agent_operation, data)
+                (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+                log_msg(resp_status, resp_text)
+                resp_json = json.loads(resp_text)
+
+                if resp_status == 200:
+                    resp_json["state"] = "offer-sent"
+                    resp_json["thread_id"] = None #resp_json["piid"]
+
+                    resp_text = json.dumps(resp_json)
+
+                return (resp_status, resp_text)
+
+            elif operation == "store":
                 # swap thread id for cred ex id from the webhook
                 #cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
-                #TODO: change to method call
-                agent_operation = "/issuecredential/send-request" #+ cred_ex_id + "/" + operation
+                agent_operation = "/{topic}/send-request" #+ cred_ex_id + "/" + operation
                 return (200, '{"state": "done", "credential_id": "111"}')
                 
             elif operation == "send-request":
-                #TODO: change to method call
-                agent_operation = "/issuecredential/accept-request"
+                agent_operation = "/{topic}/accept-request"
                 return (200, '{"state": "request-sent"}')
 
             elif operation == "issue":
-                #TODO: change to method call
-                agent_operation = "/issuecredential/issue-request"
-                return (200, '{"state": "credential-issued"}')
+                agent_operation = "/{topic}/{rec_id}/accept-credential"
+                data = {
+                    "names": []
+                }
+
+                log_msg(agent_operation, data)
+                (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+                log_msg(resp_status, resp_text)
+
+                if resp_status == 200:
+                    resp_json = json.loads(resp_text)
+                    resp_json["state"] = "credential-issued"
+                    resp_text = json.dumps(resp_json)
+
+                return (resp_status, resp_text)
 
             # Make Special provisions for revoke since it is passing multiple query params not just one id.
             elif operation == "revoke":
@@ -718,30 +723,20 @@ class AfGoAgentBackchannel(AgentBackchannel):
             agent_operation = "/connections"
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            #  if resp_status != 200:
-               #  return (resp_status, resp_text)
-               #
-            #  resp_json = json.loads(resp_text)
-            did = { 'did': 'some_did_values' }
-
-            resp_text = json.dumps(did)
+            if resp_status == 200:
+                did = { 'did': 'did:' }
+                resp_text = json.dumps(did)
+           
             return (resp_status, resp_text)
 
         elif op["topic"] == "schema":
             schema_id = rec_id
             agent_operation = "/schemas/" + schema_id
 
-            #(resp_status, resp_text) = await self.admin_GET(agent_operation)
-            #if resp_status != 200:
-            #    return (resp_status, resp_text)
-
-            #resp_json = json.loads(resp_text)
-            #schema = resp_json["schema"]
-
-            #resp_text = json.dumps(schema)
-            #return (resp_status, resp_text)
-            #TODO: change to actual method call
-            return (200, '{ "id": "111", "name": "nameone", "version": "1.0"}')
+            # afgo has not did schema
+            # dummy schema
+            schema = { "id": "did:", "name": "", "version": self.afgo_version } 
+            return (200, json.dumps(schema))
 
         elif op["topic"] == "credential-definition":
             cred_def_id = rec_id
