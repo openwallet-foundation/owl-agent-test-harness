@@ -503,6 +503,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     "their_did": pre_json["TheirDID"]
                 }
 
+        print(f'==== {operation} == {rec_id} == {data} =====')
         if rec_id is None:
             if data is None:
                 agent_operation = f"/{topic}/{operation}"
@@ -549,17 +550,33 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 return (resp_status, resp_text)
 
             elif operation == "store":
-                # swap thread id for cred ex id from the webhook
-                #cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
-                agent_operation = "/{topic}/send-request" #+ cred_ex_id + "/" + operation
-                return (200, '{"state": "done", "credential_id": "111"}')
+                agent_operation = ""
+
+                state_cred_id = {
+                    "state": "done",
+                    "credential_id": rec_id
+                }
+
+                return (200, json.dumps(state_cred_id))
                 
             elif operation == "send-request":
-                agent_operation = "/{topic}/accept-request"
-                return (200, '{"state": "request-sent"}')
+                agent_operation = f"/{topic}/{operation}"
+                data = self.did_data
+                data["request_credential"] = {}
+
+                log_msg(agent_operation, data)
+                (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+                log_msg(resp_status, resp_text)
+
+                if resp_status == 200:
+                    resp_json = json.loads(resp_text)
+                    resp_json["state"] = "request-sent"
+                    resp_text = json.dumps(resp_json)
+
+                return (resp_status, resp_text)
 
             elif operation == "issue":
-                agent_operation = "/{topic}/{rec_id}/accept-credential"
+                agent_operation = f"/{topic}/{rec_id}/accept-credential"
                 data = {
                     "names": []
                 }
