@@ -44,7 +44,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
     afgo_version = None
     current_webhook_topic = None
     did_data = None
-    t_state = 0
+    wehhook_state = None
 
     def __init__(
         self, 
@@ -81,6 +81,12 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "credential_issued": "credential-issued",
             "credential_received": "credential-received",
             "credential_acked": "done"
+        }
+
+        self.tempIssureCredentialStateTranslationDict = {
+            "proposal-sent": "offer-received",
+            "offer-sent": "request-received",
+            "request-sent": "credential-received"
         }
 
         # Aca-py : RFC
@@ -218,6 +224,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
     async def handle_issue_credential(self, message):
         thread_id = message["message"]["Properties"]["piid"]
+
+        # if has state
+        if "StateID" in message["message"]: 
+            self.webhook_state = message["message"]["StateID"]
+
         push_resource(thread_id, "credential-msg", message)
         log_msg(f'Received Issue Credential Webhook message: {json.dumps(message)}')
         if "revocation_id" in message: # also push as a revocation message
@@ -505,7 +516,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     "their_did": pre_json["TheirDID"]
                 }
 
-        print(f'==== {operation} == {rec_id} == {data} =====')
         if rec_id is None:
             if data is None:
                 agent_operation = f"/{topic}/{operation}"
@@ -781,15 +791,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             #return (resp_status, resp_text)
 
-            if self.t_state == 0:
-                resp_json = {"state": "offer-received"}
-            elif self.t_state == 1:
-                resp_json = {"state": "request-received"}
-            else:
-                resp_json = {"state": "credential-received"}
-
-            self.t_state = self.t_state + 1
-
+            resp_json = {"state": self.tempIssureCredentialStateTranslationDict[self.webhook_state]}
             return (200, json.dumps(resp_json))
 
         elif op["topic"] == "credential":
