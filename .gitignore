@@ -25,3 +25,8 @@ allure-report/
 allure-results/
 New-KGR-File.json
 
+# Jekyll
+_site/
+.jekyll-metadata
+.env
+Gemfile.lock

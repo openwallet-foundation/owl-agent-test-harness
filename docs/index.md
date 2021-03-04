@@ -19,21 +19,23 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 ## Summary
 
-Results last updated: Wed Mar 3 16:48:40 PST 2021
+Results last updated: Wed Mar 3 17:24:00 PST 2021
 
-|   #   | Runset Name     | Runset ID       | Passed Tests |
-| :---: | :-------------: | :-------------: | :-------------: |
-| 1 | [ACA-PY Issuer/Verifier and Aries Framework Go Holder/Prover](#1.-acapy-issuerverifier-and-aries-framework-go-holderprover) | acapy-afgo | **0 / 5** ( 0% ) |
-| 2 | [acapy-dotnet](#2.-acapydotnet) | acapy-dotnet | **25 / 25** ( 100% ) |
-| 3 | [acapy-full](#3.-acapyfull) | acapy-full | **41 / 81** ( 50% ) |
-| 4 | [acapy-javascript](#4.-acapyjavascript) | acapy-javascript | **15 / 30** ( 50% ) |
-| 5 | [acapy](#5.-acapy) | acapy | **40 / 41** ( 97% ) |
-| 6 | [afgo](#6.-afgo) | afgo | **3 / 5** ( 60% ) |
-| 7 | [dotnet](#7.-dotnet) | dotnet | **13 / 13** ( 100% ) |
-| 8 | [javascript-dotnet](#8.-javascriptdotnet) | javascript-dotnet | **13 / 13** ( 100% ) |
-| 9 | [javascript](#9.-javascript) | javascript | **18 / 18** ( 100% ) |
+|   #   | Runset Name     | Passed Tests |
+| :---: | :-------------: | :-------------: |
+| 1 | [ACA-PY Issuer/Verifier and Aries Framework Go Holder/Prover](#1-acapy-afgo) | **0 / 5** (0%) |
+| 2 | [acapy-dotnet](#2-acapy-dotnet) | **25 / 25** (100%) |
+| 3 | [acapy-full](#3-acapy-full) | **41 / 81** (50%) |
+| 4 | [acapy-javascript](#4-acapy-javascript) | **15 / 30** (50%) |
+| 5 | [acapy](#5-acapy) | **40 / 41** (97%) |
+| 6 | [afgo](#6-afgo) | **3 / 5** (60%) |
+| 7 | [dotnet](#7-dotnet) | **13 / 13** (100%) |
+| 8 | [javascript-dotnet](#8-javascript-dotnet) | **13 / 13** (100%) |
+| 9 | [javascript](#9-javascript) | **18 / 18** (100%) |
 
-## 1 ACA-PY Issuer/Verifier and Aries Framework Go Holder/Prover
+## 1 acapy-afgo
+
+Name: **ACA-PY Issuer/Verifier and Aries Framework Go Holder/Prover**
 
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-acapy-afgo.yml.
 
@@ -48,6 +50,8 @@ Test Status Notes: No summary is available for this runset. Please add it to the
 See the full test run results and history for the runset [acapy-b-afgo](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
 
 ## 2 acapy-dotnet
+
+Name: **acapy-dotnet**
 
 
  This test run uses the current main branch of ACA-Py for all of the agents except Bob (holder),
@@ -77,6 +81,8 @@ See the full test run results and history for the runset [acapy-b-dotnet](https:
 
 ## 3 acapy-full
 
+Name: **acapy-full**
+
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-acapy-full.yml.
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) |
@@ -90,6 +96,8 @@ Test Status Notes: No summary is available for this runset. Please add it to the
 See the full test run results and history for the runset [acapy-full](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-full/reports/latest)
 
 ## 4 acapy-javascript
+
+Name: **acapy-javascript**
 
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-acapy-javascript.yml.
 
@@ -105,6 +113,8 @@ See the full test run results and history for the runset [acapy-b-javascript](ht
 
 ## 5 acapy
 
+Name: **acapy**
+
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-acapy.yml.
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) |
@@ -118,6 +128,8 @@ Test Status Notes: No summary is available for this runset. Please add it to the
 See the full test run results and history for the runset [acapy](https://allure.vonx.io/allure-docker-service-ui/projects/acapy/reports/latest)
 
 ## 6 afgo
+
+Name: **afgo**
 
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-afgo.yml.
 
@@ -133,6 +145,8 @@ See the full test run results and history for the runset [afgo](https://allure.v
 
 ## 7 dotnet
 
+Name: **dotnet**
+
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-dotnet.yml.
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) |
@@ -147,6 +161,8 @@ See the full test run results and history for the runset [dotnet](https://allure
 
 ## 8 javascript-dotnet
 
+Name: **javascript-dotnet**
+
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-javascript-dotnet.yml.
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) |
@@ -160,6 +176,8 @@ Test Status Notes: No summary is available for this runset. Please add it to the
 See the full test run results and history for the runset [javascript-b-dotnet](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-dotnet/reports/latest)
 
 ## 9 javascript
+
+Name: **javascript**
 
 No summary is available for this runset. Please add it to the file .github/workflows/test-harness-javascript.yml.
 

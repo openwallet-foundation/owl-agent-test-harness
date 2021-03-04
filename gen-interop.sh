@@ -16,10 +16,14 @@ collect_runset_data () {
     export RUNSET=$(echo $file | sed "s/.*ness-//" | sed "s/.yml//")
     export RUNSET_NAME=""
     export RUNSET_NAME=$(grep RUNSET_NAME $file |  sed 's/^.*: //' | sed 's/["]//g')
-     if [ "${RUNSET_NAME}" == "" ]; then
+    if [ "${RUNSET_NAME}" == "" ]; then
         export RUNSET_NAME=${RUNSET}
+        export RUNSET_LINK=${RUNSET}
+    else
+        export RUNSET_LINK=$(echo "$RUNSET_NAME" | tr '[:upper:]' '[:lower:]' | tr -d '[:punct:]' | tr '[:blank:]' '-')
     fi
-    export RUNSET_LINK=$(echo "$RUNSET_NAME" | tr '[:upper:]' '[:lower:]' | tr -d '[:punct:]' | tr '[:blank:]' '-')
+    # Temporary -- until I can figure out how to convert arbitary strings into GitHub links
+    export RUNSET_LINK=${RUNSET}
     export SUMMARY=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/Current/,$d' | sed '/Summary/d' | sed 's/$/\\n/' | sed 's/^ //')
     export CURRENT_STATUS=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/^End/,$d' | sed -n '/Current/,$p' | sed '1d' | sed 's/$/\\n/' | sed 's/^ //')
     export DEFAULT_AGENT=$(grep "DEFAULT_AGENT" $file | sed 's/.*: //' )
@@ -63,8 +67,8 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 Results last updated: $(date | sed 's/  / /g')
 
-|   #   | Runset Name     | Runset ID       | Passed Tests |
-| :---: | :-------------: | :-------------: | :-------------: |
+|   #   | Runset Name     | Passed Tests |
+| :---: | :-------------: | :-------------: |
 EOF
 }
 
@@ -75,7 +79,7 @@ aries_interop_header
 count=1
 for file in .github/workflows/test-harness-*; do
     collect_runset_data $file
-    echo "| ${count} | [${RUNSET_NAME}](#${count}.-$RUNSET_LINK) | ${RUNSET} | **${PASSED} / ${TOTAL_CASES}** ( ${PERCENT}% ) |" >>$outfile
+    echo "| ${count} | [${RUNSET_NAME}](#${count}-$RUNSET_LINK) | **${PASSED} / ${TOTAL_CASES}** (${PERCENT}%) |" >>$outfile
     count=$(expr ${count} + 1)
 done
 
@@ -83,7 +87,8 @@ echo "" >>$outfile
 count=1
 for file in .github/workflows/test-harness-*; do
     collect_runset_data $file
-    echo -e "## ${count} ${RUNSET_NAME}\\n" >>$outfile
+    echo -e "## ${count} ${RUNSET}\\n" >>$outfile
+    echo -e Name: **${RUNSET_NAME}**\\n >>$outfile
     if [ "${SUMMARY}" == "" ]; then
         echo -e "No summary is available for this runset. Please add it to the file $file.\\n" >>$outfile
     else
