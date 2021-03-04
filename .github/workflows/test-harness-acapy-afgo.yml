@@ -26,6 +26,7 @@ jobs:
           BOB_AGENT: afgo-master
           TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: acapy-b-afgo
+          RUNSET_NAME: "ACA-PY Issuer/Verifier and Aries Framework Go Holder/Prover"
         env:
           EMIT-NEW-DIDCOMM-PREFIX: true
           EMIT-NEW-DIDCOMM-MIME-TYPE: true
