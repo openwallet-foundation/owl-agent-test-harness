@@ -237,6 +237,12 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
+
+        print(f'wh-------- {message} ------')
+         # if has state
+        if "StateID" in message["message"]:
+            self.webhook_state = message["message"]["StateID"]
+
         push_resource(thread_id, "presentation-msg", message)
         log_msg('Received a Present Proof Webhook message: ' + json.dumps(message))
 
@@ -623,30 +629,42 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return (resp_status, resp_text)
 
 
-    async def handle_kms_POST(self, op, rec_id=None, data=None):
-        pass
-
-    async def handle_mediator_POST(self, op, rec_id=None, data=None):
-        pass
-
-    async def handle_message_POST(self, op, rec_id=None, data=None):
-        pass
-
     async def handle_present_proof_POST(self, op, rec_id=None, data=None):
         self.current_webhook_topic = op["topic"].replace('-', '_')
+
+        topic = "presentproof"
         operation = op["operation"]
+
+        if self.did_data == None:
+            pre_operation = "/connections"
+            (pre_status, pre_text) = await self.admin_GET(pre_operation)
+
+            if pre_status == 200:
+                pre_json = json.loads(pre_text)
+                pre_json = pre_json["results"][0]
+
+                self.did_data = {
+                    "my_did": pre_json["MyDID"],
+                    "their_did": pre_json["TheirDID"]
+                }
+
 
         if operation == "create-send-connectionless-request":
             operation = "create-request"
 
-           
+        print(f'stat=========== {operation} == {rec_id} == {data} ==========')   
         if rec_id is None:
 
             if operation == "send-request":
-                agent_operation = f"/presentproof/{operation}-presentation"
+                agent_operation = f"/{topic}/{operation}-presentation"
 
-                resp_json = {"state": "request-sent", "thread_id": ""}
-                return (200, json.dumps(resp_json))
+                new_data = self.did_data
+                new_data["request_presentation"] = data["presentation_proposal"]
+
+                data = new_data
+
+                print(f'constr==== {data} ====')
+                #resp_json = {"state": "request-sent", "thread_id": ""}
 
         else:
             if operation == "remove":
@@ -660,33 +678,30 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
 
             elif operation == "send-presentation":
-                agent_operation = f"/presentproof/{operation}"
-
-                return (200, '{"state": "presentation-sent"}')
+                agent_operation = f"/{topic}/send-propose-presentation"
 
             elif operation == "verify-presentation":
-                agent_operation = f"/presentproof/{operation}"
+                agent_operation = f"/{topic}/{operation}"
 
-                return (200, '{"state": "done"}')
+                resp_json = {"state": "done"}
+                return (200, json.dumps(resp_json))
 
             else:
                 agent_operation = "/present-proof/" + operation
             
         log_msg(agent_operation, data)
 
-        if data is not None:
-            # Format the message data that came from the test, to what the Aca-py admin api expects.
-            data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
+        #if data is not None:
+        #    # Format the message data that came from the test, to what the Aca-py admin api expects.
+        #    data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
         log_msg(resp_status, resp_text)
-        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+        #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
         return (resp_status, resp_text)
 
-    async def handle_verifiable_POST(self, op, rec_id=None, data=None):
-        pass
-
+   
     def add_did_exchange_state_to_response(self, operation, raw_response):
         resp_json = json.loads(raw_response)
         
