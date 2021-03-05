@@ -16,7 +16,7 @@
 **Latest results: 3 out of 5 (60%)**
 
 
-*Last updated: Fri Mar 5 14:26:06 PST 2021*
+*Last updated: Fri Mar 5 14:32:02 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -27,7 +27,7 @@ supported in Aries Framework Go.
 *Updated: 2021.03.05*
 
 ## Test Run Details
-See the tests results organized by Aries RFCs executed [afgo](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
+See the tests results grouped by the Aries RFCs executed [afgo](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
 
 See the test runs history and drill into the details [afgo](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
 

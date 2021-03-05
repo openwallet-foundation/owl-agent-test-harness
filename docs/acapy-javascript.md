@@ -18,7 +18,7 @@
 **Latest results: 15 out of 30 (50%)**
 
 
-*Last updated: Fri Mar 5 14:26:05 PST 2021*
+*Last updated: Fri Mar 5 14:32:01 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -30,7 +30,7 @@ the tests with the holder proposing a proof are not running, as that feature is 
 *Updated: 2021.03.05*
 
 ## Test Run Details
-See the tests results organized by Aries RFCs executed [acapy-b-javascript](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors)
+See the tests results grouped by the Aries RFCs executed [acapy-b-javascript](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors)
 
 See the test runs history and drill into the details [acapy-b-javascript](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-javascript/reports/latest)
 

@@ -17,7 +17,7 @@
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last updated: Fri Mar 5 14:26:06 PST 2021*
+*Last updated: Fri Mar 5 14:32:02 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -27,7 +27,7 @@ All of the tests being executed in this runset are passing.
 *Updated: 2021.03.05*
 
 ## Test Run Details
-See the tests results organized by Aries RFCs executed [dotnet](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors)
+See the tests results grouped by the Aries RFCs executed [dotnet](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors)
 
 See the test runs history and drill into the details [dotnet](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet/reports/latest)
 

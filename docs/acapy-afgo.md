@@ -17,7 +17,7 @@
 **Latest results: 0 out of 5 (0%)**
 
 
-*Last updated: Fri Mar 5 14:26:04 PST 2021*
+*Last updated: Fri Mar 5 14:31:59 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -28,7 +28,7 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 *Updated: 2021.03.05*
 
 ## Test Run Details
-See the tests results organized by Aries RFCs executed [acapy-b-afgo](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
+See the tests results grouped by the Aries RFCs executed [acapy-b-afgo](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
 
 See the test runs history and drill into the details [acapy-b-afgo](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
 

@@ -167,7 +167,7 @@ for file in .github/workflows/test-harness-*; do
     fi
 # Links to the allure results
     echo -e "## Test Run Details" >>$outfile
-    echo -e "See the tests results organized by Aries RFCs executed [${ALLURE_PROJECT}](${ALLURE_BEHAVIORS_LINK})\\n" >>$outfile
+    echo -e "See the tests results grouped by the Aries RFCs executed [${ALLURE_PROJECT}](${ALLURE_BEHAVIORS_LINK})\\n" >>$outfile
     echo -e "See the test runs history and drill into the details [${ALLURE_PROJECT}](${ALLURE_LINK})\\n" >>$outfile
     count=$(expr ${count} + 1)
 
