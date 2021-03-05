@@ -1,4 +1,4 @@
-# AF-Go to AF-Go Passing Tests
+# AF-Go to AF-Go
 
 ## Summary of Tests
 
@@ -14,6 +14,9 @@
 
 ```tip
 **Latest results: 3 out of 5 (60%)**
+
+
+*Last updated: Fri Mar 5 14:14:08 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -21,8 +24,12 @@
 The tests that use an implicit invitation are not currently working. The issue is being investigated -- this feature may not be
 supported in Aries Framework Go.
 
+*Updated: 2021.03.05*
+
 ## Test Run Details
-See the tests runs organized by Aries RFC [afgo behaviors](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
+See the tests results organized by Aries RFCs executed [afgo](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
 
 See the test runs history and drill into the details [afgo](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
+
+Jump back to the [runset summary](./README.md).
 

@@ -1,5 +1,5 @@
 name: test-harness-javascript-javascript
-# RUNSET_NAME: "AF-JS to AF-JS Passing Tests"
+# RUNSET_NAME: "AF-JS to AF-JS"
 # Scope: AIP 1.0 except revocation
 # 
 # Summary
@@ -10,6 +10,8 @@ name: test-harness-javascript-javascript
 # Current
 # 
 # All of the tests being executed in this runset are passing.
+# 
+# *Updated: 2021.03.05*
 #
 # End
 on:

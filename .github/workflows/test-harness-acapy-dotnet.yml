@@ -1,5 +1,5 @@
 name: test-harness-acapy-dotnet
-# RUNSET_NAME: "ACA-PY and AF-.NET"
+# RUNSET_NAME: "ACA-PY to AF-.NET"
 # Scope: AIP 1.0 except proof proposals
 #
 # Summary
@@ -11,6 +11,8 @@ name: test-harness-acapy-dotnet
 # Current
 # 
 # All of the tests are currently running.
+# 
+# *Updated: 2021.03.05*
 #
 # End
 on:

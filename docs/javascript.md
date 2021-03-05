@@ -1,4 +1,4 @@
-# AF-JS to AF-JS Passing Tests
+# AF-JS to AF-JS
 
 ## Summary of Tests
 
@@ -14,14 +14,19 @@
 
 ```tip
 **Latest results: 17 out of 18 (94%)**
+
+
+*Last updated: Fri Mar 5 14:14:09 PST 2021*
 ```
 
 ## Current Status of Tests
 
 All of the tests being executed in this runset are passing.
 
+*Updated: 2021.03.05*
+
 ## Test Run Details
-See the tests runs organized by Aries RFC [javascript behaviors](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors)
+See the tests results organized by Aries RFCs executed [javascript](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors)
 
 See the test runs history and drill into the details [javascript](https://allure.vonx.io/allure-docker-service-ui/projects/javascript/reports/latest)
 

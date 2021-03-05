@@ -1,4 +1,4 @@
-# ACA-PY and AF-.NET
+# ACA-PY to AF-.NET
 
 ## Summary of Tests
 
@@ -15,14 +15,21 @@
 
 ```tip
 **Latest results: 25 out of 25 (100%)**
+
+
+*Last updated: Fri Mar 5 14:14:07 PST 2021*
 ```
 
 ## Current Status of Tests
 
 All of the tests are currently running.
 
+*Updated: 2021.03.05*
+
 ## Test Run Details
-See the tests runs organized by Aries RFC [acapy-b-dotnet behaviors](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
+See the tests results organized by Aries RFCs executed [acapy-b-dotnet](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
 
 See the test runs history and drill into the details [acapy-b-dotnet](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
+
+Jump back to the [runset summary](./README.md).
 

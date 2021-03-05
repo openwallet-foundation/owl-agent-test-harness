@@ -1,6 +1,7 @@
 name: test-harness-acapy-full
 # RUNSET_NAME: "ACA-PY to ACA-Py All Tests"
 # Scope: All tests
+# SKIP
 # 
 # Summary
 #
@@ -12,6 +13,8 @@ name: test-harness-acapy-full
 # Half of the tests in the suite are working. We will shortly remove the "work in progress" tests as they are
 # not expected to run (currently 20 tests). We'll assess and document the other tests that are not work and update
 # this status.
+# 
+# *Updated: 2021.03.05*
 #
 # End
 on:
