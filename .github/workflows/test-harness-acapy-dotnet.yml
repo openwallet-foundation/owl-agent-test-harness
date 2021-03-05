@@ -1,15 +1,16 @@
 name: test-harness-acapy-dotnet
+# RUNSET_NAME: "ACA-PY and AF-.NET"
+# Scope: AIP 1.0 except proof proposals
+#
 # Summary
 #
-# This test run uses the current main branch of ACA-Py for all of the agents except Bob (holder),
-# which uses the master branch of Aries Framework .NET. It skips tests that are known not to work with
-# the Aries Framework .NET as the holder, notably those that involve Proof Proposals and DID Exchange (RFC0023).
+# This runset uses the current main branch of ACA-Py for all of the agents except Bob (holder),
+# which uses the master branch of Aries Framework .NET. The runset covers all of the AIP 1.0 tests that 
+# are known not to work with the Aries Framework .NET as the holder, notably those that involve Proof Proposals.
 #
 # Current
 # 
-# We currently have four tests failing that appear to be tests that use RFC0023 DID Exchange, which
-# is not supported.  This is an issue with tagging in the test suite, and is an expected failure. Issue #169
-# submitted to the Aries Agent Test Harness.
+# All of the tests are currently running.
 #
 # End
 on:

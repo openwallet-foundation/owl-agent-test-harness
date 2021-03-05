@@ -1,4 +1,17 @@
 name: test-harness-javascript-javascript
+# RUNSET_NAME: "AF-JS to AF-JS Passing Tests"
+# Scope: AIP 1.0 except revocation
+# 
+# Summary
+#
+# This runset uses the current main branch of Aries Framework - JavaScript for all of the agents. The runset runs all of the tests in the suite
+# that are expected to pass given the current state of the framework's support for AIP 1. Tests related to revocation (Indy HIPE 0011) are not included.
+#
+# Current
+# 
+# All of the tests being executed in this runset are passing.
+#
+# End
 on:
   workflow_dispatch:
   schedule:

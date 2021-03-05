@@ -1,4 +1,19 @@
 name: test-harness-acapy-full
+# RUNSET_NAME: "ACA-PY to ACA-Py All Tests"
+# Scope: All tests
+# 
+# Summary
+#
+# This runset uses the current main branch of ACA-Py for all of the agents. The runset runs every test in the suite
+# including those that are marked as works in progress.
+#
+# Current
+# 
+# Half of the tests in the suite are working. We will shortly remove the "work in progress" tests as they are
+# not expected to run (currently 20 tests). We'll assess and document the other tests that are not work and update
+# this status.
+#
+# End
 on:
   workflow_dispatch:
   schedule:

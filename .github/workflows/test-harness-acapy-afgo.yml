@@ -1,4 +1,19 @@
 name: test-harness-acapy-dotnet
+# RUNSET_NAME: "ACA-PY and AF-Go"
+# Scope: AIP 2.0 RFC0023 Only
+# 
+# Summary
+#
+# This runset uses the current main branch of ACA-Py for all of the agents except Bob (holder),
+# which uses the master branch of Aries Framework Go. The runset cover several AIP 2.0 tests
+# using RFC0023 (DID Exchange).
+#
+# Current
+# 
+# None of the tests are currently working and issues have been created to try to determine three identified issues.
+# One might be in the test suite, while two others appear to be in the Aries Framework Go.
+#
+# End
 on:
   workflow_dispatch:
   schedule:
@@ -26,7 +41,6 @@ jobs:
           BOB_AGENT: afgo-master
           TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: acapy-b-afgo
-          RUNSET_NAME: "ACA-PY Issuer/Verifier and Aries Framework Go Holder/Prover"
         env:
           EMIT-NEW-DIDCOMM-PREFIX: true
           EMIT-NEW-DIDCOMM-MIME-TYPE: true

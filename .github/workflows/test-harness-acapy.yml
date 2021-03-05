@@ -1,4 +1,17 @@
 name: test-harness-acapy-acapy
+# RUNSET_NAME: "ACA-PY to ACA-Py Passing Tests"
+# Scope: AIP 1.0, AIP 2.0 (RFC0023 Only)
+# 
+# Summary
+#
+# This runset uses the current main branch of ACA-Py for all of the agents. The runset runs all of the tests in the suite
+# that are expected to pass given the current state of ACA-Py support for AIP 1 and 2.
+#
+# Current
+# 
+# All of the tests being executed in this runset are passing.
+#
+# End
 on:
   workflow_dispatch:
   schedule:

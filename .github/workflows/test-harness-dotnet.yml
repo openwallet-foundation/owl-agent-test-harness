@@ -1,4 +1,18 @@
 name: test-harness-dotnet-dotnet
+# RUNSET_NAME: "AF-.NET to AF-.NET Passing Tests"
+# Scope: AIP 1.0 except revocation and proof proposals
+# 
+# Summary
+#
+# This runset uses the current main branch of Aries Framework .NET for all of the agents. The runset runs all of the tests in the suite
+# that are expected to pass given the current state of Aries Framework .NET's support for AIP 1. Tests related to revocation (Indy HIPE 0011)
+# and holders initiating present proof protocols using a "proposal" message are not included.
+#
+# Current
+# 
+# All of the tests being executed in this runset are passing.
+#
+# End
 on:
   workflow_dispatch:
   schedule:
