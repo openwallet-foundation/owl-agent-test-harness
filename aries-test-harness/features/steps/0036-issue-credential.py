@@ -1,6 +1,7 @@
 from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
+from agent_test_utils import amend_data_for_AIP20
 from time import sleep
 import time
 
@@ -201,6 +202,10 @@ def step_impl(context, holder, issuer):
         "connection_id": context.connection_id_dict[holder][issuer],
         "schema_id": context.issuer_schema_dict[context.schema['schema_name']]["id"],
     }
+
+    # If the test sceanrio is an AIP20 test, add AIP20 to the data to pass over to the backchannel.
+    if "AIP20" in context.tags:
+        credential_offer = amend_data_for_AIP20(credential_offer) 
 
     #(resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-proposal", id=holder_connection_id, data=credential_offer)
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-proposal", data=credential_offer)

@@ -52,3 +52,6 @@ def get_relative_timestamp_to_epoch(timestamp):
 
     return epoch_time
 
+def amend_data_for_AIP20(data):
+    data["aip_version"] = "AIP20"
+    return data
