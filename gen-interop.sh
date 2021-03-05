@@ -133,12 +133,13 @@ count=1
 for file in .github/workflows/test-harness-*; do
 # Collect the data -- again. No worries -- it won't take long.
     collect_runset_data $file
-    if [ "${SKIP}" != "" ]; then
-        continue # Skip this workflow from the published results
-    fi
 # New output file -- the test details -- overwrite the old version
     outfile=docs/${RUNSET}.md
-
+    if [ "${SKIP}" != "" ]; then
+        # Delete the output file if it exists
+        rm -f $outfile
+        continue # Skip this workflow from the published results
+    fi
 # First write eache detail file -- make sure to replace the old version with a ">" and ">>" for the rest
     echo -e "# ${RUNSET_NAME}\\n" >$outfile
     echo -e "## Summary of Tests\\n" >>$outfile

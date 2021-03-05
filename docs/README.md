@@ -30,5 +30,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 | 7 | [AF-JS to AF-.NET](./javascript-dotnet.md) | AIP 1.0 except revocation and proof proposals | **12 / 13** (92%) |
 | 8 | [AF-JS to AF-JS](./javascript.md) | AIP 1.0 except revocation | **17 / 18** (94%) |
 
-*Results last updated: Fri Mar 5 14:14:06 PST 2021*
+*Results last updated: Fri Mar 5 14:26:03 PST 2021*
 
