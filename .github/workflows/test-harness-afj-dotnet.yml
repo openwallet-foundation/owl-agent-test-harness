@@ -1,5 +1,5 @@
 name: test-harness-javascript-dotnet
-# RUNSET_NAME: "AF-JS to AF-.NET"
+# RUNSET_NAME: "AFJ to AF-.NET"
 # Scope: AIP 1.0 except revocation and proof proposals
 # 
 # Summary

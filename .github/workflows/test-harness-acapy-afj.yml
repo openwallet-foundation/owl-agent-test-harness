@@ -1,17 +1,21 @@
-name: test-harness-javascript-javascript
-# RUNSET_NAME: "AF-JS to AF-JS"
+name: test-harness-acapy-javascript
+# RUNSET_NAME: "ACA-PY to AFJ"
 # Scope: AIP 1.0 except revocation
-# 
+#
 # Summary
 #
-# This runset uses the current main branch of Aries Framework - JavaScript for all of the agents. The runset runs all of the tests in the suite
-# that are expected to pass given the current state of the framework's support for AIP 1. Tests related to revocation (Indy HIPE 0011) are not included.
+# This runset uses the current main branch of ACA-Py for all of the agents except Bob (holder),
+# which uses the master branch of Aries Framework JavaScript. The runset covers all of the AIP 1.0 tests
+# except those that are known **not** to work with the Aries Framework JavaScript as the holder,
+# notably those that involve revocation.
 #
 # Current
 # 
-# All of the tests being executed in this runset are passing.
+# Only about half of the tests are currently running. The issues seem to be related to the set of tags
+# of the test cases being run as a number of the revocation tests are running and shouldn't be. As well,
+# the tests with the holder proposing a proof are not running, as that feature is not supported in AFJ.
 # 
-# *Updated: 2021.03.05*
+# *Updated: 2021.03.08*
 #
 # End
 on:
@@ -37,13 +41,14 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          DEFAULT_AGENT: javascript
+          DEFAULT_AGENT: acapy-main
+          BOB_AGENT: javascript
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@RFC0023 -t ~@DIDExchangeConnection"
-          REPORT_PROJECT: javascript
+          REPORT_PROJECT: acapy-b-javascript
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: javascript
+          REPORT_PROJECT: acapy-b-javascript
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}

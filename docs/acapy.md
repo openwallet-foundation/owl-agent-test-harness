@@ -10,13 +10,13 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| acapy-master | acapy-master | acapy-master | acapy-master | AIP 1.0, AIP 2.0 (RFC0023 Only) |
+| acapy-main | acapy-main | acapy-main | acapy-main | AIP 1.0, AIP 2.0 (RFC0023 Only) |
 
 ```tip
 **Latest results: 41 out of 41 (100%)**
 
 
-*Last updated: Fri Mar 5 14:32:01 PST 2021*
+*Last updated: Mon 8 Mar 2021 12:43:47 CET*
 ```
 
 ## Current Status of Tests
