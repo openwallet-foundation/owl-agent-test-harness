@@ -1,0 +1,35 @@
+{
+   "Data_DL_MaxValues":{
+      "cred_name":"Data_DriversLicense_v2_MaxValues",
+      "schema_name":"Schema_DriversLicense_v2",
+      "schema_version":"1.0.1",
+      "attributes":[
+         {
+            "name":"address",
+            "value":"947 this street, Kingston Ontario Canada, K9O 3R5"
+         },
+         {
+            "name":"DL_number",
+            "value":"09385029529385"
+         },
+         {
+            "name":"expiry",
+            "value":"10/12/2022"
+         },
+         {
+            "name":"age",
+            "value":"30"
+         }
+      ],
+      "filters": {
+         "indy": {
+            "cred_def_id": "replace_me",
+            "issuer_did": "replace_me",
+            "schema_id": "replace_me",
+            "schema_issuer_did": "replace_me",
+            "schema_name": "Schema_DriversLicense_v2",
+            "schema_version": "1.0.1"
+         }
+      }
+   }
+}

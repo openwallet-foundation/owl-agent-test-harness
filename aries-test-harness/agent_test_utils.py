@@ -52,6 +52,42 @@ def get_relative_timestamp_to_epoch(timestamp):
 
     return epoch_time
 
-def amend_data_for_AIP20(data):
-    data["aip_version"] = "AIP20"
+def amend_data_for_AIP20(data=None):
+    if not data:
+        data = {
+            "aip_version": "AIP20"
+        }
+    else:
+        data["aip_version"] = "AIP20"
     return data
+
+def format_cred_proposal_by_aip_version(context, aip_version, cred_data, connection_id, filters=None):
+
+    if aip_version == "AIP20":
+
+        filters = amend_filters_with_runtime_data(context, filters)
+
+        credential_proposal = {
+            "connection_id": connection_id,
+            "credential_preview": {
+                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+                "attributes": cred_data,
+            },
+            "filter": filters
+        }
+
+    return credential_proposal
+
+def amend_filters_with_runtime_data(context, filters):
+    # This method will need comdification as new types of filters are used. Intially "indy" is used.
+    if "indy" in filters:
+        if "schema_issuer_did" in filters["indy"] and filters["indy"]["schema_issuer_did"] == "replace_me":
+            filters["indy"]["schema_issuer_did"] = context.issuer_did_dict[context.schema['schema_name']]
+        if "issuer_did" in filters["indy"] and filters["indy"]["issuer_did"] == "replace_me":
+            filters["indy"]["issuer_did"] = context.issuer_did_dict[context.schema['schema_name']]
+        if "cred_def_id" in filters["indy"] and filters["indy"]["cred_def_id"] == "replace_me":
+            filters["indy"]["cred_def_id"] = context.issuer_credential_definition_dict[context.schema['schema_name']]["id"]
+        if "schema_id" in filters["indy"] and filters["indy"]["schema_id"] == "replace_me":
+            filters["indy"]["schema_id"] = context.issuer_schema_dict[context.schema['schema_name']]["id"]
+
+    return filters

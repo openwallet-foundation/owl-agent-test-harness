@@ -6,7 +6,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     Given "Acme" has a public did
     And "Acme" is ready to issue a credential
 
-  @T001-RFC0453 @critical @AcceptanceTest @DIDExchangeConnection @Schema_DriversLicense
+  @T001-RFC0453 @critical @AcceptanceTest @DIDExchangeConnection @Schema_DriversLicense_v2
   Scenario Outline: Issue a credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |

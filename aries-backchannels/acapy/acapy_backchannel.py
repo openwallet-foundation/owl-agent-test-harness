@@ -66,6 +66,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # ignore errors
             pass
 
+        # set the acapy AIP version, defaulting to AIP10
+        self.aip_version = "AIP10" 
+
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
             "invitation": "invited",
@@ -351,6 +354,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
+        
+        # check if the data contains the aip_version. If so retrive it and set it localy, then remove it from data
+        if data and "aip_version" in data:
+            self.aip_version = data["aip_version"]
+            data.pop("aip_version")
+        else:
+            self.aip_version = "AIP10"
+
         if op["topic"] == "connection":
             operation = op["operation"]
             if operation == "create-invitation":
@@ -410,8 +421,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "issue-credential":
             operation = op["operation"]
+            
+            # Check which AIP version being used and set the topic accordingly
+            if self.aip_version == "AIP20":
+                acapy_topic = "/issue-credential-2.0/"
+            else: # May need elif self.aip_version == "AIP10" in the future.
+                acapy_topic = "/issue-credential/"
+
+
             if rec_id is None:
-                agent_operation = "/issue-credential/" + operation
+                agent_operation = acapy_topic + operation
             else:
                 if (operation == "send-offer" 
                     or operation == "send-request"
@@ -420,16 +439,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 ):
                     # swap thread id for cred ex id from the webhook
                     cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
-                    agent_operation = "/issue-credential/records/" + cred_ex_id + "/" + operation
+                    agent_operation = acapy_topic + records + "/" + cred_ex_id + "/" + operation
                 # Make Special provisions for revoke since it is passing multiple query params not just one id.
                 elif (operation == "revoke"):
                     cred_rev_id = rec_id
                     rev_reg_id = data["rev_registry_id"]
                     publish = data["publish_immediately"]
-                    agent_operation = "/issue-credential/" + operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
+                    agent_operation = acapy_topic + operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
                     data = None
                 else:
-                    agent_operation = "/issue-credential/" + operation
+                    agent_operation = acapy_topic + operation
             
             log_msg(agent_operation, data)
             
