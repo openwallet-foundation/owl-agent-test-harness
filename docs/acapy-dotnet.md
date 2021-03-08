@@ -11,13 +11,13 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| acapy-master | dotnet-master | acapy-master | acapy-master | AIP 1.0 except proof proposals |
+| acapy-main | dotnet-master | acapy-main | acapy-main | AIP 1.0 except proof proposals |
 
 ```tip
 **Latest results: 25 out of 25 (100%)**
 
 
-*Last updated: Fri Mar 5 14:32:00 PST 2021*
+*Last updated: Mon 8 Mar 2021 12:43:42 CET*
 ```
 
 ## Current Status of Tests

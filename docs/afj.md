@@ -1,4 +1,4 @@
-# AF-JS to AF-JS
+# AFJ to AFJ
 
 ## Summary of Tests
 
@@ -16,7 +16,7 @@
 **Latest results: 17 out of 18 (94%)**
 
 
-*Last updated: Fri Mar 5 14:32:03 PST 2021*
+*Last updated: Mon 8 Mar 2021 12:43:54 CET*
 ```
 
 ## Current Status of Tests

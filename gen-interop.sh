@@ -92,7 +92,7 @@ The following test agents are currently included in the runsets:
 
 - [Aries Cloud Agent Python](https://github.com/hyperledger/aries-cloudagent-python) (ACA-Py)
 - [Aries Framework .NET](https://github.com/hyperledger/aries-framework-dotnet) (AF-.NET)
-- [Aries Framework - JavaScript](https://github.com/hyperledger/aries-framework-javascript) (AF-JS)
+- [Aries Framework JavaScript](https://github.com/hyperledger/aries-framework-javascript) (AFJ)
 - [Aries Framework Go](https://github.com/hyperledger/aries-framework-go) (AF-Go)
 
 Want to add your Aries component to this page? You need to add a runset to the
