@@ -311,10 +311,16 @@ startAgent() {
   local BACKCHANNEL_PORT=$5
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-    echo "Starting ${NAME} Agent ..."
-    docker run -d --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" -e "TAILS_SERVER_URL=http://${DOCKERHOST}:6543" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false
-    local container_id=$?
-    docker logs -f ${container_id} &
+    echo "Starting ngrok for ${NAME} Agent ..."
+    docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http localhost:"${BACKCHANNEL_PORT}" --log stdout > /dev/null
+    sleep 1
+    echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
+    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" -e "TAILS_SERVER_URL=http://${DOCKERHOST}:6543" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    sleep 1
+    if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
+      echo "Tail-ing log files for ${NAME} agent in ${container_id}"
+      docker logs -f ${container_id} &
+    fi
   else
     echo "${NAME} Agent already running, skipping..."
   fi
@@ -412,6 +418,7 @@ runTests() {
   echo "Cleanup:"
   echo "  - Shutting down all the agents ..."
   docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
+  docker stop acme_agent-ngrok bob_agent-ngrok faber_agent-ngrok mallory_agent-ngrok >/dev/null
   printf "Done\n"
 
   if [[ "${REPORT}" = "allure" ]]; then

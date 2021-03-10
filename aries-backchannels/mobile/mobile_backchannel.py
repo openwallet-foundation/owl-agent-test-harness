@@ -10,6 +10,7 @@ import uuid
 from timeit import default_timer
 from time import sleep
 from operator import itemgetter
+from qrcode import QRCode
 
 from aiohttp import (
     web,
@@ -56,6 +57,7 @@ class MobileAgentBackchannel(AgentBackchannel):
             genesis_data,
             params
         )
+        self.connection_state = "n/a"
 
     def get_agent_args(self):
         result = [
@@ -215,11 +217,25 @@ class MobileAgentBackchannel(AgentBackchannel):
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
         print("make_agent_POST_request:", op)
+
         if op["topic"] == "connection":
             operation = op["operation"]
             if operation == "receive-invitation":
-                print(data)
-                return (200, '{"result": "ok"}')
+                self.connection_state = "invited"
+                print("Connection invitation:", data)
+
+                qr = QRCode(border=1)
+                qr.add_data(data["invitation_url"])
+                log_msg(
+                    "Use the following JSON to accept the invite from another demo agent."
+                    " Or use the QR code to connect from a mobile agent."
+                )
+                log_msg(
+                    json.dumps(data), label="Invitation Data:", color=None
+                )
+                qr.print_ascii(invert=True)
+
+                return (200, '{"result": "ok", "connection_id": "1", "state": "' + self.connection_state + '"}')
 
             elif (operation == "accept-invitation" 
                 or operation == "accept-request"
@@ -227,7 +243,8 @@ class MobileAgentBackchannel(AgentBackchannel):
                 or operation == "start-introduction"
                 or operation == "send-ping"
             ):
-                return (200, '{"result": "ok"}')
+                self.connection_state = "requested"
+                return (200, '{"result": "ok", "connection_id": "1", "state": "' + self.connection_state + '"}')
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
@@ -240,6 +257,9 @@ class MobileAgentBackchannel(AgentBackchannel):
             status = 200 if self.ACTIVE else 418
             status_msg = "Active" if self.ACTIVE else "Inactive"
             return (status, json.dumps({"status": status_msg}))
+
+        elif op["topic"] == "connection":
+            return (200, '{"result": "ok", "connection_id": "1", "state": "' + self.connection_state + '"}')
         
         if op["topic"] == "version":
             return (200, '{"result": "ok"}')
@@ -525,6 +545,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
     agent = None
     try:
+        print("Starting mobile backchannel ...")
         agent = MobileAgentBackchannel(
             "mobile", start_port+1, start_port+2, genesis_data=genesis
         )

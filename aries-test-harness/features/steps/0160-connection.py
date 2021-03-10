@@ -84,6 +84,7 @@ def step_impl(context, inviter):
 
     resp_json = json.loads(resp_text)
     context.inviter_invitation = resp_json["invitation"]
+    context.inviter_invitation_url = {"invitation_url": resp_json["invitation_url"]}
 
     # check and see if the connection_id_dict exists
     # if it does, it was probably used to create another connection in a 3+ agent scenario
@@ -107,7 +108,7 @@ def step_impl(context, inviter):
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
 
-    data = context.inviter_invitation
+    data = context.inviter_invitation_url
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="receive-invitation", data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
@@ -188,7 +189,7 @@ def step_impl(context, inviter):
     inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # inviter already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested")
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=30.0)
 
 
 @when('"{inviter}" accepts the connection response to "{invitee}"')
