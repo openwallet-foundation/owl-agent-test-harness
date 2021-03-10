@@ -309,14 +309,17 @@ startAgent() {
   local IMAGE_NAME=$3
   local PORT_RANGE=$4
   local BACKCHANNEL_PORT=$5
+  local AGENT_ENDPOINT_PORT=$6
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "Starting ngrok for ${NAME} Agent ..."
-    docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http localhost:"${BACKCHANNEL_PORT}" --log stdout > /dev/null
+    docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
     sleep 1
+    docker network connect aath_network "${CONTAINER_NAME}-ngrok"
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" -e "TAILS_SERVER_URL=http://${DOCKERHOST}:6543" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${CONTAINER_NAME}-ngrok" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" -e "TAILS_SERVER_URL=http://${DOCKERHOST}:6543" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
+    docker network connect aath_network "${CONTAINER_NAME}"
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
       echo "Tail-ing log files for ${NAME} agent in ${container_id}"
       docker logs -f ${container_id} &
@@ -378,10 +381,12 @@ runTests() {
 
   export PROJECT_ID=${PROJECT_ID:-general}
 
-  startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020
-  startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030
-  startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040
-  startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050
+  docker network create aath_network
+
+  startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021
+  startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031
+  startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040 9041
+  startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051
 
   echo
   waitForAgent Acme 9020
@@ -419,6 +424,7 @@ runTests() {
   echo "  - Shutting down all the agents ..."
   docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
   docker stop acme_agent-ngrok bob_agent-ngrok faber_agent-ngrok mallory_agent-ngrok >/dev/null
+  docker network rm aath_network
   printf "Done\n"
 
   if [[ "${REPORT}" = "allure" ]]; then

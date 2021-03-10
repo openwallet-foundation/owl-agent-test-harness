@@ -103,7 +103,11 @@ class AgentBackchannel:
         self.external_host = DEFAULT_EXTERNAL_HOST
         self.label = ident
 
-        if RUN_MODE == "pwd":
+        # may be set via ngrok
+        agent_endpoint = os.getenv("AGENT_PUBLIC_ENDPOINT")
+        if agent_endpoint:
+            self.endpoint = agent_endpoint
+        elif RUN_MODE == "pwd":
             self.endpoint = f"http://{self.external_host}".replace(
                 "{PORT}", str(http_port)
             )

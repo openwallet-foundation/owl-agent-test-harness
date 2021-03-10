@@ -10,10 +10,10 @@ Feature: RFC 0160 Aries agent connection functions
       When "Acme" generates a connection invitation
       And "Bob" receives the connection invitation
       And "Bob" sends a connection request to "Acme"
-      And "Acme" receives the connection request
-      And "Acme" sends a connection response to "Bob"
-      And "Bob" receives the connection response
-      And "Bob" sends <message> to "Acme"
+      #And "Acme" receives the connection request
+      #And "Acme" sends a connection response to "Bob"
+      #And "Bob" receives the connection response
+      #And "Acme" sends <message> to "Bob"
       Then "Acme" and "Bob" have a connection
 
       Examples:
