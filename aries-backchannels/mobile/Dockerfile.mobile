@@ -19,4 +19,6 @@ COPY python python
 COPY mobile mobile
 COPY data ./
 
+ENV PYTHONPATH=/aries-backchannels
+
 ENTRYPOINT ["python", "mobile/mobile_backchannel.py"]

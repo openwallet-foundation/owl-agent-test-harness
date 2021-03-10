@@ -312,7 +312,9 @@ startAgent() {
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "Starting ${NAME} Agent ..."
-    docker run -d --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" -e "TAILS_SERVER_URL=http://${DOCKERHOST}:6543" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false >/dev/null
+    docker run -d --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" -e "TAILS_SERVER_URL=http://${DOCKERHOST}:6543" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false
+    local container_id=$?
+    docker logs -f ${container_id} &
   else
     echo "${NAME} Agent already running, skipping..."
   fi

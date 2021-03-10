@@ -214,11 +214,12 @@ class MobileAgentBackchannel(AgentBackchannel):
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
+        print("make_agent_POST_request:", op)
         if op["topic"] == "connection":
             operation = op["operation"]
             if operation == "receive-invitation":
-
-                return (200, "ok")
+                print(data)
+                return (200, '{"result": "ok"}')
 
             elif (operation == "accept-invitation" 
                 or operation == "accept-request"
@@ -226,8 +227,7 @@ class MobileAgentBackchannel(AgentBackchannel):
                 or operation == "start-introduction"
                 or operation == "send-ping"
             ):
-
-                return (200, "ok")
+                return (200, '{"result": "ok"}')
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
@@ -235,18 +235,17 @@ class MobileAgentBackchannel(AgentBackchannel):
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
     ) -> (int, str):
+        print("make_agent_GET_request:", op)
         if op["topic"] == "status":
             status = 200 if self.ACTIVE else 418
             status_msg = "Active" if self.ACTIVE else "Inactive"
             return (status, json.dumps({"status": status_msg}))
         
         if op["topic"] == "version":
-
-            return (200, "n/a")
+            return (200, '{"result": "ok"}')
 
         elif op["topic"] == "connection":
-
-            return (200, "ok")
+            return (200, '{"result": "ok"}')
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
@@ -532,6 +531,8 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
         # start backchannel (common across all types of agents)
         await agent.listen_backchannel(start_port)
+
+        agent.activate()
 
         # now wait ...
         if interactive:
