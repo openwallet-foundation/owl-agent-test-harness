@@ -4,8 +4,9 @@
 This web site shows the current status of Aries Interoperability.
 
 The latest interoperability test results are provided below. Each item is for a test runset, a combination
-of Aries agents and frameworks running a subset of the overall tests in the repository. The subset of tests
-run represent the set of tests expected to be supported by the combination of components being tested.
+of Aries agents and frameworks running a subset (see scope and exceptions) of the overall tests in the repository.
+The subset of tests run represent the set of tests expected to be supported by the combination of components
+being tested, with a narrative on the scope on the details page.
 
 The following test agents are currently included in the runsets:
 
@@ -30,5 +31,11 @@ Want to add your Aries component to this page? You need to add a runset to the
 | 7 | [AFJ to AFJ](./afj.md) | AIP 1.0 | Revocation | [**17 / 18** (94%)](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
 | 8 | [AF-.NET to AF-.NET](./dotnet.md) | AIP 1.0 | Revocation and Proof Proposals | [**13 / 13** (100%)](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors) |
 
-*Results last updated: Thu Mar 11 16:38:13 PST 2021*
+For a non-technical overview of the results, please read the [Introduction to Aries Interoperability](aries-interop-intro.md).
+
+If you are developer interested in contributing tests, test agents and/or runsets, 
+please see the [Aries Agent Test Harness README](https://github.com/hyperledger/aries-agent-test-harness).
+
+
+*Results last updated: Fri Mar 12 11:32:24 PST 2021*
 

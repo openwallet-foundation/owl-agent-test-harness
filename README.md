@@ -47,12 +47,14 @@ We'd love to have help in building out a full Aries interoperability lab.
 - [The `manage` bash script](#the-manage-bash-script)
 - [Test Tags](#test-tags)
   - [Running Tagged Tests](#running-tagged-tests)
+  - [Test Coverage](#test-coverage)
+  - [Test Reporting](#test-reporting)
 
 ## Architecture
 
 The following diagram provides an overview of the architecture of the AATH.
 
-![Aries Agent Test Harness Architecture](out/aath-arch/aath-arch.png)
+![Aries Agent Test Harness Architecture](docs/assets/aath-arch/aath-arch.png)
 
 - All of the executable elements run in docker containers.
 - The components-under-test (e.g. Acme, Bob and Mallory) are externally identical, enabling the selection of the components to be tested a runtime decision.

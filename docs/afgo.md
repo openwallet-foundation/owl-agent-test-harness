@@ -1,3 +1,6 @@
+---
+sort: 5 # follow a certain sequence of letters or numbers
+---
 # AF-Go to AF-Go
 
 ## Summary of Tests
@@ -16,7 +19,7 @@
 **Latest results: 3 out of 5 (60%)**
 
 
-*Last run: Wed Mar 10 16:42:38 PST 2021*
+*Last run: Thu Mar 11 16:43:35 PST 2021*
 ```
 
 ## Current Status of Tests
