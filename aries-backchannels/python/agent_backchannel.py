@@ -53,20 +53,33 @@ elif RUN_MODE == "pwd":
     DEFAULT_EXTERNAL_HOST = os.getenv("DOCKERHOST") or "host.docker.internal"
 
 
+def get_ledger_url(ledger_url: str = None):
+    if not ledger_url:
+        ledger_url = LEDGER_URL
+    if not ledger_url:
+        ledger_url = f"http://{self.external_host}:9000"
+
+    return ledger_url
+
+
 async def default_genesis_txns():
     genesis = None
     try:
         if GENESIS_URL:
             async with ClientSession() as session:
+                print("From GENESIS_URL:", GENESIS_URL)
                 async with session.get(GENESIS_URL) as resp:
                     genesis = await resp.text()
         elif RUN_MODE == "docker":
             async with ClientSession() as session:
+                ledger_url = get_ledger_url()
+                print("From ledger_url:", f"{ledger_url}/genesis")
                 async with session.get(
-                    f"http://{DEFAULT_EXTERNAL_HOST}:9000/genesis"
+                    f"{ledger_url}/genesis"
                 ) as resp:
                     genesis = await resp.text()
         else:
+            print("With local file:", "../local-genesis.txt")
             with open("../local-genesis.txt", "r") as genesis_file:
                 genesis = genesis_file.read()
     except Exception:
@@ -405,10 +418,7 @@ class AgentBackchannel:
         log_msg(*output, color=color, prefix=self.prefix_str, end=end, **kwargs)
 
     async def register_did(self, ledger_url: str = None, alias: str = None):
-        if not ledger_url:
-            ledger_url = LEDGER_URL
-        if not ledger_url:
-            ledger_url = f"http://{self.external_host}:9000"
+        ledger_url = get_ledger_url(ledger_url)
         data = {"alias": alias or self.ident, "seed": self.seed, "role": "TRUST_ANCHOR"}
         async with self.client_session.post(
             ledger_url + "/register", json=data

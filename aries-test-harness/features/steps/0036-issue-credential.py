@@ -275,7 +275,7 @@ def step_impl(context, holder):
     assert resp_json["state"] == "request-sent"
 
     # Verify issuer status
-    assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received")
+    assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received", wait_time=60.0)
 
 
 @when('"{issuer}" issues the credential')
@@ -354,9 +354,13 @@ def step_impl(context, holder):
         (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
-        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
-        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+        if "state" in resp_json and resp_json["state"] == "N/A":
+            # backchannel can't get the credential
+            pass
+        else:
+            assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
+            assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+            assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 
         # Make sure the issuer is not holding the credential
         # get the credential from the holders wallet

@@ -253,6 +253,15 @@ class MobileAgentBackchannel(AgentBackchannel):
                 self.connection_state = "requested"
                 return (200, '{"result": "ok", "connection_id": "1", "state": "' + self.connection_state + '"}')
 
+        elif op["topic"] == "issue-credential":
+            operation = op["operation"]
+            if operation == "send-request":
+                return (200, '{"result": "ok", "thread_id": "1", "state": "request-sent"}')
+            elif operation == "store":
+                return (200, '{"result": "ok", "thread_id": "1", "credential_id": "' + rec_id + '", "state": "done"}')
+            else:
+                return (200, '{"result": "ok", "thread_id": "1", "state": "N/A"}')
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
 
@@ -267,7 +276,13 @@ class MobileAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "connection":
             return (200, '{"result": "ok", "connection_id": "1", "state": "N/A"}')
-        
+
+        elif op["topic"] == "issue-credential":
+            return (200, '{"result": "ok", "credential_id": "' + rec_id + '", "state": "N/A"}')
+
+        elif op["topic"] == "credential":
+            return (200, '{"result": "ok", "credential_id": "' + rec_id + '", "state": "N/A"}')
+
         if op["topic"] == "version":
             return (200, '{"result": "ok"}')
 

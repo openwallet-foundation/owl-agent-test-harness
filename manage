@@ -11,6 +11,9 @@ SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
 export AGENT_TIMEOUT=30
 export LEDGER_TIMEOUT=60
+# these two can be overrode via env vars
+export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
+export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
   # Prefix interactive terminal commands ...
@@ -213,9 +216,10 @@ pingLedger(){
 
 waitForLedger(){
   (
-    # Wait for tails server to start ...
+    # Wait for ledger server to start ...
     local startTime=${SECONDS}
-    local LEDGER_URL=http://localhost:9000
+    # use global LEDGER_URL
+    local LEDGER_URL="${LEDGER_URL_CONFIG:-http://localhost:9000}"
     local rtnCd=0
     printf "waiting for ledger to start"
     while ! pingLedger "$LEDGER_URL"; do
@@ -249,7 +253,7 @@ waitForTailsServer(){
   (
     # Wait for tails server to start ...
     local startTime=${SECONDS}
-    local TAILS_SERVER_URL=http://localhost:6543
+    local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
     local rtnCd=0
     printf "waiting for tails server to start"
     while ! pingTailsServer "$TAILS_SERVER_URL"; do
@@ -317,7 +321,9 @@ startAgent() {
     sleep 1
     docker network connect aath_network "${CONTAINER_NAME}-ngrok"
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${CONTAINER_NAME}-ngrok" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" -e "TAILS_SERVER_URL=http://${DOCKERHOST}:6543" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local LEDGER_URL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
+    local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
+    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${CONTAINER_NAME}-ngrok" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=${LEDGER_URL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     docker network connect aath_network "${CONTAINER_NAME}"
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
