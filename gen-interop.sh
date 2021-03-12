@@ -77,7 +77,7 @@ collect_runset_data () {
     else
         export PERCENT=$((PASSED*100/TOTAL_CASES))
     fi
-    export ALLURE_DATE=$( date -d@$( expr substr $( echo ${ALLURE_SUMMARY} | sed  's/.*"stop" : \([0-9]*\).*/\1/' ) 1 10) )
+    export ALLURE_DATE=$( date -d@$( echo ${ALLURE_SUMMARY} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' ) )
 }
 
 # The summary page header -- markdown format
@@ -88,8 +88,9 @@ aries_interop_header () {
 This web site shows the current status of Aries Interoperability.
 
 The latest interoperability test results are provided below. Each item is for a test runset, a combination
-of Aries agents and frameworks running a subset of the overall tests in the repository. The subset of tests
-run represent the set of tests expected to be supported by the combination of components being tested.
+of Aries agents and frameworks running a subset (see scope and exceptions) of the overall tests in the repository.
+The subset of tests run represent the set of tests expected to be supported by the combination of components
+being tested, with a narrative on the scope on the details page.
 
 The following test agents are currently included in the runsets:
 
@@ -105,6 +106,19 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 |   #   | Runset Name [Details] | Scope | Exceptions | Results [Summary by RFC] |
 | :---- | :-------------------- | ----- | ---------- | ------------------------ |
+EOF
+}
+
+# The summary page header -- markdown format
+aries_interop_footer () {
+
+    cat << EOF >>$outfile
+
+For a non-technical overview of the results, please read the [Introduction to Aries Interoperability](aries-interop-intro.md).
+
+If you are developer interested in contributing tests, test agents and/or runsets, 
+please see the [Aries Agent Test Harness README](https://github.com/hyperledger/aries-agent-test-harness).
+
 EOF
 }
 
@@ -128,6 +142,7 @@ for file in .github/workflows/test-harness-*; do
 done
 
 # Finished with the table -- add in the footer and done with the summary file
+aries_interop_footer
 echo -e "\\n*Results last updated: $(date | sed 's/  / /g')*" >>$outfile
 echo "" >>$outfile
 
@@ -144,7 +159,8 @@ for file in .github/workflows/test-harness-*; do
         continue # Skip this workflow from the published results
     fi
 # First write eache detail file -- make sure to replace the old version with a ">" and ">>" for the rest
-    echo -e "# ${RUNSET_NAME}\\n" >$outfile
+    echo -e "---\\nsort: ${count} # follow a certain sequence of letters or numbers\\n---" >$outfile
+    echo -e "# ${RUNSET_NAME}\\n" >>$outfile
     echo -e "## Summary of Tests\\n" >>$outfile
     
 # Print the summary text from the workflow file -- or a default message

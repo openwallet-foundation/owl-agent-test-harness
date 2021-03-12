@@ -42,7 +42,7 @@ $ cp -r ./allure-report/history ./reports
 allure generate --clean ./reports
 ```
 Allure reports with the Aries Agent Test Harness will resemble the following,
-![Aries Agent Test Harness Reports](out/aath-reports/aath-allure-report.png)
+![Aries Agent Test Harness Reports](docs/assets/aath-reports/aath-allure-report.png)
 
 
 ### Using Allure at the Command Line
