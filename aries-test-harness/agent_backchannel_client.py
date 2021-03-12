@@ -91,6 +91,8 @@ def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt, wait_ti
     state = "None"
     if type(status_txt) != list:
         status_txt = [status_txt]
+    # "N/A" means that the backchannel can't determine the state - we'll treat this as a successful response
+    status_txt.append("N/A")
     for i in range(int(wait_time/sleep_time)):
         (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", protocol_txt, id=thread_id)
         if resp_status == 200:

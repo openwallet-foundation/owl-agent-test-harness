@@ -84,7 +84,6 @@ def step_impl(context, inviter):
 
     resp_json = json.loads(resp_text)
     context.inviter_invitation = resp_json["invitation"]
-    context.inviter_invitation_url = {"invitation_url": resp_json["invitation_url"]}
 
     # check and see if the connection_id_dict exists
     # if it does, it was probably used to create another connection in a 3+ agent scenario
@@ -108,7 +107,7 @@ def step_impl(context, inviter):
 def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
 
-    data = context.inviter_invitation_url
+    data = context.inviter_invitation
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="receive-invitation", data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
@@ -161,7 +160,7 @@ def step_impl(context, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # invitee already recieved the connection response in the accept-request call so get connection and verify status=responded.
-    # assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "responded")
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "responded")
 
 @given('"{invitee}" sends a connection request to "{inviter}"')
 @when('"{invitee}" sends a connection request to "{inviter}"')
@@ -251,14 +250,14 @@ def step_impl(context, inviter, invitee):
         state_to_assert = "completed"
         topic = "did-exchange"
     else:
-        state_to_assert = "responded"
+        state_to_assert = ["responded", "complete",]
         topic = "connection"
 
     # get connection and verify status for inviter
     assert expected_agent_state(inviter_url, topic, inviter_connection_id, state_to_assert, wait_time=60.0)
 
     # get connection and verify status for invitee
-    # assert expected_agent_state(invitee_url, topic, invitee_connection_id, state_to_assert, wait_time=60.0)
+    assert expected_agent_state(invitee_url, topic, invitee_connection_id, state_to_assert, wait_time=60.0)
 
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):

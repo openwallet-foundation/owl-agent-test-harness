@@ -11,6 +11,7 @@ from timeit import default_timer
 from time import sleep
 from operator import itemgetter
 from qrcode import QRCode
+import base64
 
 from aiohttp import (
     web,
@@ -224,8 +225,14 @@ class MobileAgentBackchannel(AgentBackchannel):
                 self.connection_state = "invited"
                 print("Connection invitation:", data)
 
+                message_bytes = json.dumps(data).encode('ascii')
+                base64_bytes = base64.b64encode(message_bytes)
+                base64_message = base64_bytes.decode('ascii')
+                invitation_url = data["serviceEndpoint"] + "?c_i=" + base64_message
+                print("Connection invitation:", invitation_url)
+
                 qr = QRCode(border=1)
-                qr.add_data(data["invitation_url"])
+                qr.add_data(invitation_url)
                 log_msg(
                     "Use the following JSON to accept the invite from another demo agent."
                     " Or use the QR code to connect from a mobile agent."
@@ -259,12 +266,9 @@ class MobileAgentBackchannel(AgentBackchannel):
             return (status, json.dumps({"status": status_msg}))
 
         elif op["topic"] == "connection":
-            return (200, '{"result": "ok", "connection_id": "1", "state": "' + self.connection_state + '"}')
+            return (200, '{"result": "ok", "connection_id": "1", "state": "N/A"}')
         
         if op["topic"] == "version":
-            return (200, '{"result": "ok"}')
-
-        elif op["topic"] == "connection":
             return (200, '{"result": "ok"}')
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))

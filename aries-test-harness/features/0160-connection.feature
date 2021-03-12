@@ -12,7 +12,7 @@ Feature: RFC 0160 Aries agent connection functions
       And "Bob" sends a connection request to "Acme"
       And "Acme" receives the connection request
       And "Acme" sends a connection response to "Bob"
-      #And "Bob" receives the connection response
+      And "Bob" receives the connection response
       And "Acme" sends <message> to "Bob"
       Then "Acme" and "Bob" have a connection
 
