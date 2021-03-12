@@ -1,4 +1,21 @@
 name: test-harness-afgo-afgo
+# RUNSET_NAME: "AF-Go to AF-Go"
+# Scope: pre-AIP 2.0
+# Exceptions: None
+# 
+# Summary
+#
+# This runset uses the current main branch of Aries Framework Go for all of the agents. The runset runs some of the tests in the suite
+# that are expected to pass given the current state of Aries Framework Go support for 2 DID exchange.
+#
+# Current
+# 
+# The tests that use an implicit invitation are not currently working. The issue is being investigated -- this feature may not be
+# supported in Aries Framework Go.
+# 
+# *Status Note Updated: 2021.03.05*
+#
+# End
 on:
   workflow_dispatch:
   schedule:

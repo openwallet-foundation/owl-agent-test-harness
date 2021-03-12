@@ -24,4 +24,10 @@ reports/
 allure-report/
 allure-results/
 New-KGR-File.json
+aries-test-harness/allure/allure-results/environment.properties
 
+# Jekyll
+_site/
+.jekyll-metadata
+.env
+Gemfile.lock
