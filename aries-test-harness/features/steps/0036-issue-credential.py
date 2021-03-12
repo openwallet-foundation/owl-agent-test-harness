@@ -1,7 +1,7 @@
 from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
-from agent_test_utils import amend_data_for_AIP20, format_cred_proposal_by_aip_version
+from agent_test_utils import format_cred_proposal_by_aip_version
 from time import sleep
 import time
 
@@ -189,26 +189,19 @@ def step_impl(context, holder, issuer):
     else:   
         cred_data = CREDENTIAL_ATTR_TEMPLATE.copy()
 
-    if "AIP20" in context.tags:
-        credential_offer = format_cred_proposal_by_aip_version(context, "AIP20", cred_data, context.connection_id_dict[holder][issuer], context.filters)
-    else:
-        credential_offer = {
-            "schema_issuer_did": context.issuer_did_dict[context.schema['schema_name']],
-            "issuer_did": context.issuer_did_dict[context.schema['schema_name']],
-            "schema_name": context.issuer_schema_dict[context.schema['schema_name']]["name"],
-            "cred_def_id": context.issuer_credential_definition_dict[context.schema['schema_name']]["id"],
-            "schema_version": context.issuer_schema_dict[context.schema['schema_name']]["version"],
-            "credential_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
-                "attributes": cred_data,
-            },
-            "connection_id": context.connection_id_dict[holder][issuer],
-            "schema_id": context.issuer_schema_dict[context.schema['schema_name']]["id"],
-        }
-
-    # If the test sceanrio is an AIP20 test, add AIP20 to the data to pass over to the backchannel.
-    if "AIP20" in context.tags:
-        credential_offer = amend_data_for_AIP20(credential_offer) 
+    credential_offer = {
+        "schema_issuer_did": context.issuer_did_dict[context.schema['schema_name']],
+        "issuer_did": context.issuer_did_dict[context.schema['schema_name']],
+        "schema_name": context.issuer_schema_dict[context.schema['schema_name']]["name"],
+        "cred_def_id": context.issuer_credential_definition_dict[context.schema['schema_name']]["id"],
+        "schema_version": context.issuer_schema_dict[context.schema['schema_name']]["version"],
+        "credential_proposal": {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+            "attributes": cred_data,
+        },
+        "connection_id": context.connection_id_dict[holder][issuer],
+        "schema_id": context.issuer_schema_dict[context.schema['schema_name']]["id"],
+    }
 
     #(resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-proposal", id=holder_connection_id, data=credential_offer)
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-proposal", data=credential_offer)
@@ -245,21 +238,12 @@ def step_impl(context, issuer):
             "connection_id": context.connection_id_dict[issuer][context.holder_name],
         }
 
-        # If the test sceanrio is an AIP20 test, add AIP20 to the data to pass over to the backchannel.
-        if "AIP20" in context.tags:
-            credential_offer = amend_data_for_AIP20(credential_offer) 
-
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", data=credential_offer)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
         context.cred_thread_id = resp_json["thread_id"]
 
     else:
-
-        # If the test sceanrio is an AIP20 test, add AIP20 to the data to pass over to the backchannel.
-        if "AIP20" in context.tags:
-            data = amend_data_for_AIP20() 
-        # TODO add data to this operation in the test api
 
         # If context has the credential thread id then the proposal was done. 
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.cred_thread_id)
@@ -277,11 +261,6 @@ def step_impl(context, issuer):
 @when('"{holder}" sends a credential request')
 def step_impl(context, holder):
     holder_url = context.holder_url
-
-    # If the test sceanrio is an AIP20 test, add AIP20 to the data to pass over to the backchannel.
-    if "AIP20" in context.tags:
-        data = amend_data_for_AIP20() 
-    # TODO add data to this operation in the test api
 
     # If @indy then we can be sure we cannot start the protocol from this command. We can be sure that we have previously 
     # reveived the thread_id.
@@ -320,10 +299,6 @@ def step_impl(context, issuer):
         "comment": "issuing credential",
     }
 
-    # If the test sceanrio is an AIP20 test, add AIP20 to the data to pass over to the backchannel.
-    if "AIP20" in context.tags:
-        credential_preview = amend_data_for_AIP20(credential_preview) 
-
     (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="issue", id=context.cred_thread_id, data=credential_preview)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
@@ -342,10 +317,6 @@ def step_impl(context, holder):
     credential_id = {
         "credential_id": context.cred_thread_id,
     }
-
-    # If the test sceanrio is an AIP20 test, add AIP20 to the data to pass over to the backchannel. 
-    if "AIP20" in context.tags:
-        credential_id = amend_data_for_AIP20(credential_id) 
 
     # (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="store", id=context.holder_cred_ex_id)
     sleep(1)
@@ -380,21 +351,21 @@ def step_impl(context, holder):
 @then('"{holder}" has the credential issued')
 def step_impl(context, holder):
 
-        holder_url = context.config.userdata.get(holder)
-        # get the credential from the holders wallet
-        (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-        resp_json = json.loads(resp_text)
-        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
-        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+    holder_url = context.config.userdata.get(holder)
+    # get the credential from the holders wallet
+    (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+    assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
+    assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+    assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 
-        # Make sure the issuer is not holding the credential
-        # get the credential from the holders wallet
-        # TODO this expected error is not displaying in the agent output until after all the tests are executed. Uncomment this out when
-        # there is a solution to the error messaging happening at the end. 
-        #(resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
-        #assert resp_status == 404, f'resp_status {resp_status} is not 404; {resp_text}'
+    # Make sure the issuer is not holding the credential
+    # get the credential from the holders wallet
+    # TODO this expected error is not displaying in the agent output until after all the tests are executed. Uncomment this out when
+    # there is a solution to the error messaging happening at the end. 
+    #(resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
+    #assert resp_status == 404, f'resp_status {resp_status} is not 404; {resp_text}'
 
 
 

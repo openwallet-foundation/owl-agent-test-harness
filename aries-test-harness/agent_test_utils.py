@@ -52,15 +52,6 @@ def get_relative_timestamp_to_epoch(timestamp):
 
     return epoch_time
 
-def amend_data_for_AIP20(data=None):
-    if not data:
-        data = {
-            "aip_version": "AIP20"
-        }
-    else:
-        data["aip_version"] = "AIP20"
-    return data
-
 def format_cred_proposal_by_aip_version(context, aip_version, cred_data, connection_id, filters=None):
 
     if aip_version == "AIP20":

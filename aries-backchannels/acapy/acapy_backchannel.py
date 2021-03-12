@@ -90,6 +90,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "credential_acked": "done"
         }
 
+        # AATH API : Acapy Admin API
+        self.issueCredentialv2OperationTranslationDict = {
+            "send-proposal": "send-proposal",
+            "send-offer": "send-offer",
+            "send-request": "send-request",
+            "issue": "issue",
+            "store": "store"
+        }
+
+        # AATH API : Acapy Admin API
+        self.TopicTranslationDict = {
+            "issue-credential": "/issue-credential/",
+            "issue-credential-v2": "/issue-credential-2.0/",
+            "present-proof-v2": "/present-proof-2.0/"
+        }
+
         # Aca-py : RFC
         self.presentProofStateTranslationDict = {
             "request_sent": "request-sent",
@@ -280,6 +296,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             push_resource(thread_id, "revocation-registry-msg", message)
             log_msg('Issue Credential Webhook message contains revocation info') 
 
+    async def handle_issue_credential_v2_0(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "credential-msg", message)
+        log_msg('Received Issue Credential Webhook message: ' + json.dumps(message)) 
+        if "revocation_id" in message: # also push as a revocation message 
+            push_resource(thread_id, "revocation-registry-msg", message)
+            log_msg('Issue Credential Webhook message contains revocation info') 
+
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "presentation-msg", message)
@@ -355,12 +379,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
         
-        # check if the data contains the aip_version. If so retrive it and set it localy, then remove it from data
-        if data and "aip_version" in data:
-            self.aip_version = data["aip_version"]
-            data.pop("aip_version")
-        else:
-            self.aip_version = "AIP10"
+        #data = self.check_aip_version(data)
 
         if op["topic"] == "connection":
             operation = op["operation"]
@@ -421,13 +440,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "issue-credential":
             operation = op["operation"]
-            
-            # Check which AIP version being used and set the topic accordingly
-            if self.aip_version == "AIP20":
-                acapy_topic = "/issue-credential-2.0/"
-            else: # May need elif self.aip_version == "AIP10" in the future.
-                acapy_topic = "/issue-credential/"
 
+            acapy_topic = "/issue-credential/"
 
             if rec_id is None:
                 agent_operation = acapy_topic + operation
@@ -438,8 +452,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     or operation == "store"
                 ):
                     # swap thread id for cred ex id from the webhook
-                    cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
-                    agent_operation = acapy_topic + records + "/" + cred_ex_id + "/" + operation
+                    cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg", "credential_exchange_id")
+                    agent_operation = acapy_topic + "records/" + cred_ex_id + "/" + operation
                 # Make Special provisions for revoke since it is passing multiple query params not just one id.
                 elif (operation == "revoke"):
                     cred_rev_id = rec_id
@@ -455,7 +469,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
             log_msg(resp_status, resp_text)
-            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            if resp_status == 200 and self.aip_version != "AIP20": resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            return (resp_status, resp_text)
+
+        # Handle issue credential v2 POST operations 
+        elif op["topic"] == "issue-credential-v2":
+            (resp_status, resp_text) = await self.handle_issue_credential_v2_POST(op, rec_id=rec_id, data=data)
             return (resp_status, resp_text)
 
         elif op["topic"] == "revocation":
@@ -580,10 +599,71 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
 
+    async def handle_issue_credential_v2_POST(self, op, rec_id=None, data=None):
+        operation = op["operation"]
+        topic = op["topic"]
+
+        if rec_id is None:
+            agent_operation = self.TopicTranslationDict[topic] + self.issueCredentialv2OperationTranslationDict[operation]
+        else:
+            # if (operation == "send-offer" 
+            #     or operation == "send-request"
+            #     or operation == "issue"
+            #     or operation == "store"
+            # ):
+            # swap thread id for cred ex id from the webhook
+            cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg", "cred_ex_id")
+            agent_operation = self.TopicTranslationDict[topic] + "records/" + cred_ex_id + "/" + self.issueCredentialv2OperationTranslationDict[operation]
+            # Make Special provisions for revoke since it is passing multiple query params not just one id.
+            # elif (operation == "revoke"):
+            #     cred_rev_id = rec_id
+            #     rev_reg_id = data["rev_registry_id"]
+            #     publish = data["publish_immediately"]
+            #     agent_operation = self.TopicTranslationDict[topic] + self.issueCredentialv2OperationTranslationDict[operation] + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
+            #     data = None
+            # else:
+            #     agent_operation = acapy_topic + operation
+        
+        log_msg(agent_operation, data)
+        
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        log_msg(resp_status, resp_text)
+        # Looks like all v2 states are RFC states. Yah!
+        #if resp_status == 200: resp_text = self.agent_state_translation(topic], None, resp_text)
+        resp_text = self.move_state_to_top_level(resp_text)
+        return (resp_status, resp_text)
+
+    def check_aip_version(self, data=None):
+        # check if the data contains the aip_version. If so retrive it and set it localy, then remove it from data
+        if data and "aip_version" in data:
+            self.aip_version = data["aip_version"]
+            data.pop("aip_version")
+            if len(data) == 0:
+                data = None
+        else:
+            self.aip_version = "AIP10"
+        return data
+
+    def move_state_to_top_level(self, resp_text):
+        # for some responses the state is not a top level field. 
+        # the test harness expects the state to be a top level field
+        resp_json = json.loads(resp_text)
+        if "state" in resp_json:
+            # If it is already a top level field, forget about it.
+            return resp_text
+        else:
+            # Find the state and put a copy as a top level field
+            for key in resp_json:
+                if "state" in resp_json[key]:
+                    state = resp_json[key]["state"]
+                    resp_json["state"] = state
+                    return json.dumps(resp_json)
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
     ) -> (int, str):
+
         if op["topic"] == "status":
             status = 200 if self.ACTIVE else 418
             status_msg = "Active" if self.ACTIVE else "Inactive"
@@ -673,11 +753,20 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "issue-credential":
             # swap thread id for cred ex id from the webhook
-            cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
-            agent_operation = "/issue-credential/records/" + cred_ex_id
+            cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg", "credential_exchange_id")
+            agent_operation = self.TopicTranslationDict[op["topic"]] + "records/" + cred_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "issue-credential-v2":
+            # swap thread id for cred ex id from the webhook
+            cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg", "cred_ex_id")
+            agent_operation = self.TopicTranslationDict[op["topic"]] + "records/" + cred_ex_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            resp_text = self.move_state_to_top_level(resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "credential":
