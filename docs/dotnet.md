@@ -11,20 +11,20 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| dotnet-master | dotnet-master | dotnet-master | dotnet-master | AIP 1.0 except revocation and proof proposals |
+| dotnet-master | dotnet-master | dotnet-master | dotnet-master | AIP 1.0 |
 
 ```tip
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:56 CET*
+*Last run: Thu Mar 11 16:08:22 PST 2021*
 ```
 
 ## Current Status of Tests
 
 All of the tests being executed in this runset are passing.
 
-*Updated: 2021.03.05*
+*Status Note Updated: 2021.03.05*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [dotnet](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors)

@@ -10,20 +10,20 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| javascript | javascript | javascript | javascript | AIP 1.0 except revocation |
+| javascript | javascript | javascript | javascript | AIP 1.0 |
 
 ```tip
 **Latest results: 17 out of 18 (94%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:54 CET*
+*Last run: Thu Mar 11 16:10:33 PST 2021*
 ```
 
 ## Current Status of Tests
 
 All of the tests being executed in this runset are passing.
 
-*Updated: 2021.03.05*
+*Status Note Updated: 2021.03.05*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [javascript](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors)
