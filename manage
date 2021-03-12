@@ -317,7 +317,11 @@ startAgent() {
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "Starting ngrok for ${NAME} Agent ..."
-    docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
+    if [[ "${IMAGE_NAME}" = "dotnet-master-agent-backchannel" ]]; then
+      docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
+    else
+      docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
+    fi
     sleep 1
     docker network connect aath_network "${CONTAINER_NAME}-ngrok"
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
