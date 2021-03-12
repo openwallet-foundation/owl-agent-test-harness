@@ -1,6 +1,7 @@
 name: test-harness-dotnet-dotnet
 # RUNSET_NAME: "AF-.NET to AF-.NET"
-# Scope: AIP 1.0 except revocation and proof proposals
+# Scope: AIP 1.0
+# Exceptions: Revocation and Proof Proposals
 # 
 # Summary
 #
@@ -12,7 +13,7 @@ name: test-harness-dotnet-dotnet
 # 
 # All of the tests being executed in this runset are passing.
 # 
-# *Updated: 2021.03.05*
+# *Status Note Updated: 2021.03.05*
 #
 # End
 on:

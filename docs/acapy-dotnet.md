@@ -11,20 +11,20 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| acapy-main | dotnet-master | acapy-main | acapy-main | AIP 1.0 except proof proposals |
+| acapy-main | dotnet-master | acapy-main | acapy-main | AIP 1.0 |
 
 ```tip
 **Latest results: 25 out of 25 (100%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:42 CET*
+*Last run: Thu Mar 11 16:30:46 PST 2021*
 ```
 
 ## Current Status of Tests
 
 All of the tests are currently running.
 
-*Updated: 2021.03.05*
+*Status Note Updated: 2021.03.05*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [acapy-b-dotnet](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)

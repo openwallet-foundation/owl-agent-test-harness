@@ -1,6 +1,7 @@
 name: test-harness-javascript-dotnet
 # RUNSET_NAME: "AFJ to AF-.NET"
-# Scope: AIP 1.0 except revocation and proof proposals
+# Scope: AIP 1.0
+# Exceptions: Revocation and Proof Proposals
 # 
 # Summary
 #
@@ -13,7 +14,7 @@ name: test-harness-javascript-dotnet
 # 
 # All but one of the tests being executed in this runset are passing. The failure is being investigated.
 # 
-# *Updated: 2021.03.05*
+# *Status Note Updated: 2021.03.05*
 #
 # End
 on:

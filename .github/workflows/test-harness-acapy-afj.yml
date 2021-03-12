@@ -1,6 +1,7 @@
 name: test-harness-acapy-javascript
 # RUNSET_NAME: "ACA-PY to AFJ"
-# Scope: AIP 1.0 except revocation
+# Scope: AIP 1.0
+# Exceptions: Revocation
 #
 # Summary
 #
@@ -15,7 +16,7 @@ name: test-harness-acapy-javascript
 # of the test cases being run as a number of the revocation tests are running and shouldn't be. As well,
 # the tests with the holder proposing a proof are not running, as that feature is not supported in AFJ.
 # 
-# *Updated: 2021.03.08*
+# *Status Note Updated: 2021.03.08*
 #
 # End
 on:

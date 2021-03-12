@@ -10,13 +10,13 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| afgo-master | afgo-master | afgo-master | afgo-master | AP 2.0 RFC0023 Only |
+| afgo-master | afgo-master | afgo-master | afgo-master | pre-AIP 2.0 |
 
 ```tip
 **Latest results: 3 out of 5 (60%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:50 CET*
+*Last run: Wed Mar 10 16:42:38 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -24,7 +24,7 @@
 The tests that use an implicit invitation are not currently working. The issue is being investigated -- this feature may not be
 supported in Aries Framework Go.
 
-*Updated: 2021.03.05*
+*Status Note Updated: 2021.03.05*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [afgo](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)

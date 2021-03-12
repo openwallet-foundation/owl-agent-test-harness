@@ -1,6 +1,7 @@
 name: test-harness-acapy-dotnet
 # RUNSET_NAME: "ACA-PY to AF-Go"
-# Scope: AIP 2.0 RFC0023 Only
+# Scope: pre-AIP 2.0
+# Exceptions: None
 # 
 # Summary
 #
@@ -13,7 +14,7 @@ name: test-harness-acapy-dotnet
 # None of the tests are currently working and issues have been created to try to determine three identified issues.
 # One might be in the test suite, while two others appear to be in the Aries Framework Go.
 # 
-# *Updated: 2021.03.05*
+# *Status Note Updated: 2021.03.05*
 #
 # End
 on:

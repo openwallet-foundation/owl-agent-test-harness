@@ -19,16 +19,16 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 ## Summary
 
-|   #   | Runset Name     | Scope | Results |
-| :---- | :-------------- | ----- | ------: |
-| 1 | [ACA-PY to AF-Go](./acapy-afgo.md) | AIP 2.0 RFC0023 Only | **0 / 5** (0%) |
-| 2 | [ACA-PY to AFJ](./acapy-afj.md) | AIP 1.0 except revocation | **15 / 30** (50%) |
-| 3 | [ACA-PY to AF-.NET](./acapy-dotnet.md) | AIP 1.0 except proof proposals | **25 / 25** (100%) |
-| 4 | [ACA-PY to ACA-Py](./acapy.md) | AIP 1.0, AIP 2.0 (RFC0023 Only) | **41 / 41** (100%) |
-| 5 | [AF-Go to AF-Go](./afgo.md) | AP 2.0 RFC0023 Only | **3 / 5** (60%) |
-| 6 | [AFJ to AF-.NET](./afj-dotnet.md) | AIP 1.0 except revocation and proof proposals | **13 / 13** (100%) |
-| 7 | [AFJ to AFJ](./afj.md) | AIP 1.0 except revocation | **17 / 18** (94%) |
-| 8 | [AF-.NET to AF-.NET](./dotnet.md) | AIP 1.0 except revocation and proof proposals | **13 / 13** (100%) |
+|   #   | Runset Name [Details] | Scope | Exceptions | Results [Summary by RFC] |
+| :---- | :-------------------- | ----- | ---------- | ------------------------ |
+| 1 | [ACA-PY to AF-Go](./acapy-afgo.md) | pre-AIP 2.0 | None | [**0 / 5** (0%)](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
+| 2 | [ACA-PY to AFJ](./acapy-afj.md) | AIP 1.0 | Revocation | [**13 / 18** (72%)](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| 3 | [ACA-PY to AF-.NET](./acapy-dotnet.md) | AIP 1.0 | Proof Proposals | [**25 / 25** (100%)](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| 4 | [ACA-PY to ACA-Py](./acapy.md) | AIP 1.0 | None | [**41 / 41** (100%)](https://allure.vonx.io/api/allure-docker-service/projects/acapy/reports/latest/index.html?redirect=false#behaviors) |
+| 5 | [AF-Go to AF-Go](./afgo.md) | pre-AIP 2.0 | None | [**3 / 5** (60%)](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
+| 6 | [AFJ to AF-.NET](./afj-dotnet.md) | AIP 1.0 | Revocation and Proof Proposals | [**13 / 13** (100%)](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| 7 | [AFJ to AFJ](./afj.md) | AIP 1.0 | Revocation | [**17 / 18** (94%)](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
+| 8 | [AF-.NET to AF-.NET](./dotnet.md) | AIP 1.0 | Revocation and Proof Proposals | [**13 / 13** (100%)](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors) |
 
-*Results last updated: Mon 8 Mar 2021 12:43:34 CET*
+*Results last updated: Thu Mar 11 16:38:13 PST 2021*
 

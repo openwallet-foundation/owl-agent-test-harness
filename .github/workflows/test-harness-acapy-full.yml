@@ -1,6 +1,7 @@
 name: test-harness-acapy-full
 # RUNSET_NAME: "ACA-PY to ACA-Py All Tests"
-# Scope: All tests
+# Scope: AIP 1.0
+# Exceptions: None
 # SKIP
 # 
 # Summary
@@ -14,7 +15,7 @@ name: test-harness-acapy-full
 # not expected to run (currently 20 tests). We'll assess and document the other tests that are not work and update
 # this status.
 # 
-# *Updated: 2021.03.05*
+# *Status Note Updated: 2021.03.05*
 #
 # End
 on:
