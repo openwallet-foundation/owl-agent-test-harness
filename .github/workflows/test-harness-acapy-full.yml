@@ -43,7 +43,7 @@ jobs:
         with:
           DEFAULT_AGENT: acapy-main
           BOB_AGENT: acapy-main
-          TEST_SCOPE: ""
+          TEST_SCOPE: "-t ~@wip"
           REPORTING: "-r allure -e comparison"
           REPORT_PROJECT: acapy-full
           ADMIN_USER: ${{ secrets.AllureAdminUser }}

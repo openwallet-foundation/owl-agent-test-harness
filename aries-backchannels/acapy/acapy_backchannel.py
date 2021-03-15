@@ -378,8 +378,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
-        
-        #data = self.check_aip_version(data)
 
         if op["topic"] == "connection":
             operation = op["operation"]
@@ -606,23 +604,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if rec_id is None:
             agent_operation = self.TopicTranslationDict[topic] + self.issueCredentialv2OperationTranslationDict[operation]
         else:
-            # if (operation == "send-offer" 
-            #     or operation == "send-request"
-            #     or operation == "issue"
-            #     or operation == "store"
-            # ):
             # swap thread id for cred ex id from the webhook
             cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg", "cred_ex_id")
             agent_operation = self.TopicTranslationDict[topic] + "records/" + cred_ex_id + "/" + self.issueCredentialv2OperationTranslationDict[operation]
-            # Make Special provisions for revoke since it is passing multiple query params not just one id.
-            # elif (operation == "revoke"):
-            #     cred_rev_id = rec_id
-            #     rev_reg_id = data["rev_registry_id"]
-            #     publish = data["publish_immediately"]
-            #     agent_operation = self.TopicTranslationDict[topic] + self.issueCredentialv2OperationTranslationDict[operation] + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
-            #     data = None
-            # else:
-            #     agent_operation = acapy_topic + operation
         
         log_msg(agent_operation, data)
         
@@ -633,17 +617,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         #if resp_status == 200: resp_text = self.agent_state_translation(topic], None, resp_text)
         resp_text = self.move_state_to_top_level(resp_text)
         return (resp_status, resp_text)
-
-    def check_aip_version(self, data=None):
-        # check if the data contains the aip_version. If so retrive it and set it localy, then remove it from data
-        if data and "aip_version" in data:
-            self.aip_version = data["aip_version"]
-            data.pop("aip_version")
-            if len(data) == 0:
-                data = None
-        else:
-            self.aip_version = "AIP10"
-        return data
 
     def move_state_to_top_level(self, resp_text):
         # for some responses the state is not a top level field. 
