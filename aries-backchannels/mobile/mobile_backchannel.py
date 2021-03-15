@@ -262,6 +262,13 @@ class MobileAgentBackchannel(AgentBackchannel):
             else:
                 return (200, '{"result": "ok", "thread_id": "1", "state": "N/A"}')
 
+        elif op["topic"] == "proof":
+            operation = op["operation"]
+            if operation == "send-presentation":
+                return (200, '{"result": "ok", "thread_id": "1", "state": "presentation-sent"}')
+            else:
+                return (200, '{"result": "ok", "thread_id": "1", "state": "N/A"}')
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
 
@@ -282,6 +289,9 @@ class MobileAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "credential":
             return (200, '{"result": "ok", "credential_id": "' + rec_id + '", "state": "N/A"}')
+
+        elif op["topic"] == "proof":
+            return (200, '{"result": "ok", "thread_id": "' + rec_id + '", "state": "N/A"}')
 
         if op["topic"] == "version":
             return (200, '{"result": "ok"}')

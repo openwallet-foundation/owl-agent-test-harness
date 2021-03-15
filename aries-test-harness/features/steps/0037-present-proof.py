@@ -92,27 +92,33 @@ def step_impl(context, prover, issuer):
     # issue the credential to prover
     # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
     # there are schemas and add the schema to context as the issue cred tests expect. 
-    if 'schema_dict' not in context:
-        context.execute_steps('''
+    if "Indy" in context.tags:
+        context_steps_start = '''
             When  "''' + prover + '''" proposes a credential to "''' + issuer + '''"
-            And  "''' + issuer + '''" offers a credential
+            And '''
+    else:
+        context_steps_start = '''
+            When '''
+    if 'schema_dict' not in context:
+        context_steps = context_steps_start + ''' "''' + issuer + '''" offers a credential
             And "''' + prover + '''" requests the credential
             And  "''' + issuer + '''" issues the credential
             And "''' + prover + '''" acknowledges the credential issue
             Then "''' + prover + '''" has the credential issued
-        ''')
+        '''
+        context.execute_steps(context_steps)
     else:
         for schema in context.schema_dict:
             context.credential_data = context.credential_data_dict[schema]
             context.schema = context.schema_dict[schema]
-            context.execute_steps('''
-                When  "''' + prover + '''" proposes a credential to "''' + issuer + '''"
+            context_steps = context_steps_start + ''' "''' + prover + '''" proposes a credential to "''' + issuer + '''"
                 And  "''' + issuer + '''" offers a credential
                 And "''' + prover + '''" requests the credential
                 And  "''' + issuer + '''" issues the credential
                 And "''' + prover + '''" acknowledges the credential issue
                 Then "''' + prover + '''" has the credential issued
-            ''')
+            '''
+            context.execute_steps(context_steps)
     
 
 @when('"{verifier}" sends a request for proof presentation to "{prover}"')
@@ -275,7 +281,7 @@ def step_impl(context, prover):
     assert resp_json["state"] == "presentation-sent"
 
     # check the state of the presentation from the verifier's perspective
-    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "presentation-received")
+    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "presentation-received", wait_time=60.0)
 
 @when('"{prover}" makes the {presentation} of the proof')
 def step_impl(context, prover, presentation):

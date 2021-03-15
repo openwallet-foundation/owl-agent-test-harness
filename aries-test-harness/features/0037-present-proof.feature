@@ -52,7 +52,7 @@ Feature: RFC 0037 Aries agent present proof
 
       Examples:
          | issuer | credential_data   | request_for_proof            | presentation                |
-         | Acme   | Data_DL_MaxValues | proof_request_DL_address     | presentation_DL_address     |
+         #| Acme   | Data_DL_MaxValues | proof_request_DL_address     | presentation_DL_address     |
          | Faber  | Data_DL_MinValues | proof_request_DL_age_over_19 | presentation_DL_age_over_19 |
 
 
@@ -89,6 +89,25 @@ Feature: RFC 0037 Aries agent present proof
       Examples:
          | issuer | credential_data      | request for proof            | presentation                |
          | Faber  | Data_BI_HealthValues | proof_request_health_consent | presentation_health_consent |
+
+
+   @T001.5-RFC0037 @AIP10 @critical @AcceptanceTest @MobileTest
+   Scenario Outline: Present Proof where the prover does not propose a presentation of the proof and is acknowledged
+      Given "2" agents
+         | name  | role     |
+         | Faber | verifier |
+         | Bob   | prover   |
+      And "Faber" and "Bob" have an existing connection
+      And "Bob" has an issued credential from <issuer>
+      When "Faber" sends a request for proof presentation to "Bob"
+      And "Bob" makes the presentation of the proof
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof verified
+
+      Examples:
+         | issuer |
+         # | Acme   |
+         | Faber  |
 
 
    # See issue #90 for when work on this test will resume - https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/bcgov/aries-agent-test-harness/90
