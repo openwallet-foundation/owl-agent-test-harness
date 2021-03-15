@@ -1,3 +1,6 @@
+---
+sort: 4 # follow a certain sequence of letters or numbers
+---
 # ACA-PY to ACA-Py
 
 ## Summary of Tests
@@ -10,20 +13,20 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| acapy-main | acapy-main | acapy-main | acapy-main | AIP 1.0, AIP 2.0 (RFC0023 Only) |
+| acapy-main | acapy-main | acapy-main | acapy-main | AIP 1.0 |
 
 ```tip
 **Latest results: 41 out of 41 (100%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:47 CET*
+*Last run: Thu Mar 11 16:11:17 PST 2021*
 ```
 
 ## Current Status of Tests
 
 All of the tests being executed in this runset are passing.
 
-*Updated: 2021.03.05*
+*Status Note Updated: 2021.03.05*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [acapy](https://allure.vonx.io/api/allure-docker-service/projects/acapy/reports/latest/index.html?redirect=false#behaviors)

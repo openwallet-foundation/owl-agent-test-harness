@@ -54,6 +54,7 @@ collect_runset_data () {
         export RUNSET_NAME=${RUNSET}
     fi
     export SCOPE=$(grep "# Scope" $file |  sed 's/^.*: //' | sed 's/["]//g')
+    export EXCEPTIONS=$(grep "# Exceptions" $file |  sed 's/^.*: //' | sed 's/["]//g')
     # Optional -- to skip a runset from inclusion in the results.
     export SKIP=$(grep "# SKIP" $file )
     export RUNSET_LINK=${RUNSET}
@@ -67,14 +68,16 @@ collect_runset_data () {
     export ALLURE_PROJECT=$(grep "REPORT_PROJECT" $1 | sed -n '1p' | sed 's/.*: //' | sed 's/ *$//' )
     export ALLURE_LINK="https://allure.vonx.io/allure-docker-service-ui/projects/${ALLURE_PROJECT}/reports/latest"
     export ALLURE_BEHAVIORS_LINK="https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT}/reports/latest/index.html?redirect=false#behaviors"
-    export TOTAL_CASES=$( curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT}/reports/latest/widgets/summary.json | grep "total" | sed 's/.*: //' | sed 's/[^0-9]*$//' )
-    export PASSED=$( curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT}/reports/latest/widgets/summary.json | grep "passed" | sed 's/.*: //' | sed 's/[^0-9]*$//' )
-    export FAILED=$( curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT}/reports/latest/widgets/summary.json | grep "failed" | sed 's/.*: //' | sed 's/[^0-9]*$//' )
+    export ALLURE_SUMMARY=$(curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT}/reports/latest/widgets/summary.json)
+    export TOTAL_CASES=$( echo ${ALLURE_SUMMARY} | sed  's/.*"total" : \([0-9]*\).*/\1/' )
+    export PASSED=$( echo ${ALLURE_SUMMARY} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
+    export FAILED=$( echo ${ALLURE_SUMMARY} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
     if [ ${TOTAL_CASES} -eq 0 ]; then
         export PERCENT=0
     else
         export PERCENT=$((PASSED*100/TOTAL_CASES))
     fi
+    export ALLURE_DATE=$( date -d@$( echo ${ALLURE_SUMMARY} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' ) )
 }
 
 # The summary page header -- markdown format
@@ -85,8 +88,9 @@ aries_interop_header () {
 This web site shows the current status of Aries Interoperability.
 
 The latest interoperability test results are provided below. Each item is for a test runset, a combination
-of Aries agents and frameworks running a subset of the overall tests in the repository. The subset of tests
-run represent the set of tests expected to be supported by the combination of components being tested.
+of Aries agents and frameworks running a subset (see scope and exceptions) of the overall tests in the repository.
+The subset of tests run represent the set of tests expected to be supported by the combination of components
+being tested, with a narrative on the scope on the details page.
 
 The following test agents are currently included in the runsets:
 
@@ -100,8 +104,21 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 ## Summary
 
-|   #   | Runset Name     | Scope | Results |
-| :---- | :-------------- | ----- | ------: |
+|   #   | Runset Name [Details] | Scope | Exceptions | Results [Summary by RFC] |
+| :---- | :-------------------- | ----- | ---------- | ------------------------ |
+EOF
+}
+
+# The summary page header -- markdown format
+aries_interop_footer () {
+
+    cat << EOF >>$outfile
+
+For a non-technical overview of the results, please read the [Introduction to Aries Interoperability](aries-interop-intro.md).
+
+If you are developer interested in contributing tests, test agents and/or runsets, 
+please see the [Aries Agent Test Harness README](https://github.com/hyperledger/aries-agent-test-harness).
+
 EOF
 }
 
@@ -120,11 +137,12 @@ for file in .github/workflows/test-harness-*; do
     if [ "${SKIP}" != "" ]; then
         continue # Skip this workflow from the published results
     fi
-    echo "| ${count} | [${RUNSET_NAME}](./${RUNSET}.md) | ${SCOPE} | **${PASSED} / ${TOTAL_CASES}** (${PERCENT}%) |" >>$outfile
+    echo "| ${count} | [${RUNSET_NAME}](./${RUNSET}.md) | ${SCOPE} | ${EXCEPTIONS} | [**${PASSED} / ${TOTAL_CASES}** (${PERCENT}%)](${ALLURE_BEHAVIORS_LINK}) |" >>$outfile
     count=$(expr ${count} + 1)
 done
 
 # Finished with the table -- add in the footer and done with the summary file
+aries_interop_footer
 echo -e "\\n*Results last updated: $(date | sed 's/  / /g')*" >>$outfile
 echo "" >>$outfile
 
@@ -141,7 +159,8 @@ for file in .github/workflows/test-harness-*; do
         continue # Skip this workflow from the published results
     fi
 # First write eache detail file -- make sure to replace the old version with a ">" and ">>" for the rest
-    echo -e "# ${RUNSET_NAME}\\n" >$outfile
+    echo -e "---\\nsort: ${count} # follow a certain sequence of letters or numbers\\n---" >$outfile
+    echo -e "# ${RUNSET_NAME}\\n" >>$outfile
     echo -e "## Summary of Tests\\n" >>$outfile
     
 # Print the summary text from the workflow file -- or a default message
@@ -157,7 +176,7 @@ for file in .github/workflows/test-harness-*; do
     echo "| ${ACME} | ${BOB} | ${FABER} | ${MALLORY} | ${SCOPE} |" >>$outfile
 # Print the highlighted test results
     echo -e "\\n\`\`\`tip\\n**Latest results: ${PASSED} out of ${TOTAL_CASES} (${PERCENT}%)**\\n" >>$outfile
-    echo -e "\\n*Last updated: $(date | sed 's/  / /g')*\\n\`\`\`\\n" >>$outfile
+    echo -e "\\n*Last run: ${ALLURE_DATE}*\\n\`\`\`\\n" >>$outfile
     echo -e "## Current Status of Tests" >>$outfile
 # Print the status text from the workflow file -- or a default message
     if [ "${CURRENT_STATUS}" == "" ]; then
@@ -169,10 +188,11 @@ for file in .github/workflows/test-harness-*; do
     echo -e "## Test Run Details" >>$outfile
     echo -e "See the tests results grouped by the Aries RFCs executed [${ALLURE_PROJECT}](${ALLURE_BEHAVIORS_LINK})\\n" >>$outfile
     echo -e "See the test runs history and drill into the details [${ALLURE_PROJECT}](${ALLURE_LINK})\\n" >>$outfile
-    count=$(expr ${count} + 1)
+
 
 # Link to the summary page
     echo "Jump back to the [runset summary](./README.md)." >>$outfile
 # And we're done for this file
     echo "" >>$outfile
+    count=$(expr ${count} + 1)
 done

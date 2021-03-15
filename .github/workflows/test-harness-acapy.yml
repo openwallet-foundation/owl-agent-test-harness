@@ -1,6 +1,7 @@
 name: test-harness-acapy-acapy
 # RUNSET_NAME: "ACA-PY to ACA-Py"
-# Scope: AIP 1.0, AIP 2.0 (RFC0023 Only)
+# Scope: AIP 1.0
+# Exceptions: None
 # 
 # Summary
 #
@@ -11,7 +12,7 @@ name: test-harness-acapy-acapy
 # 
 # All of the tests being executed in this runset are passing.
 # 
-# *Updated: 2021.03.05*
+# *Status Note Updated: 2021.03.05*
 #
 # End
 on:

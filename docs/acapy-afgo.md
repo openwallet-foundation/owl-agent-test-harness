@@ -1,3 +1,6 @@
+---
+sort: 1 # follow a certain sequence of letters or numbers
+---
 # ACA-PY to AF-Go
 
 ## Summary of Tests
@@ -11,13 +14,13 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| acapy-main | afgo-master | acapy-main | acapy-main | AIP 2.0 RFC0023 Only |
+| acapy-main | afgo-master | acapy-main | acapy-main | pre-AIP 2.0 |
 
 ```tip
 **Latest results: 0 out of 5 (0%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:36 CET*
+*Last run: Thu Mar 11 16:07:49 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -25,7 +28,7 @@
 None of the tests are currently working and issues have been created to try to determine three identified issues.
 One might be in the test suite, while two others appear to be in the Aries Framework Go.
 
-*Updated: 2021.03.05*
+*Status Note Updated: 2021.03.05*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [acapy-b-afgo](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)

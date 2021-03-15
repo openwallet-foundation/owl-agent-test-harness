@@ -1,3 +1,6 @@
+---
+sort: 6 # follow a certain sequence of letters or numbers
+---
 # AFJ to AF-.NET
 
 ## Summary of Tests
@@ -12,20 +15,20 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| javascript | dotnet-master | javascript | javascript | AIP 1.0 except revocation and proof proposals |
+| javascript | dotnet-master | javascript | javascript | AIP 1.0 |
 
 ```tip
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:52 CET*
+*Last run: Thu Mar 11 17:01:06 PST 2021*
 ```
 
 ## Current Status of Tests
 
 All but one of the tests being executed in this runset are passing. The failure is being investigated.
 
-*Updated: 2021.03.05*
+*Status Note Updated: 2021.03.05*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [javascript-b-dotnet](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors)

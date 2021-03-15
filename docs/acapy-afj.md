@@ -1,3 +1,6 @@
+---
+sort: 2 # follow a certain sequence of letters or numbers
+---
 # ACA-PY to AFJ
 
 ## Summary of Tests
@@ -12,13 +15,13 @@
 
 |  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
 | :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| acapy-main | javascript | acapy-main | acapy-main | AIP 1.0 except revocation |
+| acapy-main | javascript | acapy-main | acapy-main | AIP 1.0 |
 
 ```tip
-**Latest results: 15 out of 30 (50%)**
+**Latest results: 13 out of 18 (72%)**
 
 
-*Last updated: Mon 8 Mar 2021 12:43:39 CET*
+*Last run: Thu Mar 11 17:34:44 PST 2021*
 ```
 
 ## Current Status of Tests
@@ -27,7 +30,7 @@ Only about half of the tests are currently running. The issues seem to be relate
 of the test cases being run as a number of the revocation tests are running and shouldn't be. As well,
 the tests with the holder proposing a proof are not running, as that feature is not supported in AFJ.
 
-*Updated: 2021.03.08*
+*Status Note Updated: 2021.03.08*
 
 ## Test Run Details
 See the tests results grouped by the Aries RFCs executed [acapy-b-javascript](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors)
