@@ -70,6 +70,83 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0036 Issue Credential,X,,issue-credential,POST,store,Y,Y,Send credential acknowledgement with ID ,cred_exchange_id,"offer = {
     ""credential_id"": ""issue-credential exchange id string""
 }",cred_exchange_id
+0453 Issue Credential,X,,issue-credential-v2,POST,send-proposal,,Y,Send a credential proposal,,"proposal = {
+   ""connection_id"":""d71cd2f1-f075-4083-9b63-73f507813836"",
+   ""credential_preview"":{
+      ""@type"":""did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"",
+      ""attributes"":[
+         {
+            ""name"":""address"",
+            ""value"":""947 this street, Kingston Ontario Canada, K9O 3R5""
+         },
+         {
+            ""name"":""DL_number"",
+            ""value"":""09385029529385""
+         },
+         {
+            ""name"":""expiry"",
+            ""value"":""10/12/2022""
+         },
+         {
+            ""name"":""age"",
+            ""value"":""30""
+         }
+      ]
+   },
+   ""filter"":{
+      ""indy"":{
+         ""cred_def_id"":""9AEavHmJPMK8gi8ey748Cc:3:CL:9852:default"",
+         ""issuer_did"":""9AEavHmJPMK8gi8ey748Cc"",
+         ""schema_id"":""9AEavHmJPMK8gi8ey748Cc:2:Schema_DriversLicense_v2:1.0.1"",
+         ""schema_issuer_did"":""9AEavHmJPMK8gi8ey748Cc"",
+         ""schema_name"":""Schema_DriversLicense_v2"",
+         ""schema_version"":""1.0.1""
+      }
+   }
+}","state, thread_id"
+0453 Issue Credential v2,X,,issue-credential-v2,POST,send-offer,,Y,Send a credential offer (unsolicited),,"offer = {
+   ""connection_id"":""d71cd2f1-f075-4083-9b63-73f507813836"",
+   ""credential_preview"":{
+      ""@type"":""did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"",
+      ""attributes"":[
+         {
+            ""name"":""address"",
+            ""value"":""947 this street, Kingston Ontario Canada, K9O 3R5""
+         },
+         {
+            ""name"":""DL_number"",
+            ""value"":""09385029529385""
+         },
+         {
+            ""name"":""expiry"",
+            ""value"":""10/12/2022""
+         },
+         {
+            ""name"":""age"",
+            ""value"":""30""
+         }
+      ]
+   },
+   ""filter"":{
+      ""indy"":{
+         ""cred_def_id"":""9AEavHmJPMK8gi8ey748Cc:3:CL:9852:default"",
+         ""issuer_did"":""9AEavHmJPMK8gi8ey748Cc"",
+         ""schema_id"":""9AEavHmJPMK8gi8ey748Cc:2:Schema_DriversLicense_v2:1.0.1"",
+         ""schema_issuer_did"":""9AEavHmJPMK8gi8ey748Cc"",
+         ""schema_name"":""Schema_DriversLicense_v2"",
+         ""schema_version"":""1.0.1""
+      }
+   }
+}","state, thread_id"
+0453 Issue Credential v2,X,,issue-credential-v2,POST,send-offer,Y,,Send a credential offer as a response to a proposal,thread_id,,state
+0453 Issue Credential v2,X,,issue-credential-v2,GET,,Y,,Fetch a specific credential by ID ,thread_id,,state
+0453 Issue Credential v2,X,,issue-credential-v2,POST,send-request,Y,,Send a credential request,thread_id,,state
+0453 Issue Credential v2,X,,issue-credential-v2,POST,issue,Y,Y,Issue a credential in response to a request with details ,thread_id,"offer = {
+    ""comment"": ""some comment""
+}",state
+0453 Issue Credential v2,X,,issue-credential-v2,POST,store,Y,Y,Send credential acknowledgement with ID ,thread_id,"offer = {
+    ""credential_id"": ""issue-credential exchange id string""
+}","state, credential_id"
 0011 Revocation,X,,revocation,POST,revoke,Y,Y,revoke an issued credential,cred_rev_id,"revocation = {
     ""rev_registry_id"": ""revocation registry id string"",
     ""publish_immediately"": ""Publish revocation now or queue""
