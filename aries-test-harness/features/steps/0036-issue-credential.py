@@ -1,6 +1,7 @@
 from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
+from agent_test_utils import format_cred_proposal_by_aip_version
 from time import sleep
 import time
 
@@ -243,6 +244,7 @@ def step_impl(context, issuer):
         context.cred_thread_id = resp_json["thread_id"]
 
     else:
+
         # If context has the credential thread id then the proposal was done. 
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.cred_thread_id)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -352,26 +354,25 @@ def step_impl(context, holder):
 @then('"{holder}" has the credential issued')
 def step_impl(context, holder):
 
-        holder_url = context.config.userdata.get(holder)
-        # get the credential from the holders wallet
-        (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-        resp_json = json.loads(resp_text)
-        if "state" in resp_json and resp_json["state"] == "N/A":
-            # backchannel can't get the credential
-            pass
-        else:
-            assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-            assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
-            assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+    holder_url = context.config.userdata.get(holder)
+    # get the credential from the holders wallet
+    (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+    if "state" in resp_json and resp_json["state"] == "N/A":
+        # backchannel can't get the credential
+        pass
+    else:
+        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
+        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 
-        # Make sure the issuer is not holding the credential
-        # get the credential from the holders wallet
-        # TODO this expected error is not displaying in the agent output until after all the tests are executed. Uncomment this out when
-        # there is a solution to the error messaging happening at the end. 
-        #(resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
-        #assert resp_status == 404, f'resp_status {resp_status} is not 404; {resp_text}'
-
+    # Make sure the issuer is not holding the credential
+    # get the credential from the holders wallet
+    # TODO this expected error is not displaying in the agent output until after all the tests are executed. Uncomment this out when
+    # there is a solution to the error messaging happening at the end. 
+    #(resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
+    #assert resp_status == 404, f'resp_status {resp_status} is not 404; {resp_text}'
 
 
 @when(u'"{holder}" negotiates the offer with a proposal of the credential to "{issuer}"')
