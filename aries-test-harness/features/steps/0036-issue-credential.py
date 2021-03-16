@@ -90,6 +90,7 @@ def step_impl(context, issuer):
     cred_def["schema_id"] = context.issuer_schema_id_dict[context.schema['schema_name']]
     if "support_revocation" in context:
         cred_def["support_revocation"] = context.support_revocation
+    print("Creating cred def:", cred_def)
 
     (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "credential-definition", data=cred_def)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -236,6 +237,8 @@ def step_impl(context, issuer):
             },
             "connection_id": context.connection_id_dict[issuer][context.holder_name],
         }
+        print("Offering credential:", credential_offer)
+        print("For schema/cred def:", context.schema['schema_name'], context.issuer_credential_definition_dict[context.schema['schema_name']])
 
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", data=credential_offer)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -243,6 +246,7 @@ def step_impl(context, issuer):
         context.cred_thread_id = resp_json["thread_id"]
 
     else:
+        print("Start with a credential offer ...")
         # If context has the credential thread id then the proposal was done. 
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.cred_thread_id)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -262,12 +266,15 @@ def step_impl(context, holder):
 
     # If @indy then we can be sure we cannot start the protocol from this command. We can be sure that we have previously 
     # reveived the thread_id.
-    if "Indy" in context.tags:
+    #if "Indy" in context.tags:
+    if "cred_thread_id" in context:
         sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.cred_thread_id)
 
     # If we are starting from here in the protocol you won't have the cred_ex_id or the thread_id
     else:
+        print("Holder is sending a credential request", holder)
+        sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.connection_id_dict[holder][context.issuer_name])
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'

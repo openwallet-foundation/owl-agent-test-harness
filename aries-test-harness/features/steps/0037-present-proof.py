@@ -111,8 +111,7 @@ def step_impl(context, prover, issuer):
         for schema in context.schema_dict:
             context.credential_data = context.credential_data_dict[schema]
             context.schema = context.schema_dict[schema]
-            context_steps = context_steps_start + ''' "''' + prover + '''" proposes a credential to "''' + issuer + '''"
-                And  "''' + issuer + '''" offers a credential
+            context_steps = context_steps_start + ''' "''' + issuer + '''" offers a credential
                 And "''' + prover + '''" requests the credential
                 And  "''' + issuer + '''" issues the credential
                 And "''' + prover + '''" acknowledges the credential issue

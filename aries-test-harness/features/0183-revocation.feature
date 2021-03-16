@@ -41,6 +41,24 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
+   @T001.2-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @MobileTest @support_revocation
+   Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked
+      Given "2" agents
+         | name  | role     |
+         | Bob   | prover   |
+         | Faber | verifier |
+      And "Faber" and "Bob" have an existing connection
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      When <issuer> revokes the credential
+      And "Faber" sends a <request_for_proof> presentation to "Bob"
+      And "Bob" makes the <presentation> of the proof
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof verified
+
+      Examples:
+         | issuer | credential_data   | request_for_proof              | presentation                  |
+         | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
+
    @T002-HIPE0011 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential with timesstamp
       Given "2" agents
@@ -70,6 +88,24 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
       And "Bob" has an issued credential from <issuer> with <credential_data>
       When <issuer> revokes the credential
       And <issuer> issues a new credential to "Bob" with <new_credential_data>
+      And "Faber" sends a <request_for_proof> presentation to "Bob"
+      And "Bob" makes the <presentation> of the proof
+      And "Faber" acknowledges the proof
+      Then "Bob" has the proof unverified
+
+      Examples:
+         | issuer | credential_data      | new_credential_data          | request_for_proof                         | presentation                             |
+         | Acme   | Data_BI_HealthValues | Data_BI_HealthValues_Reissue | proof_request_health_consent_revoc_expiry | presentation_health_consent_revoc_expiry |
+
+   @T002.2-HIPE0011 @normal @wip @NegativeTest @AcceptanceTest @Schema_Health_Consent_Revoc @support_revocation @MobileTest
+   Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential with no timestamp
+      Given "2" agents
+         | name  | role     |
+         | Bob   | prover   |
+         | Faber | verifier |
+      And "Faber" and "Bob" have an existing connection
+      And "Bob" has an issued credential from <issuer> with <credential_data>
+      When <issuer> revokes the credential
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
