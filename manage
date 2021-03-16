@@ -72,7 +72,7 @@ usage () {
   rebuild [ -a agent ]* args
     Same as build, but adds the --no-cache option to force building from scratch
 
-  run [ -a/b/m/d agent ] [-r allure [-e comparison]] [ -i <ini file> ] [ -o <output file> ] [ -t tags ]*
+  run [ -a/b/m/d agent ] [-r allure [-e comparison]] [ -i <ini file> ] [ -o <output file> ] [ -n ] [ -t tags ]*
     Run the tagged tests using the specified agents for Acme, Bob, Faber and Mallory.
       Select the agents for the roles of Acme (-a), Bob (-b), Faber (-f) and Mallory (-m).
       - For all to be set to the same, use "-d" for default.
@@ -86,11 +86,14 @@ usage () {
         (allure is the only supported option)
       Use the -e option to compare current results to Known Good Results (KGR)
         (comparison is the only supported option)
+      Use the -n option to start ngrok endpoints for each agent
+        (this is *required* when testing with a Mobile agent)
 
     Examples:
     $0 run -a acapy -b vcx -f vcx -m acapy  - Run all the tests using the specified agents per role
     $0 run -d vcx                           - Run all tests for all features using the vcx agent in all roles
     $0 run -d acapy -t @SmokeTest -t @P1    - Run the tests tagged @SmokeTest and/or @P1 (priority 1) using all ACA-Py agents
+    $0 run -d acapy -b mobile -n -t @MobileTest  - Run the mobile tests using ngrok endpoints
   
   tags - Get a list of the tags on the features tests
 
@@ -316,18 +319,21 @@ startAgent() {
   local AGENT_ENDPOINT_PORT=$6
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-    echo "Starting ngrok for ${NAME} Agent ..."
-    if [[ "${IMAGE_NAME}" = "dotnet-master-agent-backchannel" ]]; then
-      docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
-    else
-      docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
+    if [[ "${USE_NGROK}" = "true" ]]; then
+      echo "Starting ngrok for ${NAME} Agent ..."
+      if [[ "${IMAGE_NAME}" = "dotnet-master-agent-backchannel" ]]; then
+        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
+      else
+        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
+      fi
+      sleep 1
+      export NGROK_NAME="${CONTAINER_NAME}-ngrok"
+      docker network connect aath_network "${CONTAINER_NAME}-ngrok"
     fi
-    sleep 1
-    docker network connect aath_network "${CONTAINER_NAME}-ngrok"
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     local LEDGER_URL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
     local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
-    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${CONTAINER_NAME}-ngrok" -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=${LEDGER_URL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     docker network connect aath_network "${CONTAINER_NAME}"
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
@@ -433,7 +439,9 @@ runTests() {
   echo "Cleanup:"
   echo "  - Shutting down all the agents ..."
   docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
-  docker stop acme_agent-ngrok bob_agent-ngrok faber_agent-ngrok mallory_agent-ngrok >/dev/null
+  if [[ "${USE_NGROK}" = "true" ]]; then
+    docker stop acme_agent-ngrok bob_agent-ngrok faber_agent-ngrok mallory_agent-ngrok >/dev/null
+  fi
   docker network rm aath_network
   printf "Done\n"
 
@@ -480,7 +488,7 @@ if [[ "${COMMAND}" == "run" ]]; then
   TAGS=""
   BEHAVE_INI=aries-test-harness/behave.ini
 
-  while getopts "ha:b:c:f:m:r:e:d:t:i:" FLAG; do
+  while getopts "hna:b:c:f:m:r:e:d:t:i:" FLAG; do
     case $FLAG in
         h ) usage ;;
         : ) usage ;;
@@ -503,6 +511,8 @@ if [[ "${COMMAND}" == "run" ]]; then
         t ) export TAGS="${TAGS} --tags=${OPTARG}"
             ;;
         i ) export BEHAVE_INI=${OPTARG}
+            ;;
+        n ) export USE_NGROK="true"
             ;;
         d )
             export ACME=${OPTARG}
@@ -593,7 +603,8 @@ case "${COMMAND}" in
       echo ${DOCKERHOST}
     ;;
   *)
-      usage;;
+      usage
+    ;;
 
 esac
 

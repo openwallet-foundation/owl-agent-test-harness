@@ -223,6 +223,7 @@ class MobileAgentBackchannel(AgentBackchannel):
             operation = op["operation"]
             if operation == "receive-invitation":
                 self.connection_state = "invited"
+                print("=================================================================")
                 print("Connection invitation:", data)
 
                 message_bytes = json.dumps(data).encode('ascii')
@@ -241,6 +242,7 @@ class MobileAgentBackchannel(AgentBackchannel):
                     json.dumps(data), label="Invitation Data:", color=None
                 )
                 qr.print_ascii(invert=True)
+                print("=================================================================")
 
                 return (200, '{"result": "ok", "connection_id": "1", "state": "' + self.connection_state + '"}')
 
@@ -256,6 +258,9 @@ class MobileAgentBackchannel(AgentBackchannel):
         elif op["topic"] == "issue-credential":
             operation = op["operation"]
             if operation == "send-request":
+                print("=================================================================")
+                print("Please respond to the Credential Offer!")
+                print("=================================================================")
                 return (200, '{"result": "ok", "thread_id": "1", "state": "request-sent"}')
             elif operation == "store":
                 return (200, '{"result": "ok", "thread_id": "1", "credential_id": "' + rec_id + '", "state": "done"}')
@@ -265,6 +270,9 @@ class MobileAgentBackchannel(AgentBackchannel):
         elif op["topic"] == "proof":
             operation = op["operation"]
             if operation == "send-presentation":
+                print("=================================================================")
+                print("Please respond to the Proof Request!")
+                print("=================================================================")
                 return (200, '{"result": "ok", "thread_id": "1", "state": "presentation-sent"}')
             else:
                 return (200, '{"result": "ok", "thread_id": "1", "state": "N/A"}')

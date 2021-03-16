@@ -5,7 +5,7 @@ Feature: RFC 0160 Aries agent connection functions
    Scenario Outline: establish a connection between two agents
       Given we have "2" agents
          | name  | role    |
-         | Acme | inviter |
+         | Acme  | inviter |
          | Bob   | invitee |
       When "Acme" generates a connection invitation
       And "Bob" receives the connection invitation

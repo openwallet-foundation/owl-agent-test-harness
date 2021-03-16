@@ -106,7 +106,7 @@ Feature: RFC 0037 Aries agent present proof
 
       Examples:
          | issuer |
-         # | Acme   |
+         | Acme   |
          | Faber  |
 
 

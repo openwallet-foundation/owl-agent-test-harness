@@ -118,6 +118,7 @@ class AgentBackchannel:
 
         # may be set via ngrok
         agent_endpoint = os.getenv("AGENT_PUBLIC_ENDPOINT")
+        print("agent_endpoint:", agent_endpoint)
         if agent_endpoint:
             self.endpoint = agent_endpoint
         elif RUN_MODE == "pwd":
@@ -126,6 +127,7 @@ class AgentBackchannel:
             )
         else:
             self.endpoint = f"http://{self.external_host}:{http_port}"
+        print("self.endpoint:", self.endpoint)
         self.admin_url = f"http://{self.internal_host}:{admin_port}"
 
         self.storage_type = "indy"
