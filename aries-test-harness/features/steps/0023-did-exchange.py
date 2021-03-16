@@ -103,7 +103,7 @@ def step_impl(context, requester, responder):
         context.connection_id_dict = {}
 
     # Check for responder key existing in dict
-    if responder not in context.connection_id_dict:
+    if requester not in context.connection_id_dict:
         context.connection_id_dict[requester] = {}
 
     # Some agents (afgo) do not have a webhook that give a connection id at this point in the protocol. 

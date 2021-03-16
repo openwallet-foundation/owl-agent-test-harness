@@ -1,4 +1,23 @@
 name: test-harness-acapy-full
+# RUNSET_NAME: "ACA-PY to ACA-Py All Tests"
+# Scope: AIP 1.0
+# Exceptions: None
+# SKIP
+# 
+# Summary
+#
+# This runset uses the current main branch of ACA-Py for all of the agents. The runset runs every test in the suite
+# including those that are marked as works in progress.
+#
+# Current
+# 
+# Half of the tests in the suite are working. We will shortly remove the "work in progress" tests as they are
+# not expected to run (currently 20 tests). We'll assess and document the other tests that are not work and update
+# this status.
+# 
+# *Status Note Updated: 2021.03.05*
+#
+# End
 on:
   workflow_dispatch:
   schedule:
@@ -24,7 +43,7 @@ jobs:
         with:
           DEFAULT_AGENT: acapy-main
           BOB_AGENT: acapy-main
-          TEST_SCOPE: ""
+          TEST_SCOPE: "-t ~@wip"
           REPORTING: "-r allure -e comparison"
           REPORT_PROJECT: acapy-full
           ADMIN_USER: ${{ secrets.AllureAdminUser }}

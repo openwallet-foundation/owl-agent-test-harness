@@ -34,7 +34,7 @@ def before_scenario(context, scenario):
         print ('NOTE: Test \"' + scenario.name + '\" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
 
     # Check for Present Froof Feature to be able to handle the loading of schemas and credential definitions before the scenarios.
-    if 'present proof' in context.feature.name or 'revocation' in context.feature.name:
+    if 'present proof' in context.feature.name or 'revocation' in context.feature.name or 'Issue Credential' in context.feature.name:
             # get the tag with "Schema_".
             for tag in context.tags:
                 if 'Schema_' in tag:
@@ -42,10 +42,14 @@ def before_scenario(context, scenario):
                     try:
                         schema_json_file = open('features/data/' + tag.lower() + '.json')
                         schema_json = json.load(schema_json_file)
-                        #context.schema = schema_json["schema"]
 
-                        # Get and assign the credential definition info to the context
-                        #context.support_revocation = schema_json["cred_def_support_revocation"]
+                        # If this is issue credential then you can't created multiple credential defs at the same time, like Proof uses
+                        # mulitple crdential types in the proof. So just set the context.schema here to be used in the issue cred test.
+                        # This makes the rule that you can only have one @Schema_ tag in an issue credential test scenario. 
+                        if 'Issue Credential' in context.feature.name:
+                            context.schema = schema_json["schema"]
+                            # Get and assign the credential definition info to the context
+                            context.support_revocation = schema_json["cred_def_support_revocation"]
 
                         # Support multiple schemas for multiple creds in a proof request.
                         # for each schema in tags add the schema and revocation support to a dict keyed by schema name.
