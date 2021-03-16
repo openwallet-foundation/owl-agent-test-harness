@@ -305,6 +305,7 @@ def step_impl(context, issuer):
     assert resp_json["state"] == "credential-issued"
 
     # Verify holder status
+    sleep(1.0)
     assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "credential-received")
 
 

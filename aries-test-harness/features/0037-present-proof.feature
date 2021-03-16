@@ -52,7 +52,7 @@ Feature: RFC 0037 Aries agent present proof
 
       Examples:
          | issuer | credential_data   | request_for_proof            | presentation                |
-         #| Acme   | Data_DL_MaxValues | proof_request_DL_address     | presentation_DL_address     |
+         | Acme   | Data_DL_MaxValues | proof_request_DL_address     | presentation_DL_address     |
          | Faber  | Data_DL_MinValues | proof_request_DL_age_over_19 | presentation_DL_age_over_19 |
 
 

@@ -86,7 +86,7 @@ def agent_backchannel_DELETE(url, topic, id=None, data=None) -> (int, str):
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "DELETE", agent_url)
     return (resp_status, resp_text)
 
-def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt, wait_time=1.0, sleep_time=1.0):
+def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt, wait_time=2.0, sleep_time=0.2):
     sleep(sleep_time)
     state = "None"
     if type(status_txt) != list:

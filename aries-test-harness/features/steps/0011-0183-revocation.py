@@ -34,7 +34,7 @@ def step_impl(context, issuer):
 
     (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "revocation", operation="revoke", data=credential_revocation)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
+    # resp_json = json.loads(resp_text)
 
     # Check the Holder wallet for the credential
     # Should be a 200 since the revoke doesn't remove the cred from the holders wallet. 
