@@ -1,25 +1,43 @@
 #! /bin/bash
 
+# Configuration Data -- order matters in these arrays. A new entry requires an entry in all "ta_" arrays
+ta_tlas=("acapy" "afgo" "javascript" "dotnet")
+ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET")
+ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET")
+ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1")
+ta_exceptions=("None" "None" "Revocation" "Proof Proposal")
+ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
+https://github.com/hyperledger/aries-framework-go \
+https://github.com/hyperledger/aries-framework-javascript \
+https://github.com/hyperledger/aries-framework-dotnet)
+workflows=".github/workflows/test-harness-*"
+
 usage () {
 
 cat << EOF
 Usage: gen-interop.sh [--help]
 
-Generates the Aries Interop tests documentation pages based on the workflows defined in the
-repo. The workflows are in the .github/workflows folder and must be named "test-harness-<name>.yml".
+Generates the Aries Interop tests documentation pages based on the test agents setup and the workflows
+defined in the repo. The workflows are in the .github/workflows folder and must be named "test-harness-<name>.yml".
 
-The generator iterates over each workflow file, extracts data from it -- either live
-data or from comments, grabs data from the last run of the workflow and puts the data
-into generated markdown files in the /docs folder.
+The generator iterates over each workflow file, extracting data from it -- either live
+data or from comments. Further, it curl's the related allure "latest" files to get some
+data about the last run - tests run, tests passed and date.  All of the data goes into
+a set of arrays indexed by the workflow file number.
+
+From there, a README file is created summarizing by Test Agent the run results, and
+a file per Test Agent is generated that gives more details about the tests run for that agent.
 
 Basic process:
+  Collect all the runset data in arrays
   Generate the header for the summary page (README.md)
-  Iterate through the workflow files -- the runsets
-      Extract data from the workflow file and Allure results
-      Print a summary row about the test runs and history
-  Iterate through the workflow files -- the runsets (again)
-      Extract data from the workflow file and Allure results (again)
-      Print a details file about about the current runset (<runset>.md)
+  Iterate through the test agents configured in this script.
+      Print a summary per test agent showing the results against all other agents.
+  Iterate again through the test agents
+      Print a details file about about the current test agent (<ta_shortname>.md)
+      Print a table listing each runset the test agent is a part of
+      Iterate over the runsets
+         Print details about each runset the test agent is a part of
 
 To add information about a workflow, insert comments into the YAML with identifiers RUNSET_NAME,
 Scope, Summary, and Current.
@@ -35,57 +53,32 @@ if [ "$1" == "--help" ]; then
     usage
 fi
 
-# Helper function to override the default agent type -- if there is an override
-agent_type () { # file Agent Default_Value
-    if grep -q $2 $1; then
-        echo $(grep "$2" $1 | sed 's/.*: //')
+default_value () {
+# Helper function set a value to a default if no value is provided
+    if [ "$2" == "" ]; then
+        echo $1
     else
-        echo $3
+        echo $2
     fi
 }
 
-# Collect all the data about each runset
-collect_runset_data () {
-    file=$1
-    export RUNSET=$(echo $file | sed "s/.*ness-//" | sed "s/.yml//")
-    export RUNSET_NAME=""
-    export RUNSET_NAME=$(grep RUNSET_NAME $file |  sed 's/^.*: //' | sed 's/["]//g')
-    if [ "${RUNSET_NAME}" == "" ]; then
-        export RUNSET_NAME=${RUNSET}
-    fi
-    export SCOPE=$(grep "# Scope" $file |  sed 's/^.*: //' | sed 's/["]//g')
-    export EXCEPTIONS=$(grep "# Exceptions" $file |  sed 's/^.*: //' | sed 's/["]//g')
-    # Optional -- to skip a runset from inclusion in the results.
-    export SKIP=$(grep "# SKIP" $file )
-    export RUNSET_LINK=${RUNSET}
-    export SUMMARY=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/Current/,$d' | sed '1,/Summary/d' | sed 's/$/\\n/' | sed 's/^ //')
-    export CURRENT_STATUS=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/^End/,$d' | sed -n '/Current/,$p' | sed '1d' | sed 's/^ //')
-    export DEFAULT_AGENT=$(grep "DEFAULT_AGENT" $file | sed 's/.*: //' )
-    export ACME=$(agent_type $file ACME ${DEFAULT_AGENT} )
-    export BOB=$(agent_type $file BOB ${DEFAULT_AGENT} )
-    export FABER=$(agent_type $file FABER ${DEFAULT_AGENT} )
-    export MALLORY=$(agent_type $file MALLORY ${DEFAULT_AGENT} )
-    export ALLURE_PROJECT=$(grep "REPORT_PROJECT" $1 | sed -n '1p' | sed 's/.*: //' | sed 's/ *$//' )
-    export ALLURE_LINK="https://allure.vonx.io/allure-docker-service-ui/projects/${ALLURE_PROJECT}/reports/latest"
-    export ALLURE_BEHAVIORS_LINK="https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT}/reports/latest/index.html?redirect=false#behaviors"
-    export ALLURE_SUMMARY=$(curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT}/reports/latest/widgets/summary.json)
-    export TOTAL_CASES=$( echo ${ALLURE_SUMMARY} | sed  's/.*"total" : \([0-9]*\).*/\1/' )
-    export PASSED=$( echo ${ALLURE_SUMMARY} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
-    export FAILED=$( echo ${ALLURE_SUMMARY} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
-    if [ ${TOTAL_CASES} -eq 0 ]; then
-        export PERCENT=0
-    else
-        export PERCENT=$((PASSED*100/TOTAL_CASES))
-    fi
-    export ALLURE_DATE=$( date -d@$( echo ${ALLURE_SUMMARY} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' ) )
+list_agents () {
+# Helper function -- list the agents with links -- used in the header function
+    count=0
+    for agent in "${ta_shortnames[@]}"; do
+        echo "- [${ta_names[$count]}](${ta_urls[$count]}) ($agent)"
+        count=$(expr ${count} + 1)
+    done
 }
 
-# The summary page header -- markdown format
 aries_interop_header () {
+# The summary page header -- markdown format
 
-    cat << EOF >>$outfile
+    cat << EOF
 
-This web site shows the current status of Aries Interoperability.
+This web site shows the current status of Aries Interoperability amongst Aries frameworks and agents. while
+not included in these results yet, we have a working prototype for testing Aries mobile wallets using the
+identical tests.
 
 The latest interoperability test results are provided below. Each item is for a test runset, a combination
 of Aries agents and frameworks running a subset (see scope and exceptions) of the overall tests in the repository.
@@ -94,105 +87,197 @@ being tested, with a narrative on the scope on the details page.
 
 The following test agents are currently included in the runsets:
 
-- [Aries Cloud Agent Python](https://github.com/hyperledger/aries-cloudagent-python) (ACA-Py)
-- [Aries Framework .NET](https://github.com/hyperledger/aries-framework-dotnet) (AF-.NET)
-- [Aries Framework JavaScript](https://github.com/hyperledger/aries-framework-javascript) (AFJ)
-- [Aries Framework Go](https://github.com/hyperledger/aries-framework-go) (AF-Go)
+$(list_agents)
 
 Want to add your Aries component to this page? You need to add a runset to the
 [Aries Agent Test Harness](https://github.com/hyperledger/aries-agent-test-harness).
 
-## Summary
+## Aries Continuous Interoperability Results
 
-|   #   | Runset Name [Details] | Scope | Exceptions | Results [Summary by RFC] |
-| :---- | :-------------------- | ----- | ---------- | ------------------------ |
 EOF
 }
 
-# The summary page header -- markdown format
 aries_interop_footer () {
+# The summary page footer -- markdown format
 
-    cat << EOF >>$outfile
+    cat << EOF
 
-For a non-technical overview of the results, please read the [Introduction to Aries Interoperability](aries-interop-intro.md).
-
-If you are developer interested in contributing tests, test agents and/or runsets, 
-please see the [Aries Agent Test Harness README](https://github.com/hyperledger/aries-agent-test-harness).
+- The **bolded results** include all tests involving the "Test Agent" (first column), including tests using only that Test Agent.
+- Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
+- Click on the "Test Agent" links to drill into the tests being run for each.
 
 EOF
 }
 
-# First write the summary file -- make sure to replace the old version with a ">" and ">>" for the rest
-outfile=docs/README.md
-# Title of the page
-# Note -- may want to put Jekyll frontmatter at the top of the page
-echo -e '# Aries Interoperability Testing Overview\n' >$outfile
+aries_interop_summary_table_header () {
+# The header for the table on the summary page -- static columns, plus one per test agent
+    printf "| Test Agent | Scope | Exceptions "
+    for agent in "${ta_shortnames[@]}"; do
+        printf "| $agent "
+    done
+    printf "|\\n"
 
-aries_interop_header
+    printf "| ----- | ----- | ----- "
+    for agent in "${ta_shortnames[@]}"; do
+        printf "| :----: "
+    done
+    printf "|\\n"
+}
 
-count=1
-for file in .github/workflows/test-harness-*; do
-# Collect the data per workflow and then dump it into the table
-    collect_runset_data $file
-    if [ "${SKIP}" != "" ]; then
-        continue # Skip this workflow from the published results
+sum_print_tests () {
+# Inserts the value of a cell by summing the number of tests involving the two agents
+# passed in as args 1 and 2. Doesn't include skipped runsets. Prints the result at the end.
+# Special handling of arg values are the same -- puts markdown bold around the results.
+    passed=0
+    total=0
+    file_num=0
+    for file in ${workflows}; do
+        agents=${ACME[$file_num]}${BOB[$file_num]}${FABER[$file_num]}${MALLORY[$file_num]}
+        if [[ $agents =~ $1 && $agents =~ $2 && "${SKIP[$file_num]}" == "" ]]; then
+            passed=$(expr $passed + ${PASSED[$file_num]} ) 
+            total=$(expr $total + ${TOTAL_CASES[$file_num]} )
+        fi
+        file_num=$(expr ${file_num} + 1 )
+    done
+    if [ ${total} -eq 0 ]; then
+        percent=0
+    else
+        percent=$((${passed}*100/${total}))
     fi
-    echo "| ${count} | [${RUNSET_NAME}](./${RUNSET}.md) | ${SCOPE} | ${EXCEPTIONS} | [**${PASSED} / ${TOTAL_CASES}** (${PERCENT}%)](${ALLURE_BEHAVIORS_LINK}) |" >>$outfile
+    bold=""
+    if [ "$1" == "$2" ]; then
+        bold="**"
+    fi
+    printf "| ${bold}%d / %d<br>%d%%${bold} " ${passed} ${total} ${percent}
+}
+
+aries_interop_summary_table () {
+# Prints the data rows of the summary page table -- iterating over the list of agents
+# Calls the "sum_print_tests" function to sum across runsets for a test agent.
+    count=0
+    for agent in "${ta_tlas[@]}"; do
+        printf "| [${ta_shortnames[$count]}](${agent}.md)"
+        printf "| ${ta_scopes[$count]} "
+        printf "| ${ta_exceptions[$count]} "
+        count=$(expr $count + 1)
+        for other_agent in "${ta_tlas[@]}"; do
+            sum_print_tests $agent $other_agent
+        done
+        printf "|\\n"
+    done
+}
+
+# Inline code starts here
+# Collect all the data about each runset into a series of arrays - one per data element
+count=0
+for file in ${workflows}; do
+    RUNSET[$count]=$(echo $file | sed "s/.*ness-//" | sed "s/.yml//")
+    # set -x
+    RUNSET_NAME[$count]=$( default_value ${RUNSET[$count]} "$(grep RUNSET_NAME $file |  sed 's/^.*: //' | sed 's/["]//g')" )
+    SCOPE[$count]=$(grep "# Scope" $file |  sed 's/^.*: //' | sed 's/["]//g')
+    EXCEPTIONS[$count]=$(grep "# Exceptions" $file |  sed 's/^.*: //' | sed 's/["]//g')
+    # Optional -- to skip a runset from inclusion in the results.
+    SKIP[$count]=$(grep "# SKIP" $file )
+    RUNSET_LINK[$count]=${RUNSET}
+    SUMMARY[$count]=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/Current/,$d' | sed '1,/Summary/d' | sed 's/$/\\n/' | sed 's/^ //')
+    CURRENT_STATUS[$count]=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/^End/,$d' | sed -n '/Current/,$p' | sed '1d' | sed 's/^ //')
+    DEFAULT_AGENT[$count]=$(grep "DEFAULT_AGENT" $file | sed 's/.*: //' )
+    ACME[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "ACME" $file | sed 's/.*: //')" )
+    BOB[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "BOB" $file | sed 's/.*: //')" )
+    FABER[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "FABER" $file | sed 's/.*: //')" )
+    MALLORY[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "MALLORY" $file | sed 's/.*: //')" )
+    ALLURE_PROJECT[$count]=$(grep "REPORT_PROJECT" $file | sed -n '1p' | sed 's/.*: //' | sed 's/ *$//' )
+    ALLURE_LINK[$count]="https://allure.vonx.io/allure-docker-service-ui/projects/${ALLURE_PROJECT[$count]}/reports/latest"
+    ALLURE_BEHAVIORS_LINK[$count]="https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT[$count]}/reports/latest/index.html?redirect=false#behaviors"
+    ALLURE_SUMMARY[$count]=$(curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT[$count]}/reports/latest/widgets/summary.json)
+    TOTAL_CASES[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"total" : \([0-9]*\).*/\1/' )
+    PASSED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
+    FAILED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
+    if [ ${TOTAL_CASES[$count]} -eq 0 ]; then
+        PERCENT[$count]=0
+    else
+        PERCENT[$count]=$((PASSED[$count]*100/TOTAL_CASES[$count]))
+    fi
+    ALLURE_DATE[$count]=$( date -d@$( echo ${ALLURE_SUMMARY[$count]} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' ) )
+  
     count=$(expr ${count} + 1)
 done
 
+
+# First write the summary file -- make sure to replace the old version with a ">" and ">>" for the rest
+outfile=docs/README.md
+# Remove the file if it exists
+rm -f $outfile
+
+# Title of the page
+echo -e '# Aries Interoperability Information\n' >>$outfile
+
+# Header part of the page
+aries_interop_header >>$outfile
+
+# Summary table header
+aries_interop_summary_table_header >>$outfile
+
+# Summary table data
+aries_interop_summary_table >>$outfile
+
 # Finished with the table -- add in the footer and done with the summary file
-aries_interop_footer
+aries_interop_footer >>$outfile
 echo -e "\\n*Results last updated: $(date | sed 's/  / /g')*" >>$outfile
 echo "" >>$outfile
 
-# Loop again over the workflow files and generate a file per workflow of details
-count=1
-for file in .github/workflows/test-harness-*; do
-# Collect the data -- again. No worries -- it won't take long.
-    collect_runset_data $file
-# New output file -- the test details -- overwrite the old version
-    outfile=docs/${RUNSET}.md
-    if [ "${SKIP}" != "" ]; then
-        # Delete the output file if it exists
-        rm -f $outfile
-        continue # Skip this workflow from the published results
-    fi
-# First write eache detail file -- make sure to replace the old version with a ">" and ">>" for the rest
-    echo -e "---\\nsort: ${count} # follow a certain sequence of letters or numbers\\n---" >$outfile
-    echo -e "# ${RUNSET_NAME}\\n" >>$outfile
-    echo -e "## Summary of Tests\\n" >>$outfile
+# Iterate through the test agents and create a file per test agent.
+ta_num=0
+for agent in "${ta_tlas[@]}"; do
+    outfile=docs/${agent}.md
+    # Remove the file if it exists
+    rm -f $outfile
     
-# Print the summary text from the workflow file -- or a default message
-    if [ "${SUMMARY}" == "" ]; then
-        echo -e "\`\`\`warning\\nNo summary is available for this runset. Please update: $file.\\n\`\`\`\\n" >>$outfile
-    else
-        echo -e ${SUMMARY}\\n >>$outfile
-    fi
+    # echo -e "---\\nsort: ${ta_num} # follow a certain sequence of letters or numbers\\n---" >>$outfile
+    echo -e "# ${ta_names[$ta_num]} Interoperability\\n" >>$outfile
+    echo -e "## Runsets with ${ta_shortnames[$ta_num]}\\n" >>$outfile
+    
+    # Print a table of details
+    echo "| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | " >>$outfile
+    echo "| ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | " >>$outfile
+    runset_num=0
+    # Iterate through the workflows and find the ones involving this test agent -- ignoring skipped files
+    # Insert the data into the table
+    for file in ${workflows}; do
+        agents=${ACME[$runset_num]}${BOB[$runset_num]}${FABER[$runset_num]}${MALLORY[$runset_num]}
+        if [[ $agents =~ $agent && "${SKIP[$runset_num]}" == "" ]]; then
+            echo -e "| [${RUNSET[$runset_num]}](#runset-${RUNSET[$runset_num]}) | ${ACME[$runset_num]} | ${BOB[$runset_num]} | ${FABER[$runset_num]} | ${MALLORY[$runset_num]} | ${SCOPE[$runset_num]} | [**${PASSED[$runset_num]} / ${TOTAL_CASES[$runset_num]}<br>${PERCENT[$runset_num]}%**](${ALLURE_BEHAVIORS_LINK[$runset_num]}) |" >>$outfile
+        fi
+        runset_num=$( expr ${runset_num} + 1)
+    done
 
-# Print a table of details
-    echo "|  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |" >>$outfile
-    echo "| :------------: | :----------: | :-------------: | :--------------: | -------------- |" >>$outfile
-    echo "| ${ACME} | ${BOB} | ${FABER} | ${MALLORY} | ${SCOPE} |" >>$outfile
-# Print the highlighted test results
-    echo -e "\\n\`\`\`tip\\n**Latest results: ${PASSED} out of ${TOTAL_CASES} (${PERCENT}%)**\\n" >>$outfile
-    echo -e "\\n*Last run: ${ALLURE_DATE}*\\n\`\`\`\\n" >>$outfile
-    echo -e "## Current Status of Tests" >>$outfile
-# Print the status text from the workflow file -- or a default message
-    if [ "${CURRENT_STATUS}" == "" ]; then
-        echo -e "\`\`\`warning\\nNo test status note is available for this runset. Please update: $file.\\n\`\`\`\\n" >>$outfile
-    else
-        echo -e "${CURRENT_STATUS}\\n" >>$outfile
-    fi
-# Links to the allure results
-    echo -e "## Test Run Details" >>$outfile
-    echo -e "See the tests results grouped by the Aries RFCs executed [${ALLURE_PROJECT}](${ALLURE_BEHAVIORS_LINK})\\n" >>$outfile
-    echo -e "See the test runs history and drill into the details [${ALLURE_PROJECT}](${ALLURE_LINK})\\n" >>$outfile
-
-
-# Link to the summary page
-    echo "Jump back to the [runset summary](./README.md)." >>$outfile
-# And we're done for this file
+    # Iterate again through the workflows to write out a section per workflow
+    echo -e "\\n## Runset Notes" >>$outfile
+    runset_num=0
+    for file in ${workflows}; do
+        agents=${ACME[$runset_num]}${BOB[$runset_num]}${FABER[$runset_num]}${MALLORY[$runset_num]}
+        if [[ $agents =~ $agent && "${SKIP[$runset_num]}" == "" ]]; then
+            echo -e "\\n### Runset **${RUNSET[$runset_num]}**\\n" >>$outfile
+            echo -e "Runset Name: ${RUNSET_NAME[$runset_num]}" >>$outfile
+            echo -e "\\n\`\`\`tip\\n**Latest results: ${PASSED[$runset_num]} out of ${TOTAL_CASES[$runset_num]} (${PERCENT[$runset_num]}%)**\\n" >>$outfile
+            echo -e "\\n*Last run: ${ALLURE_DATE[$runset_num]}*\\n\`\`\`\\n" >>$outfile
+            echo -e "#### Current Runset Status" >>$outfile
+            # Print the status text from the workflow file -- or a default message
+            if [ "${CURRENT_STATUS[$runset_num]}" == "" ]; then
+                echo -e "\`\`\`warning\\nNo test status note is available for this runset. Please update: $file.\\n\`\`\`\\n" >>$outfile
+            else
+                echo -e "${CURRENT_STATUS[$runset_num]}\\n" >>$outfile
+            fi
+            # Links to the allure results
+            echo -e "#### Runset Details\\n" >>$outfile
+            echo -e "- Results grouped by [executed Aries RFCs executed](${ALLURE_BEHAVIORS_LINK[$runset_num]})" >>$outfile
+            echo -e "- Results by [history](${ALLURE_LINK[$runset_num]})\\n" >>$outfile
+        fi
+        runset_num=$( expr ${runset_num} + 1)
+    done
+    # Link to the summary page
+    echo "Jump back to the [interoperability summary](./README.md)." >>$outfile
+    # And we're done for this file
     echo "" >>$outfile
-    count=$(expr ${count} + 1)
+    ta_num=$( expr ${ta_num} + 1)
 done
