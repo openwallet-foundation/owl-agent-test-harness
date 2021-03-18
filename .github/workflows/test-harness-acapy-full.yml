@@ -11,17 +11,18 @@ name: test-harness-acapy-full
 #
 # Current
 # 
-# Half of the tests in the suite are working. We will shortly remove the "work in progress" tests as they are
-# not expected to run (currently 20 tests). We'll assess and document the other tests that are not work and update
+# Half of the tests in the suite are working. "work in progress" tests were removed as they are
+# not expected to pass. This is the reason for the drop in total test count in the Allure Reports
+# We'll assess and document the other tests that are not working and update.
 # this status.
 # 
-# *Status Note Updated: 2021.03.05*
+# *Status Note Updated: 2021.03.18*
 #
 # End
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "30 0 * * *"
 defaults:
   run:
     shell: bash
@@ -41,8 +42,8 @@ jobs:
       - name: run-test-harness
         uses: ./test-harness/actions/run-test-harness
         with:
-          DEFAULT_AGENT: acapy-main
-          BOB_AGENT: acapy-main
+          BUILD_AGENTS: "-a acapy-main"
+          TEST_AGENTS: "-d acapy-main"
           TEST_SCOPE: "-t ~@wip"
           REPORTING: "-r allure -e comparison"
           REPORT_PROJECT: acapy-full

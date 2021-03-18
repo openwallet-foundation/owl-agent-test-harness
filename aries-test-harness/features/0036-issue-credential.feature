@@ -19,7 +19,7 @@ Feature: RFC 0036 Aries agent issue credential
     And "Bob" acknowledges the credential issue
     Then "Bob" has the credential issued
 
-  @T001.1-RFC0036 @AIP10 @critical @AcceptanceTest @Indy @DIDExchangeConnection
+  @T001.1-RFC0036 @AIP20 @critical @AcceptanceTest @Indy @DIDExchangeConnection
   Scenario: Issue a credential with the Holder beginning with a proposal with DID Exchange Connection
     Given "2" agents
       | name | role   |
