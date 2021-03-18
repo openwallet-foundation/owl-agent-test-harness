@@ -1,38 +1,82 @@
----
-sort: 8 # follow a certain sequence of letters or numbers
----
-# AF-.NET to AF-.NET
+# Aries Framework .NET Interoperability
 
-## Summary of Tests
+## Runsets with AF-.NET
+
+| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | 
+| ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
+| [acapy-dotnet](#runset-acapy-dotnet) | acapy-main | dotnet-master | acapy-main | acapy-main | AIP 1.0 | [**25 / 25<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-dotnet](#runset-afj-dotnet) | javascript | dotnet-master | javascript | javascript | AIP 1.0 | [**13 / 13<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet](#runset-dotnet) | dotnet-master | dotnet-master | dotnet-master | dotnet-master | AIP 1.0 | [**13 / 13<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors) |
+
+## Runset Notes
+
+### Runset **acapy-dotnet**
+
+Runset Name: ACA-PY to AF-.NET
+
+```tip
+**Latest results: 25 out of 25 (100%)**
 
 
- This runset uses the current main branch of Aries Framework .NET for all of the agents. The runset runs all of the tests in the suite
- that are expected to pass given the current state of Aries Framework .NET's support for AIP 1. Tests related to revocation (Indy HIPE 0011)
- and holders initiating present proof protocols using a "proposal" message are not included.
- 
+*Last run: Wed Mar 17 17:30:45 PDT 2021*
+```
+
+#### Current Runset Status
+
+All of the tests are currently running.
+
+*Status Note Updated: 2021.03.05*
+
+#### Runset Details
+
+- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
 
 
-|  ACME (Issuer) | Bob (Holder) | Faber (Verfier) | Mallory (Holder) | Scope of Tests |
-| :------------: | :----------: | :-------------: | :--------------: | -------------- |
-| dotnet-master | dotnet-master | dotnet-master | dotnet-master | AIP 1.0 |
+### Runset **afj-dotnet**
+
+Runset Name: AFJ to AF-.NET
 
 ```tip
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last run: Thu Mar 11 16:08:22 PST 2021*
+*Last run: Wed Mar 17 18:02:20 PDT 2021*
 ```
 
-## Current Status of Tests
+#### Current Runset Status
+
+All but one of the tests being executed in this runset are passing. The failure is being investigated.
+
+*Status Note Updated: 2021.03.05*
+
+#### Runset Details
+
+- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-dotnet/reports/latest)
+
+
+### Runset **dotnet**
+
+Runset Name: AF-.NET to AF-.NET
+
+```tip
+**Latest results: 13 out of 13 (100%)**
+
+
+*Last run: Wed Mar 17 17:09:12 PDT 2021*
+```
+
+#### Current Runset Status
 
 All of the tests being executed in this runset are passing.
 
 *Status Note Updated: 2021.03.05*
 
-## Test Run Details
-See the tests results grouped by the Aries RFCs executed [dotnet](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors)
+#### Runset Details
 
-See the test runs history and drill into the details [dotnet](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet/reports/latest)
+- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors)
+- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet/reports/latest)
 
-Jump back to the [runset summary](./README.md).
+Jump back to the [interoperability summary](./README.md).
 
