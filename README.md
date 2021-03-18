@@ -93,7 +93,9 @@ AATH test scripts are written in the [Gherkin](https://behave.readthedocs.io/en/
 
 ## Aries Agent Backchannels
 
-Backchannels are the challenging part of the AATH. In order to participate in the interoperability testing, each CUT builder must create and maintain a backchannel that converts requests from the test engine into commands for the component being tested. In some cases, that's relatively easy, such as with [Aries Cloud Agent - Python](https://github.com/hyperledger/aries-cloudagent-python). An ACA-Py controller uses an HTTP interface to control an ACA-Py instance, so the backchannel is almost a proxy from the Test Harness to to the ACA-Py instance being tested. In other cases, it may be more difficult, calling for the component being tested to be embedded into a web service. And we've not yet even tried to use a backchannel to drive a mobile app simulator...
+Backchannels are the challenging part of the AATH. In order to participate in the interoperability testing, each CUT builder must create and maintain a backchannel that converts requests from the test engine into commands for the component being tested. In some cases, that's relatively easy, such as with [Aries Cloud Agent - Python](https://github.com/hyperledger/aries-cloudagent-python). An ACA-Py controller uses an HTTP interface to control an ACA-Py instance, so the backchannel is almost a proxy from the Test Harness to to the ACA-Py instance being tested. In other cases, it may be more difficult, calling for the component being tested to be embedded into a web service.
+
+We have created a POC backchannel to support manual testing with mobile agents, described [here](./MOBILE_AGENT_TESTING.md).
 
 A further complication is that as tests are added to the test suite, the backchannel interface expands, requiring that backchannel maintainers extend their implementation to be able to run the new tests. Note that the test engine doesn't fail if the backchannel steps are not implemented, just that such tests will be marked as `fail`ing on test runs, usually with an HTTP `404` error.
 
@@ -102,6 +104,8 @@ A further complication is that as tests are added to the test suite, the backcha
 Backchannels can be found in the [`aries-backchannels`](aries-backchannels) folder of this repo. For more information on building a backchannel, see the documentation in the [`aries-backchannels` README](aries-backchannels/README.md), and look at the code of the existing backchannels. To get help in building a backchannel for a component you want tested, please use GitHub issues and/or ask questions on the [Hyperledger Rocketchat](https://chat.hyperledger.org) `#aries-agent-test-harness` channel (free Linux Foundation account required).
 
 Three backchannels have been implemented, for the [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python), [VCX](https://github.com/hyperledger/indy-sdk/tree/master/vcx), [.NET](https://github.com/hyperledger/aries-framework-dotnet) and [JavaScript](https://github.com/hyperledger/aries-framework-javascript.git) Aries agent frameworks. The ACA-Py and VCX are built on a common Python base (./aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. The ACA-PY (./aries-backchannels/acapy/acapy_backchannel.py) and VCX (./aries-backchannels/vcx/vcx_backchannel.py) implementations extend the base to add support for their respective agent frameworks.
+
+There is also a backchannel to support (manual) testing with [mobile](./aries-backcgannels/mobile) agents.  This backchannel doesn't control the mobile agent directly, rather it will prompt the tester to manually accept connection requests, credential offers etc.  Use of the mobile backchannel is described [here](./MOBILE_AGENT_TESTING.md).
 
 ## The `manage` bash script
 
