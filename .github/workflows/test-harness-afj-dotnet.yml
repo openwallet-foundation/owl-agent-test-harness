@@ -20,7 +20,7 @@ name: test-harness-javascript-dotnet
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "55 0 * * *"
 defaults:
   run:
     shell: bash
@@ -40,8 +40,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          DEFAULT_AGENT: javascript
-          BOB_AGENT: dotnet-master
+          BUILD_AGENTS: "-a javascript -a dotnet-master"
+          TEST_AGENTS: "-d javascript -b dotnet-master"
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@ProofProposal"
           REPORT_PROJECT: javascript-b-dotnet
         continue-on-error: true

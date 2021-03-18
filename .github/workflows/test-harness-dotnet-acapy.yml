@@ -1,26 +1,26 @@
-name: test-harness-acapy-dotnet
-# RUNSET_NAME: "ACA-PY to AF-.NET"
+name: test-harness-dotnet-acapy
+# RUNSET_NAME: "AF-.NET to ACA-PY"
 # Scope: AIP 1.0
 # Exceptions: Proof Proposals
+# SKIP
 #
 # Summary
 #
-# This runset uses the current main branch of ACA-Py for all of the agents except Bob (holder),
-# which uses the master branch of Aries Framework .NET. The runset covers all of the AIP 1.0 tests that 
-# are known to work with the Aries Framework .NET as the holder along with Revocation tests. Excluded 
-# are those tests that involve Proof Proposals.
+# This runset uses the current master branch of Aries Framework .NET for all of the agents except Bob (holder),
+# which uses the main branch of ACA-Py . The runset covers all of the AIP 1.0 tests that 
+# are expected to work with the Aries Framework .NET as the issue. Proof Proposals are excluded.
 #
 # Current
 # 
-# All of the tests are currently running.
+# More tests are failing than are passing when Aries Framework .NET is playing the issuer role. More investigation is needed.
 # 
-# *Status Note Updated: 2021.03.18*
+# *Status Note Updated: 2021.03.17*
 #
 # End
 on:
   workflow_dispatch:
   schedule:
-    - cron: "25 0 * * *"
+    - cron: "5 1 * * *"
 defaults:
   run:
     shell: bash
@@ -40,14 +40,14 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a acapy-main -a dotnet-master"
-          TEST_AGENTS: "-d acapy-main -b dotnet-master"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection"
-          REPORT_PROJECT: acapy-b-dotnet
+          BUILD_AGENTS: "-a dotnet-master -a acapy-main"
+          TEST_AGENTS: "-d dotnet-master -b acapy-main"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@ProofProposal
+          REPORT_PROJECT: dotnet-b-acapy
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy-b-dotnet 
+          REPORT_PROJECT: dotnet-b-acapy 
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}

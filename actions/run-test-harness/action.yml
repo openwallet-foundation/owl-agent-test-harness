@@ -2,14 +2,14 @@ name: "Run Aries Test Harness"
 description: "Run the Aries Test Harness test suite with the specified Agents"
 author: "iancostanzo@gmail.com"
 inputs:
-  DEFAULT_AGENT:
-    description: "Default agent image for all roles"
-    required: false
-    default: "acapy"
-  BOB_AGENT:
-    description: "Specific agent image for the bob role"
-    required: false
-    default: "acapy"
+  BUILD_AGENTS:
+    description: "Agent Frameworks to build"
+    required: true
+    default: "-a acapy-main"
+  TEST_AGENTS:
+    description: "Agent Frameworks to run"
+    required: true
+    default: "-d acapy-main"
   REPORTING:
     description: "Use formal reporting engine"
     required: false
@@ -44,11 +44,11 @@ runs:
   using: "composite"
   steps:
     - name: build-test-harness
-      run: ./manage build -a ${{ inputs.DEFAULT_AGENT }} -a ${{ inputs.BOB_AGENT }}
+      run: ./manage build ${{ inputs.BUILD_AGENTS }}
       shell: bash
       working-directory: test-harness
     - name: run-test-harness-acapy
-      run: PROJECT_ID=${{inputs.REPORT_PROJECT}} ./manage run -d ${{ inputs.DEFAULT_AGENT }} -b ${{ inputs.BOB_AGENT }} ${{ inputs.REPORTING }} ${{ inputs.TEST_SCOPE }}
+      run: PROJECT_ID=${{inputs.REPORT_PROJECT}} ./manage run ${{ inputs.TEST_AGENTS }} ${{ inputs.REPORTING }} ${{ inputs.TEST_SCOPE }}
       shell: bash
       env:
         NO_TTY: "1"
