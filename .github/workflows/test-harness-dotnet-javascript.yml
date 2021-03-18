@@ -2,7 +2,6 @@ name: test-harness-dotnet-javascript
 # RUNSET_NAME: "AF-.NET to AFJ"
 # Scope: AIP 1.0
 # Exceptions: Proof Proposals
-# SKIP
 #
 # Summary
 #

@@ -2,7 +2,6 @@ name: test-harness-javascript-acapy
 # RUNSET_NAME: "AFJ to ACA-PY"
 # Scope: AIP 1.0
 # Exceptions: Proof Proposal
-# SKIP
 #
 # Summary
 #
