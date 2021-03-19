@@ -76,23 +76,24 @@ aries_interop_header () {
 
     cat << EOF
 
-This web site shows the current status of Aries Interoperability amongst Aries frameworks and agents. while
-not included in these results yet, we have a working prototype for testing Aries mobile wallets using the
-identical tests.
+This web site shows the current status of Aries Interoperability between Aries frameworks and agents. While
+not yet included in these results, we have a working prototype for testing Aries mobile wallets using the
+same tests.
 
-The latest interoperability test results are provided below. Each item is for a test runset, a combination
-of Aries agents and frameworks running a subset (see scope and exceptions) of the overall tests in the repository.
-The subset of tests run represent the set of tests expected to be supported by the combination of components
-being tested, with a narrative on the scope on the details page.
+The latest interoperability test results are below. Each row is a test agent, its columns
+the results of tests executed in combination with other test agents.
+The bolded cell per row shows the results of all tests run for the given test agent. The link on each test
+agent name provides more details about results for all test combinations for that test agent. On
+that page are links to a full history of the test runs and full details on every executed test. 
 
-The following test agents are currently included in the runsets:
+The following test agents are currently supported:
 
 $(list_agents)
 
 Want to add your Aries component to this page? You need to add a runset to the
 [Aries Agent Test Harness](https://github.com/hyperledger/aries-agent-test-harness).
 
-## Aries Continuous Interoperability Results
+## Latest Interoperability Results
 
 EOF
 }
@@ -102,9 +103,9 @@ aries_interop_footer () {
 
     cat << EOF
 
-- The **bolded results** include all tests involving the "Test Agent" (first column), including tests using only that Test Agent.
+- The **bolded results** show all tests involving the "Test Agent", including tests involving only that Test Agent.
 - Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
-- Click on the "Test Agent" links to drill into the tests being run for each.
+- Select the "Test Agent" links to drill down into the tests being run.
 
 EOF
 }
@@ -181,15 +182,19 @@ for file in ${workflows}; do
     RUNSET_LINK[$count]=${RUNSET}
     SUMMARY[$count]=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/Current/,$d' | sed '1,/Summary/d' | sed 's/$/\\n/' | sed 's/^ //')
     CURRENT_STATUS[$count]=$(grep "^#" $file | sed 's/^#[ ]*//'  | sed '/^End/,$d' | sed -n '/Current/,$p' | sed '1d' | sed 's/^ //')
-    DEFAULT_AGENT[$count]=$(grep "DEFAULT_AGENT" $file | sed 's/.*: //' )
-    ACME[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "ACME" $file | sed 's/.*: //')" )
-    BOB[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "BOB" $file | sed 's/.*: //')" )
-    FABER[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "FABER" $file | sed 's/.*: //')" )
-    MALLORY[$count]=$(default_value ${DEFAULT_AGENT[$count]} "$(grep "MALLORY" $file | sed 's/.*: //')" )
     ALLURE_PROJECT[$count]=$(grep "REPORT_PROJECT" $file | sed -n '1p' | sed 's/.*: //' | sed 's/ *$//' )
     ALLURE_LINK[$count]="https://allure.vonx.io/allure-docker-service-ui/projects/${ALLURE_PROJECT[$count]}/reports/latest"
     ALLURE_BEHAVIORS_LINK[$count]="https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT[$count]}/reports/latest/index.html?redirect=false#behaviors"
     ALLURE_SUMMARY[$count]=$(curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT[$count]}/reports/latest/widgets/summary.json)
+    ALLURE_ENVIRONMENT[$count]=$(curl --silent https://allure.vonx.io/api/allure-docker-service/projects/${ALLURE_PROJECT[$count]}/reports/latest/widgets/environment.json)
+    ACME[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/acme.agent.*/acme.agent/' | sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
+    BOB[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*acme.agent/acme.agent/' | sed 's/bob.agent.*/bob.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
+    FABER[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*bob.agent/bob.agent/' | sed 's/faber.agent.*/faber.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
+    MALLORY[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*faber.agent/faber.agent/' | sed 's/mallory.agent.*/mallory.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
+    ACME_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.acme//' | sed 's/acme.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
+    BOB_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.bob//' | sed 's/bob.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
+    FABER_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.faber//' | sed 's/faber.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
+    MALLORY_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.mallory//' | sed 's/mallory.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
     TOTAL_CASES[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"total" : \([0-9]*\).*/\1/' )
     PASSED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
     FAILED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
@@ -203,6 +208,10 @@ for file in ${workflows}; do
     count=$(expr ${count} + 1)
 done
 
+# echo ACME: ${ACME_VERSION[@]}
+# echo BOB: ${BOB_VERSION[@]}
+# echo FABER: ${FABER_VERSION[@]}
+# echo MALLORY: ${MALLORY_VERSION[@]}
 
 # First write the summary file -- make sure to replace the old version with a ">" and ">>" for the rest
 outfile=docs/README.md
@@ -246,7 +255,7 @@ for agent in "${ta_tlas[@]}"; do
     for file in ${workflows}; do
         agents=${ACME[$runset_num]}${BOB[$runset_num]}${FABER[$runset_num]}${MALLORY[$runset_num]}
         if [[ $agents =~ $agent && "${SKIP[$runset_num]}" == "" ]]; then
-            echo -e "| [${RUNSET[$runset_num]}](#runset-${RUNSET[$runset_num]}) | ${ACME[$runset_num]} | ${BOB[$runset_num]} | ${FABER[$runset_num]} | ${MALLORY[$runset_num]} | ${SCOPE[$runset_num]} | [**${PASSED[$runset_num]} / ${TOTAL_CASES[$runset_num]}<br>${PERCENT[$runset_num]}%**](${ALLURE_BEHAVIORS_LINK[$runset_num]}) |" >>$outfile
+            echo -e "| [${RUNSET[$runset_num]}](#runset-${RUNSET[$runset_num]}) | ${ACME[$runset_num]}<br>${ACME_VERSION[$runset_num]} | ${BOB[$runset_num]}<br>${BOB_VERSION[$runset_num]} | ${FABER[$runset_num]}<br>${FABER_VERSION[$runset_num]} | ${MALLORY[$runset_num]}<br>${MALLORY_VERSION[$runset_num]} | ${SCOPE[$runset_num]} | [**${PASSED[$runset_num]} / ${TOTAL_CASES[$runset_num]}<br>${PERCENT[$runset_num]}%**](${ALLURE_BEHAVIORS_LINK[$runset_num]}) |" >>$outfile
         fi
         runset_num=$( expr ${runset_num} + 1)
     done

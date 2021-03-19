@@ -1,16 +1,17 @@
 # Aries Interoperability Information
 
 
-This web site shows the current status of Aries Interoperability amongst Aries frameworks and agents. while
-not included in these results yet, we have a working prototype for testing Aries mobile wallets using the
-identical tests.
+This web site shows the current status of Aries Interoperability between Aries frameworks and agents. While
+not yet included in these results, we have a working prototype for testing Aries mobile wallets using the
+same tests.
 
-The latest interoperability test results are provided below. Each item is for a test runset, a combination
-of Aries agents and frameworks running a subset (see scope and exceptions) of the overall tests in the repository.
-The subset of tests run represent the set of tests expected to be supported by the combination of components
-being tested, with a narrative on the scope on the details page.
+The latest interoperability test results are below. Each row is a test agent, its columns
+the results of tests executed in combination with other test agents.
+The bolded cell per row shows the results of all tests run for the given test agent. The link on each test
+agent name provides more details about results for all test combinations for that test agent. On
+that page are links to a full history of the test runs and full details on every executed test. 
 
-The following test agents are currently included in the runsets:
+The following test agents are currently supported:
 
 - [Aries Cloud Agent Python](https://github.com/hyperledger/aries-cloudagent-python) (ACA-Py)
 - [Aries Framework Go](https://github.com/hyperledger/aries-framework-go) (AF-Go)
@@ -20,19 +21,19 @@ The following test agents are currently included in the runsets:
 Want to add your Aries component to this page? You need to add a runset to the
 [Aries Agent Test Harness](https://github.com/hyperledger/aries-agent-test-harness).
 
-## Aries Continuous Interoperability Results
+## Latest Interoperability Results
 
 | Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET |
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | **80 / 90<br>88%** | 0 / 5<br>0% | 13 / 18<br>72% | 25 / 25<br>100% |
-| [AF-Go](afgo.md)| AIP 2 | None | 0 / 5<br>0% | **3 / 10<br>30%** | 0 / 0<br>0% | 0 / 0<br>0% |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 13 / 18<br>72% | 0 / 0<br>0% | **44 / 49<br>89%** | 13 / 13<br>100% |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 25 / 25<br>100% | 0 / 0<br>0% | 13 / 13<br>100% | **51 / 51<br>100%** |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | **124 / 152<br>81%** | 0 / 10<br>0% | 53 / 62<br>85% | 39 / 51<br>76% |
+| [AF-Go](afgo.md)| AIP 2 | None | 0 / 10<br>0% | **3 / 15<br>20%** | 0 / 0<br>0% | 0 / 0<br>0% |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 53 / 62<br>85% | 0 / 0<br>0% | **70 / 88<br>79%** | 27 / 39<br>69% |
+| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 39 / 51<br>76% | 0 / 0<br>0% | 27 / 39<br>69% | **69 / 90<br>76%** |
 
-- The **bolded results** include all tests involving the "Test Agent" (first column), including tests using only that Test Agent.
+- The **bolded results** show all tests involving the "Test Agent", including tests involving only that Test Agent.
 - Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
-- Click on the "Test Agent" links to drill into the tests being run for each.
+- Select the "Test Agent" links to drill down into the tests being run.
 
 
-*Results last updated: Thu Mar 18 12:47:23 PDT 2021*
+*Results last updated: Thu Mar 18 15:45:22 PDT 2021*
 

@@ -2,7 +2,6 @@ name: test-harness-afgo-acapy
 # RUNSET_NAME: "AF-Go to ACA-PY"
 # Scope: pre-AIP 2.0
 # Exceptions: None
-# SKIP
 # 
 # Summary
 #

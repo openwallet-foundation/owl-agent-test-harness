@@ -12,11 +12,9 @@ name: test-harness-acapy-javascript
 #
 # Current
 # 
-# Only about half of the tests are currently running. The issues seem to be related to the set of tags
-# of the test cases being run as a number of the revocation tests are running and shouldn't be. As well,
-# the tests with the holder proposing a proof are not running, as that feature is not supported in AFJ.
+# Most of the tests are running. The tests not passing are being investigated.
 # 
-# *Status Note Updated: 2021.03.08*
+# *Status Note Updated: 2021.03.18*
 #
 # End
 on:
