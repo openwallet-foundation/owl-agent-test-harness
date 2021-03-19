@@ -49,7 +49,7 @@ Feature: RFC 0036 Aries agent issue credential
     And "Bob" acknowledges the credential issue
     Then "Bob" has the credential issued
 
-  @T003-RFC0036 @AIP10 @critical @AcceptanceTest @Indy
+  @T003-RFC0036 @AIP10 @critical @AcceptanceTest @Indy @MobileTest
   Scenario: Issue a credential with the Issuer beginning with an offer
     Given "2" agents
       | name | role   |

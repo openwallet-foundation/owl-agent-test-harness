@@ -264,12 +264,14 @@ def step_impl(context, holder):
 
     # If @indy then we can be sure we cannot start the protocol from this command. We can be sure that we have previously 
     # reveived the thread_id.
-    if "Indy" in context.tags:
+    #if "Indy" in context.tags:
+    if "cred_thread_id" in context:
         sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.cred_thread_id)
 
     # If we are starting from here in the protocol you won't have the cred_ex_id or the thread_id
     else:
+        sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.connection_id_dict[holder][context.issuer_name])
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -277,7 +279,7 @@ def step_impl(context, holder):
     assert resp_json["state"] == "request-sent"
 
     # Verify issuer status
-    assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received")
+    assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received", wait_time=60.0)
 
 
 @when('"{issuer}" issues the credential')
@@ -305,6 +307,7 @@ def step_impl(context, issuer):
     assert resp_json["state"] == "credential-issued"
 
     # Verify holder status
+    sleep(1.0)
     assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "credential-received")
 
 
@@ -356,9 +359,13 @@ def step_impl(context, holder):
     (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-    assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
-    assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+    if "state" in resp_json and resp_json["state"] == "N/A":
+        # backchannel can't get the credential
+        pass
+    else:
+        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
+        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 
     # Make sure the issuer is not holding the credential
     # get the credential from the holders wallet
@@ -366,7 +373,6 @@ def step_impl(context, holder):
     # there is a solution to the error messaging happening at the end. 
     #(resp_status, resp_text) = agent_backchannel_GET(context.issuer_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']])
     #assert resp_status == 404, f'resp_status {resp_status} is not 404; {resp_text}'
-
 
 
 @when(u'"{holder}" negotiates the offer with a proposal of the credential to "{issuer}"')

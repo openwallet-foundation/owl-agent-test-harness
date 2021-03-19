@@ -30,6 +30,8 @@ LOGGER = logging.getLogger(__name__)
 
 MAX_TIMEOUT = 5
 
+AGENT_NAME = os.getenv("AGENT_NAME", "Agent")
+
 DEFAULT_BIN_PATH = "../venv/bin"
 DEFAULT_PYTHON_PATH = ".."
 
@@ -39,6 +41,7 @@ if RUN_MODE == "docker":
 elif RUN_MODE == "pwd":
     DEFAULT_BIN_PATH = "./bin"
     DEFAULT_PYTHON_PATH = "."
+
 
 class AcaPyAgentBackchannel(AgentBackchannel):
     def __init__(
@@ -1287,7 +1290,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
     try:
         agent = AcaPyAgentBackchannel(
-            "aca-py", start_port+1, start_port+2, genesis_data=genesis
+            "aca-py." + AGENT_NAME, start_port+1, start_port+2, genesis_data=genesis
         )
 
         # start backchannel (common across all types of agents)

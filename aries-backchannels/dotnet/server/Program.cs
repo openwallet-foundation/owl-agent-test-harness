@@ -50,7 +50,7 @@ namespace DotNet.Backchannel
             var DOCKER_HOST = Environment.GetEnvironmentVariable("DOCKERHOST") ?? "host.docker.internal";
             var EXTERNAL_HOST = DOCKER_HOST;
             var LEDGER_URL = Environment.GetEnvironmentVariable("LEDGER_URL") ?? $"http://{EXTERNAL_HOST}:9000";
-            var ENDPOINT_HOST = $"http://{EXTERNAL_HOST}:{port}";
+            var ENDPOINT_HOST = Environment.GetEnvironmentVariable("AGENT_PUBLIC_ENDPOINT") ?? $"http://{EXTERNAL_HOST}:{port}";
             var ISSUER_KEY_SEED = LedgerUtils.getRandomSeed();
             var GENESIS_URL = Environment.GetEnvironmentVariable("GENESIS_URL");
             var GENESIS_FILE = Environment.GetEnvironmentVariable("GENESIS_FILE");

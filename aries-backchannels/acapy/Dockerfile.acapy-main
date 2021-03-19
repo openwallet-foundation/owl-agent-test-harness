@@ -13,6 +13,9 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
 
 ENV RUNMODE=docker
 
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+
 COPY python/requirements.txt python/
 RUN pip install -r python/requirements.txt
 COPY acapy/requirements-main.txt acapy/
@@ -30,4 +33,4 @@ ENV PYTHONPATH=/aries-backchannels
 
 RUN ./bin/aca-py --version > ./acapy-version.txt
 
-ENTRYPOINT ["python", "acapy/acapy_backchannel.py"]
+ENTRYPOINT ["bash", "acapy/ngrok-wait.sh"]

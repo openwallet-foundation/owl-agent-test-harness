@@ -47,7 +47,7 @@ namespace DotNet.Backchannel
 
                 builder.RegisterAgent<DotNet.Backchannel.TestAgent>(c =>
                 {
-                    c.AgentName = Environment.GetEnvironmentVariable("AGENT_NAME") ?? "dotnet";
+                    c.AgentName = "dotnet." + (Environment.GetEnvironmentVariable("AGENT_NAME") ?? "Agent");
                     c.EndpointUri = Environment.GetEnvironmentVariable("ENDPOINT_HOST");
                     c.WalletConfiguration = new WalletConfiguration { Id = "TestAgentWallet" };
                     c.WalletCredentials = new WalletCredentials { Key = "MyWalletKey" };

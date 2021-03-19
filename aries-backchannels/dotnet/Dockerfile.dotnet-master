@@ -18,4 +18,9 @@ RUN dotnet publish "DotNet.Backchannel.Master.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "DotNet.Backchannel.Master.dll"]
+
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+COPY ./dotnet/ngrok-wait.sh .
+
+ENTRYPOINT ["bash", "./ngrok-wait.sh"]

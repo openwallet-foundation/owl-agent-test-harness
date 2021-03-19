@@ -86,19 +86,21 @@ def agent_backchannel_DELETE(url, topic, id=None, data=None) -> (int, str):
     (resp_status, resp_text) = run_coroutine_with_kwargs(make_agent_backchannel_request, "DELETE", agent_url)
     return (resp_status, resp_text)
 
-def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt):
-    sleep(0.2)
+def expected_agent_state(agent_url, protocol_txt, thread_id, status_txt, wait_time=2.0, sleep_time=0.5):
+    sleep(sleep_time)
     state = "None"
     if type(status_txt) != list:
         status_txt = [status_txt]
-    for i in range(5):
+    # "N/A" means that the backchannel can't determine the state - we'll treat this as a successful response
+    status_txt.append("N/A")
+    for i in range(int(wait_time/sleep_time)):
         (resp_status, resp_text) = agent_backchannel_GET(agent_url + "/agent/command/", protocol_txt, id=thread_id)
         if resp_status == 200:
             resp_json = json.loads(resp_text)
             state = resp_json["state"]
             if state in status_txt:
                 return True
-        sleep(0.2)
+        sleep(sleep_time)
 
     print("From", agent_url, "Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
     return False

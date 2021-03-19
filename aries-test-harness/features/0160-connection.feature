@@ -1,11 +1,11 @@
 @RFC0160 @AIP10
 Feature: RFC 0160 Aries agent connection functions
 
-   @T001-RFC0160 @critical @AcceptanceTest
+   @T001-RFC0160 @critical @AcceptanceTest @MobileTest
    Scenario Outline: establish a connection between two agents
       Given we have "2" agents
          | name  | role    |
-         | Acme | inviter |
+         | Acme  | inviter |
          | Bob   | invitee |
       When "Acme" generates a connection invitation
       And "Bob" receives the connection invitation
@@ -13,7 +13,7 @@ Feature: RFC 0160 Aries agent connection functions
       And "Acme" receives the connection request
       And "Acme" sends a connection response to "Bob"
       And "Bob" receives the connection response
-      And "Bob" sends <message> to "Acme"
+      And "Acme" sends <message> to "Bob"
       Then "Acme" and "Bob" have a connection
 
       Examples:
