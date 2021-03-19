@@ -1,4 +1,4 @@
-@revocation
+@revocation @AIP20
 Feature: RFC 0183 Aries agent credential revocation and revocation notification
 
    Background: create a schema and credential definition in order to issue a credential
@@ -23,7 +23,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T001.1-HIPE0011 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @DIDExchangeConnection
+   @T001.1-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @DIDExchangeConnection
    Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked with a DID Exchange connection
       Given "2" agents
          | name  | role     |

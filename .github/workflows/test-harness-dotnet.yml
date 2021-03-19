@@ -19,7 +19,7 @@ name: test-harness-dotnet-dotnet
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "15 1 * * *"
 defaults:
   run:
     shell: bash
@@ -39,8 +39,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          DEFAULT_AGENT: dotnet-master
-          BOB_AGENT: dotnet-master
+          BUILD_AGENTS: "-a dotnet-master"
+          TEST_AGENTS: "-d dotnet-master"
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection"
           REPORT_PROJECT: dotnet
         continue-on-error: true

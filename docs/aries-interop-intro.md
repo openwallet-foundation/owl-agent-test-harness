@@ -1,3 +1,6 @@
+---
+sort: 1 # follow a certain sequence of letters or numbers
+---
 # Introduction to Aries Interoperability
 
 This website reports on the interoperability between different Hyperledger Aries agents. Interoperability includes how seamlessly the agents work together, and how well each agent adheres to community-agreed standards such as Aries Interop Profile (AIP) 1.0 and AIP 2.0.

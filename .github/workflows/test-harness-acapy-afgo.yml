@@ -20,7 +20,7 @@ name: test-harness-acapy-dotnet
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "5 0 * * *"
 defaults:
   run:
     shell: bash
@@ -40,8 +40,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          DEFAULT_AGENT: acapy-main
-          BOB_AGENT: afgo-master
+          BUILD_AGENTS: "-a acapy-main -a afgo-master"
+          TEST_AGENTS: "-d acapy-main -b afgo-main"
           TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: acapy-b-afgo
         env:

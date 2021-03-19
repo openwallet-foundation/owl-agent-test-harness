@@ -2,6 +2,7 @@ name: test-harness-acapy-acapy
 # RUNSET_NAME: "ACA-PY to ACA-Py"
 # Scope: AIP 1.0
 # Exceptions: None
+# SKIP
 # 
 # Summary
 #
@@ -12,13 +13,13 @@ name: test-harness-acapy-acapy
 # 
 # All of the tests being executed in this runset are passing.
 # 
-# *Status Note Updated: 2021.03.05*
+# *Status Note Updated: 2021.03.18*
 #
 # End
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "35 0 * * *"
 defaults:
   run:
     shell: bash
@@ -38,8 +39,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          DEFAULT_AGENT: acapy-main
-          BOB_AGENT: acapy-main
+          BUILD_AGENTS: "-a acapy-main"
+          TEST_AGENTS: "-d acapy-main"
           REPORT_PROJECT: acapy  
         continue-on-error: true
       - name: run-send-gen-test-results-secure

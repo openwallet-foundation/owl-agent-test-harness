@@ -1,18 +1,21 @@
-name: test-harness-acapy-javascript
-# RUNSET_NAME: "ACA-PY to AFJ"
+name: test-harness-acapy-dotnet-javascript
+# RUNSET_NAME: "ACA-PY to AF-.NET to AFJ"
 # Scope: AIP 1.0
-# Exceptions: Revocation
+# Exceptions: Proof Proposals
 #
 # Summary
 #
-# This runset uses the current main branch of ACA-Py for all of the agents except Bob (holder),
-# which uses the master branch of Aries Framework JavaScript. The runset covers all of the AIP 1.0 tests
-# except those that are known **not** to work with the Aries Framework JavaScript as the holder,
-# notably those that involve revocation.
+# This runset uses the current main branch of ACA-Py for the Acme agent. Bob (holder)
+# uses the master branch of Aries Framework Javascript, and Faber (verifier) uses the 
+# master branch of Aries Framework .NET. The runset covers all of the AIP 1.0 tests that 
+# are known to work with the Aries Framework .NET as the holder and Aries Framework .NET as a verifier.
+# Proof Proposals and Revocation are not included.
 #
 # Current
 # 
-# Most of the tests are running. The tests not passing are being investigated.
+# All tests are working, except for three tests that include Faber in the test run as an issuer.
+# These tests are; T001-RFC0037@1.2, T001.2-RFC0037@1.2, T001.4-RFC0037@1.1 . Further investigation 
+# is required to determine the issue in these three tests.
 # 
 # *Status Note Updated: 2021.03.18*
 #
@@ -20,7 +23,7 @@ name: test-harness-acapy-javascript
 on:
   workflow_dispatch:
   schedule:
-    - cron: "10 0 * * *"
+    - cron: "20 0 * * *"
 defaults:
   run:
     shell: bash
@@ -40,14 +43,14 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a acapy-main -a javascript"
-          TEST_AGENTS: "-d acapy-main -b javascript"
+          BUILD_AGENTS: "-a acapy-main -a javascript -a dotnet-master"
+          TEST_AGENTS: "-d acapy-main -b javascript -f dotnet-master"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@ProofProposal"
-          REPORT_PROJECT: acapy-b-javascript
+          REPORT_PROJECT: acapy-b-javascript-f-dotnet
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy-b-javascript
+          REPORT_PROJECT: acapy-b-javascript-f-dotnet 
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
