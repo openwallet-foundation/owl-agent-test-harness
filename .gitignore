@@ -31,3 +31,10 @@ _site/
 .jekyll-metadata
 .env
 Gemfile.lock
+
+# ignore python env files
+env/
+.python-version
+
+# VSCode
+.vscode/settings.json
