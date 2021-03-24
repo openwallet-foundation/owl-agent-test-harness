@@ -17,15 +17,22 @@ servers:
           - "9050"
         default: "9020"
 info:
-  description: Open API definition for AATH backchannel servers
+  description: |
+    This page documents the backchannel API the test harness uses to communicate with agents under tests.
+
+    For more information checkout the [Aries Interoperability Information](http://aries-interop.info) page.
   version: "1.0.0"
-  title: Aries Agent Test Harness Backchannel
+  title: Aries Agent Test Harness Backchannel API
   contact:
     name: Province of British Columbia
-    url: https://github.com/bcgov/aries-agent-test-harness
+    url: https://github.com/hyperledger/aries-agent-test-harness
   license:
     name: Apache 2.0
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+  x-logo:
+    url: https://raw.githubusercontent.com/hyperledger/aries-agent-test-harness/master/docs/assets/aries-logo.png
+    altText: Hyperledger Aries logo
+  
 tags:
   - name: Status
     description: Agent commands to get agent status
