@@ -6,7 +6,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     Given "Acme" has a public did
     And "Acme" is ready to issue a credential
 
-  @T001-RFC0453 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
+  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
   Scenario Outline: Issue a Indy credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
@@ -24,7 +24,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.1-RFC0453 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
+  @T001.1-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018
   Scenario Outline: Issue a JSON-LD credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
