@@ -84,4 +84,4 @@ If you are a stakeholder interested in improving the results for an agent, this 
 
 Finally, if you want your Aries agent to be added to this website, or wish to expand the tests covered for your agent, your developers can reference the extensive information in the [Aries Agent Test Harness repo](https://github.com/hyperledger/aries-agent-test-harness) on GitHub.
 
-In addition an API reference for backchannels can be found here: http://aries-interop.info/api.html
+In addition an API reference for backchannels can be found [here](http://aries-interop.info/api.html)
