@@ -7,6 +7,7 @@
   - [Defining Protocol Suite Specific Tags](#defining-protocol-suite-specific-tags)
 - [Defining Backchannel Operations](#defining-backchannel-operations)
 - [Implementing Test Steps](#implementing-test-steps)
+  - [Github Actions and Comparing Test Results Day-To-Day](#github-actions-and-comparing-test-results-day-to-day)
 - [Implementing the Backchannel](#implementing-the-backchannel)
 - [Diving Deeper](#diving-deeper)
 
@@ -95,10 +96,9 @@ Defining test steps require using and extending the commands and operations to b
 
 - prepare a branch in your fork of the repo that will be a PR
   - [optional] export the Google Sheet, saving it into this file in the repo: [steps/Mapping Aries Protocols for Testing - Aries Agent Test Scripts.csv](./aries-test-harness/features/Mapping%20Aries%20Protocols%20for%20Testing%20-%20Aries%20Agent%20Test%20Scripts.csv)
-- run the command in the `aries-test-harness/features` folder: 
-  - If you used the public Google sheet, you can skip the previous [optional] step and run: `python genBCdata.py`. This wil download the latest version automatically
-  - Otherwise run: python genBCdata.py Mapping\ Aries\ Protocols\ for\ Testing\ -\ Aries\ Agent\ Test\ Scripts.csv
-  - this will replace the current data file in the `aries-backchannels/data` folder
+- run the command in the `aries-test-harness/features` folder:
+  - If you used the public Google sheet, you can skip the previous [optional] step and run: `python genBCData.py`. This wil download the latest version automatically
+  - Otherwise run: `python genBCData.py Mapping\ Aries\ Protocols\ for\ Testing\ -\ Aries\ Agent\ Test\ Scripts.csv` to replace the current data file in the `aries-backchannels/data` folder
 - submit a PR to update the file
 
 > To Do: This should be changed to a github action that is run on each commit to the repo
