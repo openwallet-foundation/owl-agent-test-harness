@@ -784,11 +784,27 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             operation = op["operation"]
             if operation == 'revoked':
                 agent_operation = "/credential/" + operation + "/" + rec_id
+                (resp_status, resp_text) = await self.admin_GET(agent_operation)
+                return (resp_status,  resp_text)
             else:
+                # TODO: we should detect what type of credential to fetch
+                # First try indy credential
                 agent_operation = "/credential/" + rec_id
+                (resp_status, resp_text) = await self.admin_GET(agent_operation)
+ 
+                # If not found try w3c credential
+                if resp_status == 404:
+                    agent_operation = "/credential/w3c/" + rec_id
+                    (resp_status, resp_text) = await self.admin_GET(agent_operation)
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            return (resp_status, resp_text)
+                    if resp_status == 200:
+                        resp_json = json.loads(resp_text)
+                        return (resp_status, json.dumps({
+                            "credential_id": resp_json["record_id"], 
+                            "credential": resp_json["cred_value"]
+                        }))
+
+                return (resp_status, resp_text)
 
         elif op["topic"] == "proof":
             # swap thread id for pres ex id from the webhook

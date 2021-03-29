@@ -70,8 +70,15 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
         cred_data = context.credential_data
 
     if "AIP20" in context.tags:
-        # This call may need to be formated by cred_format instead of version. Reassess when more types are used.
-        credential_offer = format_cred_proposal_by_aip_version(context, "AIP20", cred_data, context.connection_id_dict[holder][issuer], context.filters)
+        # We only want to send data for the cred format being used
+        assert cred_format in context.filters, f"credential data has no filter for cred format {cred_format}"
+        filters = {
+            cred_format: context.filters[cred_format]
+        }
+
+         # This call may need to be formated by cred_format instead of version. Reassess when more types are used.
+        credential_offer = format_cred_proposal_by_aip_version(
+            context, "AIP20", cred_data, context.connection_id_dict[holder][issuer], filters)
 
 
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential-v2", operation="send-proposal", data=credential_offer)
@@ -96,7 +103,13 @@ def step_impl(context, issuer, cred_format):
         if "credential_data" in context:
             cred_data = context.credential_data
 
-        credential_offer = format_cred_proposal_by_aip_version(context, "AIP20", cred_data, context.connection_id_dict[issuer][context.holder_name], context.filters)
+        # We only want to send data for the cred format being used
+        assert cred_format in context.filters, f"credential data has no filter for cred format {cred_format}"
+        filters = {
+            cred_format: context.filters[cred_format]
+        }
+
+        credential_offer = format_cred_proposal_by_aip_version(context, "AIP20", cred_data, context.connection_id_dict[issuer][context.holder_name], filters)
 
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential-v2", operation="send-offer", data=credential_offer)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -212,9 +225,15 @@ def step_impl(context, holder, cred_format):
     (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-    assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
-    assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+
+    if cred_format == CRED_FORMAT_INDY:
+        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+        assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][-1]
+    elif cred_format == CRED_FORMAT_JSON_LD:
+        # TODO: do not use schema name for credential_id_dict
+        # TODO: validate json-ld credential structure
+        assert resp_json["credential_id"] == context.credential_id_dict[context.schema['schema_name']][-1]
 
 @when('"{holder}" negotiates the offer with another proposal of the "{cred_format}" credential to "{issuer}"')
 def step_impl(context, holder, cred_format, issuer):
