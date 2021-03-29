@@ -24,8 +24,8 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.1-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018
-  Scenario Outline: Issue a JSON-LD credential with the Holder beginning with a proposal
+  @T001.1-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018 @DidMethod_Key
+  Scenario Outline: Issue a JSON-LD Ed25519Signature2018 credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
       | Acme | issuer |
@@ -42,19 +42,20 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.2-RFC0453 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD-BBS @Schema_DriversLicense_v2
-  Scenario Outline: Issue a JSON-LD-BBS credential with the Holder beginning with a proposal
+  @T001.2-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_BbsBlsSignature2020 @DidMethod_Key
+  Scenario Outline: Issue a JSON-LD BbsBlsSignature2020 credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
       | Acme | issuer |
       | Bob  | holder |
+    And "Acme" is ready to issue a "json-ld" credential
     And "Acme" and "Bob" have an existing connection
-    When "Bob" proposes a "json-ld-bbs" credential to "Acme" with <credential_data>
-    And "Acme" offers the "json-ld-bbs" credential
-    And "Bob" requests the "json-ld-bbs" credential
-    And "Acme" issues the "json-ld-bbs" credential
-    And "Bob" acknowledges the "json-ld-bbs" credential issue
-    Then "Bob" has the "json-ld-bbs" credential issued
+    When "Bob" proposes a "json-ld" credential to "Acme" with <credential_data>
+    And "Acme" offers the "json-ld" credential
+    And "Bob" requests the "json-ld" credential
+    And "Acme" issues the "json-ld" credential
+    And "Bob" acknowledges the "json-ld" credential issue
+    Then "Bob" has the "json-ld" credential issued
 
     Examples:
       | credential_data   |

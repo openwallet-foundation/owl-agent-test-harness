@@ -109,6 +109,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "present-proof-v2": "/present-proof-2.0/"
         }
 
+        self.credFormatFilterTranslationDict = {
+            "indy": "indy",
+            "json-ld": "ld_proof"
+        }
+
+        self.proofTypeKeyTypeTranslationDict = {
+            "Ed25519Signature2018": "ed25519",
+            "BbsBlsSignature2020": "bls12381g2"
+        }
+
         # Aca-py : RFC
         self.presentProofStateTranslationDict = {
             "request_sent": "request-sent",
@@ -604,6 +614,26 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         operation = op["operation"]
         topic = op["topic"]
 
+        # TODO: maybe better to move this to a separate prepare topic?
+        if operation == "prepare-json-ld":
+            key_type = self.proofTypeKeyTypeTranslationDict[data["proof_type"]]
+
+            # TODO: check if there is an already existing did with this method
+            # Only step to prepare at the moment is creating a did
+            # In the future this step would also do revocation or other required setup
+            (resp_status, resp_text) = await self.admin_POST("/wallet/did/create", {
+                "method": data["did_method"],
+                "options": {
+                    "key_type": key_type
+                }
+            })
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                resp_text = json.dumps({"did": resp_json["result"]["did"]})
+
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
         if rec_id is None:
             agent_operation = self.TopicTranslationDict[topic] + self.issueCredentialv2OperationTranslationDict[operation]
         else:
@@ -611,6 +641,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg", "cred_ex_id")
             agent_operation = self.TopicTranslationDict[topic] + "records/" + cred_ex_id + "/" + self.issueCredentialv2OperationTranslationDict[operation]
         
+        # Map AATH filter keys to ACA-Py filter keys
+        # e.g. data.filters.json-ld becomes data.filters.ld_proof
+        if data and "filter" in data:
+            data["filter"] = dict((self.credFormatFilterTranslationDict[name], val)for name, val in data["filter"].items())
+
         log_msg(agent_operation, data)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)

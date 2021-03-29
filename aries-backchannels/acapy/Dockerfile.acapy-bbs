@@ -1,0 +1,39 @@
+FROM python:3.7-buster
+RUN mkdir -p /aries-backchannels
+WORKDIR /aries-backchannels
+
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
+   && apt-get update \
+   && apt-get install -y software-properties-common \
+   && apt-get update \
+   && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' \
+   && apt-get update \
+   && apt-get install -y libindy \
+   && apt-get install -y libnullpay
+
+ENV RUNMODE=docker
+
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+
+COPY python/requirements.txt python/
+RUN pip install -r python/requirements.txt
+COPY acapy/requirements-bbs.txt acapy/
+RUN pip install -r acapy/requirements-bbs.txt
+
+# Copy the necessary files from the AATH Backchannel sub-folders
+COPY python python
+COPY acapy acapy
+COPY data ./
+
+# Copy bbs libray files
+COPY acapy/ursa_bbs_signatures ./ursa_bbs_signatures
+
+# aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
+RUN mkdir -p ./bin
+RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
+ENV PYTHONPATH=/aries-backchannels
+
+RUN ./bin/aca-py --version > ./acapy-version.txt
+
+ENTRYPOINT ["bash", "acapy/ngrok-wait.sh"]

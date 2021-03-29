@@ -1,0 +1,3 @@
+git+git://github.com/animo/ffi-bbs-signatures@python-wrapper#egg=ursa_bbs_signatures&subdirectory=wrappers/python
+git+git://github.com/TimoGlastra/py-multicodec@update-multicodec-table#egg=py_multicodec
+aries-cloudagent[indy]@git+https://github.com/animo/aries-cloudagent-python@cwu-bbs-main
