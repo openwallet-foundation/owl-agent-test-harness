@@ -614,22 +614,38 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         operation = op["operation"]
         topic = op["topic"]
 
-        # TODO: maybe better to move this to a separate prepare topic?
         if operation == "prepare-json-ld":
             key_type = self.proofTypeKeyTypeTranslationDict[data["proof_type"]]
 
-            # TODO: check if there is an already existing did with this method
-            # Only step to prepare at the moment is creating a did
-            # In the future this step would also do revocation or other required setup
-            (resp_status, resp_text) = await self.admin_POST("/wallet/did/create", {
+            # Retrieve matching dids
+            resp_status, resp_text = await self.admin_GET("/wallet/did", params={
                 "method": data["did_method"],
-                "options": {
-                    "key_type": key_type
-                }
+                "key_type": key_type
             })
+
+            did = None
             if resp_status == 200:
                 resp_json = json.loads(resp_text)
-                resp_text = json.dumps({"did": resp_json["result"]["did"]})
+
+                # If there is a matching did use it
+                if len(resp_json["results"]) > 0:
+                    # Get first matching did
+                    did = resp_json["results"][0]["did"]
+
+            # If there was no matching did create a new one
+            if not did:
+                (resp_status, resp_text) = await self.admin_POST("/wallet/did/create", {
+                    "method": data["did_method"],
+                    "options": {
+                        "key_type": key_type
+                    }
+                })
+                if resp_status == 200:
+                    resp_json = json.loads(resp_text)
+                    did = resp_json["result"]["did"]
+            
+            if did:
+                resp_text = json.dumps({"did": did})
 
             log_msg(resp_status, resp_text)
             return (resp_status, resp_text)
@@ -649,6 +665,19 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         log_msg(agent_operation, data)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        if operation == "store":
+            resp_json = json.loads(resp_text)
+
+            if resp_json["ld_proof"]:
+                resp_json["json-ld"] = resp_json.pop("ld_proof")
+
+            # Return less ACA-Py specific credential identifier key
+            for key in resp_json:
+                if resp_json[key] and resp_json[key].get("cred_id_stored"):
+                    resp_json[key]["credential_id"] = resp_json[key].get("cred_id_stored")
+
+            resp_text = json.dumps(resp_json)
 
         log_msg(resp_status, resp_text)
         # Looks like all v2 states are RFC states. Yah!
@@ -787,7 +816,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 (resp_status, resp_text) = await self.admin_GET(agent_operation)
                 return (resp_status,  resp_text)
             else:
-                # TODO: we should detect what type of credential to fetch
+                # NOTE: We don't know what type of credential to fetch, so we first try an indy credential.
+                # Maybe it would be nice if the test harness passed the credential format that belonged to the
+                # credential
                 # First try indy credential
                 agent_operation = "/credential/" + rec_id
                 (resp_status, resp_text) = await self.admin_GET(agent_operation)
