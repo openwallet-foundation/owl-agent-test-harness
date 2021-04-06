@@ -46,6 +46,8 @@ tags:
     description: Agent commands related to credential-definition topic
   - name: Issue Credential
     description: Agent commands related to issue-credential topic
+  - name: Issue Credential V2
+    description: Agent commands related to issue-credential-v2 topic
   - name: Credential
     description: Agent commands related to credential topic
   - name: Present Proof
