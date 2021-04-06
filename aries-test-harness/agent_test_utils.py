@@ -94,9 +94,7 @@ def amend_filters_with_runtime_data(context, filters):
         credential = json_ld.get("credential")
         options = json_ld.get("options")
 
-        # TODO: do not use indy schema name
-        # issuer = context.issuer_did_dict[context.schema['schema_name']]
-        issuer = context.issuer_did
+        issuer = context.issuer_did_dict[context.schema['schema_name']]
 
         if "issuer" in credential:
             # "issuer": "replace_me"

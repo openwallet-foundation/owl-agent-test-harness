@@ -41,6 +41,10 @@ def before_scenario(context, scenario):
                     # Get and assign the proof type to the context
                     # tag is in format "ProofType_PROOFTYPESTRING"
                     context.proof_type = tag.split("ProofType_")[1]
+                if 'DidMethod_' in tag:
+                    # Get and assign the did method to the context
+                    # tag is in format "@DidMethod_DIDMETHOD"
+                    context.did_method = tag.split("DidMethod_")[1]
                 if 'Schema_' in tag:
                     # Get and assign the scehma to the context
                     try:

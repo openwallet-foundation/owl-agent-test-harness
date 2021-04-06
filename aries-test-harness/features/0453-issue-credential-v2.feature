@@ -21,7 +21,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.1-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018 @DidMethod_Key
+  @T001.1-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018 @DidMethod_key
   Scenario Outline: Issue a JSON-LD Ed25519Signature2018 credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
@@ -40,7 +40,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.2-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_BbsBlsSignature2020 @DidMethod_Key
+  @T001.2-RFC0453 @RFC0593 @critical @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_BbsBlsSignature2020 @DidMethod_key
   Scenario Outline: Issue a JSON-LD BbsBlsSignature2020 credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |

@@ -17,10 +17,8 @@ def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
     elif cred_format == CRED_FORMAT_JSON_LD:
         issuer_url = context.config.userdata.get(issuer)
 
-        # TODO: extract did method from context (could be set by tags)
-        # TODO: topic / url / operation naming for prepare
         data = {
-            "did_method": "key",
+            "did_method": context.did_method,
             "proof_type": context.proof_type
         }
 
@@ -29,7 +27,11 @@ def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
         assert resp_status == 200, f'issue-credential-v2/prepare-json-ld: resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
 
-        context.issuer_did = resp_json["did"]
+        # TODO: it would be nice to not depend on the schema name for the issuer did dict
+        if 'issuer_did_dict' in context:
+            context.issuer_did_dict[context.schema['schema_name']] = resp_json["did"]
+        else:
+            context.issuer_did_dict = {context.schema['schema_name']: resp_json["did"]}
     else:
         raise Exception(f"Unknown credential format {cred_format}")
 
@@ -187,20 +189,15 @@ def step_impl(context, holder, cred_format):
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "done"
 
-    # FIXME: this should be handled by acapy backchannel
-    if cred_format == CRED_FORMAT_JSON_LD:
-        cred_format = "ld_proof"
-
-    # FIXME: the return value of this is very ACA-Py specific, should just be credential_id
-    credential_id = resp_json[cred_format]["cred_id_stored"]
+    credential_id = resp_json[cred_format]["credential_id"]
 
     if 'credential_id_dict' in context:
         try:
-            context.credential_id_dict[context.schema['schema_name']].append(resp_json[cred_format]["cred_id_stored"])
+            context.credential_id_dict[context.schema['schema_name']].append(credential_id)
         except KeyError:
-            context.credential_id_dict[context.schema['schema_name']] = [resp_json[cred_format]["cred_id_stored"]]
+            context.credential_id_dict[context.schema['schema_name']] = [credential_id]
     else:
-        context.credential_id_dict = {context.schema['schema_name']: [resp_json[cred_format]["cred_id_stored"]]}
+        context.credential_id_dict = {context.schema['schema_name']: [credential_id]}
 
     # Verify issuer status
     # TODO This is returning none instead of Done. Should this be the case. Needs investigation.
@@ -222,7 +219,7 @@ def step_impl(context, holder, cred_format):
     holder_url = context.config.userdata.get(holder)
 
     # get the credential from the holders wallet
-    (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1])
+    (resp_status, resp_text) = agent_backchannel_GET(holder_url + "/agent/command/", "credential", id=context.credential_id_dict[context.schema['schema_name']][-1])
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
 
@@ -232,7 +229,6 @@ def step_impl(context, holder, cred_format):
         assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][-1]
     elif cred_format == CRED_FORMAT_JSON_LD:
         # TODO: do not use schema name for credential_id_dict
-        # TODO: validate json-ld credential structure
         assert resp_json["credential_id"] == context.credential_id_dict[context.schema['schema_name']][-1]
 
 @when('"{holder}" negotiates the offer with another proposal of the "{cred_format}" credential to "{issuer}"')
