@@ -1,17 +1,14 @@
 @RFC0453 @AIP20
 Feature: RFC 0453 Aries Agent Issue Credential v2
 
-  # is this background needed with v2 AIP20?
-  Background: create a schema and credential definition in order to issue a credential
-    Given "Acme" has a public did
-    And "Acme" is ready to issue a credential
-
   @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
   Scenario Outline: Issue a Indy credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
       | Acme | issuer |
       | Bob  | holder |
+    Given "Acme" has a public did
+    And "Acme" is ready to issue a credential
     And "Acme" and "Bob" have an existing connection
     When "Bob" proposes a "indy" credential to "Acme" with <credential_data>
     And "Acme" offers the "indy" credential
@@ -30,6 +27,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | name | role   |
       | Acme | issuer |
       | Bob  | holder |
+    And "Acme" is ready to issue a "json-ld" credential
     And "Acme" and "Bob" have an existing connection
     When "Bob" proposes a "json-ld" credential to "Acme" with <credential_data>
     And "Acme" offers the "json-ld" credential
@@ -68,6 +66,8 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | name | role   |
       | Acme | issuer |
       | Bob  | holder |
+    Given "Acme" has a public did
+    And "Acme" is ready to issue a credential
     And "Acme" and "Bob" have an existing connection
     And "Bob" proposes a "indy" credential to "Acme" with <credential_data>
     And "Acme" offers the "indy" credential
