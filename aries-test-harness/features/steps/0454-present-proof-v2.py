@@ -5,6 +5,113 @@ from agent_test_utils import get_relative_timestamp_to_epoch
 from time import sleep
 
 
+@given('"{prover}" has an issued credential with formats from {issuer} with {credential_data}')
+def step_impl(context, prover, issuer, credential_data):
+    #assign the credential data to the context for use in the credential offer or proposal. 
+    if credential_data != None:
+        if "schema_dict" in context:
+            for schema in context.schema_dict:
+                if 'credential_data_dict' in context:
+                    try:
+                        credential_data_json_file = open('features/data/cred_data_' + schema.lower() + '.json')
+                        context.credential_data_dict[schema] = json.load(credential_data_json_file)[credential_data]['attributes']
+                    except FileNotFoundError:
+                        print(FileNotFoundError + ': features/data/cred_data_' + schema.lower() + '.json')
+                else:
+                    try:
+                        credential_data_json_file = open('features/data/cred_data_' + schema.lower() + '.json')
+                        context.credential_data_dict = {schema: json.load(credential_data_json_file)[credential_data]['attributes']}
+                    except FileNotFoundError:
+                        print(FileNotFoundError + ': features/data/cred_data_' + schema.lower() + '.json')
+
+    if "CredFormat_Indy" in context.tags:
+        cred_format = "indy"
+    elif "CredFormat_JSON-LD" in context.tags:
+        cred_format = "json-ld"
+    elif "CredFormat_JSON-LD-BBS" in context.tags:
+        cred_format = "json-ld-bbs"
+
+    # Call the step below to get the credential issued.
+    context.execute_steps('''
+        Given "''' + prover + '''" has an issued ''' + cred_format + ''' credential from {issuer}
+    '''.format(issuer=issuer))
+
+@given('"{prover}" has an issued credential from {issuer}')
+def step_impl(context, prover, issuer):
+    # create the Connection between the prover and the issuer
+    # TODO: May need to check for an existing connection established from other tests here instead of creating one.
+    # Check if a connection between the players has already been established in this test. 
+    if prover not in context.connection_id_dict or issuer not in context.connection_id_dict[prover]:
+        context.execute_steps('''
+            Given "''' + issuer + '''" and "''' + prover + '''" have an existing connection
+        ''')
+
+
+    # make sure the issuer has the credential definition
+    # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
+    # there are schemas and add the schema to context as the issue cred tests expect. 
+    if 'schema_dict' not in context:
+        context.execute_steps('''
+        Given "''' + issuer + '''" has a public did
+        When "''' + issuer + '''" creates a new schema
+        And "''' + issuer + '''" creates a new credential definition
+        Then "''' + issuer + '''" has an existing schema
+        And "''' + issuer + '''" has an existing credential definition
+        ''')
+    else:
+        for schema in context.schema_dict:
+            context.support_revocation = context.support_revocation_dict[schema]
+            context.schema = context.schema_dict[schema]
+            context.execute_steps('''
+            Given "''' + issuer + '''" has a public did
+            When "''' + issuer + '''" creates a new schema
+            And "''' + issuer + '''" creates a new credential definition
+            Then "''' + issuer + '''" has an existing schema
+            And "''' + issuer + '''" has an existing credential definition
+            ''')
+
+    # setup the holder and issuer for the issue cred sceneario below. The data table in the tests does not setup a holder.
+    # The prover is also the holder.
+    context.holder_url = context.config.userdata.get(prover)
+    context.holder_name = prover
+    assert context.holder_url is not None and 0 < len(context.holder_url)
+    # The issuer was not in the data table, it was in the gherkin scenario outline examples, so get it and assign it.
+    context.issuer_url = context.config.userdata.get(issuer)
+    context.issuer_name = issuer
+    assert context.issuer_url is not None and 0 < len(context.issuer_url)
+
+    # issue the credential to prover
+    # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
+    # there are schemas and add the schema to context as the issue cred tests expect. 
+    if "Indy" in context.tags:
+        context_steps_start = '''
+            When  "''' + prover + '''" proposes a credential to "''' + issuer + '''"
+            And '''
+    else:
+        context_steps_start = '''
+            When '''
+    if 'schema_dict' not in context:
+        context_steps = context_steps_start + ''' "''' + issuer + '''" offers a credential
+            And "''' + prover + '''" requests the credential
+            And  "''' + issuer + '''" issues the credential
+            And "''' + prover + '''" acknowledges the credential issue
+            Then "''' + prover + '''" has the credential issued
+        '''
+        context.execute_steps(context_steps)
+    else:
+        for schema in context.schema_dict:
+            context.credential_data = context.credential_data_dict[schema]
+            context.schema = context.schema_dict[schema]
+            context_steps = context_steps_start + ''' "''' + issuer + '''" offers a credential
+                And "''' + prover + '''" requests the credential
+                And  "''' + issuer + '''" issues the credential
+                And "''' + prover + '''" acknowledges the credential issue
+                Then "''' + prover + '''" has the credential issued
+            '''
+            context.execute_steps(context_steps)
+
+
+
 @when('"{verifier}" sends a {request_for_proof} presentation to "{prover}"')
 def step_impl(context, verifier, request_for_proof, prover):
     try:

@@ -1,19 +1,20 @@
 @RFC0454 @AIP20
 Feature: RFC 0454 Aries agent present proof v2
 
-   @T001-RFC0454 @critical @AcceptanceTest @Schema_DriversLicense_v2 @Indy @DIDExchangeConnection
+   @T001-RFC0454 @critical @AcceptanceTest @Indy @DIDExchangeConnection
    Scenario Outline: Present Proof of specific types and proof is acknowledged with a Drivers License credential type with a DID Exchange Connection
       Given "2" agents
          | name  | role     |
          | Faber | verifier |
          | Bob   | prover   |
       And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued "indy" credential from <issuer> with <credential_data>
-      When "Faber" sends a <request_for_proof> presentation to "Bob"
+      And "Bob" has an issued credential with formats from <issuer> with <credential_data>
+      When "Faber" sends a <request_for_proof> presentation with formats to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
       Then "Bob" has the proof verified
 
+      @CredFormat_Indy @Schema_DriversLicense
       Examples:
          | issuer | credential_data   | request_for_proof            | presentation                |
          | Acme   | Data_DL_MaxValues | proof_request_DL_address     | presentation_DL_address     |
