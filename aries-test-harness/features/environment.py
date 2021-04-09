@@ -39,6 +39,14 @@ def before_scenario(context, scenario):
     if 'present proof' in context.feature.name or 'revocation' in context.feature.name or 'Issue Credential' in context.feature.name:
             # get the tag with "Schema_".
             for tag in context.tags:
+                if 'ProofType_' in tag:
+                    # Get and assign the proof type to the context
+                    # tag is in format "ProofType_PROOFTYPESTRING"
+                    context.proof_type = tag.split("ProofType_")[1]
+                if 'DidMethod_' in tag:
+                    # Get and assign the did method to the context
+                    # tag is in format "@DidMethod_DIDMETHOD"
+                    context.did_method = tag.split("DidMethod_")[1]
                 if 'Schema_' in tag:
                     # Get and assign the schema to the context
                     try:
@@ -356,3 +364,12 @@ def setup_scenario_context(context, scenario):
     # context.credential_verification_dict["515b5850-8d98-4d0b-a1ca-ddd21038db96"] = True
     context.credential_verification_dict = {}
 
+    # Signature suite used for json-ld credentials
+    # 
+    # context.proof_type = "Ed25519Signature2018"
+    context.proof_type = None
+
+    # Did method used for json-ld credentials
+    # 
+    # context.did_method = "key"
+    context.did_method = None
