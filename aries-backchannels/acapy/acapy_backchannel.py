@@ -745,7 +745,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = self.TopicTranslationDict[op["topic"]] + "records/" + cred_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            resp_text = self.move_state_to_top_level(resp_text)
+            resp_text = self.move_field_to_top_level(resp_text, "state")
             return (resp_status, resp_text)
 
         elif op["topic"] == "credential":
