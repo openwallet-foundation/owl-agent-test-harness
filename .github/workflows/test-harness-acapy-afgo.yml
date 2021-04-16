@@ -42,6 +42,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a afgo-master"
           TEST_AGENTS: "-d acapy-main -b afgo-main"
+          OTHER_PARAMS: "-v 20"
           TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: acapy-b-afgo
         env:
