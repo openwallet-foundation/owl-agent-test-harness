@@ -103,10 +103,19 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         }
 
         # AATH API : Acapy Admin API
+        self.proofv2OperationTranslationDict = {
+            "create-send-connectionless-request": "create-request",
+            "send-presentation": "send-presentation",
+            "send-request": "send-request",
+            "verify-presentation": "verify-presentation",
+            "send-proposal": "send-proposal"
+        }        
+
+        # AATH API : Acapy Admin API
         self.TopicTranslationDict = {
             "issue-credential": "/issue-credential/",
             "issue-credential-v2": "/issue-credential-2.0/",
-            "present-proof-v2": "/present-proof-2.0/"
+            "proof-v2": "/present-proof-2.0/"
         }
 
         # Aca-py : RFC
@@ -480,6 +489,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.handle_issue_credential_v2_POST(op, rec_id=rec_id, data=data)
             return (resp_status, resp_text)
 
+        # Handle issue credential v2 POST operations 
+        elif op["topic"] == "proof-v2":
+            (resp_status, resp_text) = await self.handle_proof_v2_POST(op, rec_id=rec_id, data=data)
+            return (resp_status, resp_text)
+
         elif op["topic"] == "revocation":
             #set the acapyversion to master since work to set it is not complete. Remove when master report proper version
             #self.acapy_version = "0.5.5-RC"
@@ -623,6 +637,28 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         resp_text = self.move_field_to_top_level(resp_text, "state")
         return (resp_status, resp_text)
 
+    async def handle_proof_v2_POST(self, op, rec_id=None, data=None):
+        operation = op["operation"]
+        topic = op["topic"]
+
+        if rec_id is None:
+            agent_operation = self.TopicTranslationDict[topic] + self.proofv2OperationTranslationDict[operation]
+        else:
+            # swap thread id for cred ex id from the webhook
+            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+            agent_operation = self.TopicTranslationDict[topic] + "records/" + pres_ex_id + "/" + self.proofv2OperationTranslationDict[operation]
+        
+        log_msg(f"Data passed to backchannel by test for operation: {agent_operation}", data)
+        if data is not None:
+            # Format the message data that came from the test, to what the Aca-py admin api expects.
+            data = self.map_test_json_to_admin_api_json("proof-v2", operation, data)
+        log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        log_msg(resp_status, resp_text)
+        resp_text = self.move_field_to_top_level(resp_text, "state")
+        return (resp_status, resp_text)
+
     def move_field_to_top_level(self, resp_text, field_to_move):
         # Some reponses have been changed to nest fields that were once at top level.
         # The Test harness expects the these fields to be at the root. Other agents have it at the root.
@@ -745,7 +781,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = self.TopicTranslationDict[op["topic"]] + "records/" + cred_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            resp_text = self.move_field_to_top_level(resp_text)
+            resp_text = self.move_field_to_top_level(resp_text, "state")
             return (resp_status, resp_text)
 
         elif op["topic"] == "credential":
@@ -1160,6 +1196,69 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     "requested_predicates": requested_predicates,
                     "self_attested_attributes": self_attested_attributes
                 }
+
+            else:
+                admin_data = data
+
+            # Add on the service decorator if it exists.
+            if "~service" in data: 
+                admin_data["~service"] = data["~service"]
+
+            return (admin_data)
+
+        if topic == "proof-v2":
+
+            if operation == "send-request":
+                request_type = "presentation_request"
+                
+                if data.get("presentation_proposal", {}).get("format") is None:
+                    raise Exception("Credential format not specified for presentation") 
+                else:
+                    cred_format = data["presentation_proposal"]["format"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("requested_attributes") is None:
+                    requested_attributes = {}
+                else:
+                    requested_attributes = data["presentation_proposal"]["data"]["requested_attributes"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("requested_predicates") is None:
+                    requested_predicates = {}
+                else:
+                    requested_predicates = data["presentation_proposal"]["data"]["requested_predicates"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("name") is None:
+                    proof_request_name = "test proof"
+                else:
+                    proof_request_name = data["presentation_proposal"]["data"]["name"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("version") is None:
+                    proof_request_version = "1.0"
+                else:
+                    proof_request_version = data["presentation_proposal"]["data"]["version"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("non_revoked") is None:
+                    non_revoked = None
+                else:
+                    non_revoked = data["presentation_proposal"]["data"]["non_revoked"]
+                
+                admin_data = {
+                    "comment": data["presentation_proposal"]["comment"],
+                    "trace": False,
+                    request_type: {
+                        cred_format: {
+                            "name": proof_request_name,
+                            "version": proof_request_version,
+                            "requested_attributes": requested_attributes,
+                            "requested_predicates": requested_predicates
+                        }
+                    }
+                }
+
+                if "connection_id" in data["presentation_proposal"]:
+                    admin_data["connection_id"] = data["presentation_proposal"]["connection_id"] 
+
+                if non_revoked is not None:
+                    admin_data[request_type][cred_format]["non_revoked"] = non_revoked
 
             else:
                 admin_data = data

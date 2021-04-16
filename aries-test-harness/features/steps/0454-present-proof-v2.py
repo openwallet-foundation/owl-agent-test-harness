@@ -33,11 +33,11 @@ def step_impl(context, prover, issuer, credential_data):
     # Set the cred format from the featue tags.
     # TODO Check of the Prefix CredFormat exists, throw and error if not. It is mandatory
     if "CredFormat_Indy" in context.tags:
-        cred_format = "indy"
+        context.current_cred_format = "indy"
     elif "CredFormat_JSON-LD" in context.tags:
-        cred_format = "json-ld"
+        context.current_cred_format = "json-ld"
     elif "CredFormat_JSON-LD-BBS" in context.tags:
-        cred_format = "json-ld-bbs"
+        context.current_cred_format = "json-ld-bbs"
 
     # make sure the issuer has the credential definition
     # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
@@ -69,7 +69,7 @@ def step_impl(context, prover, issuer, credential_data):
         # there are schemas and add the schema to context as the issue cred tests expect. 
         if "CredProposalStart" in context.tags:
             context_steps_start = f'''
-                When  "{prover}" proposes a "{cred_format}" credential to "{issuer}" with {credential_data}
+                When  "{prover}" proposes a "{context.current_cred_format}" credential to "{issuer}" with {credential_data}
                 And '''
         else:
             context_steps_start = f'''
@@ -77,11 +77,11 @@ def step_impl(context, prover, issuer, credential_data):
         for schema in context.schema_dict:
             context.credential_data = context.credential_data_dict[schema]
             context.schema = context.schema_dict[schema]
-            context_steps = context_steps_start + f''' "{issuer}" offers the "{cred_format}" credential
-                And "{prover}" requests the "{cred_format}" credential
-                And  "{issuer}" issues the "{cred_format}" credential
-                And "{prover}" acknowledges the "{cred_format}" credential issue
-                Then "{prover}" has the "{cred_format}" credential issued
+            context_steps = context_steps_start + f''' "{issuer}" offers the "{context.current_cred_format}" credential
+                And "{prover}" requests the "{context.current_cred_format}" credential
+                And  "{issuer}" issues the "{context.current_cred_format}" credential
+                And "{prover}" acknowledges the "{context.current_cred_format}" credential issue
+                Then "{prover}" has the "{context.current_cred_format}" credential issued
             '''
             context.execute_steps(context_steps)
 
@@ -102,33 +102,25 @@ def step_impl(context, verifier, request_for_proof, prover):
         if "non_revoked_timeframe" in context:
              data["non_revoked"] = context.non_revoked_timeframe["non_revoked"]
 
-    if ('connectionless' in context) and (context.connectionless == True):
-        presentation_proposal = {
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
-            }
+    presentation_proposal = {
+        "presentation_proposal": {
+            "format": context.current_cred_format,
+            "comment": "This is a comment for the request for presentation.",
+            "data":  data
         }
+    }
+
+    if ('connectionless' in context) and (context.connectionless == True):
         (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="create-send-connectionless-request", data=presentation_proposal)
     else:
-        presentation_proposal = {
-            "connection_id": context.connection_id_dict[verifier][prover],
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
-            }
-        }
-
+        presentation_proposal["presentation_proposal"]["connection_id"] = context.connection_id_dict[verifier][prover]
+        # presentation_proposal = {
+        #     "connection_id": context.connection_id_dict[verifier][prover],
+        #     "presentation_proposal": {
+        #         "comment": "This is a comment for the request for presentation.",
+        #         "data":  data
+        #     }
+        # }
 
         # send presentation request
         (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="send-request", data=presentation_proposal)
