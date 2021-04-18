@@ -26,9 +26,6 @@ COPY python python
 COPY acapy acapy
 COPY data ./
 
-# Copy bbs libray files
-COPY acapy/ursa_bbs_signatures ./ursa_bbs_signatures
-
 # aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
 RUN mkdir -p ./bin
 RUN ln -s /usr/local/bin/aca-py ./bin/aca-py

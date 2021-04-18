@@ -1,2 +1,1 @@
-git+git://github.com/animo/ffi-bbs-signatures@python-wrapper#egg=ursa_bbs_signatures&subdirectory=wrappers/python
-aries-cloudagent[indy]@git+https://github.com/animo/aries-cloudagent-python@cwu-bbs-main
+aries-cloudagent[indy, bbs]@git+https://github.com/animo/aries-cloudagent-python@cwu-bbs-main
