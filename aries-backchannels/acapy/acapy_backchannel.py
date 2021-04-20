@@ -311,10 +311,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_issue_credential_v2_0(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "credential-msg", message)
-        log_msg('Received Issue Credential Webhook message: ' + json.dumps(message)) 
+        log_msg('Received Issue Credential v2 Webhook message: ' + json.dumps(message)) 
         if "revocation_id" in message: # also push as a revocation message 
             push_resource(thread_id, "revocation-registry-msg", message)
             log_msg('Issue Credential Webhook message contains revocation info') 
+
+    async def handle_present_proof_v2_0(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "presentation-msg", message)
+        log_msg('Received a Present Proof v2 Webhook message: ' + json.dumps(message))
 
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
@@ -645,7 +650,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = self.TopicTranslationDict[topic] + self.proofv2OperationTranslationDict[operation]
         else:
             # swap thread id for cred ex id from the webhook
-            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "pres_ex_id")
             agent_operation = self.TopicTranslationDict[topic] + "records/" + pres_ex_id + "/" + self.proofv2OperationTranslationDict[operation]
         
         log_msg(f"Data passed to backchannel by test for operation: {agent_operation}", data)
@@ -801,6 +806,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "proof-v2":
+            # swap thread id for pres ex id from the webhook
+            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "pres_ex_id")
+            agent_operation = self.TopicTranslationDict[op["topic"]] + "records/" + pres_ex_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "revocation":
@@ -1259,6 +1273,37 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if non_revoked is not None:
                     admin_data[request_type][cred_format]["non_revoked"] = non_revoked
+            
+            elif operation == "send-presentation":
+                
+                if data.get("format") is None:
+                    raise Exception("Credential format not specified for presentation") 
+                else:
+                    cred_format = data["format"]
+
+                if data.get("requested_attributes") == None:
+                    requested_attributes = {}
+                else:
+                    requested_attributes = data["requested_attributes"]
+
+                if data.get("requested_predicates") == None:
+                    requested_predicates = {}
+                else:
+                    requested_predicates = data["requested_predicates"]
+
+                if data.get("self_attested_attributes") == None:
+                    self_attested_attributes = {}
+                else:
+                    self_attested_attributes = data["self_attested_attributes"]
+
+                admin_data = {
+                    "comment": data["comment"],
+                    cred_format: {
+                        "requested_attributes": requested_attributes,
+                        "requested_predicates": requested_predicates,
+                        "self_attested_attributes": self_attested_attributes
+                    }
+                }
 
             else:
                 admin_data = data

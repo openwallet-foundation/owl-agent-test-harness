@@ -114,13 +114,6 @@ def step_impl(context, verifier, request_for_proof, prover):
         (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="create-send-connectionless-request", data=presentation_proposal)
     else:
         presentation_proposal["presentation_proposal"]["connection_id"] = context.connection_id_dict[verifier][prover]
-        # presentation_proposal = {
-        #     "connection_id": context.connection_id_dict[verifier][prover],
-        #     "presentation_proposal": {
-        #         "comment": "This is a comment for the request for presentation.",
-        #         "data":  data
-        #     }
-        # }
 
         # send presentation request
         (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="send-request", data=presentation_proposal)
@@ -142,111 +135,98 @@ def step_impl(context, verifier, request_for_proof, prover):
         context.presentation_exchange_id = resp_json["presentation_exchange_id"]
 
 
-# @when('"{prover}" makes the presentation of the proof')
-# def step_impl(context, prover):
-#     prover_url = context.prover_url
 
-#     if "presentation" in context:
-#         presentation = context.presentation
-#         # Find the cred ids and add the actual cred id into the presentation
-#         # TODO: There is probably a better way to get access to the specific requested attributes and predicates. Revisit this later.
-#         try:
-#             for i in range(json.dumps(presentation["requested_attributes"]).count("cred_id")):
-#                 # Get the schema name from the loaded presentation for each requested attributes
-#                 cred_type_name = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_type_name"]
-#                 presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1]
-#                 # If there is a timestamp, calculate it from the instruction in the file. Can be 'now' or + - relative to now.
-#                 if ("timestamp" in presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]):
-#                     relative_timestamp = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["timestamp"]
-#                     presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["timestamp"] = get_relative_timestamp_to_epoch(relative_timestamp)
-#                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
-#                 presentation["requested_attributes"][list(presentation["requested_attributes"])[i]].pop("cred_type_name")
-#         except KeyError:
-#             pass
+@when('"{prover}" makes the {presentation} of the proof with formats')
+def step_impl(context, prover, presentation):
+    # Open the presentation json file
+    try:
+        presentation_json_file = open('features/data/' + presentation + '.json')
+        presentation_json = json.load(presentation_json_file)
+        context.presentation = presentation_json["presentation"]
+
+    except FileNotFoundError:
+        print(FileNotFoundError + ': features/data/' + presentation + '.json')
+
+    prover_url = context.prover_url
+
+    if "presentation" in context:
+        presentation = context.presentation
+        # Find the cred ids and add the actual cred id into the presentation
+        # TODO: There is probably a better way to get access to the specific requested attributes and predicates. Revisit this later.
+        try:
+            for i in range(json.dumps(presentation["requested_attributes"]).count("cred_id")):
+                # Get the schema name from the loaded presentation for each requested attributes
+                cred_type_name = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_type_name"]
+                presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1]
+                # If there is a timestamp, calculate it from the instruction in the file. Can be 'now' or + - relative to now.
+                if ("timestamp" in presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]):
+                    relative_timestamp = presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["timestamp"]
+                    presentation["requested_attributes"][list(presentation["requested_attributes"])[i]]["timestamp"] = get_relative_timestamp_to_epoch(relative_timestamp)
+                # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+                presentation["requested_attributes"][list(presentation["requested_attributes"])[i]].pop("cred_type_name")
+        except KeyError:
+            pass
         
-#         try:
-#             for i in range(json.dumps(presentation["requested_predicates"]).count("cred_id")):
-#                 # Get the schema name from the loaded presentation for each requested predicates
-#                 cred_type_name = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_type_name"]
-#                 presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1] 
-#                 # If there is a timestamp, calculate it from the instruction in the file. Can be 'now' or + - relative to now.
-#                 if ("timestamp" in presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]):
-#                     relative_timestamp = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["timestamp"]
-#                     presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["timestamp"] = get_relative_timestamp_to_epoch(relative_timestamp)
-#                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
-#                 presentation["requested_predicates"][list(presentation["requested_predicates"])[i]].pop("cred_type_name")
-#         except KeyError:
-#             pass
+        try:
+            for i in range(json.dumps(presentation["requested_predicates"]).count("cred_id")):
+                # Get the schema name from the loaded presentation for each requested predicates
+                cred_type_name = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_type_name"]
+                presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["cred_id"] = context.credential_id_dict[cred_type_name][len(context.credential_id_dict[cred_type_name])-1] 
+                # If there is a timestamp, calculate it from the instruction in the file. Can be 'now' or + - relative to now.
+                if ("timestamp" in presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]):
+                    relative_timestamp = presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["timestamp"]
+                    presentation["requested_predicates"][list(presentation["requested_predicates"])[i]]["timestamp"] = get_relative_timestamp_to_epoch(relative_timestamp)
+                # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
+                presentation["requested_predicates"][list(presentation["requested_predicates"])[i]].pop("cred_type_name")
+        except KeyError:
+            pass
 
-#     else:   
-#         presentation = {
-#             "comment": "This is a comment for the send presentation.",
-#             "requested_attributes": {
-#                 "attr_1": {
-#                     "revealed": True,
-#                     "cred_id": context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-#                 }
-#             }
-#         }
+        presentation["format"] = context.current_cred_format
 
-#     # if this is happening connectionless, then add the service decorator to the presentation
-#     if ('connectionless' in context) and (context.connectionless == True):
-#         presentation["~service"] = {
-#                 "recipientKeys": [
-#                     context.presentation_exchange_id
-#                 ],
-#                 "routingKeys": None,
-#                 "serviceEndpoint": context.verifier_url
-#             }
+    # if this is happening connectionless, then add the service decorator to the presentation
+    if ('connectionless' in context) and (context.connectionless == True):
+        presentation["~service"] = {
+                "recipientKeys": [
+                    context.presentation_exchange_id
+                ],
+                "routingKeys": None,
+                "serviceEndpoint": context.verifier_url
+            }
 
-#     (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
-#     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-#     resp_json = json.loads(resp_text)
-#     assert resp_json["state"] == "presentation-sent"
+    (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof-v2", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+    assert resp_json["state"] == "presentation-sent"
 
-#     # check the state of the presentation from the verifier's perspective
-#     assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "presentation-received", wait_time=60.0)
+    # check the state of the presentation from the verifier's perspective
+    assert expected_agent_state(context.verifier_url, "proof-v2", context.presentation_thread_id, "presentation-received")
 
-# @when('"{prover}" makes the {presentation} of the proof')
-# def step_impl(context, prover, presentation):
-#     try:
-#         presentation_json_file = open('features/data/' + presentation + '.json')
-#         presentation_json = json.load(presentation_json_file)
-#         context.presentation = presentation_json["presentation"]
 
-#     except FileNotFoundError:
-#         print(FileNotFoundError + ': features/data/' + presentation + '.json')
+@when('"{verifier}" acknowledges the proof with formats')
+def step_impl(context, verifier):
+    verifier_url = context.verifier_url
 
-#     # Call the step below to get send rhe request for presentation.
-#     context.execute_steps('''
-#         When "''' + prover + '''" makes the presentation of the proof
-#     ''')
+    (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof-v2", operation="verify-presentation", id=context.presentation_thread_id)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    resp_json = json.loads(resp_text)
+    assert resp_json["state"] == "done"
 
-# @when('"{verifier}" acknowledges the proof')
-# def step_impl(context, verifier):
-#     verifier_url = context.verifier_url
+    if "support_revocation" in context:
+        if context.support_revocation:
+            # Add the verified property returned to the credential verification dictionary to check in subsequent steps. Key by presentation thread id
+            if "credential_verification_dict" in context:
+                context.credential_verification_dict[context.presentation_thread_id] = resp_json["verified"]
+            else:
+                context.credential_verification_dict = {context.presentation_thread_id: resp_json["verified"]}
 
-#     (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.presentation_thread_id)
-#     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-#     resp_json = json.loads(resp_text)
-#     assert resp_json["state"] == "done"
+@then('"{prover}" has the proof with formats verified')
+def step_impl(context, prover):
+    # check the state of the presentation from the prover's perspective
+    assert expected_agent_state(context.prover_url, "proof-v2", context.presentation_thread_id, "done")
 
-#     if "support_revocation" in context:
-#         if context.support_revocation:
-#             # Add the verified property returned to the credential verification dictionary to check in subsequent steps. Key by presentation thread id
-#             if "credential_verification_dict" in context:
-#                 context.credential_verification_dict[context.presentation_thread_id] = resp_json["verified"]
-#             else:
-#                 context.credential_verification_dict = {context.presentation_thread_id: resp_json["verified"]}
-
-# @then('"{prover}" has the proof verified')
-# def step_impl(context, prover):
-#     # check the state of the presentation from the prover's perspective
-#     assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
-
-#     # Check the status of the verification in the verify-presentation call. Should be True
-#     if 'credential_verification_dict' in context:
-#         assert context.credential_verification_dict[context.presentation_thread_id] == "true"
+    # Check the status of the verification in the verify-presentation call. Should be True
+    if 'credential_verification_dict' in context:
+        assert context.credential_verification_dict[context.presentation_thread_id] == "true"
 
 # @given('"{verifier}" and "{prover}" do not have a connection')
 # def step_impl(context, verifier, prover):
