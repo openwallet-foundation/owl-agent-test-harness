@@ -16,7 +16,9 @@ docker-compose -f docker-compose-demo.yml rm
 
 When the agents are running you have access to the following URLs and ports:
 
+
 | Agent | Bachchannel | Backchannel Port | Admin API (Swagger)           |
+| ----- | ----------- | ---------------- | --------------------          |
 | Acme  | acapy-main  | 9010             | http://localhost:9012/api/doc |
 | Bob   | acapy-main  | 9020             | http://localhost:9022/api/doc |
 | Faber | afgo-master | 9030             | http://localhost:9080/openapi |
