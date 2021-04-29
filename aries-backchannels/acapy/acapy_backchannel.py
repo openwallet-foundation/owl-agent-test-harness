@@ -121,6 +121,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "proof-v2": "/present-proof-2.0/"
         }
 
+        self.credFormatFilterTranslationDict = {
+            "indy": "indy",
+            "json-ld": "ld_proof"
+        }
+
+        self.proofTypeKeyTypeTranslationDict = {
+            "Ed25519Signature2018": "ed25519",
+            "BbsBlsSignature2020": "bls12381g2"
+        }
+
         # Aca-py : RFC
         self.presentProofStateTranslationDict = {
             "request_sent": "request-sent",
@@ -630,6 +640,42 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         operation = op["operation"]
         topic = op["topic"]
 
+        if operation == "prepare-json-ld":
+            key_type = self.proofTypeKeyTypeTranslationDict[data["proof_type"]]
+
+            # Retrieve matching dids
+            resp_status, resp_text = await self.admin_GET("/wallet/did", params={
+                "method": data["did_method"],
+                "key_type": key_type
+            })
+
+            did = None
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+
+                # If there is a matching did use it
+                if len(resp_json["results"]) > 0:
+                    # Get first matching did
+                    did = resp_json["results"][0]["did"]
+
+            # If there was no matching did create a new one
+            if not did:
+                (resp_status, resp_text) = await self.admin_POST("/wallet/did/create", {
+                    "method": data["did_method"],
+                    "options": {
+                        "key_type": key_type
+                    }
+                })
+                if resp_status == 200:
+                    resp_json = json.loads(resp_text)
+                    did = resp_json["result"]["did"]
+            
+            if did:
+                resp_text = json.dumps({"did": did})
+
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
         if rec_id is None:
             agent_operation = self.TopicTranslationDict[topic] + self.issueCredentialv2OperationTranslationDict[operation]
         else:
@@ -637,9 +683,27 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg", "cred_ex_id")
             agent_operation = self.TopicTranslationDict[topic] + "records/" + cred_ex_id + "/" + self.issueCredentialv2OperationTranslationDict[operation]
         
+        # Map AATH filter keys to ACA-Py filter keys
+        # e.g. data.filters.json-ld becomes data.filters.ld_proof
+        if data and "filter" in data:
+            data["filter"] = dict((self.credFormatFilterTranslationDict[name], val)for name, val in data["filter"].items())
+
         log_msg(agent_operation, data)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        if operation == "store":
+            resp_json = json.loads(resp_text)
+
+            if resp_json["ld_proof"]:
+                resp_json["json-ld"] = resp_json.pop("ld_proof")
+
+            # Return less ACA-Py specific credential identifier key
+            for key in resp_json:
+                if resp_json[key] and resp_json[key].get("cred_id_stored"):
+                    resp_json[key]["credential_id"] = resp_json[key].get("cred_id_stored")
+
+            resp_text = json.dumps(resp_json)
 
         log_msg(resp_status, resp_text)
         # Looks like all v2 states are RFC states. Yah!
@@ -798,11 +862,29 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             operation = op["operation"]
             if operation == 'revoked':
                 agent_operation = "/credential/" + operation + "/" + rec_id
+                (resp_status, resp_text) = await self.admin_GET(agent_operation)
+                return (resp_status,  resp_text)
             else:
+                # NOTE: We don't know what type of credential to fetch, so we first try an indy credential.
+                # Maybe it would be nice if the test harness passed the credential format that belonged to the
+                # credential
+                # First try indy credential
                 agent_operation = "/credential/" + rec_id
+                (resp_status, resp_text) = await self.admin_GET(agent_operation)
+ 
+                # If not found try w3c credential
+                if resp_status == 404:
+                    agent_operation = "/credential/w3c/" + rec_id
+                    (resp_status, resp_text) = await self.admin_GET(agent_operation)
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            return (resp_status, resp_text)
+                    if resp_status == 200:
+                        resp_json = json.loads(resp_text)
+                        return (resp_status, json.dumps({
+                            "credential_id": resp_json["record_id"], 
+                            "credential": resp_json["cred_value"]
+                        }))
+
+                return (resp_status, resp_text)
 
         elif op["topic"] == "proof":
             # swap thread id for pres ex id from the webhook
