@@ -32,6 +32,9 @@ MAX_TIMEOUT = 5
 
 AGENT_NAME = os.getenv("AGENT_NAME", "Agent")
 
+# AIP level is 10 or 20
+AIP_CONFIG = int(os.getenv("AIP_CONFIG", "10"))
+
 DEFAULT_BIN_PATH = "../venv/bin"
 DEFAULT_PYTHON_PATH = ".."
 
@@ -103,10 +106,19 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         }
 
         # AATH API : Acapy Admin API
+        self.proofv2OperationTranslationDict = {
+            "create-send-connectionless-request": "create-request",
+            "send-presentation": "send-presentation",
+            "send-request": "send-request",
+            "verify-presentation": "verify-presentation",
+            "send-proposal": "send-proposal"
+        }        
+
+        # AATH API : Acapy Admin API
         self.TopicTranslationDict = {
             "issue-credential": "/issue-credential/",
             "issue-credential-v2": "/issue-credential-2.0/",
-            "present-proof-v2": "/present-proof-2.0/"
+            "proof-v2": "/present-proof-2.0/"
         }
 
         self.credFormatFilterTranslationDict = {
@@ -224,11 +236,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the tails server env is not set use the gov.bc TEST tails server.
             result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
         
-        if os.getenv('EMIT-NEW-DIDCOMM-PREFIX') is not None:
+        if AIP_CONFIG >= 20 or os.getenv('EMIT-NEW-DIDCOMM-PREFIX') is not None:
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-prefix"))
 
-        if os.getenv('EMIT-NEW-DIDCOMM-MIME-TYPE') is not None:
+        if AIP_CONFIG >= 20 or os.getenv('EMIT-NEW-DIDCOMM-MIME-TYPE') is not None:
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-mime-type"))
 
@@ -236,6 +248,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # when it does (and there is talk of supporting YAML) then this code can be removed. 
         if os.getenv('LOG_LEVEL') is not None:
             result.append(("--log-level", os.getenv('LOG_LEVEL')))
+
+        # result.append(("--trace", "--trace-target", "log", "--trace-tag", "acapy.events", "--trace-label", "acapy",))
 
         #if self.extra_args:
         #    result.extend(self.extra_args)
@@ -312,10 +326,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_issue_credential_v2_0(self, message):
         thread_id = message["thread_id"]
         push_resource(thread_id, "credential-msg", message)
-        log_msg('Received Issue Credential Webhook message: ' + json.dumps(message)) 
+        log_msg('Received Issue Credential v2 Webhook message: ' + json.dumps(message)) 
         if "revocation_id" in message: # also push as a revocation message 
             push_resource(thread_id, "revocation-registry-msg", message)
             log_msg('Issue Credential Webhook message contains revocation info') 
+
+    async def handle_present_proof_v2_0(self, message):
+        thread_id = message["thread_id"]
+        push_resource(thread_id, "presentation-msg", message)
+        log_msg('Received a Present Proof v2 Webhook message: ' + json.dumps(message))
 
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
@@ -437,6 +456,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
             log_msg(resp_status, resp_text)
+            resp_text = self.move_field_to_top_level(resp_text, "schema_id")
             return (resp_status, resp_text)
 
         elif op["topic"] == "credential-definition":
@@ -447,6 +467,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
             log_msg(resp_status, resp_text)
+            resp_text = self.move_field_to_top_level(resp_text, "credential_definition_id")
             return (resp_status, resp_text)
 
         elif op["topic"] == "issue-credential":
@@ -486,6 +507,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # Handle issue credential v2 POST operations 
         elif op["topic"] == "issue-credential-v2":
             (resp_status, resp_text) = await self.handle_issue_credential_v2_POST(op, rec_id=rec_id, data=data)
+            return (resp_status, resp_text)
+
+        # Handle issue credential v2 POST operations 
+        elif op["topic"] == "proof-v2":
+            (resp_status, resp_text) = await self.handle_proof_v2_POST(op, rec_id=rec_id, data=data)
             return (resp_status, resp_text)
 
         elif op["topic"] == "revocation":
@@ -682,22 +708,45 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         log_msg(resp_status, resp_text)
         # Looks like all v2 states are RFC states. Yah!
         #if resp_status == 200: resp_text = self.agent_state_translation(topic], None, resp_text)
-        resp_text = self.move_state_to_top_level(resp_text)
+        resp_text = self.move_field_to_top_level(resp_text, "state")
         return (resp_status, resp_text)
 
-    def move_state_to_top_level(self, resp_text):
-        # for some responses the state is not a top level field. 
-        # the test harness expects the state to be a top level field
+    async def handle_proof_v2_POST(self, op, rec_id=None, data=None):
+        operation = op["operation"]
+        topic = op["topic"]
+
+        if rec_id is None:
+            agent_operation = self.TopicTranslationDict[topic] + self.proofv2OperationTranslationDict[operation]
+        else:
+            # swap thread id for cred ex id from the webhook
+            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "pres_ex_id")
+            agent_operation = self.TopicTranslationDict[topic] + "records/" + pres_ex_id + "/" + self.proofv2OperationTranslationDict[operation]
+        
+        log_msg(f"Data passed to backchannel by test for operation: {agent_operation}", data)
+        if data is not None:
+            # Format the message data that came from the test, to what the Aca-py admin api expects.
+            data = self.map_test_json_to_admin_api_json("proof-v2", operation, data)
+        log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        log_msg(resp_status, resp_text)
+        resp_text = self.move_field_to_top_level(resp_text, "state")
+        return (resp_status, resp_text)
+
+    def move_field_to_top_level(self, resp_text, field_to_move):
+        # Some reponses have been changed to nest fields that were once at top level.
+        # The Test harness expects the these fields to be at the root. Other agents have it at the root.
+        # This could be removed if it is common acorss agents to nest these fields in `sent:` for instance.
         resp_json = json.loads(resp_text)
-        if "state" in resp_json:
+        if field_to_move in resp_json:
             # If it is already a top level field, forget about it.
             return resp_text
         else:
-            # Find the state and put a copy as a top level field
+            # Find the field and put a copy as a top level
             for key in resp_json:
-                if "state" in resp_json[key]:
-                    state = resp_json[key]["state"]
-                    resp_json["state"] = state
+                if field_to_move in resp_json[key]:
+                    field_value = resp_json[key][field_to_move]
+                    resp_json[field_to_move] = field_value
                     return json.dumps(resp_json)
 
     async def make_agent_GET_request(
@@ -806,7 +855,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = self.TopicTranslationDict[op["topic"]] + "records/" + cred_ex_id
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            resp_text = self.move_state_to_top_level(resp_text)
+            resp_text = self.move_field_to_top_level(resp_text, "state")
             return (resp_status, resp_text)
 
         elif op["topic"] == "credential":
@@ -844,6 +893,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            return (resp_status, resp_text)
+
+        elif op["topic"] == "proof-v2":
+            # swap thread id for pres ex id from the webhook
+            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "pres_ex_id")
+            agent_operation = self.TopicTranslationDict[op["topic"]] + "records/" + pres_ex_id
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            #if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "revocation":
@@ -1238,6 +1296,100 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     "requested_attributes": requested_attributes,
                     "requested_predicates": requested_predicates,
                     "self_attested_attributes": self_attested_attributes
+                }
+
+            else:
+                admin_data = data
+
+            # Add on the service decorator if it exists.
+            if "~service" in data: 
+                admin_data["~service"] = data["~service"]
+
+            return (admin_data)
+
+        if topic == "proof-v2":
+
+            if operation == "send-request":
+                request_type = "presentation_request"
+                
+                if data.get("presentation_proposal", {}).get("format") is None:
+                    raise Exception("Credential format not specified for presentation") 
+                else:
+                    cred_format = data["presentation_proposal"]["format"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("requested_attributes") is None:
+                    requested_attributes = {}
+                else:
+                    requested_attributes = data["presentation_proposal"]["data"]["requested_attributes"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("requested_predicates") is None:
+                    requested_predicates = {}
+                else:
+                    requested_predicates = data["presentation_proposal"]["data"]["requested_predicates"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("name") is None:
+                    proof_request_name = "test proof"
+                else:
+                    proof_request_name = data["presentation_proposal"]["data"]["name"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("version") is None:
+                    proof_request_version = "1.0"
+                else:
+                    proof_request_version = data["presentation_proposal"]["data"]["version"]
+
+                if data.get("presentation_proposal", {}).get("data", {}).get("non_revoked") is None:
+                    non_revoked = None
+                else:
+                    non_revoked = data["presentation_proposal"]["data"]["non_revoked"]
+                
+                admin_data = {
+                    "comment": data["presentation_proposal"]["comment"],
+                    "trace": False,
+                    request_type: {
+                        cred_format: {
+                            "name": proof_request_name,
+                            "version": proof_request_version,
+                            "requested_attributes": requested_attributes,
+                            "requested_predicates": requested_predicates
+                        }
+                    }
+                }
+
+                if "connection_id" in data["presentation_proposal"]:
+                    admin_data["connection_id"] = data["presentation_proposal"]["connection_id"] 
+
+                if non_revoked is not None:
+                    admin_data[request_type][cred_format]["non_revoked"] = non_revoked
+            
+            elif operation == "send-presentation":
+                
+                if data.get("format") is None:
+                    raise Exception("Credential format not specified for presentation") 
+                else:
+                    cred_format = data["format"]
+
+                if data.get("requested_attributes") == None:
+                    requested_attributes = {}
+                else:
+                    requested_attributes = data["requested_attributes"]
+
+                if data.get("requested_predicates") == None:
+                    requested_predicates = {}
+                else:
+                    requested_predicates = data["requested_predicates"]
+
+                if data.get("self_attested_attributes") == None:
+                    self_attested_attributes = {}
+                else:
+                    self_attested_attributes = data["self_attested_attributes"]
+
+                admin_data = {
+                    "comment": data["comment"],
+                    cred_format: {
+                        "requested_attributes": requested_attributes,
+                        "requested_predicates": requested_predicates,
+                        "self_attested_attributes": self_attested_attributes
+                    }
                 }
 
             else:
