@@ -1,1 +1,0 @@
-aries-cloudagent[indy, bbs]@git+https://github.com/animo/aries-cloudagent-python@cwu-bbs-main
