@@ -1,14 +1,13 @@
 @RFC0453 @AIP20
 Feature: RFC 0453 Aries Agent Issue Credential v2
 
-  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
-  Scenario Outline: Issue a Indy credential with the Holder beginning with a proposal
+  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @DIDExchangeConnection @Schema_DriversLicense_v2
+  Scenario Outline: Issue a Credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
       | Acme | issuer |
       | Bob  | holder |
-    Given "Acme" has a public did
-    And "Acme" is ready to issue a "<credential_format>" credential using signature suite "<signature_suite>" and did method "<did_method>"
+    Given "Acme" is ready to issue a "<credential_format>" credential using signature suite "<signature_suite>" and did method "<did_method>"
     And "Acme" and "Bob" have an existing connection
     When "Bob" proposes a "<credential_format>" credential to "Acme" with <credential_data>
     And "Acme" offers the "<credential_format>" credential
@@ -17,45 +16,17 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     And "Bob" acknowledges the "<credential_format>" credential issue
     Then "Bob" has the "<credential_format>" credential issued
 
-    Examples:
+    @CredFormat_Indy
+    Examples: Indy
       | credential_data   | credential_format | signature_suite | did_method |
       | Data_DL_MaxValues | indy              | n/a             | sov        |
 
-  @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
-  Scenario Outline: Issue a JSON-LD Ed25519Signature2018 credential with the Holder beginning with a proposal
-    Given "2" agents
-      | name | role   |
-      | Acme | issuer |
-      | Bob  | holder |
-    And "Acme" is ready to issue a "<credential_format>" credential using signature suite "<signature_suite>" and did method "<did_method>"
-    And "Acme" and "Bob" have an existing connection
-    When "Bob" proposes a "<credential_format>" credential to "Acme" with <credential_data>
-    And "Acme" offers the "<credential_format>" credential
-    And "Bob" requests the "<credential_format>" credential
-    And "Acme" issues the "<credential_format>" credential
-    And "Bob" acknowledges the "<credential_format>" credential issue
-    Then "Bob" has the "<credential_format>" credential issued
-
-    Examples:
+    @CredFormat_JSON-LD
+    Examples: Json-LD
       | credential_data   | credential_format | signature_suite      | did_method |
       | Data_DL_MaxValues | json-ld           | Ed25519Signature2018 | key        |
 
-  @T001.2-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
-  Scenario Outline: Issue a JSON-LD BbsBlsSignature2020 credential with the Holder beginning with a proposal
-    Given "2" agents
-      | name | role   |
-      | Acme | issuer |
-      | Bob  | holder |
-    And "Acme" is ready to issue a "<credential_format>" credential using signature suite "<signature_suite>" and did method "<did_method>"
-    And "Acme" and "Bob" have an existing connection
-    When "Bob" proposes a "<credential_format>" credential to "Acme" with <credential_data>
-    And "Acme" offers the "<credential_format>" credential
-    And "Bob" requests the "<credential_format>" credential
-    And "Acme" issues the "<credential_format>" credential
-    And "Bob" acknowledges the "<credential_format>" credential issue
-    Then "Bob" has the "<credential_format>" credential issued
-
-    Examples:
+    @CredFormat_JSON-BBS
       | credential_data   | credential_format | signature_suite      | did_method |
       | Data_DL_MaxValues | json-ld           | BbsBlsSignature2020  | key        |
 
