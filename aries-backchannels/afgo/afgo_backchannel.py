@@ -69,6 +69,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
+            "invited": "invitation-received",
             "invitation": "invited",
             "requested": "request-received",
             "response": "responded",
@@ -418,55 +419,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
         operation = op["operation"]
         agent_operation = "outofband"
 
-        if operation == "send-invitation-message":
-            # replace data
-            data = { "label": "Bob" }
-
-        elif operation == "receive-invitation":
-            data = self.enrich_receive_invitation_data_request(data)
-
-            agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
-
-            (resp_status_ri, resp_text_ri) = await self.admin_POST(agent_operation, data)
-            if resp_status_ri == 200: resp_text_ri = self.agent_state_translation(op["topic"], operation, resp_text_ri)
-
-            # check state
-            if resp_status_ri == 200:
-                resp_json_ri = json.loads(resp_text_ri)
-                connection_id = resp_json_ri["connection_id"]
-
-                self.agent_connection_id = connection_id
-
-                (resp_status_conn, resp_text_conn) = await self.admin_GET(f'/connections/{connection_id}')
-
-                # merge request
-                if resp_status_conn == 200:
-                    resp_json = json.loads(resp_text_ri)
-                    resp_json["full_state"] = json.loads(resp_text_conn)
-
-                    # interprete state
-                    if resp_json["full_state"]["result"]["State"] == "invited":
-                        resp_status = 200
-                        resp_text = json.dumps(resp_json)
-
-                        # interprete state for test
-                        resp_text = self.enrich_receive_invitation_data_response(resp_text)
-            else:
-                # send actual response
-                resp_status = resp_status_ri
-                resp_text = resp_text_ri
-
-            return (resp_status, resp_text)
-
+        data = self.amend_oob_data_for_afgo(operation, data)
 
         agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         resp_json = json.loads(resp_text)
-        if 'invitation' in resp_json:
-            self.agent_invitation_id = resp_json["invitation"]["@id"]
-            await self.find_connection_by_invitation_id(resp_json["invitation"]["@id"])
-        if resp_status == 200 and operation == "send-invitation-message":
+        if resp_status == 200:
             # call get connection to get the status based on the invitation id. 
             resp_text = await self.amend_repsonse_with_state("connection", resp_text)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -475,11 +434,21 @@ class AfGoAgentBackchannel(AgentBackchannel):
     async def amend_repsonse_with_state(self, topic, resp_text, operation=None):
         resp_json = json.loads(resp_text)
         operation = { "topic": topic }
-        params = { "invitation_id": resp_json["invitation"]["@id"] }
-        (resp_status, get_resp_text) = await self.make_agent_GET_request(operation, params=params)
+        if 'invitation' in resp_json:
+            params = {'invitation_id': resp_json['invitation']['@id']}
+            (resp_status, get_resp_text) = await self.make_agent_GET_request(operation, params=params)
+        elif 'connection_id' in resp_json:
+            connection_id = resp_json["connection_id"]
+            (resp_status, get_resp_text) = await self.admin_GET(f'/connections/{connection_id}')
         get_resp_json = json.loads(get_resp_text)
-        if resp_status == 200:
-            resp_json["state"] = get_resp_json["results"]["State"]
+        if resp_status == 200 and len(get_resp_json) != 0:
+            if len(get_resp_json) != 0:
+                if 'results' in resp_json: resp_json["state"] = get_resp_json["results"]["State"]
+                else: resp_json["state"] = get_resp_json["result"]["State"]
+            else: 
+                # If the message is empty with 200, it probably means that an invitation was created
+                # but no conection record exists yet. Set the state to invitation-sent
+                resp_json["state"] = 'invitation-sent'
         else:
             log_msg(f"Could not retrieve state information - {resp_status}: {get_resp_text}")
         return json.dumps(resp_json)
@@ -497,27 +466,34 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             self.agent_connection_id = connection["ConnectionID"]
 
 
-    def enrich_receive_invitation_data_request(self, data):
-        data = { "invitation": data }
-        data["my_label"] = data["invitation"]["label"] #enrichment
-
+    def amend_oob_data_for_afgo(self, operation, data):
+        if operation == "send-invitation-message":
+            # This label is needed for the accept invitation.
+            data = { f"label": "Invitation created by {self.admin_url}" }
+        elif operation == 'receive-invitation':
+            # Accept invitation requires my_label be part of the data. 
+            # That is wy the create invitation above adds a label to have some consistency.
+            data = { "invitation": data }
+            data["my_label"] = data["invitation"]["label"]
         return data
-
-    def enrich_receive_invitation_data_response(self, resp):
-        data = json.loads(resp)
-        data['state'] = 'invitation-received'
-
-        return json.dumps(data)
 
     async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
-        agent_operation = "didexchange"
+        agent_operation = "/connections/" #did-exchange
 
         if operation == "send-message":
             agent_operation = f"/connections/{rec_id}/accept-request"
 
         elif operation == "send-request":
-            (resp_status, resp_text) = 200, '{ "state": "request-sent" }'
+            # Check the webhook for the latest state
+            #resp_state, resp_text = await self.make_agent_GET_request_response("connection", rec_id)
+
+            # Check the connection object for latest state
+            resp_text = {'connection_id': rec_id}
+            resp_text = self.amend_repsonse_with_state("connections", json.dumps(resp_text))
+            resp_status = 200
+            #agent_operation = f"{agent_operation}{rec_id}/accept-invitation"
+            # (resp_status, resp_text) = 200, '{ "state": "request-sent" }'
             return (resp_status, resp_text)
 
         elif operation == "send-response":
@@ -737,23 +713,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     pres_ex_id = data["~service"]["recipientKeys"][0]
                 agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
 
-            #  elif operation == "send-presentation":
-                #  agent_operation = f"/{topic}/send-propose-presentation"
-
-            #  elif operation == "verify-presentation":
-                #  agent_operation = f"/{topic}/{operation}"
-                #
-                #  resp_json = {"state": "done"}
-                #  return (200, json.dumps(resp_json))
-
             else:
                 agent_operation = "/present-proof/" + operation
             
         log_msg(agent_operation, data)
-
-        #if data is not None:
-        #    # Format the message data that came from the test, to what the Aca-py admin api expects.
-        #    data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -805,18 +768,19 @@ class AfGoAgentBackchannel(AgentBackchannel):
             log_msg('GET Request response details: ', resp_status, resp_text)
 
             resp_json = json.loads(resp_text)
-            if rec_id:
-                connection_info = { "connection_id": resp_json["result"]["ConnectionID"], "state": resp_json["result"]["State"], "connection": resp_json }
-                resp_text = json.dumps(connection_info)
-            else:
-                resp_json = resp_json["results"]
-                connection_infos = []
-                for connection in resp_json:
-                    connection_info = {"connection_id": connection["ConnectionID"], "state": connection["State"], "connection": connection}
-                    connection_infos.append(connection_info)
-                resp_text = json.dumps(connection_infos)
-            # translate the state from that the agent gave to what the tests expect
-            resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            if len(resp_json) != 0:
+                if rec_id:
+                    connection_info = { "connection_id": resp_json["result"]["ConnectionID"], "state": resp_json["result"]["State"], "connection": resp_json }
+                    resp_text = json.dumps(connection_info)
+                else:
+                        resp_json = resp_json["results"]
+                        connection_infos = []
+                        for connection in resp_json:
+                            connection_info = {"connection_id": connection["ConnectionID"], "state": connection["State"], "connection": connection}
+                            connection_infos.append(connection_info)
+                        resp_text = json.dumps(connection_infos)
+                # translate the state from that the agent gave to what the tests expect
+                resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "did":
@@ -960,6 +924,28 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif topic == "did-exchange" and rec_id:
             didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+            i = 0
+            while didexchange_msg is None and i < MAX_TIMEOUT:
+                sleep(1)
+                didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+                i = i + 1
+
+            resp_status = 200
+            if didexchange_msg:
+                resp_text = json.dumps(didexchange_msg)
+                resp_text = self.agent_state_translation(topic, None, resp_text)
+
+                if 'message' in didexchange_msg:
+                    conn_id = didexchange_msg['message']['Properties']['connectionID']
+                    resp_text = json.dumps({ 'connection_id': conn_id, 'data': didexchange_msg })
+
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
+        elif topic == "out-of-band" and rec_id:
+            c_msg = pop_resource(rec_id, "didexchange-msg")
             i = 0
             while didexchange_msg is None and i < MAX_TIMEOUT:
                 sleep(1)
