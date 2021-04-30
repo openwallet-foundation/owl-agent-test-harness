@@ -12,6 +12,15 @@ https://github.com/hyperledger/aries-framework-javascript \
 https://github.com/hyperledger/aries-framework-dotnet)
 workflows=".github/workflows/test-harness-*"
 
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+
 usage () {
 
 cat << EOF
@@ -54,7 +63,7 @@ if [ "$1" == "--help" ]; then
 fi
 
 default_value () {
-# Helper function set a value to a default if no value is provided
+    # Helper function set a value to a default if no value is provided
     if [ "$2" == "" ]; then
         echo $1
     else
@@ -63,7 +72,7 @@ default_value () {
 }
 
 list_agents () {
-# Helper function -- list the agents with links -- used in the header function
+    # Helper function -- list the agents with links -- used in the header function
     count=0
     for agent in "${ta_shortnames[@]}"; do
         echo "- [${ta_names[$count]}](${ta_urls[$count]}) ($agent)"
@@ -72,7 +81,7 @@ list_agents () {
 }
 
 aries_interop_header () {
-# The summary page header -- markdown format
+    # The summary page header -- markdown format
 
     cat << EOF
 
@@ -99,7 +108,7 @@ EOF
 }
 
 aries_interop_footer () {
-# The summary page footer -- markdown format
+    # The summary page footer -- markdown format
 
     cat << EOF
 
@@ -111,7 +120,7 @@ EOF
 }
 
 aries_interop_summary_table_header () {
-# The header for the table on the summary page -- static columns, plus one per test agent
+    # The header for the table on the summary page -- static columns, plus one per test agent
     printf "| Test Agent | Scope | Exceptions "
     for agent in "${ta_shortnames[@]}"; do
         printf "| $agent "
@@ -126,9 +135,9 @@ aries_interop_summary_table_header () {
 }
 
 sum_print_tests () {
-# Inserts the value of a cell by summing the number of tests involving the two agents
-# passed in as args 1 and 2. Doesn't include skipped runsets. Prints the result at the end.
-# Special handling of arg values are the same -- puts markdown bold around the results.
+    # Inserts the value of a cell by summing the number of tests involving the two agents
+    # passed in as args 1 and 2. Doesn't include skipped runsets. Prints the result at the end.
+    # Special handling of arg values are the same -- puts markdown bold around the results.
     passed=0
     total=0
     file_num=0
@@ -153,8 +162,8 @@ sum_print_tests () {
 }
 
 aries_interop_summary_table () {
-# Prints the data rows of the summary page table -- iterating over the list of agents
-# Calls the "sum_print_tests" function to sum across runsets for a test agent.
+    # Prints the data rows of the summary page table -- iterating over the list of agents
+    # Calls the "sum_print_tests" function to sum across runsets for a test agent.
     count=0
     for agent in "${ta_tlas[@]}"; do
         printf "| [${ta_shortnames[$count]}](${agent}.md)"
@@ -203,8 +212,13 @@ for file in ${workflows}; do
     else
         PERCENT[$count]=$((PASSED[$count]*100/TOTAL_CASES[$count]))
     fi
-    ALLURE_DATE[$count]=$( date -d@$( echo ${ALLURE_SUMMARY[$count]} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' ) )
-  
+    epoch_seconds=$(echo ${ALLURE_SUMMARY[$count]} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' )
+    if [ ${machine} == 'Mac' ]; then
+        ALLURE_DATE[$count]=$( date -j -f %s ${epoch_seconds} )
+    else
+        ALLURE_DATE[$count]=$( date -d${epoch_seconds} )
+    fi
+
     count=$(expr ${count} + 1)
 done
 
