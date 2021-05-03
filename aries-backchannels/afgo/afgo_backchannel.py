@@ -67,11 +67,21 @@ class AfGoAgentBackchannel(AgentBackchannel):
             params
         )
 
-        # Aca-py : RFC
-        self.connectionStateTranslationDict = {
+        # Afgo : RFC
+        self.connectionResponderStateTranslationDict = {
             "invited": "invitation-received",
             "invitation": "invited",
             "requested": "request-received",
+            "responded": "response-sent",
+            "response": "responded",
+            "completed": "completed"
+        }
+
+        # Afgo : RFC
+        self.connectionRequesterStateTranslationDict = {
+            "invited": "invitation-received",
+            "invitation": "invited",
+            "requested": "request-sent",
             "response": "responded",
             "completed": "completed"
         }
@@ -485,29 +495,30 @@ class AfGoAgentBackchannel(AgentBackchannel):
             agent_operation = f"/connections/{rec_id}/accept-request"
 
         elif operation == "send-request":
-            # Check the webhook for the latest state
-            #resp_state, resp_text = await self.make_agent_GET_request_response("connection", rec_id)
-
             # Check the connection object for latest state
             resp_text = {'connection_id': rec_id}
-            resp_text = self.amend_repsonse_with_state("connections", json.dumps(resp_text))
+            resp_text = await self.amend_repsonse_with_state("connections", json.dumps(resp_text))
             resp_status = 200
-            #agent_operation = f"{agent_operation}{rec_id}/accept-invitation"
-            # (resp_status, resp_text) = 200, '{ "state": "request-sent" }'
+            # We know this is the requester because we are in send-request, so swap for expected requester state
+            resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
             return (resp_status, resp_text)
 
         elif operation == "send-response":
             agent_operation = f"/connections/{rec_id}/accept-request"
-            #(resp_status, resp_text) = 200, '{ "state": "response-sent" }'
-            #return (resp_status, resp_text)
-            await self.find_connection_by_invitation_id(self.agent_invitation_id)
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            if resp_status == 200:
+                # Response doesn't have a state, get it from the connection record.
+                resp_text = await self.amend_repsonse_with_state("connections", resp_text)
+                # Translate the given state to the expected RFC state.
+                resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+            elif resp_status == 500 and 'code' in resp_text:
+                resp_json = json.loads(resp_text)
+                if resp_json["code"] == 2005: resp_status = 400
+            return (resp_status, resp_text)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-        if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
-
-        if resp_status == 500 and 'code' in resp_text:
-            resp_json = json.loads(resp_text)
-            if resp_json["code"] == 2005: resp_status = 400
+        #if resp_status == 200 and (resp)
+        #if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
 
         return (resp_status, resp_text)
 
@@ -1312,16 +1323,20 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if "state" in resp_json:
                 agent_state = resp_json["state"]
 
-                if topic == "connection":
-                    data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
+                if topic == "connection" or topic == "did-exchange":
+                    if operation == "send-request":
+                        # We know this is the requester because we are in send-request, so swap for expected requester state
+                        data = data.replace(agent_state, self.connectionRequesterStateTranslationDict[agent_state])
+                    else:
+                        data = data.replace(agent_state, self.connectionResponderStateTranslationDict[agent_state])
                 elif topic == "issue-credential":
                     data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
                 elif topic == "proof":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
                 elif topic == "out-of-band":
-                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionStateTranslationDict[agent_state] + '"')
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionResponderStateTranslationDict[agent_state] + '"')
                 elif topic == "did-exchange":
-                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionStateTranslationDict[agent_state] + '"')
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionResponderStateTranslationDict[agent_state] + '"')
 
             else:
                 if topic == "out-of-band":

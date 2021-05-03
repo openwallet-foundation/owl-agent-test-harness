@@ -266,12 +266,12 @@ def step_impl(context, holder):
     # reveived the thread_id.
     #if "Indy" in context.tags:
     if "cred_thread_id" in context:
-        sleep(1)
+        #sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.cred_thread_id)
 
     # If we are starting from here in the protocol you won't have the cred_ex_id or the thread_id
     else:
-        sleep(1)
+        #sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.connection_id_dict[holder][context.issuer_name])
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -307,7 +307,7 @@ def step_impl(context, issuer):
     assert resp_json["state"] == "credential-issued"
 
     # Verify holder status
-    sleep(1.0)
+    #sleep(1.0)
     assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "credential-received")
 
 
@@ -322,7 +322,7 @@ def step_impl(context, holder):
     }
 
     # (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="store", id=context.holder_cred_ex_id)
-    sleep(1)
+    #sleep(1)
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="store", id=context.cred_thread_id, data=credential_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
