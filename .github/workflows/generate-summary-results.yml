@@ -2,7 +2,7 @@ name: generate-aath-summary-results
 on:
   workflow_dispatch:
   schedule:
-    - cron: "45 0 * * *"
+    - cron: "45 3 * * *"
 defaults:
   run:
     shell: bash
@@ -22,5 +22,5 @@ jobs:
         with:
           path: test-harness
           committer: "Ian Costanzo <ian@anon-solutions.ca>"
-          signoff: "Ian Costanzo ian@anon-solutions.ca"
+          signoff: true
           branch: aath-summary-results
