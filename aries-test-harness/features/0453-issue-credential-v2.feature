@@ -1,13 +1,13 @@
 @RFC0453 @AIP20
 Feature: RFC 0453 Aries Agent Issue Credential v2
 
-  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @DIDExchangeConnection @Schema_DriversLicense_v2
+  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @DIDExchangeConnection
   Scenario Outline: Issue a Credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
       | Acme | issuer |
       | Bob  | holder |
-    Given "Acme" is ready to issue a "<credential_format>" credential using signature suite "<signature_suite>" and did method "<did_method>"
+    Given "Acme" is ready to issue a "<credential_format>" credential
     And "Acme" and "Bob" have an existing connection
     When "Bob" proposes a "<credential_format>" credential to "Acme" with <credential_data>
     And "Acme" offers the "<credential_format>" credential
@@ -16,19 +16,20 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     And "Bob" acknowledges the "<credential_format>" credential issue
     Then "Bob" has the "<credential_format>" credential issued
 
-    @CredFormat_Indy
+    @CredFormat_Indy @Schema_DriversLicense_v2 @DidMethod_sov
     Examples: Indy
-      | credential_data   | credential_format | signature_suite | did_method |
-      | Data_DL_MaxValues | indy              | n/a             | sov        |
+      | credential_data   | credential_format |
+      | Data_DL_MaxValues | indy              |
 
-    @CredFormat_JSON-LD
+    @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018 @DidMethod_key
     Examples: Json-LD
-      | credential_data   | credential_format | signature_suite      | did_method |
-      | Data_DL_MaxValues | json-ld           | Ed25519Signature2018 | key        |
+      | credential_data   | credential_format |
+      | Data_DL_MaxValues | json-ld           |
 
-    @CredFormat_JSON-BBS
-      | credential_data   | credential_format | signature_suite      | did_method |
-      | Data_DL_MaxValues | json-ld           | BbsBlsSignature2020  | key        |
+    @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_BbsBlsSignature2020 @DidMethod_key
+    Examples: Json-LD-BBS
+      | credential_data   | credential_format |
+      | Data_DL_MaxValues | json-ld           |
 
 
   @T002-RFC0453 @normal @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
