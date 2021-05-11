@@ -44,7 +44,7 @@ WORKDIR $GOPATH/aries-backchannels
 ENV RUNMODE=docker
 
 COPY python/requirements.txt python/
-RUN pip install -r python/requirements.txt
+RUN pip3 install -r python/requirements.txt
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 COPY python python

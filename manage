@@ -358,7 +358,7 @@ writeEnvProperties() {
   FABER_VERSION=$(getAgentVersion 9040)
   MALLORY_VERSION=$(getAgentVersion 9050)
 
-  env_file="${PWD}/aries-test-harness/allure/allure-results/environment.properties"
+  env_file="$(pwd)/aries-test-harness/allure/allure-results/environment.properties"
   declare -a env_array
   env_array+=("role.acme=$ACME_AGENT")
   env_array+=("acme.agent.version=$ACME_VERSION")
@@ -424,12 +424,12 @@ runTests() {
 
   echo
   # Behave.ini file handling
-  export BEHAVE_INI_TMP="${PWD}/behave.ini.tmp"
+  export BEHAVE_INI_TMP="$(pwd)/behave.ini.tmp"
   cp ${BEHAVE_INI} ${BEHAVE_INI_TMP}
 
   if [[ "${REPORT}" = "allure" ]]; then
       echo "Executing tests with Allure Reports."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v $(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   else
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
@@ -457,7 +457,7 @@ runTests() {
     if [[ "${REPORT_ERROR_TYPE}" = "comparison" ]]; then
       # TODO run the same_as_yesterday.py script and capture the result
       echo "Checking results vs KGR ..."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm -v ${PWD}/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ --entrypoint /aries-test-harness/allure/same_as_yesterday.sh -e PROJECT_ID=${PROJECT_ID} aries-test-harness
+      ${terminalEmu} docker run ${INTERACTIVE} --rm -v $(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/ --entrypoint /aries-test-harness/allure/same_as_yesterday.sh -e PROJECT_ID=${PROJECT_ID} aries-test-harness
       docker_result=$?
     fi
   fi
