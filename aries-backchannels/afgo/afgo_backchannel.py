@@ -8,7 +8,6 @@ import subprocess
 import sys
 import uuid
 from timeit import default_timer
-from time import sleep
 from operator import itemgetter
 
 from aiohttp import (
@@ -22,7 +21,7 @@ from aiohttp import (
 
 from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from python.utils import flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
-from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
+from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource, pop_resource_latest
 
 #from helpers.jsonmapper.json_mapper import JsonMapper
 
@@ -94,9 +93,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "offer_received": "offer-received",
             "request_sent": "request-sent",
             "request_received": "request-received",
-            "credential_issued": "credential-issued",
+            "credential-issued": "credential-issued",
             "credential_received": "credential-received",
-            "credential_acked": "done"
+            "done": "done"
         }
 
         self.tempIssureCredentialStateTranslationDict = {
@@ -129,8 +128,16 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self.issueCredentialWRecIDOperationTranslationDict = {
             "send-proposal": "send-proposal",
             "send-offer": "accept-proposal",
-            "send-request": "accept-request",
-            "issue-credential": "accept-credential"
+            "send-request": "accept-offer",
+            "issue": "accept-request",
+            "store": "accept-credential"
+        }
+
+        # didcom type : AATH Expected State
+        self.IssueCredentialTypeToStateTranslationDict = {
+            "https://didcomm.org/issue-credential/2.0/offer-credential": "offer-received",
+            "https://didcomm.org/issue-credential/2.0/request-credential": "request-received",
+            "https://didcomm.org/issue-credential/2.0/issue-credential": "credential-received"
         }
 
         self.map_test_ops_to_bachchannel = {
@@ -620,7 +627,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         if rec_id is None:
             agent_operation = f"{self.TopicTranslationDict[topic]}{self.issueCredentialOperationTranslationDict[operation]}"
-            #agent_operation = self.TopicTranslationDict[topic] + self.issueCredentialOperationTranslationDict[operation]
         else:
             agent_operation = self.TopicTranslationDict[topic] + rec_id + "/" + self.issueCredentialWRecIDOperationTranslationDict[operation]
 
@@ -630,7 +636,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if data is None:
                 # get the credential_proposal from the webhook
                 if rec_id is not None:
-                    issue_credential_actions_msg = pop_resource(rec_id, "issue-credential-actions-msg")
+                    (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
+                    issue_credential_actions_msg = json.loads(wh_text)
                     # Format the proposal for afgo offer
                     data = {
                         "offer_credential": {
@@ -674,6 +681,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         data.pop("credential_preview")
                     else:
                         raise Exception(f"Message data passed for issuecredential/{op['operation']} doesn't contain a credential_preview: {data}")
+            
             log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
 
             (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
@@ -682,7 +690,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             if resp_status == 200:
                 # Get the state form the webhook callback.
-                #issue_credential_states_msg = pop_resource(rec_id, "issue-credential-states-msg")
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
                 (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
                 issue_credential_states_msg = json.loads(wh_text)
                 if "StateID" in issue_credential_states_msg["message"]:
@@ -691,83 +703,132 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
 
                 if operation == "send-proposal":
-                    #resp_json["state"] = "proposal-sent"
                     resp_json["thread_id"] = resp_json["piid"]
-                    resp_text = json.dumps(resp_json)
-                #elif operation == "send-offer":
-                    #resp_json["state"] = "offer-sent"
-                    #resp_text = json.dumps(resp_json)
+                    
+                resp_text = json.dumps(resp_json)
 
             return (resp_status, resp_text)
 
+        elif operation == "send-request":
+            # if data is None:
+            #     data = {
+            #         "issue_credential": {
+            #         }
+            #     }
+            # else:
+            #     # TODO not sure yet.
+            #     pass
+            
+            log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
 
-        # elif operation == "send-offer" and rec_id is None:
-        #     # if rec_id then use accept-proposal
-        #     # if no rec_id then we start with send-offer
-        #     created_data = self.did_data
-        #     created_data["offer_credential"] = {}
+            (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+            log_msg(resp_status, resp_text)
+            resp_json = json.loads(resp_text)
 
-        #     data = created_data
-        #     agent_operation = f"/{topic}/{operation}"
+            if resp_status == 200:
+                # Get the state form the webhook callback.
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
+                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = issue_credential_states_msg["message"]["StateID"]
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
 
-        #     log_msg(agent_operation, data)
-        #     (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
-        #     log_msg(resp_status, resp_text)
-        #     resp_json = json.loads(resp_text)
+                resp_json["thread_id"] = rec_id
+                    
+                resp_text = json.dumps(resp_json)
 
-        #     if resp_status == 200:
-        #         resp_json["state"] = "offer-sent"
-        #         resp_json["thread_id"] = None #resp_json["piid"]
-
-        #         resp_text = json.dumps(resp_json)
-
-        #     return (resp_status, resp_text)
+            return (resp_status, resp_text)
+            
 
         elif operation == "store":
-            agent_operation = ""
-
-            state_cred_id = {
-                "state": "done",
-                "credential_id": rec_id
+            # if data != None:
+            data = {
+                "names": [ rec_id ]
             }
+            # else:
+            #     raise Exception(f"No payload given for {agent_operation}: {data}")
 
-            return (200, json.dumps(state_cred_id))
-            
-        elif operation == "send-request":
-            agent_operation = f"/{topic}/{operation}"
-            data = self.did_data
-            data["request_credential"] = {}
+            log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
 
-            log_msg(agent_operation, data)
             (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
             log_msg(resp_status, resp_text)
 
             if resp_status == 200:
                 resp_json = json.loads(resp_text)
-                resp_json["state"] = "request-sent"
+                # Get the state form the webhook callback.
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
+                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = self.issueCredentialStateTranslationDict[issue_credential_states_msg["message"]["StateID"]]
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
+
+                # Need a Credential_id in the response.
+                resp_json["credential_id"] = rec_id # This is is also the Name of the cred.
                 resp_text = json.dumps(resp_json)
 
             return (resp_status, resp_text)
 
-        elif operation == "issue":
-            agent_operation = f"/{topic}/{rec_id}/accept-credential"
-            
-            data = {
-                "names": [ "attr_1", "attr_2" ]
-            }
+            # state_cred_id = {
+            #     "state": "done",
+            #     "credential_id": rec_id
+            # }
 
-            log_msg(agent_operation, data)
+            # return (200, json.dumps(state_cred_id))
+
+        elif operation == "issue":
+            # if data is None:
+            data = {
+                "issue_credential": {
+                }
+            }
+            # else:
+            #     # TODO not sure yet.
+            #     pass
+
+            #agent_operation = f"/{topic}/{rec_id}/accept-credential"
+            # data = {
+            #     "names": [ "attr_1", "attr_2" ]
+            # }
+            # if data != None:
+            #     data = {
+            #         "names": [ f"{self.admin_url} created credential" ]
+            #     }
+            # else:
+            #     raise Exception(f"No payload given for {agent_operation}: {data}")
+
+            log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
+
             (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
             log_msg(resp_status, resp_text)
 
             if resp_status == 200:
                 resp_json = json.loads(resp_text)
-                resp_json["state"] = "credential-issued"
+                # Get the state form the webhook callback.
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
+                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = self.issueCredentialStateTranslationDict[issue_credential_states_msg["message"]["StateID"]]
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
+
                 resp_text = json.dumps(resp_json)
-            else:
-                # when issue called from 0037, 500 is returned
-                resp_status = 200
-                resp_text = json.dumps({ "state": "credential-issued" })
 
             return (resp_status, resp_text)
 
@@ -962,7 +1023,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (200, json.dumps(resp_json))
 
         elif op["topic"] == "issue-credential":
-            issue_credential_states_msg = pop_resource(rec_id, "issue-credential-states-msg")
+            (wh_status, wh_text) = await self.make_agent_GET_request_response(op["topic"], rec_id)
+            issue_credential_states_msg = json.loads(wh_text)
             if "StateID" in issue_credential_states_msg["message"]:
                 resp_json = {"state": issue_credential_states_msg["message"]["StateID"]}
             else:
@@ -1036,13 +1098,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request_response(
-        self, topic, rec_id=None, text=False, params=None
+        self, topic, rec_id=None, text=False, params=None, message_name=None
     ) -> (int, str):
         if topic == "connection" and rec_id:
             connection_msg = pop_resource(rec_id, "connection-msg")
             i = 0
             while connection_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 connection_msg = pop_resource(rec_id, "connection-msg")
                 i = i + 1
 
@@ -1062,7 +1124,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             didexchange_msg = pop_resource(rec_id, "didexchange-states-msg")
             i = 0
             while didexchange_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 didexchange_msg = pop_resource(rec_id, "didexchange-states-msg")
                 i = i + 1
 
@@ -1084,7 +1146,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             c_msg = pop_resource(rec_id, "didexchange-msg")
             i = 0
             while didexchange_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 didexchange_msg = pop_resource(rec_id, "didexchange-msg")
                 i = i + 1
 
@@ -1103,12 +1165,41 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif topic == "issue-credential" and rec_id:
-            credential_msg = pop_resource(rec_id, "credential-msg")
+            if message_name is None:
+                message_name = "issue-credential-states-msg"
+            await asyncio.sleep(1)
+            #credential_msg = pop_resource_latest(rec_id, message_name)
+            credential_msg = pop_resource_latest(message_name)
+            # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
+            #     credential_msg = None
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
-                credential_msg = pop_resource(rec_id, "credential-msg")
+                await asyncio.sleep(1)
+                #credential_msg = pop_resource_latest(rec_id, message_name)
+                credential_msg = pop_resource_latest(message_name)
+                # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
+                #     credential_msg = None
                 i = i + 1
+
+            # If we couldn't get a state out of the states webhook message, see if we can get the type and determine what the 
+            # state should be. This is a guess as afgo doesn't return states to receivers.
+            if (message_name == "issue-credential-states-msg") and (credential_msg == None or "message" not in credential_msg):
+                message_name = "issue-credential-actions-msg"
+                credential_msg = pop_resource_latest(message_name)
+                i = 0
+                while credential_msg is None and i < MAX_TIMEOUT:
+                    await asyncio.sleep(1)
+                    # TODO May need to get instead of pop because the msg may be needed elsewhere.
+                    credential_msg = pop_resource_latest(message_name)
+                    i = i + 1
+                if "message" in credential_msg:
+                    op_type = credential_msg["message"]["Message"]["@type"]
+                    state = self.IssueCredentialTypeToStateTranslationDict[op_type]
+                    credential_msg["message"]["StateID"] = state
+                    credential_msg["state"] = state
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_actions_msg}")
+
 
             resp_status = 200
             if credential_msg:
@@ -1122,7 +1213,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             credential_msg = pop_resource(rec_id, "credential-msg")
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 credential_msg = pop_resource(rec_id, "credential-msg")
                 i = i + 1
 
@@ -1138,7 +1229,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             presentation_msg = pop_resource(rec_id, "presentation-msg")
             i = 0
             while presentation_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 presentation_msg = pop_resource(rec_id, "presentation-msg")
                 i = i + 1
 
@@ -1155,7 +1246,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
             i = 0
             while revocation_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
                 i = i + 1
 
