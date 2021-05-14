@@ -236,11 +236,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the tails server env is not set use the gov.bc TEST tails server.
             result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
         
-        if AIP_CONFIG >= 20 or os.getenv('EMIT-NEW-DIDCOMM-PREFIX') is not None:
+        if AIP_CONFIG >= 20 or os.getenv('EMIT_NEW_DIDCOMM_PREFIX') is not None:
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-prefix"))
 
-        if AIP_CONFIG >= 20 or os.getenv('EMIT-NEW-DIDCOMM-MIME-TYPE') is not None:
+        if AIP_CONFIG >= 20 or os.getenv('EMIT_NEW_DIDCOMM_MIME_TYPE') is not None:
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-mime-type"))
 

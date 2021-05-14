@@ -504,7 +504,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
     async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
-        agent_operation = "didexchange"
+        agent_operation = "/didexchange"
 
         if operation == "send-message":
             agent_operation = f"/connections/{rec_id}/accept-request"
@@ -620,7 +620,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             # resp_text = json.dumps(did)
             # return (resp_status, resp_text)
-            return (411, {})
+            return (411, "")
 
         elif op["topic"] == "schema":
             schema_id = rec_id

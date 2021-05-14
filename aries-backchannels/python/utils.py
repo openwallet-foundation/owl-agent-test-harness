@@ -119,7 +119,7 @@ def output_reader(handle, callback, *args, **kwargs):
         return
         
     for line in iter(handle.readline, b""):
-        if not line:
+        if not line and line != "":
             break
         run_in_terminal(functools.partial(callback, line, *args))
 
