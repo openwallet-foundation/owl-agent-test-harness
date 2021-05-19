@@ -364,8 +364,9 @@ def step_impl(context, holder):
         pass
     else:
         assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
-        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+        # Some agents don't return or have a schema id or cred_def_id, so only check it it exists.
+        if "schema_id" in resp_json: assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+        if "cred_def_id" in resp_json: assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 
     # Make sure the issuer is not holding the credential
     # get the credential from the holders wallet

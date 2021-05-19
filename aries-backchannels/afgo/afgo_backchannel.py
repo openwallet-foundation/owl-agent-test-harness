@@ -7,6 +7,7 @@ import random
 import subprocess
 import sys
 import uuid
+import base64
 from timeit import default_timer
 from operator import itemgetter
 
@@ -21,7 +22,7 @@ from aiohttp import (
 
 from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from python.utils import flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
-from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource, pop_resource_latest
+from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource, pop_resource_latest, get_resource_latest
 
 #from helpers.jsonmapper.json_mapper import JsonMapper
 
@@ -532,8 +533,27 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return json.dumps(resp_json)
 
     async def get_DIDs_for_participants(self, connection_id):
-        # Get connection by connection id contained in the data received
-        # Get the DID keys from the connection record
+        # if connection_id is None:
+        #     # Get DIDs from latest webhook message
+        #     # TODO This below is not working so hardcode the issuer id for now and
+        #     # figure out a way to get the issuer DID 
+        #     message = get_resource_latest("issue-credential-actions-msg")
+        #     if message is None:
+        #         raise Exception("Attempted to get Issuer DID from Webhook message but message is None")
+        #     else:
+        #         message_json = json.loads(message)
+        #         if 'theirDID' in message:
+        #             their_did = message_json["message"]["Properties"]["theirDID"]
+        #         else:
+        #             raise Exception(f"theirDID not returned in Webhook message: {message}")
+        #         if 'myDID' in message:
+        #             my_did = message_json["message"]["Properties"]["myDID"]
+        #         else:
+        #             raise Exception(f"myDID not returned in Webhook message: {message}")
+        #         return (their_did, my_did)
+        # else:
+            # Get connection by connection id contained in the data received
+            # Get the DID keys from the connection record
         operation = f"/connections/{connection_id}"
         (resp_status, resp_text) = await self.admin_GET(operation)
         if resp_status == 200:
@@ -549,17 +569,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (their_did, my_did)
         else:
             raise Exception(f"Problem retreiving Connection record with Connection ID {connection_id}: {resp_status} - {resp_text} ")
-
-        if (invitation_id != None):
-            operation = "/connections"
-            (resp_status, resp_text) = await self.admin_GET(operation)
-
-            if resp_status == 200:
-                resp_json = json.loads(resp_text)
-                if "results" in resp_json:
-                    for connection in resp_json["results"]:
-                        if connection["InvitationID"] == invitation_id:
-                            self.agent_connection_id = connection["ConnectionID"]
 
     async def find_connection_by_invitation_id(self, invitation_id):
         if (invitation_id != None):
@@ -788,9 +797,30 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # return (200, json.dumps(state_cred_id))
 
         elif operation == "issue":
-            # if data is None:
+            # TODO Need to get their DID to add to the data. Dummy input for now, which works fine.
+            #(their_did, my_did) = await self.get_DIDs_for_participants()
             data = {
                 "issue_credential": {
+                    "credentials~attach":[
+                        {
+                            "data":{
+                                "json":{
+                                    "@context":[
+                                    ],
+                                    "credentialSubject":{
+                                    },
+                                    "issuanceDate":"2010-01-01T19:23:24Z",
+                                    "issuer":{
+                                        "id":"did:peer:1zQmV22iXRZmKpap4JBKquF3CD2jnDYnNc3Mxpvi4NwnKgv4"
+                                    },
+                                    "type":[
+                                        "VerifiableCredential",
+                                        "AATHTestCredential"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
                 }
             }
             # else:
@@ -1036,16 +1066,31 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if operation == 'revoked':
                 agent_operation = "/credential/" + operation + "/" + rec_id
             else:
-                agent_operation = "/verifiable/credential"# + rec_id
+                #agent_operation = "/verifiable/credential"# + rec_id
+                #change id to Base64
+                #rec_id_bytes = rec_id.encode('utf-8')
+                #base64_rec_id = base64.b64encode(rec_id_bytes)
+                #base64_message = base64_bytes.decode('ascii')
+                #agent_operation = f"/verifiable/credential/{base64_rec_id}"
+                agent_operation = f"/verifiable/credential/name/{rec_id}"
 
             #No quivalent GET in afgo
             #afgo only provides /actions GET
-            #(resp_status, resp_text) = await self.admin_GET(agent_operation)
-            #return (resp_status, resp_text)
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                # take the name (which was saved as the cred_id) and make it the referent
+                if "name" in resp_json:
+                    resp_json["referent"] = resp_json["name"]
+                    resp_text = json.dumps(resp_json)
+                else:
+                    raise Exception(f"No name/id found in response for: {agent_operation}")
+            return (resp_status, resp_text)
 
             # prepare dummy response
-            resp_json = {"referent": rec_id, "schema_id": "", "cred_def_id": ""}
-            return (200, json.dumps(resp_json))
+            #resp_json = {"referent": rec_id, "schema_id": "", "cred_def_id": ""}
+            #resp_json = {"referent": rec_id}
+            #return (200, json.dumps(resp_json))
 
         elif op["topic"] == "proof":
             operation = op["operation"]
