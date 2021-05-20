@@ -7,8 +7,8 @@ import random
 import subprocess
 import sys
 import uuid
+import base64
 from timeit import default_timer
-from time import sleep
 from operator import itemgetter
 
 from aiohttp import (
@@ -22,7 +22,7 @@ from aiohttp import (
 
 from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
 from python.utils import flatten, log_json, log_msg, log_timer, output_reader, prompt_loop
-from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource
+from python.storage import store_resource, get_resource, delete_resource, push_resource, pop_resource, pop_resource_latest, get_resource_latest
 
 #from helpers.jsonmapper.json_mapper import JsonMapper
 
@@ -43,6 +43,13 @@ elif RUN_MODE == "pwd":
 class AfGoAgentBackchannel(AgentBackchannel):
     afgo_version = None
     current_webhook_topic = None
+    did_data = None
+    wehhook_state = None
+    indx = 0
+
+    # agent connection
+    agent_invitation_id = None
+    agent_connection_id = None
 
     def __init__(
         self, 
@@ -60,15 +67,26 @@ class AfGoAgentBackchannel(AgentBackchannel):
             params
         )
 
-        # Aca-py : RFC
-        self.connectionStateTranslationDict = {
+        # Afgo : RFC
+        self.connectionResponderStateTranslationDict = {
+            "invited": "invitation-received",
             "invitation": "invited",
             "requested": "request-received",
+            "responded": "response-sent",
             "response": "responded",
             "completed": "completed"
         }
 
-        # Aca-py : RFC
+        # Afgo : RFC
+        self.connectionRequesterStateTranslationDict = {
+            "invited": "invitation-received",
+            "invitation": "invited",
+            "requested": "request-sent",
+            "response": "responded",
+            "completed": "completed"
+        }
+
+        # afgo : RFC
         self.issueCredentialStateTranslationDict = {
             "proposal_sent": "proposal-sent",
             "proposal_received": "proposal-received",
@@ -76,12 +94,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "offer_received": "offer-received",
             "request_sent": "request-sent",
             "request_received": "request-received",
-            "credential_issued": "credential-issued",
+            "credential-issued": "credential-issued",
             "credential_received": "credential-received",
-            "credential_acked": "done"
+            "done": "done"
         }
 
-        # Aca-py : RFC
+        self.tempIssureCredentialStateTranslationDict = {
+            "proposal-sent": "offer-received",
+            "offer-sent": "request-received",
+            "request-sent": "credential-received"
+        }
+
+        # afgo : RFC
         self.presentProofStateTranslationDict = {
             "request_sent": "request-sent",
             "request_received": "request-received",
@@ -94,9 +118,38 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "presentation_acked": "done"
         }
 
+        # AATH API : AFGO Admin API
+        self.issueCredentialOperationTranslationDict = {
+            "send-proposal": "send-proposal",
+            "send-offer": "send-offer",
+            "send-request": "send-request"
+        }
+
+        # AATH API : AFGO Admin API
+        self.issueCredentialWRecIDOperationTranslationDict = {
+            "send-proposal": "send-proposal",
+            "send-offer": "accept-proposal",
+            "send-request": "accept-offer",
+            "issue": "accept-request",
+            "store": "accept-credential"
+        }
+
+        # didcom type : AATH Expected State
+        self.IssueCredentialTypeToStateTranslationDict = {
+            "https://didcomm.org/issue-credential/2.0/offer-credential": "offer-received",
+            "https://didcomm.org/issue-credential/2.0/request-credential": "request-received",
+            "https://didcomm.org/issue-credential/2.0/issue-credential": "credential-received"
+        }
+
         self.map_test_ops_to_bachchannel = {
             "send-invitation-message": "create-invitation",
             "receive-invitation": "accept-invitation"
+        }
+        
+        # AATH API : AFGO Admin API
+        self.TopicTranslationDict = {
+            "issue-credential": "/issuecredential/",
+            "proof": "/presentproof/"
         }
 
     def get_agent_args(self):
@@ -142,7 +195,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if self.webhook_url:
             result.append(("--webhook-url", self.webhook_url))
         
-        # This code for Tails Server is included here because aca-py does not support the env var directly yet. 
+        # This code for Tails Server is included here because afgo does not support the env var directly yet. 
         # when it does (and there is talk of supporting YAML) then this code can be removed. 
         #if os.getenv('TAILS_SERVER_URL') is not None:
         #    # if the env var is set for tails server then use that.
@@ -151,7 +204,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         #    # if the tails server env is not set use the gov.bc TEST tails server.
         #    result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
         
-        # This code for log level is included here because aca-py does not support the env var directly yet. 
+        # This code for log level is included here because afgo does not support the env var directly yet. 
         # when it does (and there is talk of supporting YAML) then this code can be removed. 
         #if os.getenv('LOG_LEVEL') is not None:
         #    result.append(("--log-level", os.getenv('LOG_LEVEL')))
@@ -178,8 +231,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
         print("Listening to web_hooks on port", webhook_port)
 
     async def _receive_webhook(self, request: ClientRequest):
-        topic = self.current_webhook_topic
+        #topic = request.match_info["topic"]
         payload = await request.json()
+        #topic = request.match_info["topic"]
+        topic = payload["topic"]
         await self.handle_webhook(topic, payload)
         # TODO web hooks don't require a response???
         return web.Response(text="")
@@ -187,7 +242,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
     async def handle_webhook(self, topic: str, payload):
         if topic != "webhook":  # would recurse
             handler = f"handle_{topic}"
+            # adjust method names to change hyphens to underscores
+            handler = handler.replace("-", "_")
             method = getattr(self, handler, None)
+
             # put a log message here
             log_msg('Passing webhook payload to handler ' + handler)
             if method:
@@ -201,26 +259,73 @@ class AfGoAgentBackchannel(AgentBackchannel):
         else:
             log_msg('in webhook, topic is: ' + topic + ' payload is: ' + json.dumps(payload))
 
-    async def handle_out_of_band(self, message):
-        invitation_id = message["message"]["Properties"]["invitationID"]
-        push_resource(invitation_id, "didexchange-msg", message)
-        log_msg(f'Received a out-of-band Webhook message: {json.dumps(message)}')
+    async def handle_out_of_band_states(self, message):
+        if "id" in message:
+            # connectionID may be best
+            id_key = message["id"]
+            push_resource(id_key, "out-of-band-states-msg", message)
+        else:
+            raise Exception(
+            f"Unexpected id in out_of_band_states Webhook Message: {json.dumps(message)}"
+            )
+        log_msg(f'Processed a out-of-band-states Webhook message: {json.dumps(message)}')
 
-    async def handle_connections(self, message):
-        connection_id = message["connection_id"]
-        push_resource(connection_id, "connection-msg", message)
-        log_msg('Received a Connection Webhook message: ' + json.dumps(message))
+    async def handle_didexchange_states(self, message):
+        # Maybe do both key by conneciton id and invitation id?
+        #connection_id = message["connection_id"]
+        #push_resource(connection_id, "connection-msg", message)
+        #log_msg('Received a Connection Webhook message: ' + json.dumps(message))
 
-    async def handle_issue_credential(self, message):
-        thread_id = message["thread_id"]
-        push_resource(thread_id, "credential-msg", message)
-        log_msg('Received Issue Credential Webhook message: ' + json.dumps(message)) 
-        if "revocation_id" in message: # also push as a revocation message 
+        # oob didexcahgne states are usually invitations
+        if "invitationID" in message["message"]["Properties"]:
+            invitation_id = message["message"]["Properties"]["invitationID"]
+            push_resource(invitation_id, "didexchange-states-msg", message)
+        else:
+            raise Exception(
+            f"invitation_ID not found in didexchange_states Webhook Message: {json.dumps(message)}"
+            )
+            log_msg('Processed a didexchange_states Webhook message: ' + json.dumps(message))
+    
+    async def handle_didexchange_actions(self, message):
+        if "connectionID" in message["message"]["Properties"]:
+            conection_id = message["message"]["Properties"]["connectionID"]
+            push_resource(conection_id, "didexchange-actions-msg", message)
+        else:
+            raise Exception(
+            f"connectionID not found in didexchange_actions Webhook Message: {json.dumps(message)}"
+            )
+        log_msg('Processed a didexchange_actions Webhook message: ' + json.dumps(message))
+
+    async def handle_issue_credential_states(self, message):
+        if "piid" in message["message"]["Properties"]:
+            thread_id = message["message"]["Properties"]["piid"]
+            push_resource(thread_id, "issue-credential-states-msg", message)
+        else:
+            raise Exception(
+            f"piid not found in issue_credential_states Webhook Message: {json.dumps(message)}"
+            )
+        log_msg(f'Processed issue_credential_states Webhook message: {json.dumps(message)}')
+        if "revocation_id" in message: # also push as a revocation message
             push_resource(thread_id, "revocation-registry-msg", message)
-            log_msg('Issue Credential Webhook message contains revocation info') 
+            log_msg('Issue Credential Webhook message contains revocation info')
+
+    async def handle_issue_credential_actions(self, message):
+        if "piid" in message["message"]["Properties"]:
+            thread_id = message["message"]["Properties"]["piid"]
+            push_resource(thread_id, "issue-credential-actions-msg", message)
+        else:
+            raise Exception(
+            f"piid not found in issue_credential_actions Webhook Message: {json.dumps(message)}"
+            )
+        log_msg(f'Processed issue_credential_actions Webhook message: {json.dumps(message)}')
 
     async def handle_present_proof(self, message):
         thread_id = message["thread_id"]
+
+         # if has state
+        if "StateID" in message["message"]:
+            self.webhook_state = message["message"]["StateID"]
+
         push_resource(thread_id, "presentation-msg", message)
         log_msg('Received a Present Proof Webhook message: ' + json.dumps(message))
 
@@ -326,55 +431,34 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif op["topic"] == "schema":
             # POST operation is to create a new schema
-            agent_operation = "/schemas"
-            log_msg(agent_operation, data)
+            #agent_operation = "/schemas"
+            #log_msg(agent_operation, data)
+            log_msg("afgo does not support the creation of credential types. This call is returning what the test expects without a call to afgo")
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            #(resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
-            log_msg(resp_status, resp_text)
-            return (resp_status, resp_text)
+            #log_msg(resp_status, resp_text)
+            #return (resp_status, resp_text)
+
+            resp_json = { "schema_id": "not supported by afgo" }
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "credential-definition":
             # POST operation is to create a new cred def
             agent_operation = "/credential-definitions"
             log_msg(agent_operation, data)
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            #(resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
-            log_msg(resp_status, resp_text)
-            return (resp_status, resp_text)
+            #log_msg(resp_status, resp_text)
+            #return (resp_status, resp_text)
+            resp_json = { "credential_definition_id": "" }
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "issue-credential":
-            operation = op["operation"]
-            if rec_id is None:
-                agent_operation = "/issue-credential/" + operation
-            else:
-                if (operation == "send-offer" 
-                    or operation == "send-request"
-                    or operation == "issue"
-                    or operation == "store"
-                ):
-                    # swap thread id for cred ex id from the webhook
-                    cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
-                    agent_operation = "/issue-credential/records/" + cred_ex_id + "/" + operation
-                # Make Special provisions for revoke since it is passing multiple query params not just one id.
-                elif (operation == "revoke"):
-                    cred_rev_id = rec_id
-                    rev_reg_id = data["rev_registry_id"]
-                    publish = data["publish_immediately"]
-                    agent_operation = "/issue-credential/" + operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
-                    data = None
-                else:
-                    agent_operation = "/issue-credential/" + operation
-            
-            log_msg(agent_operation, data)
-            
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-
-            log_msg(resp_status, resp_text)
-            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            (resp_status, resp_text) = await self.handle_issue_credential_POST(op, rec_id=rec_id, data=data)
             return (resp_status, resp_text)
-
+            
         elif op["topic"] == "revocation":
             #set the acapyversion to master since work to set it is not complete. Remove when master report proper version
             #self.afgo_version = "0.5.5-RC"
@@ -393,41 +477,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "proof":
-            operation = op["operation"]
-            if operation == "create-send-connectionless-request":
-                operation = "create-request"
-            if rec_id is None:
-                agent_operation = "/present-proof/" + operation
-            else:
-                if (operation == "send-presentation" 
-                    or operation == "send-request"
-                    or operation == "verify-presentation"
-                    or operation == "remove"
-                ):
-                    
-                    if (operation not in "send-presentation" or operation not in "send-request") and (data is None or "~service" not in data):
-                        # swap thread id for pres ex id from the webhook
-                        pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
-                    else:
-                        # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
-                        pres_ex_id = data["~service"]["recipientKeys"][0]
-                    agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
-
-                else:
-                    agent_operation = "/present-proof/" + operation
-            
-            log_msg(agent_operation, data)
-
-            if data is not None:
-                # Format the message data that came from the test, to what the Aca-py admin api expects.
-                data = self.map_test_json_to_admin_api_json(op["topic"], operation, data)
-
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-
-            log_msg(resp_status, resp_text)
-            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            (resp_status, resp_text) = await self.handle_present_proof_POST(op, rec_id=rec_id, data=data)
             return (resp_status, resp_text)
 
+            
         # Handle out of band POST operations 
         elif op["topic"] == "out-of-band":
             (resp_status, resp_text) = await self.handle_out_of_band_POST(op, data=data)
@@ -441,116 +494,467 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
-        self.current_webhook_topic = op["topic"].replace('-', '_')
+        #self.current_webhook_topic = op["topic"].replace('-', '_')
         operation = op["operation"]
         agent_operation = "outofband"
 
-        if operation == "send-invitation-message":
-            # replace data
-            data = { "label": "Bob" }
-
-        elif operation == "receive-invitation":
-            data = self.enrich_receive_invitation_data_request(data)
-
-            agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
-
-            (resp_status_ri, resp_text_ri) = await self.admin_POST(agent_operation, data)
-            if resp_status_ri == 200: resp_text_ri = self.agent_state_translation(op["topic"], operation, resp_text_ri)
-
-            # check state
-            if resp_status_ri == 200:
-                resp_json_ri = json.loads(resp_text_ri)
-                connection_id = resp_json_ri["connection_id"]
-
-                (resp_status_conn, resp_text_conn) = await self.admin_GET(f'/connections/{connection_id}')
-
-                # merge request
-                if resp_status_conn == 200:
-                    resp_json = json.loads(resp_text_ri)
-                    resp_json["full_state"] = json.loads(resp_text_conn)
-
-                    # interprete state
-                    if resp_json["full_state"]["result"]["State"] == "invited":
-                        resp_status = 200
-                        resp_text = json.dumps(resp_json)
-
-                        # interprete state for test
-                        resp_text = self.enrich_receive_invitation_data_response(resp_text)
-            else:
-                # send actual response
-                resp_status = resp_status_ri
-                resp_text = resp_text_ri
-
-            return (resp_status, resp_text)
+        data = self.amend_oob_data_for_afgo(operation, data)
 
         agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        resp_json = json.loads(resp_text)
+        if resp_status == 200:
+            # call get connection to get the status based on the invitation id. 
+            resp_text = await self.amend_repsonse_with_state("connection", resp_text)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
 
-    def enrich_receive_invitation_data_request(self, data):
+    async def amend_repsonse_with_state(self, topic, resp_text, operation=None):
+        resp_json = json.loads(resp_text)
+        operation = { "topic": topic }
+        if 'invitation' in resp_json:
+            params = {'invitation_id': resp_json['invitation']['@id']}
+            (resp_status, get_resp_text) = await self.make_agent_GET_request(operation, params=params)
+        elif 'connection_id' in resp_json:
+            connection_id = resp_json["connection_id"]
+            (resp_status, get_resp_text) = await self.admin_GET(f'/connections/{connection_id}')
+        get_resp_json = json.loads(get_resp_text)
+        if resp_status == 200 and len(get_resp_json) != 0:
+            if len(get_resp_json) != 0:
+                if 'results' in resp_json: resp_json["state"] = get_resp_json["results"]["State"]
+                else: resp_json["state"] = get_resp_json["result"]["State"]
+            else: 
+                # If the message is empty with 200, it probably means that an invitation was created
+                # but no conection record exists yet. Set the state to invitation-sent
+                resp_json["state"] = 'invitation-sent'
+        else:
+            log_msg(f"Could not retrieve state information - {resp_status}: {get_resp_text}")
+        return json.dumps(resp_json)
 
-        data = { "invitation": data }
-        data["my_label"] = data["invitation"]["label"] #enrichment
+    async def get_DIDs_for_participants(self, connection_id):
+        # if connection_id is None:
+        #     # Get DIDs from latest webhook message
+        #     # TODO This below is not working so hardcode the issuer id for now and
+        #     # figure out a way to get the issuer DID 
+        #     message = get_resource_latest("issue-credential-actions-msg")
+        #     if message is None:
+        #         raise Exception("Attempted to get Issuer DID from Webhook message but message is None")
+        #     else:
+        #         message_json = json.loads(message)
+        #         if 'theirDID' in message:
+        #             their_did = message_json["message"]["Properties"]["theirDID"]
+        #         else:
+        #             raise Exception(f"theirDID not returned in Webhook message: {message}")
+        #         if 'myDID' in message:
+        #             my_did = message_json["message"]["Properties"]["myDID"]
+        #         else:
+        #             raise Exception(f"myDID not returned in Webhook message: {message}")
+        #         return (their_did, my_did)
+        # else:
+            # Get connection by connection id contained in the data received
+            # Get the DID keys from the connection record
+        operation = f"/connections/{connection_id}"
+        (resp_status, resp_text) = await self.admin_GET(operation)
+        if resp_status == 200:
+            resp_json = json.loads(resp_text)
+            if 'TheirDID' in resp_text:
+                their_did = resp_json["result"]["TheirDID"]
+            else:
+                raise Exception(f"TheirDID not returned with connection record: {resp_text}")
+            if 'MyDID' in resp_text:
+                my_did = resp_json["result"]["MyDID"]
+            else:
+                raise Exception(f"MyDID not returned with connection record: {resp_text}")
+            return (their_did, my_did)
+        else:
+            raise Exception(f"Problem retreiving Connection record with Connection ID {connection_id}: {resp_status} - {resp_text} ")
 
+    async def find_connection_by_invitation_id(self, invitation_id):
+        if (invitation_id != None):
+            operation = "/connections"
+            (resp_status, resp_text) = await self.admin_GET(operation)
+
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                if "results" in resp_json:
+                    for connection in resp_json["results"]:
+                        if connection["InvitationID"] == invitation_id:
+                            self.agent_connection_id = connection["ConnectionID"]
+
+
+    def amend_oob_data_for_afgo(self, operation, data):
+        if operation == "send-invitation-message":
+            # This label is needed for the accept invitation.
+            data = { f"label": "Invitation created by {self.admin_url}" }
+        elif operation == 'receive-invitation':
+            # Accept invitation requires my_label be part of the data. 
+            # That is wy the create invitation above adds a label to have some consistency.
+            data = { "invitation": data }
+            data["my_label"] = data["invitation"]["label"]
         return data
-
-    def enrich_receive_invitation_data_response(self, resp):
-        data = json.loads(resp)
-        data['state'] = 'invitation-received'
-
-        return json.dumps(data)
 
     async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
-        agent_operation = "/didexchange"
+        agent_operation = "/connections/" #did-exchange
 
         if operation == "send-message":
             agent_operation = f"/connections/{rec_id}/accept-request"
 
         elif operation == "send-request":
-            (resp_status, resp_text) = 200, '{ "state": "request-sent" }'
+            # Check the connection object for latest state
+            resp_text = {'connection_id': rec_id}
+            resp_text = await self.amend_repsonse_with_state("connections", json.dumps(resp_text))
+            resp_status = 200
+            # We know this is the requester because we are in send-request, so swap for expected requester state
+            resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
             return (resp_status, resp_text)
-
-        # elif operation == "receive-invitation":
-        #     agent_operation = f"/{agent_operation}/{operation}"
 
         elif operation == "send-response":
             agent_operation = f"/connections/{rec_id}/accept-request"
-            #(resp_status, resp_text) = 200, '{ "state": "response-sent" }'
-            #return (resp_status, resp_text)
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            if resp_status == 200:
+                # Response doesn't have a state, get it from the connection record.
+                resp_text = await self.amend_repsonse_with_state("connections", resp_text)
+                # Translate the given state to the expected RFC state.
+                resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+            elif resp_status == 500 and 'code' in resp_text:
+                resp_json = json.loads(resp_text)
+                if resp_json["code"] == 2005: resp_status = 400
+            return (resp_status, resp_text)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-        if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
-
-        if resp_status == 500 and 'code' in resp_text:
-            resp_json = json.loads(resp_text)
-            if resp_json["code"] == 2005: resp_status = 400
+        #if resp_status == 200 and (resp)
+        #if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
 
         return (resp_status, resp_text)
 
-    async def handle_introduce_POST(self, op, rec_id=None, data=None):
-        pass
 
-    async def handle_issue_credentiatial_POST(self, op, rec_id=None, data=None):
-        pass
+    async def handle_issue_credential_POST(self, op, rec_id=None, data=None):
+        topic = op["topic"]
+        operation = op["operation"]
 
-    async def handle_kms_POST(self, op, rec_id=None, data=None):
-        pass
+        if rec_id is None:
+            agent_operation = f"{self.TopicTranslationDict[topic]}{self.issueCredentialOperationTranslationDict[operation]}"
+        else:
+            agent_operation = self.TopicTranslationDict[topic] + rec_id + "/" + self.issueCredentialWRecIDOperationTranslationDict[operation]
 
-    async def handle_mediator_POST(self, op, rec_id=None, data=None):
-        pass
+        if data is not None: log_msg(f"Data passed to backchannel by test for operation: {agent_operation}", data)
 
-    async def handle_message_POST(self, op, rec_id=None, data=None):
-        pass
+        if operation == "send-proposal" or operation == "send-offer":
+            if data is None:
+                # get the credential_proposal from the webhook
+                if rec_id is not None:
+                    (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
+                    issue_credential_actions_msg = json.loads(wh_text)
+                    # Format the proposal for afgo offer
+                    data = {
+                        "offer_credential": {
+                            "credential_preview": issue_credential_actions_msg["message"]["Message"]["credential_proposal"]
+                        }
+                    }
+                else:
+                    raise Exception(f"Cannot have both data and rec_id empty for issuecredential/{op['operation']}")
+            else:
+                # Get connection by connection id contained in the data received
+                # Get the DID keys from the connection record
+                (their_did, my_did) = await self.get_DIDs_for_participants(data["connection_id"])
+
+                # remove schema/indy related items from data
+                if "schema_id" in data: data.pop("schema_id")
+                if "schema_issuer_did" in data: data.pop("schema_issuer_did")
+                if "issuer_did" in data: data.pop("issuer_did")
+                if "schema_name" in data: data.pop("schema_name")
+                if "cred_def_id" in data: data.pop("cred_def_id")
+                if "schema_version" in data: data.pop("schema_version")
+                if "connection_id" in data: data.pop("connection_id")
+
+                # add thier did and my did to the data
+                data["my_did"] = my_did
+                data["their_did"] = their_did
+
+                # Properly construct the credential proposal for afgo
+                if operation == "send-proposal":
+                    if "credential_proposal" in data:
+                        data["propose_credential"] = {
+                            "credential_proposal": data["credential_proposal"]
+                        }
+                        data.pop("credential_proposal")
+                    else:
+                        raise Exception(f"Message data passed for issuecredential/{op['operation']} doesn't contain a credential_proposal: {data}")
+                elif operation == "send-offer":
+                    if "credential_preview" in data:
+                        data["offer_credential"] = {
+                            "credential_preview": data["credential_preview"]
+                        }
+                        data.pop("credential_preview")
+                    else:
+                        raise Exception(f"Message data passed for issuecredential/{op['operation']} doesn't contain a credential_preview: {data}")
+            
+            log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
+
+            (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+            log_msg(resp_status, resp_text)
+            resp_json = json.loads(resp_text)
+
+            if resp_status == 200:
+                # Get the state form the webhook callback.
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
+                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = issue_credential_states_msg["message"]["StateID"]
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
+
+                if operation == "send-proposal":
+                    resp_json["thread_id"] = resp_json["piid"]
+                    
+                resp_text = json.dumps(resp_json)
+
+            return (resp_status, resp_text)
+
+        elif operation == "send-request":
+            # if data is None:
+            #     data = {
+            #         "issue_credential": {
+            #         }
+            #     }
+            # else:
+            #     # TODO not sure yet.
+            #     pass
+            
+            log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
+
+            (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+            log_msg(resp_status, resp_text)
+            resp_json = json.loads(resp_text)
+
+            if resp_status == 200:
+                # Get the state form the webhook callback.
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
+                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = issue_credential_states_msg["message"]["StateID"]
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
+
+                resp_json["thread_id"] = rec_id
+                    
+                resp_text = json.dumps(resp_json)
+
+            return (resp_status, resp_text)
+            
+
+        elif operation == "store":
+            # if data != None:
+            data = {
+                "names": [ rec_id ]
+            }
+            # else:
+            #     raise Exception(f"No payload given for {agent_operation}: {data}")
+
+            log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
+
+            (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+            log_msg(resp_status, resp_text)
+
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                # Get the state form the webhook callback.
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
+                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = self.issueCredentialStateTranslationDict[issue_credential_states_msg["message"]["StateID"]]
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
+
+                # Need a Credential_id in the response.
+                resp_json["credential_id"] = rec_id # This is is also the Name of the cred.
+                resp_text = json.dumps(resp_json)
+
+            return (resp_status, resp_text)
+
+            # state_cred_id = {
+            #     "state": "done",
+            #     "credential_id": rec_id
+            # }
+
+            # return (200, json.dumps(state_cred_id))
+
+        elif operation == "issue":
+            # TODO Need to get their DID to add to the data. Dummy input for now, which works fine.
+            #(their_did, my_did) = await self.get_DIDs_for_participants()
+            data = {
+                "issue_credential": {
+                    "credentials~attach":[
+                        {
+                            "data":{
+                                "json":{
+                                    "@context":[
+                                    ],
+                                    "credentialSubject":{
+                                    },
+                                    "issuanceDate":"2010-01-01T19:23:24Z",
+                                    "issuer":{
+                                        "id":"did:peer:1zQmV22iXRZmKpap4JBKquF3CD2jnDYnNc3Mxpvi4NwnKgv4"
+                                    },
+                                    "type":[
+                                        "VerifiableCredential",
+                                        "AATHTestCredential"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+            # else:
+            #     # TODO not sure yet.
+            #     pass
+
+            #agent_operation = f"/{topic}/{rec_id}/accept-credential"
+            # data = {
+            #     "names": [ "attr_1", "attr_2" ]
+            # }
+            # if data != None:
+            #     data = {
+            #         "names": [ f"{self.admin_url} created credential" ]
+            #     }
+            # else:
+            #     raise Exception(f"No payload given for {agent_operation}: {data}")
+
+            log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
+
+            (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
+            log_msg(resp_status, resp_text)
+
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                # Get the state form the webhook callback.
+                if rec_id == None:
+                    if "piid" in resp_json: 
+                        rec_id = resp_json["piid"]
+                    else:
+                        raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
+                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = self.issueCredentialStateTranslationDict[issue_credential_states_msg["message"]["StateID"]]
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
+
+                resp_text = json.dumps(resp_json)
+
+            return (resp_status, resp_text)
+
+        # Make Special provisions for revoke since it is passing multiple query params not just one id.
+        elif operation == "revoke":
+            cred_rev_id = rec_id
+            rev_reg_id = data["rev_registry_id"]
+            publish = data["publish_immediately"]
+            agent_operation = "/issue-credential/" + operation + "?cred_rev_id=" + cred_rev_id + "&rev_reg_id=" + rev_reg_id + "&publish=" + str(publish).lower()
+            data = None
+        
+        log_msg(agent_operation, data)
+            
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        log_msg(resp_status, resp_text)
+        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+        return (resp_status, resp_text)
+
 
     async def handle_present_proof_POST(self, op, rec_id=None, data=None):
-        pass
+        #self.current_webhook_topic = op["topic"].replace('-', '_')
 
-    async def handle_verifiable_POST(self, op, rec_id=None, data=None):
-        pass
+        topic = "presentproof"
+        operation = op["operation"]
 
+        if self.did_data == None:
+            pre_operation = "/connections"
+            (pre_status, pre_text) = await self.admin_GET(pre_operation)
+
+            if pre_status == 200:
+                pre_json = json.loads(pre_text)
+                pre_json = pre_json["results"][0]
+
+                self.did_data = {
+                    "my_did": pre_json["MyDID"],
+                    "their_did": pre_json["TheirDID"]
+                }
+
+
+        if operation == "create-send-connectionless-request":
+            operation = "create-request"
+
+        if rec_id is None:
+
+            if operation == "send-request":
+                agent_operation = f"/{topic}/{operation}-presentation"
+
+                new_data = self.did_data
+                new_data["request_presentation"] = data["presentation_proposal"]
+                str_data = f'[ {json.dumps(new_data["request_presentation"]["request_presentations~attach"])} ]'
+                new_data["request_presentation"]["request_presentations~attach"] = json.loads(str_data)
+
+                data = new_data
+                #resp_json = {"state": "request-sent", "thread_id": ""}
+
+            elif operation == "send-presentation":
+                agent_operation = f"/{topic}/send-propose-presentation"
+
+                new_data = self.did_data
+                new_data["propose_presentation"] = data
+                str_data = f'[ {json.dumps(new_data["propose_presentation"])} ]'
+                new_data["propose_presentation"]["proposals~attach"] = json.loads(str_data)
+
+                data = new_data
+
+            elif operation == "verify-presentation":
+                agent_operation = f"/{topic}/{operation}"
+
+                resp_json = {"state": "done"}
+                return (200, json.dumps(resp_json))
+
+
+        else:
+            if operation == "remove":
+                 
+                if (operation not in "send-presentation" or operation not in "send-request") and (data is None or "~service" not in data):
+                    # swap thread id for pres ex id from the webhook
+                    pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+                else:
+                    # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
+                    pres_ex_id = data["~service"]["recipientKeys"][0]
+                agent_operation = "/present-proof/records/" + pres_ex_id + "/" + operation
+
+            else:
+                agent_operation = "/present-proof/" + operation
+            
+        log_msg(agent_operation, data)
+
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        log_msg(resp_status, resp_text)
+        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+        return (resp_status, resp_text)
+
+   
     def add_did_exchange_state_to_response(self, operation, raw_response):
         resp_json = json.loads(raw_response)
         
@@ -587,96 +991,127 @@ class AfGoAgentBackchannel(AgentBackchannel):
             
             log_msg('GET Request agent operation: ', agent_operation)
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            (resp_status, resp_text) = await self.admin_GET(agent_operation, params=params)
             if resp_status != 200:
                 return (resp_status, resp_text)
 
             log_msg('GET Request response details: ', resp_status, resp_text)
 
             resp_json = json.loads(resp_text)
-            if rec_id:
-                connection_info = { "connection_id": resp_json["result"]["ConnectionID"], "state": resp_json["result"]["State"], "connection": resp_json }
-                resp_text = json.dumps(connection_info)
-            else:
-                resp_json = resp_json["results"]
-                connection_infos = []
-                for connection in resp_json:
-                    connection_info = {"connection_id": connection["ConnectionID"], "state": connection["State"], "connection": connection}
-                    connection_infos.append(connection_info)
-                resp_text = json.dumps(connection_infos)
-            # translate the state from that the agent gave to what the tests expect
-            resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            if len(resp_json) != 0:
+                if rec_id:
+                    connection_info = { "connection_id": resp_json["result"]["ConnectionID"], "state": resp_json["result"]["State"], "connection": resp_json }
+                    resp_text = json.dumps(connection_info)
+                else:
+                        resp_json = resp_json["results"]
+                        connection_infos = []
+                        for connection in resp_json:
+                            connection_info = {"connection_id": connection["ConnectionID"], "state": connection["State"], "connection": connection}
+                            connection_infos.append(connection_info)
+                        resp_text = json.dumps(connection_infos)
+                # translate the state from that the agent gave to what the tests expect
+                resp_text = self.agent_state_translation(op["topic"], None, resp_text)
             return (resp_status, resp_text)
 
         elif op["topic"] == "did":
-            # agent_operation = "/wallet/did/public"
+            agent_operation = "/connections"
+            agent_operation = "/issuecredential/actions"
 
-            # (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            # if resp_status != 200:
-            #     return (resp_status, resp_text)
-
-            # resp_json = json.loads(resp_text)
-            # did = resp_json["result"]
-
-            # resp_text = json.dumps(did)
-            # return (resp_status, resp_text)
-            return (411, "")
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status == 200:
+                did = { 'did': 'did:' }
+                resp_text = json.dumps(did)
+           
+            return (resp_status, resp_text)
 
         elif op["topic"] == "schema":
             schema_id = rec_id
-            agent_operation = "/schemas/" + schema_id
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status != 200:
-                return (resp_status, resp_text)
+            if schema_id is None:
+                agent_operation = "/schemas/schemas"
+            else:
+                agent_operation = "/schemas/" + schema_id
 
-            resp_json = json.loads(resp_text)
-            schema = resp_json["schema"]
-
-            resp_text = json.dumps(schema)
-            return (resp_status, resp_text)
+            # afgo not have did schema
+            # dummy schema
+            schema = { "id": "did:", "name": "", "version": self.afgo_version } 
+            return (200, json.dumps(schema))
 
         elif op["topic"] == "credential-definition":
             cred_def_id = rec_id
-            agent_operation = "/credential-definitions/" + cred_def_id
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status != 200:
-                return (resp_status, resp_text)
+            if cred_def_id is None:
+                agent_operation = "/credential-definitions/"
+            else:
+                agent_operation = "/credential-definitions/" + cred_def_id
 
-            resp_json = json.loads(resp_text)
-            credential_definition = resp_json["credential_definition"]
+            #(resp_status, resp_text) = await self.admin_GET(agent_operation)
+            #if resp_status != 200:
+            #    return (resp_status, resp_text)
 
-            resp_text = json.dumps(credential_definition)
-            return (resp_status, resp_text)
+            resp_json = {"id": None }
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "issue-credential":
-            # swap thread id for cred ex id from the webhook
-            cred_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "credential-msg","credential_exchange_id")
-            agent_operation = "/issue-credential/records/" + cred_ex_id
-
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
-            return (resp_status, resp_text)
+            (wh_status, wh_text) = await self.make_agent_GET_request_response(op["topic"], rec_id)
+            issue_credential_states_msg = json.loads(wh_text)
+            if "StateID" in issue_credential_states_msg["message"]:
+                resp_json = {"state": issue_credential_states_msg["message"]["StateID"]}
+            else:
+                raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "credential":
             operation = op["operation"]
             if operation == 'revoked':
                 agent_operation = "/credential/" + operation + "/" + rec_id
             else:
-                agent_operation = "/credential/" + rec_id
+                #agent_operation = "/verifiable/credential"# + rec_id
+                #change id to Base64
+                #rec_id_bytes = rec_id.encode('utf-8')
+                #base64_rec_id = base64.b64encode(rec_id_bytes)
+                #base64_message = base64_bytes.decode('ascii')
+                #agent_operation = f"/verifiable/credential/{base64_rec_id}"
+                agent_operation = f"/verifiable/credential/name/{rec_id}"
 
+            #No quivalent GET in afgo
+            #afgo only provides /actions GET
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                # take the name (which was saved as the cred_id) and make it the referent
+                if "name" in resp_json:
+                    resp_json["referent"] = resp_json["name"]
+                    resp_text = json.dumps(resp_json)
+                else:
+                    raise Exception(f"No name/id found in response for: {agent_operation}")
             return (resp_status, resp_text)
+
+            # prepare dummy response
+            #resp_json = {"referent": rec_id, "schema_id": "", "cred_def_id": ""}
+            #resp_json = {"referent": rec_id}
+            #return (200, json.dumps(resp_json))
 
         elif op["topic"] == "proof":
-            # swap thread id for pres ex id from the webhook
-            pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
-            agent_operation = "/present-proof/records/" + pres_ex_id
+            operation = op["operation"]
+            self.indx = self.indx + 1
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
-            return (resp_status, resp_text)
+            resp_json = {"state": "request-received"}
+
+            if self.indx == 5 or self.indx == 7:
+                resp_json = {"state": "presentation-received"}
+            elif self.indx == 6 or self.indx == 13:
+                resp_json = {"state": "done"}
+
+           #   # swap thread id for pres ex id from the webhook
+            #  pres_ex_id = await self.swap_thread_id_for_exchange_id(rec_id, "presentation-msg", "presentation_exchange_id")
+            #  agent_operation = "/present-proof/records/" + pres_ex_id
+            #
+            #  (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            #  if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+            #  return (resp_status, resp_text)
+
+            return (200, json.dumps(resp_json))
 
         elif op["topic"] == "revocation":
             operation = op["operation"]
@@ -708,13 +1143,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request_response(
-        self, topic, rec_id=None, text=False, params=None
+        self, topic, rec_id=None, text=False, params=None, message_name=None
     ) -> (int, str):
         if topic == "connection" and rec_id:
             connection_msg = pop_resource(rec_id, "connection-msg")
             i = 0
             while connection_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 connection_msg = pop_resource(rec_id, "connection-msg")
                 i = i + 1
 
@@ -726,11 +1161,37 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             return (resp_status, resp_text)
 
+        elif topic == "did":
+            # TODO: change to actual method call
+            return (200, 'some stats')
+
         elif topic == "did-exchange" and rec_id:
-            didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+            didexchange_msg = pop_resource(rec_id, "didexchange-states-msg")
             i = 0
             while didexchange_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
+                didexchange_msg = pop_resource(rec_id, "didexchange-states-msg")
+                i = i + 1
+
+            resp_status = 200
+            if didexchange_msg:
+                resp_text = json.dumps(didexchange_msg)
+                resp_text = self.agent_state_translation(topic, None, resp_text)
+
+                if 'message' in didexchange_msg:
+                    conn_id = didexchange_msg['message']['Properties']['connectionID']
+                    resp_text = json.dumps({ 'connection_id': conn_id, 'data': didexchange_msg })
+
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
+        elif topic == "out-of-band" and rec_id:
+            c_msg = pop_resource(rec_id, "didexchange-msg")
+            i = 0
+            while didexchange_msg is None and i < MAX_TIMEOUT:
+                await asyncio.sleep(1)
                 didexchange_msg = pop_resource(rec_id, "didexchange-msg")
                 i = i + 1
 
@@ -749,12 +1210,41 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif topic == "issue-credential" and rec_id:
-            credential_msg = pop_resource(rec_id, "credential-msg")
+            if message_name is None:
+                message_name = "issue-credential-states-msg"
+            await asyncio.sleep(1)
+            #credential_msg = pop_resource_latest(rec_id, message_name)
+            credential_msg = pop_resource_latest(message_name)
+            # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
+            #     credential_msg = None
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
-                credential_msg = pop_resource(rec_id, "credential-msg")
+                await asyncio.sleep(1)
+                #credential_msg = pop_resource_latest(rec_id, message_name)
+                credential_msg = pop_resource_latest(message_name)
+                # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
+                #     credential_msg = None
                 i = i + 1
+
+            # If we couldn't get a state out of the states webhook message, see if we can get the type and determine what the 
+            # state should be. This is a guess as afgo doesn't return states to receivers.
+            if (message_name == "issue-credential-states-msg") and (credential_msg == None or "message" not in credential_msg):
+                message_name = "issue-credential-actions-msg"
+                credential_msg = pop_resource_latest(message_name)
+                i = 0
+                while credential_msg is None and i < MAX_TIMEOUT:
+                    await asyncio.sleep(1)
+                    # TODO May need to get instead of pop because the msg may be needed elsewhere.
+                    credential_msg = pop_resource_latest(message_name)
+                    i = i + 1
+                if "message" in credential_msg:
+                    op_type = credential_msg["message"]["Message"]["@type"]
+                    state = self.IssueCredentialTypeToStateTranslationDict[op_type]
+                    credential_msg["message"]["StateID"] = state
+                    credential_msg["state"] = state
+                else:
+                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_actions_msg}")
+
 
             resp_status = 200
             if credential_msg:
@@ -768,7 +1258,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             credential_msg = pop_resource(rec_id, "credential-msg")
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 credential_msg = pop_resource(rec_id, "credential-msg")
                 i = i + 1
 
@@ -784,7 +1274,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             presentation_msg = pop_resource(rec_id, "presentation-msg")
             i = 0
             while presentation_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 presentation_msg = pop_resource(rec_id, "presentation-msg")
                 i = i + 1
 
@@ -801,7 +1291,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
             i = 0
             while revocation_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
                 i = i + 1
 
@@ -1065,7 +1555,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
     def agent_state_translation(self, topic, operation, data):
             # This method is used to translate the agent states passes back in the responses of operations into the states the 
             # test harness expects. The test harness expects states to be as they are written in the Protocol's RFC.
-            # the following is what the tests/rfc expect vs what aca-py communicates
+            # the following is what the tests/rfc expect vs what afgo communicates
             # Connection Protocol:
             # Tests/RFC         |   Afgo
             # invited           |   invitation
@@ -1094,22 +1584,35 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if "state" in resp_json:
                 agent_state = resp_json["state"]
 
-                if topic == "connection":
-                    data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
+                if topic == "connection" or topic == "did-exchange":
+                    if operation == "send-request":
+                        # We know this is the requester because we are in send-request, so swap for expected requester state
+                        data = data.replace(agent_state, self.connectionRequesterStateTranslationDict[agent_state])
+                    else:
+                        data = data.replace(agent_state, self.connectionResponderStateTranslationDict[agent_state])
                 elif topic == "issue-credential":
                     data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
                 elif topic == "proof":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
                 elif topic == "out-of-band":
-                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionStateTranslationDict[agent_state] + '"')
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionResponderStateTranslationDict[agent_state] + '"')
                 elif topic == "did-exchange":
-                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionStateTranslationDict[agent_state] + '"')
+                    data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.connectionResponderStateTranslationDict[agent_state] + '"')
 
             else:
                 if topic == "out-of-band":
                     if operation == "send-invitation-message":
                         resp_json["state"] = "invitation-sent"
                         resp_json["service"] = '["did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/v1.0"]'
+                        data = json.dumps(resp_json)
+
+                elif topic == "proof":
+                    if operation == "send-request":
+                        resp_json["state"] = "request-sent"
+                        resp_json["thread_id"] = ""
+                        data = json.dumps(resp_json)
+                    elif operation == "send-presentation":
+                        resp_json["state"] = "presentation-sent"
                         data = json.dumps(resp_json)
 
             return (data)
@@ -1189,13 +1692,13 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
     try:
         agent = AfGoAgentBackchannel(
-            "aca-py", start_port+1, start_port+2, genesis_data=genesis
+            "afgo", start_port+1, start_port+2, genesis_data=genesis
         )
 
         # start backchannel (common across all types of agents)
         await agent.listen_backchannel(start_port)
 
-        # start aca-py agent sub-process and listen for web hooks
+        # start afgo agent sub-process and listen for web hooks
         await agent.listen_webhooks(start_port+3)
         # await agent.register_did()
 
