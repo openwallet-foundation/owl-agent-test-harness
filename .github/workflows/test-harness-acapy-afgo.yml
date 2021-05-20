@@ -40,14 +40,14 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a acapy-main -a afgo-master"
-          TEST_AGENTS: "-d acapy-main -b afgo-master"
+          BUILD_AGENTS: "-a acapy-main -a afgo-interop"
+          TEST_AGENTS: "-d acapy-main -b afgo-interop"
           OTHER_PARAMS: "-v 20"
           TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: acapy-b-afgo
         env:
-          EMIT-NEW-DIDCOMM-PREFIX: true
-          EMIT-NEW-DIDCOMM-MIME-TYPE: true
+          EMIT_NEW_DIDCOMM_PREFIX: true
+          EMIT_NEW_DIDCOMM_MIME_TYPE: true
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure

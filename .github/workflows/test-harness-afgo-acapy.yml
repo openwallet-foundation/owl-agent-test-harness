@@ -40,8 +40,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a afgo-master -a acapy-main"
-          TEST_AGENTS: "-d afgo-master -b acapy-main"
+          BUILD_AGENTS: "-a afgo-interop -a acapy-main"
+          TEST_AGENTS: "-d afgo-interop -b acapy-main"
           OTHER_PARAMS: "-v 20"
           TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
           REPORT_PROJECT: afgo-b-acapy
