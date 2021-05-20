@@ -15,8 +15,7 @@ RUN apk add --no-cache \
     libtool \
     bash \
     make;
-# ADD . $GOPATH/src/github.com/hyperledger
-RUN mkdir -p $GOPATH/src/github.com/hyperledger
+ADD . $GOPATH/src/github.com/hyperledger
 WORKDIR $GOPATH/src/github.com/hyperledger
 ENV EXECUTABLES go git
 
@@ -26,8 +25,7 @@ WORKDIR $GOPATH/src/github.com/hyperledger/aries-framework-go
 FROM golang as aries-framework
 ARG GO_TAGS=
 ARG GOPROXY=
-RUN GO_TAGS=${GO_TAGS} GOPROXY=${GOPROXY} make agent-rest
-
+RUN GO_TAGS=${GO_TAGS} GOPROXY=${GOPROXY} make agent-rest-acapy-interop
 #
 # Install the test harness backchannel
 #
