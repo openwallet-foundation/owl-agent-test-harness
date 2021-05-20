@@ -5,7 +5,7 @@
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
 | [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.6.0 | afgo-master<br>unknown | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | pre-AIP 2.0 | [**0 / 5<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.6.0 | javascript<br>1.0.0 | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | AIP 1.0 | [**13 / 18<br>72%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.6.0 | javascript<br>1.0.0 | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | AIP 1.0 | [**13 / 13<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-aip10](#runset-acapy-aip10) | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | AIP 1.0 | [**18 / 18<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip10/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-aip20](#runset-acapy-aip20) | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | AIP 2.0 | [**31 / 31<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip20/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.6.0 | javascript<br>1.0.0 | dotnet-master<br> | acapy-main<br>0.6.0 | AIP 1.0 | [**11 / 13<br>84%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
@@ -45,7 +45,7 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 Runset Name: ACA-PY to AFJ
 
 ```tip
-**Latest results: 13 out of 18 (72%)**
+**Latest results: 13 out of 13 (100%)**
 
 
 *Last run: Wed May 12 01:35:21 UTC 2021*
@@ -114,7 +114,7 @@ All of the tests being executed in this runset are passing.
 Runset Name: ACA-PY to AF-.NET to AFJ
 
 ```tip
-**Latest results: 10 out of 13 (76%)**
+**Latest results: 11 out of 13 (84%)**
 
 
 *Last run: Wed May 12 01:48:20 UTC 2021*
@@ -139,7 +139,7 @@ is required to determine the issue in these three tests.
 Runset Name: ACA-PY to AF-.NET
 
 ```tip
-**Latest results: 25 out of 25 (100%)**
+**Latest results: 27 out of 28 (96%)**
 
 
 *Last run: Wed May 12 01:59:47 UTC 2021*
@@ -147,9 +147,11 @@ Runset Name: ACA-PY to AF-.NET
 
 #### Current Runset Status
 
-All of the tests are currently running.
+The majority of tests are running and passing. T013-HIPE0011 is failing due to the Aries Framework Dotnet not supporting
+presentations containing a non-revocation interval, with a non-revocable credential. This issue is being tracked in 
+https://github.com/hyperledger/aries-framework-dotnet/issues/184
 
-*Status Note Updated: 2021.03.18*
+*Status Note Updated: 2021.04.08*
 
 #### Runset Details
 
@@ -205,35 +207,12 @@ as that feature is not supported in AFJ.
 - Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-acapy/reports/latest)
 
 
-### Runset **afj**
-
-Runset Name: AFJ to AFJ
-
-```tip
-**Latest results: 18 out of 18 (100%)**
-
-
-*Last run: Wed Mar 17 17:12:09 PDT 2021*
-```
-
-#### Current Runset Status
-
-All of the tests being executed in this runset are passing.
-
-*Status Note Updated: 2021.03.05*
-
-#### Runset Details
-
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/javascript/reports/latest)
-
-
 ### Runset **dotnet-acapy**
 
 Runset Name: AF-.NET to ACA-PY
 
 ```tip
-**Latest results: 4 out of 13 (30%)**
+**Latest results: 6 out of 13 (46%)**
 
 
 *Last run: Wed May 12 02:25:22 UTC 2021*
@@ -251,4 +230,3 @@ More tests are failing than are passing when Aries Framework .NET is playing the
 - Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet-b-acapy/reports/latest)
 
 Jump back to the [interoperability summary](./README.md).
-

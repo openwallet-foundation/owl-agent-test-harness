@@ -18,7 +18,7 @@
 Runset Name: ACA-PY to AFJ
 
 ```tip
-**Latest results: 13 out of 18 (72%)**
+**Latest results: 13 out of 13 (100%)**
 
 
 *Last run: Wed May 12 01:35:21 UTC 2021*
@@ -41,7 +41,7 @@ Most of the tests are running. The tests not passing are being investigated.
 Runset Name: ACA-PY to AF-.NET to AFJ
 
 ```tip
-**Latest results: 10 out of 13 (76%)**
+**Latest results: 11 out of 13 (84%)**
 
 
 *Last run: Wed May 12 01:48:20 UTC 2021*
@@ -136,7 +136,7 @@ All of the tests being executed in this runset are passing.
 Runset Name: AF-.NET to AFJ
 
 ```tip
-**Latest results: 4 out of 13 (30%)**
+**Latest results: 6 out of 13 (46%)**
 
 
 *Last run: Wed May 12 02:32:01 UTC 2021*
@@ -154,4 +154,3 @@ More tests are failing than are passing when Aries Framework .NET is playing the
 - Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet-b-javascript/reports/latest)
 
 Jump back to the [interoperability summary](./README.md).
-
