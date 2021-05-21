@@ -266,12 +266,12 @@ def step_impl(context, holder):
     # reveived the thread_id.
     #if "Indy" in context.tags:
     if "cred_thread_id" in context:
-        sleep(1)
+        #sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.cred_thread_id)
 
     # If we are starting from here in the protocol you won't have the cred_ex_id or the thread_id
     else:
-        sleep(1)
+        #sleep(1)
         (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="send-request", id=context.connection_id_dict[holder][context.issuer_name])
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -307,7 +307,7 @@ def step_impl(context, issuer):
     assert resp_json["state"] == "credential-issued"
 
     # Verify holder status
-    sleep(1.0)
+    #sleep(1.0)
     assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "credential-received")
 
 
@@ -322,7 +322,7 @@ def step_impl(context, holder):
     }
 
     # (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="store", id=context.holder_cred_ex_id)
-    sleep(1)
+    #sleep(1)
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="store", id=context.cred_thread_id, data=credential_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
@@ -364,8 +364,9 @@ def step_impl(context, holder):
         pass
     else:
         assert resp_json["referent"] == context.credential_id_dict[context.schema['schema_name']][len(context.credential_id_dict[context.schema['schema_name']])-1]
-        assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
-        assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
+        # Some agents don't return or have a schema id or cred_def_id, so only check it it exists.
+        if "schema_id" in resp_json: assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
+        if "cred_def_id" in resp_json: assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
 
     # Make sure the issuer is not holding the credential
     # get the credential from the holders wallet
