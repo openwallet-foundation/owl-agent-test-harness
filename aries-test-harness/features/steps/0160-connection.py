@@ -113,7 +113,7 @@ def step_impl(context, invitee):
 
     resp_json = json.loads(resp_text)
 
-    if not hasattr(context, 'connection_id_dict'):
+    if not hasattr(context, 'connection_id_dict') or not hasattr(context.connection_id_dict, invitee):
         context.connection_id_dict = {}
         context.connection_id_dict[invitee] = {}
     
@@ -122,13 +122,10 @@ def step_impl(context, invitee):
     # Also add the inviter into the main connection_id_dict. if the len is 0 that means its already been cleared and this may be Mallory.
     if len(context.temp_connection_id_dict) != 0:
         context.connection_id_dict[context.inviter_name] = {invitee: context.temp_connection_id_dict[context.inviter_name]}
-        #clear the temp connection id dict used in the initial step. We don't need it anymore.
-        context.temp_connection_id_dict.clear()
 
     # Check to see if the invitee_name exists in context. If not, antother suite is using it so set the invitee name and url
-    if not hasattr(context, 'invitee_name'):
-        context.invitee_url = invitee_url
-        context.invitee_name = invitee
+    context.invitee_url = invitee_url
+    context.invitee_name = invitee
 
     # get connection and verify status
     assert expected_agent_state(invitee_url, "connection", context.connection_id_dict[invitee][context.inviter_name], "invited")
@@ -144,8 +141,8 @@ def step_impl(context, inviter, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=60.0)
-    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "requested", wait_time=60.0)
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=10.0)
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "requested", wait_time=10.0)
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -188,7 +185,7 @@ def step_impl(context, inviter):
     inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # inviter already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=60.0)
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=10.0)
 
 
 @when('"{inviter}" accepts the connection response to "{invitee}"')
@@ -254,10 +251,10 @@ def step_impl(context, inviter, invitee):
         topic = "connection"
 
     # get connection and verify status for inviter
-    assert expected_agent_state(inviter_url, topic, inviter_connection_id, state_to_assert, wait_time=60.0)
+    assert expected_agent_state(inviter_url, topic, inviter_connection_id, state_to_assert, wait_time=10.0)
 
     # get connection and verify status for invitee
-    assert expected_agent_state(invitee_url, topic, invitee_connection_id, state_to_assert, wait_time=60.0)
+    assert expected_agent_state(invitee_url, topic, invitee_connection_id, state_to_assert, wait_time=10.0)
 
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):
@@ -426,7 +423,7 @@ def step_impl(context, inviteinterceptor, inviter):
 @then(u'"{inviter}" sends a request_not_accepted error')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
+    inviter_connection_id = context.connection_id_dict[inviter][context.inviteinterceptor_name]
 
     # TODO It is expected that accept-request should send a request not accepted error, not a 500
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)

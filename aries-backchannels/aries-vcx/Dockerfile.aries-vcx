@@ -1,0 +1,10 @@
+FROM docker.pkg.github.com/hyperledger/aries-vcx/libvcx:0.17.3
+
+WORKDIR /aries-vcx-backchannel/aries-vcx
+
+COPY aries-vcx .
+COPY libvcx ../libvcx
+
+RUN cargo build
+
+ENTRYPOINT ["./target/debug/aries-vcx-backchannel"]
