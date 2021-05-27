@@ -14,6 +14,17 @@ export LEDGER_TIMEOUT=60
 # these two can be overrode via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
+
+# these are derived from the above two
+LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
+LEDGER_URL_INTERNAL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
+TAILS_SERVER_URL_HOST="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
+TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
+# important: inside the internal URLs, we replace "://localhost:" with "://${DOCKERHOST}:"
+#   so it works inside docker.
+LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
+TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
+
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
   # Prefix interactive terminal commands ...
@@ -245,11 +256,10 @@ waitForLedger(){
   (
     # Wait for ledger server to start ...
     local startTime=${SECONDS}
-    # use global LEDGER_URL
-    local LEDGER_URL="${LEDGER_URL_CONFIG:-http://localhost:9000}"
     local rtnCd=0
     printf "waiting for ledger to start"
-    while ! pingLedger "$LEDGER_URL"; do
+    # use ledger URL from host
+    while ! pingLedger "$LEDGER_URL_HOST"; do
       printf "."
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
@@ -280,10 +290,10 @@ waitForTailsServer(){
   (
     # Wait for tails server to start ...
     local startTime=${SECONDS}
-    local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
     local rtnCd=0
     printf "waiting for tails server to start"
-    while ! pingTailsServer "$TAILS_SERVER_URL"; do
+    # use tails server URL from host
+    while ! pingTailsServer "$TAILS_SERVER_URL_HOST"; do
       printf "."
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
@@ -367,9 +377,7 @@ startAgent() {
       export NGROK_NAME=
     fi
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    local LEDGER_URL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
-    local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
-    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     docker network connect aath_network "${CONTAINER_NAME}"
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
