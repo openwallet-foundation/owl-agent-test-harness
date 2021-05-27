@@ -415,13 +415,13 @@ getAgentVersion(){
 
 createNetwork() {
   if [[ -z `docker network ls -q --filter "name=aath_network"` ]]; then
-    docker network create aath_network
+    docker network create aath_network > /dev/null
   fi
 }
 
 cleanupNetwork() {
   if [[ -z `docker ps -q --filter "network=aath_network"` && `docker network ls -q --filter "name=aath_network"` ]]; then
-    docker network rm aath_network
+    docker network rm aath_network > /dev/null
   fi
 }
 
@@ -472,9 +472,15 @@ startHarness(){
   echo "  Mallory - ${MALLORY}"
   echo ""
 
+  createNetwork
+
   # if we're *not* using an external VON ledger, start the local one
-  if [[ -z $LEDGER_URL_CONFIG ]]; then
-    auxiliaryService von-network start
+  if [[ -z ${LEDGER_URL_CONFIG} ]]; then
+    if [[ -z `docker ps -q --filter="name=von_webserver_1"` ]]; then
+      echo "starting local von-network..."
+      auxiliaryService von-network start
+      export STARTED_LOCAL_LEDGER=true
+    fi
   fi
 
   if ! waitForLedger; then
@@ -483,13 +489,23 @@ startHarness(){
   fi
 
   # if we're *not* using an external indy tails server, start the local one
-  if [[ -z $TAILS_SERVER_URL_CONFIG ]]; then
-    auxiliaryService indy-tails start
+  if [[ -z ${TAILS_SERVER_URL_CONFIG} ]]; then
+    if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]]; then
+      echo "starting local indy-tails-server..."
+      auxiliaryService indy-tails start
+      export STARTED_LOCAL_TAILS=true
+    fi
   fi
 
   if ! waitForTailsServer; then
     echoRed "\nThe Indy Tails Server is not running.\n"
     exit 1
+  fi
+
+  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
+      echo "starting local uniresolver..."
+    auxiliaryService uniresolver start
+    export STARTED_LOCAL_UNIRESOLVER=true
   fi
 
   export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
@@ -499,10 +515,6 @@ startHarness(){
   export AIP_CONFIG=${AIP_CONFIG:-10}
 
   export PROJECT_ID=${PROJECT_ID:-general}
-
-  createNetwork
-
-  auxiliaryService uniresolver start
 
   startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021 "$AIP_CONFIG" "$ACME"
   startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031 "$AIP_CONFIG" "$BOB"
@@ -572,8 +584,6 @@ stopHarness(){
   stopIfExists faber_agent-ngrok
   stopIfExists mallory_agent-ngrok
 
-  cleanupNetwork
-
   printf "Done\n"
 
   if [[ "${REPORT}" = "allure" ]]; then
@@ -584,6 +594,23 @@ stopHarness(){
       docker_result=$?
     fi
   fi
+
+  if [[ ${STARTED_LOCAL_UNIRESOLVER} ]]; then
+      echo "stopping local uniresolver..."
+      auxiliaryService uniresolver stop
+  fi
+
+  if [[ ${STARTED_LOCAL_TAILS} ]]; then
+      echo "stopping local indy-tails-server..."
+      auxiliaryService indy-tails stop
+  fi
+
+  if [[ ${STARTED_LOCAL_LEDGER} ]]; then
+      echo "stopping local von-network..."
+      auxiliaryService von-network stop
+  fi
+
+  cleanupNetwork
 
   if [ ! "${docker_result}" == "0" ]; then
     echo "Exit with error code ${docker_result}"
