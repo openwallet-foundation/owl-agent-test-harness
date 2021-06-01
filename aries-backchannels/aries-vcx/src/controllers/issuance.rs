@@ -10,6 +10,8 @@ use vcx::api::VcxStateType;
 use uuid;
 use crate::{Agent, State};
 use crate::controllers::Request;
+use vcx::aries::messages::a2a::A2AMessage;
+use vcx::aries::messages::issuance::credential_offer::CredentialOffer as VcxCredentialOffer;
 
 #[derive(Serialize, Deserialize, Default)]
 struct CredentialPreview {
@@ -25,12 +27,21 @@ struct CredentialOffer {
     connection_id: String
 }
 
-fn _get_state(issuer: &Issuer) -> State {
+fn _get_state_issuer(issuer: &Issuer) -> State {
     match VcxStateType::from_u32(issuer.get_state().unwrap()) {
         VcxStateType::VcxStateInitialized => State::Initial,
         VcxStateType::VcxStateOfferSent => State::OfferSent,
         VcxStateType::VcxStateRequestReceived => State::RequestReceived,
         VcxStateType::VcxStateAccepted => State::CredentialSent,
+        _ => State::Unknown
+    }
+}
+
+fn _get_state_holder(holder: &Holder) -> State {
+    match VcxStateType::from_u32(holder.get_status()) {
+        VcxStateType::VcxStateRequestReceived => State::OfferReceived,
+        VcxStateType::VcxStateOfferSent => State::RequestSent,
+        VcxStateType::VcxStateAccepted => State::CredentialReceived,
         _ => State::Unknown
     }
 }
@@ -52,21 +63,59 @@ impl Agent {
         Ok(json!({ "state": "offer-sent", "thread_id": id }).to_string()) // TODO: This must really be a thread id
     }
 
-    pub fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
-        // TODO: We need to get messages and if receive cred offer with thread id == id, create a
-        // holder in offer-received state, but we don't know connection
-
-        let mut issuer: Issuer = self.db.get(id)
-            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Issuer with id {} not found", id)))?;
-        let state = _get_state(&issuer);
-        self.db.set(&id, &issuer).map_err(|err| HarnessError::from(err))?;
+    pub fn send_credential_request(&mut self, id: &str) -> HarnessResult<String> {
+        let mut holder: Holder = self.db.get(id)
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
+        let connection = self.last_connection.as_ref()
+            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
+        // TODO: Sends problem report saying schema id is invalid
+        holder.send_request(connection.agent_info().pw_did.to_string(), connection.send_message_closure().map_err(|err| HarnessError::from(err))?).map_err(|err| HarnessError::from(err))?;
+        let state = _get_state_holder(&holder);
         Ok(json!({ "state": state }).to_string())
+    }
+
+    pub fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
+        match self.db.get::<Issuer>(id) {
+            Some(issuer) => {
+                let state = _get_state_issuer(&issuer);
+                Ok(json!({ "state": state }).to_string())
+            }
+            None => {
+                match self.db.get::<Holder>(id) {
+                    Some(holder) => {
+                        let state = _get_state_holder(&holder);
+                        Ok(json!({ "state": state }).to_string())
+                    }
+                    None => {
+                        let connection = self.last_connection.as_ref()
+                            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
+                        let credential_offers: Vec<VcxCredentialOffer> = connection.get_messages()?
+                            .into_iter()
+                            .filter_map(|(_, a2a_message)| {
+                                match a2a_message {
+                                    A2AMessage::CredentialOffer(cred_offer) => Some(cred_offer),
+                                    _ => None
+                                }
+                            })
+                            .collect();
+                        let holder = Holder::create(credential_offers.last().unwrap().clone(), id).map_err(|err| HarnessError::from(err))?;
+                        self.db.set(&id, &holder).map_err(|err| HarnessError::from(err))?;
+                        Ok(json!({ "state": "offer-received" }).to_string())
+                    }
+                }
+            }
+        }
     }
 }
 
 #[post("/send-offer")]
 pub async fn send_credential_offer(req: web::Json<Request<CredentialOffer>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_credential_offer(&req.data)
+}
+
+#[post("/send-request")]
+pub async fn send_credential_request(req: web::Json<Request<String>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
+    agent.lock().unwrap().send_credential_request(&req.id)
 }
 
 #[get("/{issuer_id}")]
@@ -81,5 +130,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             web::scope("/command/issue-credential")
                 .service(send_credential_offer)
                 .service(get_issuer_state)
+                .service(send_credential_request)
         );
 }

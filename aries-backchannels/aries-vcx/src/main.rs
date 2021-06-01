@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web, guard, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 use crate::controllers::{general, connection, credential_definition, issuance, schema};
+use vcx::aries::handlers::connection::connection::Connection;
  
 extern crate serde;
 #[macro_use]
@@ -48,7 +49,10 @@ enum State {
     Unknown,
     OfferSent,
     RequestReceived,
-    CredentialSent
+    CredentialSent,
+    OfferReceived,
+    RequestSent,
+    CredentialReceived
 }
 
 #[derive(Copy, Clone, Serialize)]
@@ -68,7 +72,8 @@ struct Agent {
     db: PickleDb,
     state: State,
     status: Status,
-    config: AgentConfig
+    config: AgentConfig,
+    last_connection: Option<Connection>
 }
 
 impl Agent {
@@ -109,7 +114,8 @@ async fn main() -> std::io::Result<()> {
                 db: PickleDb::new("storage.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
                 state: State::Initial,
                 status: Status::Active,
-                config: config.clone()
+                config: config.clone(),
+                last_connection: None
             }))
             .service(
                 web::scope("/agent")

@@ -88,6 +88,7 @@ impl Agent {
         }
         let state = _get_state(&connection);
         self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.last_connection = Some(connection);
         Ok(json!({ "state": state }).to_string())
     }
 }
