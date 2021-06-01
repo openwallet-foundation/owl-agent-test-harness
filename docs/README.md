@@ -25,15 +25,15 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 | Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET |
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | **115 / 139<br>82%** | 5 / 10<br>50% | 37 / 39<br>94% | 44 / 54<br>81% |
-| [AF-Go](afgo.md)| AIP 2 | None | 5 / 10<br>50% | **7 / 14<br>50%** | 0 / 0<br>0% | 0 / 0<br>0% |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 37 / 39<br>94% | 0 / 0<br>0% | **74 / 83<br>89%** | 30 / 39<br>76% |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 44 / 54<br>81% | 0 / 0<br>0% | 30 / 39<br>76% | **76 / 93<br>81%** |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | **120 / 139<br>86%** | 5 / 10<br>50% | 35 / 39<br>89% | 44 / 54<br>81% |
+| [AF-Go](afgo.md)| AIP 2 | None | 5 / 10<br>50% | **8 / 14<br>57%** | 0 / 0<br>0% | 0 / 0<br>0% |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 35 / 39<br>89% | 0 / 0<br>0% | **71 / 83<br>85%** | 29 / 39<br>74% |
+| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 44 / 54<br>81% | 0 / 0<br>0% | 29 / 39<br>74% | **75 / 93<br>80%** |
 
 - The **bolded results** show all tests involving the "Test Agent", including tests involving only that Test Agent.
 - Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
 - Select the "Test Agent" links to drill down into the tests being run.
 
 
-*Results last updated: Fri May 21 04:04:13 UTC 2021*
+*Results last updated: Tue Jun 1 05:56:38 UTC 2021*
 
