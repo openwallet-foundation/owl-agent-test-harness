@@ -1,17 +1,12 @@
 use std::sync::Mutex;
-use actix_web::{web, HttpResponse, HttpRequest, Responder, post, get};
+use actix_web::{web, Responder, post, get};
 use uuid;
 use crate::{Agent, State};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::controllers::Request;
 use vcx::aries::messages::connection::invite::Invitation;
-use vcx::aries::handlers::connection::connection::{Connection, SmConnectionState};
-use vcx::aries::handlers::connection::invitee::state_machine::InviteeState;
-use vcx::aries::handlers::connection::inviter::state_machine::InviterState;
-use vcx::aries::handlers::connection::messages::DidExchangeMessages;
-use vcx::aries::messages::connection::request::Request as AriesConnectionRequest;
+use vcx::aries::handlers::connection::connection::Connection;
 use vcx::api::VcxStateType;
-use actix_web::error::ErrorNotAcceptable;
 
 // Unsupported test cases:
 // @T005-RFC0160 - public did
@@ -27,29 +22,20 @@ struct Comment {
 }
 
 fn _get_state(connection: &Connection) -> State {
-    match connection.state_object() {
-        SmConnectionState::Invitee(state) => match state {
-            InviteeState::Null(_) => State::Initial,
-            InviteeState::Invited(_) => State::Invited,
-            InviteeState::Requested(_) => State::Requested,
-            InviteeState::Responded(_) => State::Responded,
-            InviteeState::Completed(_) => State::Complete
-
-        }
-        SmConnectionState::Inviter(state) => match state {
-            InviterState::Null(_) => State::Initial,
-            InviterState::Invited(_) => State::Invited,
-            InviterState::Requested(_) => State::Requested,
-            InviterState::Responded(_) => State::Responded,
-            InviterState::Completed(_) => State::Complete
-        }
+    match VcxStateType::from_u32(connection.state()) {
+        VcxStateType::VcxStateNone => State::Initial,
+        VcxStateType::VcxStateInitialized => State::Invited,
+        VcxStateType::VcxStateOfferSent => State::Requested,
+        VcxStateType::VcxStateRequestReceived => State::Responded,
+        VcxStateType::VcxStateAccepted => State::Complete,
+        _ => State::Unknown
     }
 }
 
 impl Agent {
     pub fn create_invitation(&mut self) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create(&id);
+        let mut connection = Connection::create(&id, false);
         connection.connect().map_err(|err| HarnessError::from(err))?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
@@ -60,7 +46,7 @@ impl Agent {
     pub fn receive_invitation(&mut self, invite: &str) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let invite: Invitation = serde_json::from_str(invite).map_err(|err| HarnessError::from(err))?;
-        let connection = Connection::create_with_invite(&id, invite).map_err(|err| HarnessError::from(err))?;
+        let connection = Connection::create_with_invite(&id, invite, false).map_err(|err| HarnessError::from(err))?;
         self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string())
     }
@@ -127,8 +113,8 @@ pub async fn accept_request(req: web::Json<Request<()>>, agent: web::Data<Mutex<
 }
 
 #[get("/{connection_id}")]
-pub async fn get_connection_state(agent: web::Data<Mutex<Agent>>, path: web::Path<(String,)>) -> impl Responder {
-    agent.lock().unwrap().get_connection_state(&path.into_inner().0)
+pub async fn get_connection_state(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
+    agent.lock().unwrap().get_connection_state(&path.into_inner())
         .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
 

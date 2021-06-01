@@ -6,6 +6,9 @@ use futures::executor::block_on;
 
 pub mod connection;
 pub mod general;
+pub mod credential_definition;
+pub mod schema;
+pub mod issuance;
 
 #[derive(Deserialize)]
 struct Request<T> {

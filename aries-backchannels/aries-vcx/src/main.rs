@@ -1,16 +1,12 @@
-mod api;
 mod controllers;
 mod setup;
 mod error;
 
-use std::boxed::Box;
-use std::cell::{Cell, RefCell};
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard, Mutex, Arc};
+use std::sync::Mutex;
 
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web, guard, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
-use crate::controllers::general;
-use crate::controllers::connection;
+use crate::controllers::{general, connection, credential_definition, issuance, schema};
  
 extern crate serde;
 #[macro_use]
@@ -48,7 +44,11 @@ enum State {
     Rejected,
     AwaitReponse,
     ReceiveResponse,
-    Failure
+    Failure,
+    Unknown,
+    OfferSent,
+    RequestReceived,
+    CredentialSent
 }
 
 #[derive(Copy, Clone, Serialize)]
@@ -58,11 +58,17 @@ enum Status {
     Inactive
 }
 
+#[derive(Clone, Serialize)]
+struct AgentConfig {
+    did: String
+}
+
 struct Agent {
     id: String,
     db: PickleDb,
     state: State,
-    status: Status
+    status: Status,
+    config: AgentConfig
 }
 
 impl Agent {
@@ -92,9 +98,9 @@ async fn main() -> std::io::Result<()> {
         setup::shutdown();
     }).expect("Error setting Ctrl-C handler");
 
-    setup::initialize().await.unwrap();
+    let config = setup::initialize().await.unwrap();
 
-    HttpServer::new(|| {
+    HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .wrap(middleware::NormalizePath::new(middleware::normalize::TrailingSlash::Trim))
@@ -102,11 +108,15 @@ async fn main() -> std::io::Result<()> {
                 id: String::from("aries-vcx"),
                 db: PickleDb::new("storage.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
                 state: State::Initial,
-                status: Status::Active
+                status: Status::Active,
+                config: config.clone()
             }))
             .service(
                 web::scope("/agent")
                     .configure(connection::config)
+                    .configure(schema::config)
+                    .configure(credential_definition::config)
+                    .configure(issuance::config)
                     .configure(general::config)
             )
     })
