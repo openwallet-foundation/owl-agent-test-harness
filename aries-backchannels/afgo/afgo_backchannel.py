@@ -74,6 +74,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "requested": "request-received",
             "responded": "response-sent",
             "response": "responded",
+            "invitation-sent": "invitation-sent",
             "completed": "completed"
         }
 
@@ -506,11 +507,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
         resp_json = json.loads(resp_text)
         if resp_status == 200:
             # call get connection to get the status based on the invitation id. 
-            resp_text = await self.amend_repsonse_with_state("connection", resp_text)
+            resp_text = await self.amend_response_with_state("connection", resp_text)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
 
-    async def amend_repsonse_with_state(self, topic, resp_text, operation=None):
+    async def amend_response_with_state(self, topic, resp_text, operation=None):
         resp_json = json.loads(resp_text)
         operation = { "topic": topic }
         if 'invitation' in resp_json:
@@ -520,7 +521,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             connection_id = resp_json["connection_id"]
             (resp_status, get_resp_text) = await self.admin_GET(f'/connections/{connection_id}')
         get_resp_json = json.loads(get_resp_text)
-        if resp_status == 200 and len(get_resp_json) != 0:
+        #if resp_status == 200 and len(get_resp_json) != 0:
+        if resp_status == 200:
             if len(get_resp_json) != 0:
                 if 'results' in resp_json: resp_json["state"] = get_resp_json["results"]["State"]
                 else: resp_json["state"] = get_resp_json["result"]["State"]
@@ -604,7 +606,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
         elif operation == "send-request":
             # Check the connection object for latest state
             resp_text = {'connection_id': rec_id}
-            resp_text = await self.amend_repsonse_with_state("connections", json.dumps(resp_text))
+            log_msg(f"Temp Debug - Message sent to amend_response_with_state, needs connection id: {operation}", resp_text)
+            resp_text = await self.amend_response_with_state("connections", json.dumps(resp_text))
+            log_msg(f"Temp Debug - resp_text returned from amend_response_with_state, needs state: {operation}", resp_text)
             resp_status = 200
             # We know this is the requester because we are in send-request, so swap for expected requester state
             resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -615,7 +619,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
             if resp_status == 200:
                 # Response doesn't have a state, get it from the connection record.
-                resp_text = await self.amend_repsonse_with_state("connections", resp_text)
+                log_msg(f"Temp Debug - Message sent to amend_response_with_state, needs connection id: {operation}", resp_text)
+                resp_text = await self.amend_response_with_state("connections", resp_text)
+                log_msg(f"Temp Debug - resp_text returned from amend_response_with_state, needs state: {operation}", resp_text)
                 # Translate the given state to the expected RFC state.
                 resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
             elif resp_status == 500 and 'code' in resp_text:
