@@ -30,16 +30,10 @@ def get_resource_latest(data_type):
     storage_lock.acquire()
     try:
         data_ids = list(storage.keys())
-        data_id = data_ids[len(data_ids) - 1]
+        data_id = data_ids[-1]
         data_type = storage[data_id]
-        if data_type in storage[data_id]:
-            if 0 < len(storage[data_id][data_type]):
-                if len(storage[data_id][data_type]) > 1:
-                    data = storage[data_id][data_type][len(storage[data_id][data_type])-1]
-                else:
-                    data = storage[data_id][data_type][0]
-                return data
-        return None
+        data = storage[data_id][data_type][-1]
+        return data
     finally:
         storage_lock.release()
 
@@ -103,8 +97,8 @@ def pop_resource_latest(data_type):
         if data_type in storage[data_id]:
             if 0 < len(storage[data_id][data_type]):
                 if len(storage[data_id][data_type]) > 1:
-                    data = storage[data_id][data_type][len(storage[data_id][data_type])-1]
-                    del storage[data_id][data_type][len(storage[data_id][data_type])-1]
+                    data = storage[data_id][data_type][-1]
+                    del storage[data_id][data_type][-1]
                 else:
                     data = storage[data_id][data_type][0]
                     del storage[data_id][data_type][0]
