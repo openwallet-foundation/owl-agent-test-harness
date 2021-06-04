@@ -7,7 +7,7 @@ same tests.
 
 The latest interoperability test results are below. Each row is a test agent, its columns
 the results of tests executed in combination with other test agents.
-The bolded cell per row shows the results of all tests run for the given test agent. The link on each test
+The last column ("All Tests") shows the results of all tests run for the given test agent in any role. The link on each test
 agent name provides more details about results for all test combinations for that test agent. On
 that page are links to a full history of the test runs and full details on every executed test. 
 
@@ -23,17 +23,18 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 ## Latest Interoperability Results
 
-| Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET |
-| ----- | ----- | ----- | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | **121 / 139<br>87%** | 5 / 10<br>50% | 36 / 39<br>92% | 44 / 54<br>81% |
-| [AF-Go](afgo.md)| AIP 2 | None | 5 / 10<br>50% | **8 / 14<br>57%** | 0 / 0<br>0% | 0 / 0<br>0% |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 36 / 39<br>92% | 0 / 0<br>0% | **73 / 83<br>87%** | 30 / 39<br>76% |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 44 / 54<br>81% | 0 / 0<br>0% | 30 / 39<br>76% | **76 / 93<br>81%** |
+| Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | **All Tests** |
+| ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 47 / 49<br>95% | 5 / 10<br>50% | 36 / 39<br>92% | 44 / 54<br>81% | **121 / 139<br>87%** |
+| [AF-Go](afgo.md)| AIP 2 | None | 5 / 10<br>50% | 3 / 4<br>75% | 0 / 0<br>0% | 0 / 0<br>0% | **8 / 14<br>57%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 36 / 39<br>92% | 0 / 0<br>0% | 18 / 18<br>100% | 30 / 39<br>76% | **73 / 83<br>87%** |
+| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 44 / 54<br>81% | 0 / 0<br>0% | 30 / 39<br>76% | 13 / 13<br>100% | **76 / 93<br>81%** |
 
-- The **bolded results** show all tests involving the "Test Agent", including tests involving only that Test Agent.
+- Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
+- The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
 - Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
-- Select the "Test Agent" links to drill down into the tests being run.
+- Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Fri Jun 4 05:19:29 UTC 2021*
+*Results last updated: Fri Jun 4 16:00:33 PDT 2021*
 

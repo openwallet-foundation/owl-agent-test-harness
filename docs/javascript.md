@@ -21,7 +21,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last run: Fri Jun  4 02:35:02 UTC 2021*
+*Last run: Thu Jun  3 19:35:02 PDT 2021*
 ```
 
 #### Current Runset Status
@@ -44,7 +44,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 11 out of 13 (84%)**
 
 
-*Last run: Fri Jun  4 02:52:56 UTC 2021*
+*Last run: Thu Jun  3 19:52:56 PDT 2021*
 ```
 
 #### Current Runset Status
@@ -69,7 +69,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 12 out of 13 (92%)**
 
 
-*Last run: Fri Jun  4 03:15:02 UTC 2021*
+*Last run: Thu Jun  3 20:15:02 PDT 2021*
 ```
 
 #### Current Runset Status
@@ -93,7 +93,7 @@ Runset Name: AFJ to AF-.NET
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last run: Fri Jun  4 03:16:09 UTC 2021*
+*Last run: Thu Jun  3 20:16:09 PDT 2021*
 ```
 
 #### Current Runset Status
@@ -116,7 +116,7 @@ Runset Name: AFJ to AFJ
 **Latest results: 18 out of 18 (100%)**
 
 
-*Last run: Fri Jun  4 03:29:19 UTC 2021*
+*Last run: Thu Jun  3 20:29:19 PDT 2021*
 ```
 
 #### Current Runset Status
@@ -139,7 +139,7 @@ Runset Name: AF-.NET to AFJ
 **Latest results: 6 out of 13 (46%)**
 
 
-*Last run: Fri Jun  4 03:41:49 UTC 2021*
+*Last run: Thu Jun  3 20:41:49 PDT 2021*
 ```
 
 #### Current Runset Status
