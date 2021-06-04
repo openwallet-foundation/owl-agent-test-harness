@@ -150,6 +150,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         # AATH API : AFGO Admin API
         self.TopicTranslationDict = {
             "issue-credential": "/issuecredential/",
+            "issue-credential-v2": "/issuecredential/",
             "proof": "/presentproof/"
         }
 
@@ -456,7 +457,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             resp_json = { "credential_definition_id": "" }
             return (200, json.dumps(resp_json))
 
-        elif op["topic"] == "issue-credential":
+        elif op["topic"] == "issue-credential" or op["topic"] == "issue-credential-v2":
             (resp_status, resp_text) = await self.handle_issue_credential_POST(op, rec_id=rec_id, data=data)
             return (resp_status, resp_text)
             
@@ -686,8 +687,44 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             "credential_proposal": data["credential_proposal"]
                         }
                         data.pop("credential_proposal")
+                    elif "credential_preview" in data:
+                        data["propose_credential"] = {
+                            "credential_proposal": data["credential_preview"]
+                        }
+                        data.pop("credential_preview")
                     else:
                         raise Exception(f"Message data passed for issuecredential/{op['operation']} doesn't contain a credential_proposal: {data}")
+
+                    if "filter" in data:
+                        # TODO support more than one filter
+                        # encode the json to base64
+                        json_filter = data["filter"]
+                        #json_filter_b64 = base64.b64encode(json_filter.encode('utf-8'))
+                        # add an id for the filter
+                        filter_id = str(uuid.uuid1())
+                        # add mime_type (json)
+                        mime_type = "application/json"
+                        # add the filters~attach to the data
+                        data["propose_credential"]["filters~attach"] = [
+                            {
+                                "@id": filter_id, 
+                                "mime_type": mime_type,
+                                "data": {
+                                    "json": json_filter
+                                }
+                            }
+                        ]
+                        # add formats to the data with attach_id and format
+                        data["propose_credential"]["formats"] = [
+                            {
+                                "attach_id": filter_id,
+                                "format": "hlindy/cred-filter@v2.0"
+                            }
+                        ]
+                        
+                        # data["propose_credential"]["filters~attach"] = data["filter"]
+                        data.pop("filter")
+
                 elif operation == "send-offer":
                     if "credential_preview" in data:
                         data["offer_credential"] = {
@@ -697,6 +734,36 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     else:
                         raise Exception(f"Message data passed for issuecredential/{op['operation']} doesn't contain a credential_preview: {data}")
             
+                    if "filter" in data:
+                        # TODO support more than one filter
+                        # encode the json to base64
+                        json_filter = data["filter"]
+                        #json_filter_b64 = base64.b64encode(json_filter.encode('utf-8'))
+                        # add an id for the filter
+                        filter_id = str(uuid.uuid1())
+                        # add mime_type (json)
+                        mime_type = "application/json"
+                        # add the filters~attach to the data
+                        data["propose_credential"]["offers~attach"] = [
+                            {
+                                "@id": filter_id, 
+                                "mime_type": mime_type,
+                                "data": {
+                                    "json": json_filter
+                                }
+                            }
+                        ]
+                        # add formats to the data with attach_id and format
+                        data["propose_credential"]["formats"] = [
+                            {
+                                "attach_id": filter_id,
+                                "format": "hlindy/cred-filter@v2.0"
+                            }
+                        ]
+                        
+                        # data["propose_credential"]["filters~attach"] = data["filter"]
+                        data.pop("filter")
+
             log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
 
             (resp_status, resp_text) =  await self.admin_POST(agent_operation, data)
@@ -805,30 +872,46 @@ class AfGoAgentBackchannel(AgentBackchannel):
         elif operation == "issue":
             # TODO Need to get their DID to add to the data. Dummy input for now, which works fine.
             #(their_did, my_did) = await self.get_DIDs_for_participants()
-            data = {
-                "issue_credential": {
-                    "credentials~attach":[
-                        {
-                            "data":{
-                                "json":{
-                                    "@context":[
-                                    ],
-                                    "credentialSubject":{
-                                    },
-                                    "issuanceDate":"2010-01-01T19:23:24Z",
-                                    "issuer":{
-                                        "id":"did:peer:1zQmV22iXRZmKpap4JBKquF3CD2jnDYnNc3Mxpvi4NwnKgv4"
-                                    },
-                                    "type":[
-                                        "VerifiableCredential",
-                                        "AATHTestCredential"
-                                    ]
-                                }
-                            }
+            # Get data from the last issue-credential_states webhook message which contrains the credential_proposal
+            if data is None or "issue_credential" not in data:
+                # get the credential_proposal from the webhook
+                if rec_id is not None:
+                    (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
+                    issue_credential_states_msg = json.loads(wh_text)
+                    # Format the proposal for afgo issue
+                    data = {
+                        "issue_credential": {
+                            "credentials~attach": issue_credential_states_msg["message"]["Message"]["filters~attach"]
                         }
-                    ]
-                }
-            }
+                    }
+                    data["issue_credential"]["credentials~attach"]["formats"] = issue_credential_states_msg["message"]["Message"]["formats"]
+                else:
+                    raise Exception(f"Have not passed a thread id for issuecredential/{op['operation']}")
+
+            # data = {
+            #     "issue_credential": {
+            #         "credentials~attach":[
+            #             {
+            #                 "data":{
+            #                     "json":{
+            #                         "@context":[
+            #                         ],
+            #                         "credentialSubject":{
+            #                         },
+            #                         "issuanceDate":"2010-01-01T19:23:24Z",
+            #                         "issuer":{
+            #                             "id":"did:peer:1zQmV22iXRZmKpap4JBKquF3CD2jnDYnNc3Mxpvi4NwnKgv4"
+            #                         },
+            #                         "type":[
+            #                             "VerifiableCredential",
+            #                             "AATHTestCredential"
+            #                         ]
+            #                     }
+            #                 }
+            #             }
+            #         ]
+            #     }
+            # }
             # else:
             #     # TODO not sure yet.
             #     pass
@@ -1058,7 +1141,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             resp_json = {"id": None }
             return (200, json.dumps(resp_json))
 
-        elif op["topic"] == "issue-credential":
+        elif op["topic"] == "issue-credential" or op["topic"] == "issue-credential-v2":
             (wh_status, wh_text) = await self.make_agent_GET_request_response(op["topic"], rec_id)
             issue_credential_states_msg = json.loads(wh_text)
             if "StateID" in issue_credential_states_msg["message"]:
@@ -1215,7 +1298,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             return (resp_status, resp_text)
 
-        elif topic == "issue-credential" and rec_id:
+        elif (topic == "issue-credential" or topic == "issue-credential-v2") and rec_id:
             if message_name is None:
                 message_name = "issue-credential-states-msg"
             await asyncio.sleep(1)
@@ -1596,7 +1679,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         data = data.replace(agent_state, self.connectionRequesterStateTranslationDict[agent_state])
                     else:
                         data = data.replace(agent_state, self.connectionResponderStateTranslationDict[agent_state])
-                elif topic == "issue-credential":
+                elif topic == "issue-credential" or topic == "issue-credential-v2":
                     data = data.replace(agent_state, self.issueCredentialStateTranslationDict[agent_state])
                 elif topic == "proof":
                     data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + self.presentProofStateTranslationDict[agent_state] + '"')
