@@ -634,6 +634,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # this is done automatically by the responder.
             # The test expects a connection_id returned so, return the last webhook message
             #agent_operation = agent_operation + "receive-request"
+            
             (wh_status, wh_text) = await self.make_agent_GET_request_response(op["topic"], rec_id=None, message_name="didexchange-msg")
             return (wh_status, wh_text)
 
@@ -983,6 +984,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # Poping webhook messages wihtout an id is unusual. This code may be removed when issue 944 is fixed
         # see https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/hyperledger/aries-cloudagent-python/944
         if topic == "did-exchange" and rec_id is None:
+            await asyncio.sleep(1)
             if message_name is not None:
                 didexchange_msg = pop_resource_latest(message_name)
             else:
