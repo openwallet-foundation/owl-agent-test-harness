@@ -1,0 +1,32 @@
+version: '2'
+
+services:
+  driver-did-sov.local:
+    container_name: driver-did-sov.local
+    image: universalresolver/driver-did-sov:0.1.0
+    environment:
+      - "uniresolver_driver_did_sov_poolConfigs=_;./local-pool/config.txt"
+      - "uniresolver_driver_did_sov_poolVersions=_;2"
+    ports:
+      - "8082:8080"
+    volumes:
+      - ".build/sov-pool-config:/opt/driver-did-sov/local-pool"
+    networks:
+      - aath_network
+
+  uni-resolver-web.local:
+    container_name: uni-resolver-web.local
+    image: universalresolver/uni-resolver-web:latest
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    volumes:
+      - ./uni-resolver-web/config.json:/var/lib/jetty/config.json
+     # - ./uni-resolver-web/run-uni-resolver-web.sh:/opt/uni-resolver-java/uni-resolver-web/docker/run-uni-resolver-web.sh
+    networks:
+      - aath_network
+
+networks:
+  aath_network:
+    external: true
