@@ -877,6 +877,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 # get the credential_proposal from the webhook
                 if rec_id is not None:
                     (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
+                    log_msg(f"Credential Data retreived from webhook message: ", wh_text)
                     issue_credential_states_msg = json.loads(wh_text)
                     # Format the proposal for afgo issue
                     data = {
@@ -1303,14 +1304,16 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 message_name = "issue-credential-states-msg"
             await asyncio.sleep(1)
             #credential_msg = pop_resource_latest(rec_id, message_name)
-            credential_msg = pop_resource_latest(message_name)
+            #credential_msg = pop_resource_latest(message_name)
+            credential_msg = get_resource_latest(message_name)
             # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
             #     credential_msg = None
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
                 await asyncio.sleep(1)
                 #credential_msg = pop_resource_latest(rec_id, message_name)
-                credential_msg = pop_resource_latest(message_name)
+                #credential_msg = pop_resource_latest(message_name)
+                credential_msg = get_resource_latest(message_name)
                 # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
                 #     credential_msg = None
                 i = i + 1
@@ -1319,12 +1322,14 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # state should be. This is a guess as afgo doesn't return states to receivers.
             if (message_name == "issue-credential-states-msg") and (credential_msg == None or "message" not in credential_msg):
                 message_name = "issue-credential-actions-msg"
-                credential_msg = pop_resource_latest(message_name)
+                #credential_msg = pop_resource_latest(message_name)
+                credential_msg = get_resource_latest(message_name)
                 i = 0
                 while credential_msg is None and i < MAX_TIMEOUT:
                     await asyncio.sleep(1)
                     # TODO May need to get instead of pop because the msg may be needed elsewhere.
-                    credential_msg = pop_resource_latest(message_name)
+                    #credential_msg = pop_resource_latest(message_name)
+                    credential_msg = get_resource_latest(message_name)
                     i = i + 1
                 if "message" in credential_msg:
                     op_type = credential_msg["message"]["Message"]["@type"]
