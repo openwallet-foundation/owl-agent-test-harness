@@ -379,7 +379,7 @@ startAgent() {
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
-    docker network connect aath_network "${CONTAINER_NAME}"
+    #docker network connect aath_network "${CONTAINER_NAME}"
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
       echo "Tail-ing log files for ${NAME} agent in ${container_id}"
       docker logs -f ${container_id} &
