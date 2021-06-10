@@ -34,7 +34,8 @@ impl Agent {
     pub fn get_schema(&mut self, id: &str) -> HarnessResult<String> {
         let schema: String = self.db.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Schema with id {} not found", id)))?;
-        Ok(schema)
+        let schema: serde_json::Value = serde_json::from_str(&schema).map_err(|err| HarnessError::from(err))?;
+        Ok(schema["data"].to_string())
     }
 }
 

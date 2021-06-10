@@ -52,7 +52,8 @@ enum State {
     CredentialSent,
     OfferReceived,
     RequestSent,
-    CredentialReceived
+    CredentialReceived,
+    Done
 }
 
 #[derive(Copy, Clone, Serialize)]

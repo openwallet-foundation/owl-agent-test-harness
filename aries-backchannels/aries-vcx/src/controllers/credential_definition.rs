@@ -36,7 +36,8 @@ impl Agent {
     pub fn get_credential_definition(&self, id: &str) -> HarnessResult<String> {
         let cred_def: String = self.db.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Credential definition with id {} not found", id)))?;
-        Ok(cred_def)
+        let cred_def: serde_json::Value = serde_json::from_str(&cred_def).map_err(|err| HarnessError::from(err))?;
+        Ok(cred_def["data"].to_string())
     }
 }
 
