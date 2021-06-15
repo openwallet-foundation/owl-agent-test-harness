@@ -1321,85 +1321,81 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             if operation == "send-request":
                 request_type = "presentation_request"
+
+                presentation_proposal = data.get("presentation_proposal", {})
+                pres_proposal_data = presentation_proposal.get("data", {})
+                cred_format = presentation_proposal.get("format")
                 
-                if data.get("presentation_proposal", {}).get("format") is None:
+                if cred_format is None:
                     raise Exception("Credential format not specified for presentation") 
-                else:
-                    cred_format = data["presentation_proposal"]["format"]
+                elif cred_format == "indy":
+                    requested_attributes = pres_proposal_data.get("requested_attributes", {})
+                    requested_predicates = pres_proposal_data.get("requested_predicates", {})
+                    proof_request_name = pres_proposal_data.get("name", "test proof")
+                    proof_request_version = pres_proposal_data.get("version", "1.0")
+                    non_revoked = pres_proposal_data.get("non_revoked")
 
-                if data.get("presentation_proposal", {}).get("data", {}).get("requested_attributes") is None:
-                    requested_attributes = {}
-                else:
-                    requested_attributes = data["presentation_proposal"]["data"]["requested_attributes"]
-
-                if data.get("presentation_proposal", {}).get("data", {}).get("requested_predicates") is None:
-                    requested_predicates = {}
-                else:
-                    requested_predicates = data["presentation_proposal"]["data"]["requested_predicates"]
-
-                if data.get("presentation_proposal", {}).get("data", {}).get("name") is None:
-                    proof_request_name = "test proof"
-                else:
-                    proof_request_name = data["presentation_proposal"]["data"]["name"]
-
-                if data.get("presentation_proposal", {}).get("data", {}).get("version") is None:
-                    proof_request_version = "1.0"
-                else:
-                    proof_request_version = data["presentation_proposal"]["data"]["version"]
-
-                if data.get("presentation_proposal", {}).get("data", {}).get("non_revoked") is None:
-                    non_revoked = None
-                else:
-                    non_revoked = data["presentation_proposal"]["data"]["non_revoked"]
-                
-                admin_data = {
-                    "comment": data["presentation_proposal"]["comment"],
-                    "trace": False,
-                    request_type: {
+                    presentation_request = {
                         cred_format: {
                             "name": proof_request_name,
                             "version": proof_request_version,
                             "requested_attributes": requested_attributes,
-                            "requested_predicates": requested_predicates
+                            "requested_predicates": requested_predicates,
                         }
                     }
+
+                    if non_revoked is not None:
+                        presentation_request[cred_format]["non_revoked"] = non_revoked
+
+                elif cred_format == "json-ld":
+                    # We use DIF format for JSON-LD credentials
+                    presentation_request = {
+                        "dif": pres_proposal_data
+                    }
+                else:
+                    raise Exception(f"Unknown credential format: {cred_format}")
+                
+                admin_data = {
+                    "comment": presentation_proposal["comment"],
+                    "trace": False,
+                    request_type: presentation_request
                 }
 
-                if "connection_id" in data["presentation_proposal"]:
-                    admin_data["connection_id"] = data["presentation_proposal"]["connection_id"] 
-
-                if non_revoked is not None:
-                    admin_data[request_type][cred_format]["non_revoked"] = non_revoked
+                if "connection_id" in presentation_proposal:
+                    admin_data["connection_id"] = presentation_proposal["connection_id"] 
             
             elif operation == "send-presentation":
+
+                cred_format = data.get("format")
                 
-                if data.get("format") is None:
+                if cred_format is None:
                     raise Exception("Credential format not specified for presentation") 
-                else:
-                    cred_format = data["format"]
+                elif cred_format == "indy":
+                    requested_attributes = data.get("requested_attributes", {})
+                    requested_predicates = data.get("requested_predicates", {})
+                    self_attested_attributes = data.get("self_attested_attributes", {})
 
-                if data.get("requested_attributes") == None:
-                    requested_attributes = {}
-                else:
-                    requested_attributes = data["requested_attributes"]
+                    presentation_data = {
+                        cred_format: {
+                            "requested_attributes": requested_attributes,
+                            "requested_predicates": requested_predicates,
+                            "self_attested_attributes": self_attested_attributes
+                        }
+                    }
+                elif cred_format == "json-ld":
+                    presentation = data.copy()
+                    presentation.pop("format")
 
-                if data.get("requested_predicates") == None:
-                    requested_predicates = {}
-                else:
-                    requested_predicates = data["requested_predicates"]
+                    presentation_data = {
+                        "dif": presentation
+                    }
 
-                if data.get("self_attested_attributes") == None:
-                    self_attested_attributes = {}
                 else:
-                    self_attested_attributes = data["self_attested_attributes"]
+                    raise Exception(f"Unknown credential format: {cred_format}")
 
                 admin_data = {
-                    "comment": data["comment"],
-                    cred_format: {
-                        "requested_attributes": requested_attributes,
-                        "requested_predicates": requested_predicates,
-                        "self_attested_attributes": self_attested_attributes
-                    }
+                    **presentation_data,
+                    "comment": data.get("comment", "some comment"),
                 }
 
             else:

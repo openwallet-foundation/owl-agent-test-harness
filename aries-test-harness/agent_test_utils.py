@@ -108,3 +108,16 @@ def amend_filters_with_runtime_data(context, filters):
 
 
     return filters
+
+def amend_presentation_definition_with_runtime_data(context, presentation_definition):
+    format = presentation_definition.get("format", {})
+    ldp_vp_proof_type = format.get("ldp_vp", {}).get("proof_type", [])
+
+    # Only ldp_vp with a single proof type replaced is supported ATM
+    if "replace_me" in ldp_vp_proof_type:
+        index = ldp_vp_proof_type.index("replace_me")
+        ldp_vp_proof_type[index] = context.proof_type
+
+        presentation_definition["format"]["ldp_vp"]["proof_type"] = ldp_vp_proof_type
+
+    return presentation_definition
