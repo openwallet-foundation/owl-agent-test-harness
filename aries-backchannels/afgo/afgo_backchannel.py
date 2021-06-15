@@ -52,6 +52,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
     agent_invitation_id = None
     agent_connection_id = None
 
+    myDID = None
+
     def __init__(
         self, 
         ident: str,
@@ -672,12 +674,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             "credential_preview": issue_credential_actions_msg["message"]["Message"]["credential_proposal"]
                         }
                     }
+                    # Save Issuer DID off for ease of later use
+                    self.myDID = issue_credential_actions_msg["message"]["Properties"]["myDID"]
                 else:
                     raise Exception(f"Cannot have both data and rec_id empty for issuecredential/{op['operation']}")
             else:
                 # Get connection by connection id contained in the data received
                 # Get the DID keys from the connection record
                 (their_did, my_did) = await self.get_DIDs_for_participants(data["connection_id"])
+                self.myDID = my_did
 
                 # remove schema/indy related items from data
                 if "schema_id" in data: data.pop("schema_id")
@@ -804,14 +809,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif operation == "send-request":
-            # if data is None:
-            #     data = {
-            #         "issue_credential": {
-            #         }
-            #     }
-            # else:
-            #     # TODO not sure yet.
-            #     pass
             
             log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
 
@@ -900,56 +897,59 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     
                     issue_credential_states_msg = json.loads(wh_text)
                     # Format the proposal for afgo issue
-                    data = {
-                        "issue_credential": {
-                            "credentials~attach": issue_credential_states_msg["message"]["Message"]["filters~attach"],
-                            "formats": issue_credential_states_msg["message"]["Message"]["formats"]
+                    if topic == "issue-credential-v2":
+                        data = {
+                            "issue_credential": {
+                                "credentials~attach": issue_credential_states_msg["message"]["Message"]["filters~attach"],
+                                "formats": issue_credential_states_msg["message"]["Message"]["formats"]
+                            }
                         }
-                    }
-                    #data["issue_credential"]["credentials~attach"]["formats"] = issue_credential_states_msg["message"]["Message"]["formats"]
+
                 else:
                     raise Exception(f"Have not passed a thread id for issuecredential/{op['operation']}")
 
                 # suppliment the message data with whatever afgo needs to make the store credential work
                 # IMO this is a defect in afgo
-                for dat in data["issue_credential"]["credentials~attach"]:
-                    #dat["data"]["json"].append(afgo_ammendment)
-                    dat["data"]["json"]["@context"] = []
-                    dat["data"]["json"]["credentialSubject"] = {}
-                    dat["data"]["json"]["issuanceDate"] = str(datetime.datetime.now().isoformat(timespec='seconds'))  + "Z"
-                    dat["data"]["json"]["issuer"] = {
-                        "id": json.loads(wh_text)["message"]["Properties"]["myDID"]
-                    }
-                    dat["data"]["json"]["type"] = [
-                        "VerifiableCredential",
-                        "AATHTestCredential"
-                    ]
+                if topic == "issue-credential-v2":
+                    for dat in data["issue_credential"]["credentials~attach"]:
+                        #dat["data"]["json"].append(afgo_ammendment)
+                        dat["data"]["json"]["@context"] = []
+                        dat["data"]["json"]["credentialSubject"] = {}
+                        dat["data"]["json"]["issuanceDate"] = str(datetime.datetime.now().isoformat(timespec='seconds'))  + "Z"
+                        dat["data"]["json"]["issuer"] = {
+                            "id": json.loads(wh_text)["message"]["Properties"]["myDID"]
+                        }
+                        dat["data"]["json"]["type"] = [
+                            "VerifiableCredential",
+                            "AATHTestCredential"
+                        ]
                 #data["issue_credential"]["credentials~attach"]["data"]["json"].append(afgo_ammendment)
 
-
-            # data = {
-                # "issue_credential": {
-                #     "credentials~attach":[
-                #         {
-                #             "data":{
-                #                 "json":{
-                #                     "@context":[
-                #                     ],
-                #                     "credentialSubject":{
-                #                     },
-                #                     "issuanceDate":"2010-01-01T19:23:24Z",
-                #                     "issuer":{
-                #                         "id":"did:peer:1zQmV22iXRZmKpap4JBKquF3CD2jnDYnNc3Mxpvi4NwnKgv4"
-                #                     },
-                #                     "type":[
-                #                         "VerifiableCredential",
-                #                         "AATHTestCredential"
-                #                     ]
-                #                 }
-                #             }
-                #         }
-                #     ]
-                # }
+                else:
+                    data = {
+                        "issue_credential": {
+                            "credentials~attach":[
+                                {
+                                    "data":{
+                                        "json":{
+                                            "@context":[
+                                            ],
+                                            "credentialSubject":{
+                                            },
+                                            "issuanceDate":str(datetime.datetime.now().isoformat(timespec='seconds'))  + "Z",
+                                            "issuer":{
+                                                "id": self.myDID
+                                            },
+                                            "type":[
+                                                "VerifiableCredential",
+                                                "AATHTestCredential"
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
 
             log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
 
