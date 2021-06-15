@@ -8,6 +8,7 @@ import subprocess
 import sys
 import uuid
 import base64
+import datetime
 from timeit import default_timer
 from operator import itemgetter
 
@@ -128,6 +129,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         # AATH API : AFGO Admin API
         self.issueCredentialWRecIDOperationTranslationDict = {
+            "prepare-json-ld": "prepare-json-ld",
             "send-proposal": "send-proposal",
             "send-offer": "accept-proposal",
             "send-request": "accept-offer",
@@ -140,6 +142,12 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "https://didcomm.org/issue-credential/2.0/offer-credential": "offer-received",
             "https://didcomm.org/issue-credential/2.0/request-credential": "request-received",
             "https://didcomm.org/issue-credential/2.0/issue-credential": "credential-received"
+        }
+
+        # credential format types to the format the tests expect
+        self.CredentialFromatTranslationDict = {
+            "hlindy/cred-filter@v2.0": "indy",
+            "aries/ld-proof-vc@v1.0": "json-ld",
         }
 
         self.map_test_ops_to_bachchannel = {
@@ -648,6 +656,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         if data is not None: log_msg(f"Data passed to backchannel by test for operation: {agent_operation}", data)
 
+        if operation == "prepare-json-ld":
+            # TODO Not sure what to do here if anything?
+            pass
+
         if operation == "send-proposal" or operation == "send-offer":
             if data is None:
                 # get the credential_proposal from the webhook
@@ -857,17 +869,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     raise Exception(f"Could not retieve State from webhook message: {issue_credential_states_msg}")
 
                 # Need a Credential_id in the response.
+                # TODO Test is expecting format like indy, etc to contain the credential_id, Get it from the Last Webhook
+                if "formats" in issue_credential_states_msg["message"]["Message"]:
+                    format = issue_credential_states_msg["message"]["Message"]["formats"][0]["format"]
+                    format = self.CredentialFromatTranslationDict[format]
+                    resp_json[format] = {
+                        "credential_id": rec_id
+                    }
                 resp_json["credential_id"] = rec_id # This is is also the Name of the cred.
                 resp_text = json.dumps(resp_json)
 
             return (resp_status, resp_text)
 
-            # state_cred_id = {
-            #     "state": "done",
-            #     "credential_id": rec_id
-            # }
-
-            # return (200, json.dumps(state_cred_id))
 
         elif operation == "issue":
             # TODO Need to get their DID to add to the data. Dummy input for now, which works fine.
@@ -876,57 +889,67 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if data is None or "issue_credential" not in data:
                 # get the credential_proposal from the webhook
                 if rec_id is not None:
-                    (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
+                    #(wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
+                    (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-states-msg")
                     log_msg(f"Credential Data retreived from webhook message: ", wh_text)
+                    
+                    # if the messsage doesn't contain credential details get it from the credential_details_msg
+                    if "filters~attach" not in wh_text:
+                        wh_text = pop_resource(rec_id, "credential-details-msg")
+                        wh_text = json.dumps(wh_text)
+                    
                     issue_credential_states_msg = json.loads(wh_text)
                     # Format the proposal for afgo issue
                     data = {
                         "issue_credential": {
-                            "credentials~attach": issue_credential_states_msg["message"]["Message"]["filters~attach"]
+                            "credentials~attach": issue_credential_states_msg["message"]["Message"]["filters~attach"],
+                            "formats": issue_credential_states_msg["message"]["Message"]["formats"]
                         }
                     }
-                    data["issue_credential"]["credentials~attach"]["formats"] = issue_credential_states_msg["message"]["Message"]["formats"]
+                    #data["issue_credential"]["credentials~attach"]["formats"] = issue_credential_states_msg["message"]["Message"]["formats"]
                 else:
                     raise Exception(f"Have not passed a thread id for issuecredential/{op['operation']}")
 
-            # data = {
-            #     "issue_credential": {
-            #         "credentials~attach":[
-            #             {
-            #                 "data":{
-            #                     "json":{
-            #                         "@context":[
-            #                         ],
-            #                         "credentialSubject":{
-            #                         },
-            #                         "issuanceDate":"2010-01-01T19:23:24Z",
-            #                         "issuer":{
-            #                             "id":"did:peer:1zQmV22iXRZmKpap4JBKquF3CD2jnDYnNc3Mxpvi4NwnKgv4"
-            #                         },
-            #                         "type":[
-            #                             "VerifiableCredential",
-            #                             "AATHTestCredential"
-            #                         ]
-            #                     }
-            #                 }
-            #             }
-            #         ]
-            #     }
-            # }
-            # else:
-            #     # TODO not sure yet.
-            #     pass
+                # suppliment the message data with whatever afgo needs to make the store credential work
+                # IMO this is a defect in afgo
+                for dat in data["issue_credential"]["credentials~attach"]:
+                    #dat["data"]["json"].append(afgo_ammendment)
+                    dat["data"]["json"]["@context"] = []
+                    dat["data"]["json"]["credentialSubject"] = {}
+                    dat["data"]["json"]["issuanceDate"] = str(datetime.datetime.now().isoformat(timespec='seconds'))  + "Z"
+                    dat["data"]["json"]["issuer"] = {
+                        "id": json.loads(wh_text)["message"]["Properties"]["myDID"]
+                    }
+                    dat["data"]["json"]["type"] = [
+                        "VerifiableCredential",
+                        "AATHTestCredential"
+                    ]
+                #data["issue_credential"]["credentials~attach"]["data"]["json"].append(afgo_ammendment)
 
-            #agent_operation = f"/{topic}/{rec_id}/accept-credential"
+
             # data = {
-            #     "names": [ "attr_1", "attr_2" ]
-            # }
-            # if data != None:
-            #     data = {
-            #         "names": [ f"{self.admin_url} created credential" ]
-            #     }
-            # else:
-            #     raise Exception(f"No payload given for {agent_operation}: {data}")
+                # "issue_credential": {
+                #     "credentials~attach":[
+                #         {
+                #             "data":{
+                #                 "json":{
+                #                     "@context":[
+                #                     ],
+                #                     "credentialSubject":{
+                #                     },
+                #                     "issuanceDate":"2010-01-01T19:23:24Z",
+                #                     "issuer":{
+                #                         "id":"did:peer:1zQmV22iXRZmKpap4JBKquF3CD2jnDYnNc3Mxpvi4NwnKgv4"
+                #                     },
+                #                     "type":[
+                #                         "VerifiableCredential",
+                #                         "AATHTestCredential"
+                #                     ]
+                #                 }
+                #             }
+                #         }
+                #     ]
+                # }
 
             log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
 
@@ -1304,16 +1327,16 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 message_name = "issue-credential-states-msg"
             await asyncio.sleep(1)
             #credential_msg = pop_resource_latest(rec_id, message_name)
-            #credential_msg = pop_resource_latest(message_name)
-            credential_msg = get_resource_latest(message_name)
+            credential_msg = pop_resource_latest(message_name)
+            #credential_msg = get_resource_latest(message_name)
             # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
             #     credential_msg = None
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
                 await asyncio.sleep(1)
                 #credential_msg = pop_resource_latest(rec_id, message_name)
-                #credential_msg = pop_resource_latest(message_name)
-                credential_msg = get_resource_latest(message_name)
+                credential_msg = pop_resource_latest(message_name)
+                #credential_msg = get_resource_latest(message_name)
                 # if message_name == "issue-credential-states-msg" and credential_msg["message"]["Type"] != "post_state":
                 #     credential_msg = None
                 i = i + 1
@@ -1339,7 +1362,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 else:
                     raise Exception(f"Could not retieve State from webhook message: {issue_credential_actions_msg}")
 
-
+            # There is an issue with the issue command and it needs the credential~attach as well as the thread_id
+            # Because we are popping the webhook off the stack because we are getting the protocol state we are losing
+            # the credential details (it isn't contained in every webhook message), and it is no longer being sent by 
+            # the tests. So, if the credential message contains the full credential like filters~attach, then re-add 
+            # it to the stack again keyed by the piid called credential_details_msg. This way if any call has a problem
+            # getting the cred details from the webhook messages, we have it here to fall back on.
+            credential_msg_txt = json.dumps(credential_msg)
+            if "filters~attach" in credential_msg_txt:
+                thread_id = credential_msg["message"]["Properties"]["piid"]
+                push_resource(thread_id, "credential-details-msg", credential_msg)
+                log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
+                
             resp_status = 200
             if credential_msg:
                 resp_text = json.dumps(credential_msg)
