@@ -5,7 +5,9 @@ use crate::{Agent, State};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::controllers::Request;
 use vcx::aries::messages::connection::invite::Invitation;
-use vcx::aries::handlers::connection::connection::Connection;
+use vcx::aries::handlers::connection::connection::{Connection, ConnectionState};
+use vcx::aries::handlers::connection::invitee::state_machine::InviteeState;
+use vcx::aries::handlers::connection::inviter::state_machine::InviterState;
 use vcx::api::VcxStateType;
 
 // Unsupported test cases:
@@ -22,20 +24,29 @@ struct Comment {
 }
 
 fn _get_state(connection: &Connection) -> State {
-    match VcxStateType::from_u32(connection.state()) {
-        VcxStateType::VcxStateNone => State::Initial,
-        VcxStateType::VcxStateInitialized => State::Invited,
-        VcxStateType::VcxStateOfferSent => State::Requested,
-        VcxStateType::VcxStateRequestReceived => State::Responded,
-        VcxStateType::VcxStateAccepted => State::Complete,
-        _ => State::Unknown
+    match connection.get_state() {
+        ConnectionState::Invitee(state) => match state {
+            InviteeState::Null => State::Initial,
+            InviteeState::Invited => State::Invited,
+            InviteeState::Requested => State::Requested,
+            InviteeState::Responded => State::Responded,
+            InviteeState::Completed => State::Complete
+        }
+        ConnectionState::Inviter(state) => match state {
+            InviterState::Null => State::Initial,
+            InviterState::Invited => State::Invited,
+            InviterState::Requested => State::Requested,
+            InviterState::Responded => State::Responded,
+            InviterState::Completed => State::Complete
+
+        }
     }
 }
 
 impl Agent {
     pub fn create_invitation(&mut self) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create(&id, false);
+        let mut connection = Connection::create(&id, false).map_err(|err| HarnessError::from(err))?;
         connection.connect().map_err(|err| HarnessError::from(err))?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
@@ -43,10 +54,9 @@ impl Agent {
         Ok(json!({ "connection_id": id, "invitation": invite }).to_string())
     }
 
-    pub fn receive_invitation(&mut self, invite: &str) -> HarnessResult<String> {
+    pub fn receive_invitation(&mut self, invite: Invitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let invite: Invitation = serde_json::from_str(invite).map_err(|err| HarnessError::from(err))?;
-        let connection = Connection::create_with_invite(&id, invite, false).map_err(|err| HarnessError::from(err))?;
+        let mut connection = Connection::create_with_invite(&id, invite, false).map_err(|err| HarnessError::from(err))?;
         self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string())
     }
@@ -63,7 +73,7 @@ impl Agent {
     pub fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.db.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        if connection.state() != VcxStateType::VcxStateOfferSent as u32 {
+        if connection.get_state() != ConnectionState::Inviter(InviterState::Requested) {
             return Err(HarnessError::from_kind(HarnessErrorType::RequestNotAcceptedError));
         }
         connection.update_state().map_err(|err| HarnessError::from(err))?;
@@ -99,8 +109,8 @@ pub async fn create_invitation(agent: web::Data<Mutex<Agent>>) -> impl Responder
 }
 
 #[post("/receive-invitation")]
-pub async fn receive_invitation(req: web::Json<Request<String>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
-    agent.lock().unwrap().receive_invitation(&req.data)
+pub async fn receive_invitation(req: web::Json<Request<Invitation>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
+    agent.lock().unwrap().receive_invitation(req.data.clone())
 }
 
 #[post("/accept-invitation")]
