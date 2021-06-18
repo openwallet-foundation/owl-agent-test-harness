@@ -9,6 +9,7 @@ pub mod general;
 pub mod credential_definition;
 pub mod schema;
 pub mod issuance;
+pub mod presentation;
 
 #[derive(Deserialize)]
 struct Request<T> {

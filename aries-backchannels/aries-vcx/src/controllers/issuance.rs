@@ -81,7 +81,7 @@ impl Agent {
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
         // TODO: Maybe just take Connection
-        holder.send_request(connection.agent_info().pw_did.to_string(), connection.send_message_closure().map_err(|err| HarnessError::from(err))?).map_err(|err| HarnessError::from(err))?;
+        holder.send_request(connection.pairwise_info().pw_did.to_string(), connection.send_message_closure().map_err(|err| HarnessError::from(err))?).map_err(|err| HarnessError::from(err))?;
         let state = _get_state_holder(&holder);
         self.db.set(&id, &holder).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "state": state }).to_string())

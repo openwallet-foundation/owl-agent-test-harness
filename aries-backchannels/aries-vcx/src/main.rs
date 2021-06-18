@@ -6,7 +6,7 @@ use std::sync::Mutex;
 
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web, guard, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
-use crate::controllers::{general, connection, credential_definition, issuance, schema};
+use crate::controllers::{general, connection, credential_definition, issuance, schema, presentation};
 use vcx::aries::handlers::connection::connection::Connection;
  
 extern crate serde;
@@ -42,9 +42,6 @@ enum State {
     Requested,
     Responded,
     Complete,
-    Rejected,
-    AwaitReponse,
-    ReceiveResponse,
     Failure,
     Unknown,
     OfferSent,
@@ -53,6 +50,8 @@ enum State {
     OfferReceived,
     RequestSent,
     CredentialReceived,
+    PresentationSent,
+    PresentationReceived,
     Done
 }
 
@@ -124,6 +123,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(schema::config)
                     .configure(credential_definition::config)
                     .configure(issuance::config)
+                    .configure(presentation::config)
                     .configure(general::config)
             )
     })
