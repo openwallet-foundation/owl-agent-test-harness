@@ -297,11 +297,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
         log_msg(f'Processed a out-of-band-states Webhook message: {json.dumps(message)}')
 
     async def handle_didexchange_states(self, message):
-        # Maybe do both key by conneciton id and invitation id?
-        #connection_id = message["connection_id"]
-        #push_resource(connection_id, "connection-msg", message)
-        #log_msg('Received a Connection Webhook message: ' + json.dumps(message))
-
         # oob didexcahgne states are usually invitations
         if "invitationID" in message["message"]["Properties"]:
             invitation_id = message["message"]["Properties"]["invitationID"]
@@ -507,7 +502,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             
         elif op["topic"] == "revocation":
             #set the acapyversion to master since work to set it is not complete. Remove when master report proper version
-            #self.afgo_version = "0.5.5-RC"
             operation = op["operation"]
             agent_operation, admin_data = await self.get_agent_operation_afgo_version_based(op["topic"], operation, rec_id, data)
             
@@ -580,27 +574,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
         return json.dumps(resp_json)
 
     async def get_DIDs_for_participants(self, connection_id):
-        # if connection_id is None:
-        #     # Get DIDs from latest webhook message
-        #     # TODO This below is not working so hardcode the issuer id for now and
-        #     # figure out a way to get the issuer DID 
-        #     message = get_resource_latest("issue-credential-actions-msg")
-        #     if message is None:
-        #         raise Exception("Attempted to get Issuer DID from Webhook message but message is None")
-        #     else:
-        #         message_json = json.loads(message)
-        #         if 'theirDID' in message:
-        #             their_did = message_json["message"]["Properties"]["theirDID"]
-        #         else:
-        #             raise Exception(f"theirDID not returned in Webhook message: {message}")
-        #         if 'myDID' in message:
-        #             my_did = message_json["message"]["Properties"]["myDID"]
-        #         else:
-        #             raise Exception(f"myDID not returned in Webhook message: {message}")
-        #         return (their_did, my_did)
-        # else:
-            # Get connection by connection id contained in the data received
-            # Get the DID keys from the connection record
         operation = f"/connections/{connection_id}"
         (resp_status, resp_text) = await self.admin_GET(operation)
         if resp_status == 200:
@@ -666,7 +639,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if resp_status == 200:
                 # Response doesn't have a state, get it from the connection record.
                 log_msg(f"Temp Debug - Message sent to amend_response_with_state, needs connection id: {operation}", resp_text)
-                #await asyncio.sleep(3)
                 resp_text = await self.amend_response_with_state("connections", resp_text)
                 log_msg(f"Temp Debug - resp_text returned from amend_response_with_state, needs state: {operation}", resp_text)
                 # Translate the given state to the expected RFC state.
@@ -677,8 +649,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-        #if resp_status == 200 and (resp)
-        #if resp_status == 200: resp_text = self.add_did_exchange_state_to_response(operation, resp_text)
 
         return (resp_status, resp_text)
 
@@ -752,7 +722,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         # TODO support more than one filter
                         # encode the json to base64
                         json_filter = data["filter"]
-                        #json_filter_b64 = base64.b64encode(json_filter.encode('utf-8'))
                         # add an id for the filter
                         filter_id = str(uuid.uuid1())
                         # add mime_type (json)
@@ -774,8 +743,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                                 "format": "hlindy/cred-filter@v2.0"
                             }
                         ]
-                        
-                        # data["propose_credential"]["filters~attach"] = data["filter"]
+
                         data.pop("filter")
 
                 elif operation == "send-offer":
@@ -814,7 +782,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             }
                         ]
                         
-                        # data["propose_credential"]["filters~attach"] = data["filter"]
                         data.pop("filter")
 
             log_msg(f"Data translated by backchannel to send to agent for operation: {agent_operation}", data)
@@ -1121,20 +1088,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             ]
 
             data = ammended_data
-
-            # data = {
-            #     "@context":[
-            #         "https://www.w3.org/2018/credentials/v1",
-            #         "https://www.w3.org/2018/credentials/examples/v1"
-            #     ],
-            #     "holder":"did:example:ebfeb1f712ebc6f1c276e12ec21",
-            #     "id":"urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5",
-            #     "type":[
-            #         "VerifiablePresentation",
-            #         "CredentialManagerPresentation"
-            #     ],
-            #     "verifiableCredential":None
-            # }
 
         elif operation == "verify-presentation":
 
