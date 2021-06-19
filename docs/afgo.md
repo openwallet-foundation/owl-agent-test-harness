@@ -4,7 +4,7 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.6.0 | afgo-interop<br>unknown | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | pre-AIP 2.0 | [**3 / 5<br>60%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.6.0 | afgo-interop<br>unknown | acapy-main<br>0.6.0 | acapy-main<br>0.6.0 | pre-AIP 2.0 | [**2 / 5<br>40%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.6.0 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**2 / 5<br>40%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo](#runset-afgo) | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | pre-AIP 2.0 | [**3 / 4<br>75%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
 
@@ -15,10 +15,10 @@
 Runset Name: ACA-PY to AF-Go
 
 ```tip
-**Latest results: 3 out of 5 (60%)**
+**Latest results: 2 out of 5 (40%)**
 
 
-*Last run: Fri Jun 11 01:22:58 UTC 2021*
+*Last run: Sat Jun 19 01:23:24 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -42,7 +42,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 2 out of 5 (40%)**
 
 
-*Last run: Fri Jun 11 01:55:40 UTC 2021*
+*Last run: Sat Jun 19 01:54:53 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -66,7 +66,7 @@ Runset Name: AF-Go to AF-Go
 **Latest results: 3 out of 4 (75%)**
 
 
-*Last run: Fri Jun 11 01:55:12 UTC 2021*
+*Last run: Sat Jun 19 01:56:11 UTC 2021*
 ```
 
 #### Current Runset Status
