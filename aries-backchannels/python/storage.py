@@ -31,7 +31,8 @@ def get_resource_latest(data_type):
     try:
         data_ids = list(storage.keys())
         data_id = data_ids[-1]
-        data_type = storage[data_id]
+        #data_type_keys = list(storage[data_id].keys())
+        #data_type = data_type_keys[-1]
         data = storage[data_id][data_type][-1]
         return data
     finally:
