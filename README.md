@@ -186,6 +186,13 @@ or all the ExceptionTests...
 ./manage run -t @ExceptionTest
 ```
 
+Using AND, OR in Test Execution Tags
+Stringing tags together in one `-t` with commas as separators is equivalent to an `OR`. The separate `-t` options is equivalent to an `AND`.
+```bash
+./manage run -d acapy-master -t @RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_JSON-LD
+```  
+So the command above will run tests from RFC0453 or RFC0454, without the wip tag, and without the CredFormat_JSON-LD tag.
+
 To read more on how one can control the execution of test sets based on tags see the [behave documentation](https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags)
 
 The option `-i <inifile>` can be used to pass a file in the `behave.ini` format into behave. With that, any behave configuration settings can be specified to control how behave behaves. See the behave documentation about the `behave.ini` configuration file [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files).
