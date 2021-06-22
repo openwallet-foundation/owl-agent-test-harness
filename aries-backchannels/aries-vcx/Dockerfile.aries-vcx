@@ -1,9 +1,17 @@
 FROM docker.pkg.github.com/hyperledger/aries-vcx/libvcx:0.17.3
 
-WORKDIR /aries-vcx-backchannel/aries-vcx
+USER root
 
-COPY aries-vcx .
-COPY libvcx ../libvcx
+ARG UID=1001
+ARG GID=1001
+
+RUN addgroup -g $GID agent && adduser -u $UID -D -G agent agent
+
+WORKDIR home/agent/aries-vcx-backchannel/aries-vcx
+COPY --chown=agent:agent aries-vcx .
+RUN chown -R agent:agent .
+
+USER agent
 
 RUN cargo build
 

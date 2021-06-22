@@ -1,0 +1,45 @@
+name: test-harness-ariesvcx-ariesvcx
+# on:
+#   workflow_dispatch:
+#   schedule:
+#     - cron: "35 0 * * *"
+on:
+  push:
+    branches:
+      - "**"
+defaults:
+  run:
+    shell: bash
+jobs:
+  test:
+    runs-on: ubuntu-latest
+      # if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    steps:
+      - name: checkout-test-harness
+        uses: actions/checkout@v2
+        with:
+          path: test-harness
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: run-von-network
+        uses: ./test-harness/actions/run-von-network
+      - name: run-indy-tails-server
+        uses: ./test-harness/actions/run-indy-tails-server
+      - name: run-test-harness-wo-reports
+        uses: ./test-harness/actions/run-test-harness-wo-reports
+        with:
+          BUILD_AGENTS: "-a aries-vcx"
+          TEST_AGENTS: "-d aries-vcx"
+          TEST_SCOPE: "-t @T003-RFC0036 -t @T001-RFC0037 -t @T001-RFC0160 -t @T001.2-RFC0160 -t @T002-RFC0160"
+          REPORT_PROJECT: aries-vcx  
+        continue-on-error: true
+      - name: run-send-gen-test-results-secure
+        uses: ./test-harness/actions/run-send-gen-test-results-secure
+        with:
+          REPORT_PROJECT: aries-vcx 
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}
