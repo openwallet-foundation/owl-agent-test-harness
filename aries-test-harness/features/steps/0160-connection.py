@@ -141,8 +141,8 @@ def step_impl(context, inviter, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
     # get connection and verify status
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=10.0)
-    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "requested", wait_time=10.0)
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=60.0)
+    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "requested", wait_time=60.0)
 
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
@@ -185,7 +185,7 @@ def step_impl(context, inviter):
     inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # inviter already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
-    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=10.0)
+    assert expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=60.0)
 
 
 @when('"{inviter}" accepts the connection response to "{invitee}"')
@@ -251,10 +251,10 @@ def step_impl(context, inviter, invitee):
         topic = "connection"
 
     # get connection and verify status for inviter
-    assert expected_agent_state(inviter_url, topic, inviter_connection_id, state_to_assert, wait_time=10.0)
+    assert expected_agent_state(inviter_url, topic, inviter_connection_id, state_to_assert, wait_time=60.0)
 
     # get connection and verify status for invitee
-    assert expected_agent_state(invitee_url, topic, invitee_connection_id, state_to_assert, wait_time=10.0)
+    assert expected_agent_state(invitee_url, topic, invitee_connection_id, state_to_assert, wait_time=60.0)
 
 @then('"{invitee}" is connected to "{inviter}"')
 def step_impl(context, inviter, invitee):
