@@ -4,6 +4,7 @@ from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_PO
 from agent_test_utils import format_cred_proposal_by_aip_version
 from time import sleep
 import time
+from random import *
 
 # This step is defined in another feature file
 # Given "Acme" and "Bob" have an existing connection
@@ -18,7 +19,7 @@ SCHEMA_TEMPLATE = {
 CRED_DEF_TEMPLATE = {
   "support_revocation": False,
   "schema_id": "",
-  "tag": "default"
+  "tag": str(randint(1, 10000))
 }
 
 CREDENTIAL_ATTR_TEMPLATE = [
@@ -276,7 +277,8 @@ def step_impl(context, holder):
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "request-sent"
+    resp_state = resp_json["state"]
+    assert resp_state == "request-sent", f'resp_state {resp_state} is not request-sent'
 
     # Verify issuer status
     assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received", wait_time=60.0)

@@ -92,13 +92,13 @@ def step_impl(context, prover, issuer):
     # issue the credential to prover
     # If there is a schema_dict then we are working with mulitple credential types, loop as many times as 
     # there are schemas and add the schema to context as the issue cred tests expect. 
-    if "Indy" in context.tags:
-        context_steps_start = '''
-            When  "''' + prover + '''" proposes a credential to "''' + issuer + '''"
-            And '''
-    else:
-        context_steps_start = '''
-            When '''
+    # if "Indy" in context.tags:
+    #     context_steps_start = '''
+    #         When  "''' + prover + '''" proposes a credential to "''' + issuer + '''"
+    #         And '''
+    # else:
+    context_steps_start = '''
+        When '''
     if 'schema_dict' not in context:
         context_steps = context_steps_start + ''' "''' + issuer + '''" offers a credential
             And "''' + prover + '''" requests the credential
@@ -130,29 +130,32 @@ def step_impl(context, verifier, prover):
              data["non_revoked"] = context.non_revoked_timeframe["non_revoked"]
     else:   
         data = {
-                    "requested_attributes": {
-                        "attr_1": {
-                            "name": "attr_1",
-                            "restrictions": [
-                                {
-                                    "schema_name": "test_schema." + context.issuer_name,
-                                    "schema_version": "1.0.0"
-                                }
-                            ]
+                "json": {
+                        "requested_attributes": {
+                            "attr_1": {
+                                "name": "attr_1",
+                                "restrictions": [
+                                     {
+                                         "schema_name": "test_schema." + context.issuer_name,
+                                         "schema_version": "1.0.0"
+                                     }
+                                ]
+                            }
                         }
                     }
                 }
 
     if ('connectionless' in context) and (context.connectionless == True):
         presentation_proposal = {
+            "@id": "libindy-request-presentation-0",
             "presentation_proposal": {
                 "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
                 "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
+                "request_presentations~attach": [{
                     "@id": "libindy-request-presentation-0",
                     "mime-type": "application/json",
                     "data":  data
-                }
+                }]
             }
         }
         (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="create-send-connectionless-request", data=presentation_proposal)
@@ -162,11 +165,11 @@ def step_impl(context, verifier, prover):
             "presentation_proposal": {
                 "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
                 "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
+                "request_presentations~attach": [{
                     "@id": "libindy-request-presentation-0",
                     "mime-type": "application/json",
                     "data":  data
-                }
+                }]
             }
         }
 
@@ -238,7 +241,7 @@ def step_impl(context, prover):
                 presentation["requested_attributes"][list(presentation["requested_attributes"])[i]].pop("cred_type_name")
         except KeyError:
             pass
-        
+
         try:
             for i in range(json.dumps(presentation["requested_predicates"]).count("cred_id")):
                 # Get the schema name from the loaded presentation for each requested predicates
@@ -253,7 +256,7 @@ def step_impl(context, prover):
         except KeyError:
             pass
 
-    else:   
+    else:
         presentation = {
             "comment": "This is a comment for the send presentation.",
             "requested_attributes": {
