@@ -279,6 +279,9 @@ waitForTailsServer(){
 pingAgent(){
   name=${1}
   port=${2}
+  container_name=${3}
+
+  docker logs $container_name
 
   # ping agent using a backchannel-exposed api
   rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:${port}/agent/command/status/)
@@ -338,7 +341,7 @@ startAgent() {
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     local LEDGER_URL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
     local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
-    local container_id=$(docker run -d -it --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"
@@ -413,10 +416,10 @@ runTests() {
   startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG"
 
   echo
-  waitForAgent Acme 9020
-  waitForAgent Bob 9030
-  waitForAgent Faber 9040
-  waitForAgent Mallory 9050
+  waitForAgent Acme 9020 $ACME_AGENT
+  waitForAgent Bob 9030 $BOB_AGENT
+  waitForAgent Faber 9040 $FABER_AGENT
+  waitForAgent Mallory 9050 $MALLORY_AGENT
 
   echo
   # Allure Reports environment.properties file handling
