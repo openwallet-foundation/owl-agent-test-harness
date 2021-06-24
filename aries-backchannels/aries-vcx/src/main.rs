@@ -3,6 +3,7 @@ mod setup;
 mod error;
 
 use std::sync::Mutex;
+use std::env;
 
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web, guard, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
@@ -98,6 +99,10 @@ impl Agent {
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let opts: Opts = Opts::parse();
+    let host = match std::env::var("DOCKERHOST").ok() {
+        Some(dockerhost) => dockerhost,
+        None => String::from("localhost")
+    };
 
     ctrlc::set_handler(move || {
         setup::shutdown();
@@ -128,7 +133,7 @@ async fn main() -> std::io::Result<()> {
             )
     })
         .workers(1)
-        .bind(format!("127.0.0.1:{}", opts.port))?
+        .bind(format!("{}:{}", host, opts.port))?
         .run()
         .await
 }

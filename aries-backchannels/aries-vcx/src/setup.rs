@@ -1,31 +1,46 @@
 use vcx::init::{open_main_pool, PoolConfig, open_as_main_wallet, init_issuer_config}; // TODO: Should we move all Config arguments to a single module?
-use vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfig, IssuerConfig};
+use vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfig};
 use vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfig};
 use vcx::libindy::utils::pool;
 use vcx::utils::plugins::init_plugin;
 use vcx::settings;
 use std::io::prelude::*;
 use crate::AgentConfig;
-use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
-use serde_json::Value;
 use uuid;
 
-async fn download_tails() -> std::io::Result<String> {
-    info!("Downloading tails file");
-    // let body = reqwest::get("http://127.0.0.1:9000/genesis")
-    //     .await.unwrap()
-    //     .text()
-    //     .await.unwrap();
-    let path = std::env::current_dir()?.join("resource").join("indypool.txn").to_str().unwrap().to_string();
-    // let path = std::env::current_dir()?.join("resource").join("von.txn");
-    // let mut f = std::fs::OpenOptions::new()
-    //     .write(true)
-    //     .create(true)
-    //     .open(path.clone())
-    //     .expect("Unable to open file");
-    // f.write_all(body.as_bytes()).expect("Unable to write data");
-    debug!("Tails file downloaded");
-    Ok(path)
+async fn download_tails() -> std::result::Result<String, String> {
+    match std::env::var("TAILS_FILE").ok() {
+        Some(tails_file) => {
+            if !std::path::Path::new(&tails_file).exists() {
+                Err(format!("The file {} does not exist", tails_file))
+            } else {
+                info!("Using tails file {}", tails_file);
+                Ok(tails_file)
+            }
+        }
+        None => match std::env::var("LEDGER_URL").ok() {
+            Some(ledger_url) => {
+                info!("Downloading tails file");
+                let genesis_url = format!("{}/genesis", ledger_url);
+                let body = reqwest::get(&genesis_url)
+                    .await.unwrap()
+                    .text()
+                    .await.unwrap();
+                let path = std::env::current_dir().unwrap().join("resource").join("genesis_file.txn");
+                let mut f = std::fs::OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(path.clone())
+                    .expect("Unable to open file");
+                f.write_all(body.as_bytes()).expect("Unable to write data");
+                debug!("Tails file downloaded and saved to {:?}", path);
+                path.to_str().map(|s| s.to_string()).ok_or("Failed to convert genesis file path to string".to_string())
+            }
+            None => {
+                std::env::current_dir().unwrap().join("resource").join("indypool.txn").to_str().map(|s| s.to_string()).ok_or("Failed to convert genesis file path to string".to_string())
+            }
+        }
+    }
 }
 
 pub async fn initialize() -> std::io::Result<AgentConfig> {
