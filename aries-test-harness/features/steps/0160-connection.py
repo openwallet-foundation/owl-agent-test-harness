@@ -133,7 +133,7 @@ def step_impl(context, invitee):
         # This means the connection id was not retreived for the inviter in the create invitation step
         # Get the connection id for the inviter given the invitation_id
         #context.connection_id_dict[context.inviter_name] = {invitee:  resp_json["connection_id"]}
-        (alt_resp_status, alt_resp_text) = agent_backchannel_GET(context.inviter_url + "/agent/response/", "conection", id=context.inviter_invitation["@id"])
+        (alt_resp_status, alt_resp_text) = agent_backchannel_GET(context.inviter_url + "/agent/response/", "connection", id=context.inviter_invitation["@id"])
         assert alt_resp_status == 200, f'resp_status {alt_resp_status} is not 200; {alt_resp_text}'
         alt_resp_json = json.loads(alt_resp_text)
         context.connection_id_dict[context.inviter_name] = {invitee: alt_resp_json["connection_id"]}
