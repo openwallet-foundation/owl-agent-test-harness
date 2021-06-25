@@ -27,6 +27,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    env:
+      LEDGER_URL_CONFIG: "http://localhost:9000"
+      TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2
@@ -41,7 +44,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a afgo-master"
           TEST_AGENTS: "-d afgo-master"
-          TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023  -t ~@T005-RFC0023 -t ~@T006-RFC0023"
+          TEST_SCOPE: "-t @RFC0023,@T001.1-RFC0036,@RFC0453,@RFC0454 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023  -t ~@T005-RFC0023 -t ~@T006-RFC0023 -t ~@CredFormat_JSON-LD"
           REPORT_PROJECT: afgo 
         continue-on-error: true
       - name: run-send-gen-test-results-secure

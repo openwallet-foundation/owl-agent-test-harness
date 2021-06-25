@@ -14,6 +14,17 @@ export LEDGER_TIMEOUT=60
 # these two can be overrode via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
+
+# these are derived from the above two
+LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
+LEDGER_URL_INTERNAL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
+TAILS_SERVER_URL_HOST="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
+TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
+# important: inside the internal URLs, we replace "://localhost:" with "://${DOCKERHOST}:"
+#   so it works inside docker.
+LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
+TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
+
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
   # Prefix interactive terminal commands ...
@@ -41,7 +52,7 @@ if [ "${PWD_HOST_FQDN}" != "" ]; then
   # Check if von-network is running
   # Should this be moved out of the Play with Docker section?
   if [ "${1}" == "run" ]; then
-    curl -s ${GENESIS_URL} >/dev/nul
+    curl -s ${GENESIS_URL} > /dev/null
     res=$?
     if test "$res" != "0"; then
       echo "Error: Unable to find the genesis file for the Indy Network"
@@ -68,7 +79,7 @@ usage () {
       - "agent" must be one from the supported list: ${VALID_AGENTS}
       - multiple agents may be built by specifying multiple -a options
       - By default, all agents and the harness will be built
-  
+
   rebuild [ -a agent ]* args
     Same as build, but adds the --no-cache option to force building from scratch
 
@@ -96,11 +107,33 @@ usage () {
     $0 run -d vcx                           - Run all tests for all features using the vcx agent in all roles
     $0 run -d acapy -t @SmokeTest -t @P1    - Run the tests tagged @SmokeTest and/or @P1 (priority 1) using all ACA-Py agents
     $0 run -d acapy -b mobile -n -t @MobileTest  - Run the mobile tests using ngrok endpoints
-  
+
   tags - Get a list of the tags on the features tests
 
   tests - Get a list of the test scenarios in the features, including the associated tags
+
+  test [-r allure [-e comparison]] [ -i <ini file> ] [ -o <output file> ] [ -n ] [ -v <AIP level> ] [ -t tags ]*
+    Run the tagged tests using the set of agents that were started with the 'start' command, using all the same parameters as 'run',
+    except -a/b/f/m/d/n.
+
   scenarios - synonym for tests, but longer and harder to spell
+
+  service [start|stop|logs|clean] service-name
+    Run the given service command on the given service. Commands:
+      - start: start the service, creating the AATH docker network if necessary.
+      - stop: stop the service, deleting the AATH docker network if it's now unused.
+      - logs: print the scrolling logs of the service. Ctrl-C to exit.
+      - clean: clean up the service containers and build files, if any.
+
+  start [ -a/b/f/m/d agent ]* [-n]
+    Initialize the test harness using the specified agents for Acme, Bob, Faber and Mallory.
+      Select the agents for the roles of Acme (-a), Bob (-b), Faber (-f) and Mallory (-m).
+      - For all to be set to the same, use "-d" for default.
+      - The value for agent must be one of: ${VALID_AGENTS}
+    Use the -n option to start ngrok endpoints for each agent
+        (this is *required* when testing with a Mobile agent)
+
+  stop - stop the test harness.
 
   rebuild - Rebuild the docker images.
 
@@ -223,11 +256,10 @@ waitForLedger(){
   (
     # Wait for ledger server to start ...
     local startTime=${SECONDS}
-    # use global LEDGER_URL
-    local LEDGER_URL="${LEDGER_URL_CONFIG:-http://localhost:9000}"
     local rtnCd=0
     printf "waiting for ledger to start"
-    while ! pingLedger "$LEDGER_URL"; do
+    # use ledger URL from host
+    while ! pingLedger "$LEDGER_URL_HOST"; do
       printf "."
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
@@ -258,10 +290,10 @@ waitForTailsServer(){
   (
     # Wait for tails server to start ...
     local startTime=${SECONDS}
-    local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
     local rtnCd=0
     printf "waiting for tails server to start"
-    while ! pingTailsServer "$TAILS_SERVER_URL"; do
+    # use tails server URL from host
+    while ! pingTailsServer "$TAILS_SERVER_URL_HOST"; do
       printf "."
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
@@ -323,6 +355,15 @@ startAgent() {
   local BACKCHANNEL_PORT=$5
   local AGENT_ENDPOINT_PORT=$6
   local AIP_CONFIG=$7
+  local AGENT_NAME=$8
+
+  local ENV_PATH="$(find aries-backchannels -name *${AGENT_NAME}.env)"
+  local ENV_FILE_ARG=
+
+  if [[ -n $ENV_PATH ]]; then
+    ENV_FILE_ARG="--env-file=$ENV_PATH"
+    # echo $ENV_FILE_ARG
+  fi
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     if [[ "${USE_NGROK}" = "true" ]]; then
@@ -339,14 +380,10 @@ startAgent() {
       export NGROK_NAME=
     fi
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    local LEDGER_URL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
-    local TAILS_SERVER_URL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
     local CLOUD_AGENCY_URL="${CLOUD_AGENCY_URL_CONFIG:-http://${DOCKERHOST}:8080}"
-    local container_id=$(docker run --rm --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
-    if [[ "${USE_NGROK}" = "true" ]]; then
-      docker network connect aath_network "${CONTAINER_NAME}"
-    fi
+    #docker network connect aath_network "${CONTAINER_NAME}"
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
       echo "Tail-ing log files for ${NAME} agent in ${container_id}"
       docker logs -f ${container_id} &
@@ -357,7 +394,7 @@ startAgent() {
 }
 
 writeEnvProperties() {
-  ACME_VERSION=$(getAgentVersion 9020) 
+  ACME_VERSION=$(getAgentVersion 9020)
   BOB_VERSION=$(getAgentVersion 9030)
   FABER_VERSION=$(getAgentVersion 9040)
   MALLORY_VERSION=$(getAgentVersion 9050)
@@ -388,17 +425,99 @@ getAgentVersion(){
   # fi
 }
 
-runTests() {
-  runArgs=${@}
+createNetwork() {
+  if [[ -z `docker network ls -q --filter "name=aath_network"` ]]; then
+    docker network create aath_network > /dev/null
+  fi
+}
+
+cleanupNetwork() {
+  if [[ -z `docker ps -q --filter "network=aath_network"` && `docker network ls -q --filter "name=aath_network"` ]]; then
+    docker network rm aath_network > /dev/null
+  fi
+}
+
+auxiliaryService() {
+  local SERVICE_NAME
+  local SERVICE_COMMAND
+  SERVICE_NAME=$1
+  SERVICE_COMMAND=$2
+
+  if [[ -f "./services/${SERVICE_NAME}/wrapper.sh" ]]; then
+    (./services/${SERVICE_NAME}/wrapper.sh $SERVICE_COMMAND)
+  else
+    echo "service ${SERVICE_NAME} doesn't exist"
+  fi
+}
+
+serviceCommand() {
+  local SERVICE_COMMAND
+  SERVICE_COMMAND=$1
+  local SERVICE_TARGET
+  SERVICE_TARGET=$2
+
+  # TODO: allow multiple services to be named - but can we handle logs command then?
+
+  case "${SERVICE_COMMAND}" in
+    start)
+        createNetwork
+        auxiliaryService ${SERVICE_TARGET} ${SERVICE_COMMAND}
+      ;;
+    logs)
+        auxiliaryService ${SERVICE_TARGET} ${SERVICE_COMMAND}
+      ;;
+    stop|clean)
+        auxiliaryService ${SERVICE_TARGET} ${SERVICE_COMMAND}
+        cleanupNetwork
+      ;;
+    *)
+        echo "unrecognized service command '${SERVICE_COMMAND}', must be one of 'start', 'stop', 'clean', 'logs'"
+      ;;
+  esac
+}
+
+startHarness(){
+  echo Agents to be used:
+  echo "  Acme - ${ACME}"
+  echo "  Bob - ${BOB}"
+  echo "  Faber - ${FABER}"
+  echo "  Mallory - ${MALLORY}"
+  echo ""
+
+  createNetwork
+
+  # if we're *not* using an external VON ledger, start the local one
+  if [[ -z ${LEDGER_URL_CONFIG} ]]; then
+    if [[ -z `docker ps -q --filter="name=von_webserver_1"` ]]; then
+      echo "starting local von-network..."
+      auxiliaryService von-network start
+      export STARTED_LOCAL_LEDGER=true
+    fi
+  fi
 
   if ! waitForLedger; then
     echoRed "\nThe Indy Ledger is not running.\n"
     exit 1
   fi
 
+  # if we're *not* using an external indy tails server, start the local one
+  if [[ -z ${TAILS_SERVER_URL_CONFIG} ]]; then
+    if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]]; then
+      echo "starting local indy-tails-server..."
+      auxiliaryService indy-tails start
+      export STARTED_LOCAL_TAILS=true
+    fi
+  fi
+
   if ! waitForTailsServer; then
     echoRed "\nThe Indy Tails Server is not running.\n"
     exit 1
+  fi
+
+  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
+      echo "starting local uniresolver..."
+    auxiliaryService uniresolver start
+    export STARTED_LOCAL_UNIRESOLVER=true
   fi
 
   export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
@@ -409,12 +528,10 @@ runTests() {
 
   export PROJECT_ID=${PROJECT_ID:-general}
 
-  docker network create aath_network
-
-  startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021 "$AIP_CONFIG"
-  startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031 "$AIP_CONFIG"
-  startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040 9041 "$AIP_CONFIG"
-  startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG"
+  startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021 "$AIP_CONFIG" "$ACME"
+  startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031 "$AIP_CONFIG" "$BOB"
+  startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040 9041 "$AIP_CONFIG" "$FABER"
+  startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
 
   echo
   waitForAgent Acme 9020 $ACME_AGENT
@@ -425,6 +542,16 @@ runTests() {
   echo
   # Allure Reports environment.properties file handling
   writeEnvProperties
+}
+
+runTests() {
+  runArgs=${@}
+
+  if [[ "${TAGS}" ]]; then
+      echo "Tags: ${TAGS}"
+  else
+      echo "No tags specified; all tests will be run."
+  fi
 
   echo
   # Behave.ini file handling
@@ -446,15 +573,30 @@ runTests() {
   docker logs bob_agent > .logs/bob_agent.log
   docker logs faber_agent > .logs/faber_agent.log
   docker logs mallory_agent > .logs/mallory_agent.log
+}
 
-  echo
+stopIfExists(){
+  local CONTAINER_NAME
+  CONTAINER_NAME=$1
+  local CONTAINER_ID
+  CONTAINER_ID=`docker ps -q --filter "name=${CONTAINER_NAME}"`
+
+  if [[ ${CONTAINER_ID} ]]; then
+    docker stop ${CONTAINER_ID} > /dev/null
+  fi
+}
+
+stopHarness(){
   echo "Cleanup:"
   echo "  - Shutting down all the agents ..."
-  docker stop acme_agent bob_agent faber_agent mallory_agent >/dev/null
-  if [[ "${USE_NGROK}" = "true" ]]; then
-    docker stop acme_agent-ngrok bob_agent-ngrok faber_agent-ngrok mallory_agent-ngrok >/dev/null
-  fi
-  docker network rm aath_network
+  docker stop acme_agent bob_agent faber_agent mallory_agent > /dev/null
+  docker rm -v acme_agent bob_agent faber_agent mallory_agent > /dev/null
+
+  stopIfExists acme_agent-ngrok
+  stopIfExists bob_agent-ngrok
+  stopIfExists faber_agent-ngrok
+  stopIfExists mallory_agent-ngrok
+
   printf "Done\n"
 
   if [[ "${REPORT}" = "allure" ]]; then
@@ -465,6 +607,23 @@ runTests() {
       docker_result=$?
     fi
   fi
+
+  if [[ ${STARTED_LOCAL_UNIRESOLVER} ]]; then
+      echo "stopping local uniresolver..."
+      auxiliaryService uniresolver stop
+  fi
+
+  if [[ ${STARTED_LOCAL_TAILS} ]]; then
+      echo "stopping local indy-tails-server..."
+      auxiliaryService indy-tails stop
+  fi
+
+  if [[ ${STARTED_LOCAL_LEDGER} ]]; then
+      echo "stopping local von-network..."
+      auxiliaryService von-network stop
+  fi
+
+  cleanupNetwork
 
   if [ ! "${docker_result}" == "0" ]; then
     echo "Exit with error code ${docker_result}"
@@ -492,7 +651,7 @@ COMMAND=$(toLower ${1})
 shift
 
 # Handle run args
-if [[ "${COMMAND}" == "run" ]]; then
+if [[ "${COMMAND}" == "run" || "${COMMAND}" == "start" || "${COMMAND}" == "test" ]]; then
   ACME="none"
   BOB="none"
   FABER="none"
@@ -538,35 +697,25 @@ if [[ "${COMMAND}" == "run" ]]; then
   done
   shift $((OPTIND-1))
 
-  for agent in ${ACME} ${BOB} ${FABER} ${MALLORY}; do
-      if [[ $(isAgent $agent) == false ]] ; then
-          echo All agents Acme, Bob, Faber and Mallory must be set to one of: ${VALID_AGENTS}.
-          echo Use \"${0} help\" to get more information.
-          exit 1
-      fi
-  done
+  if [[ "${COMMAND}" == "run" || "${COMMAND}" == "test" ]]; then
+    for agent in ${ACME} ${BOB} ${FABER} ${MALLORY}; do
+        if [[ $(isAgent $agent) == false ]] ; then
+            echo All agents Acme, Bob, Faber and Mallory must be set to one of: ${VALID_AGENTS}.
+            echo Use \"${0} help\" to get more information.
+            exit 1
+        fi
+    done
 
-  echo Agents to be used:
-  echo "  Acme - ${ACME}"
-  echo "  Bob - ${BOB}"
-  echo "  Faber - ${FABER}"
-  echo "  Mallory - ${MALLORY}"
-  echo ""
-  if [[ "${TAGS}" ]]; then
-      echo "Tags: ${TAGS}"
-  else
-      echo "No tags specified; all tests will be run."
-  fi
-  if [ ! -f "${BEHAVE_INI}" ]; then
-    echo Error - behave INI file does not exist: ${BEHAVE_INI}
-    exit 1
-  fi
+    if [ ! -f "${BEHAVE_INI}" ]; then
+      echo Error - behave INI file does not exist: ${BEHAVE_INI}
+      exit 1
+    fi
 
-  if [[ "$@" ]]; then
-      echo "Other args:  $@"
+    if [[ "$@" ]]; then
+        echo "Other args:  $@"
+    fi
   fi
 fi
-echo ""
 
 # Handle additional Build arguments
 if [[ "${COMMAND}" == "build" || "${COMMAND}" == "rebuild" ]]; then
@@ -589,22 +738,36 @@ if [[ "${COMMAND}" == "build" || "${COMMAND}" == "rebuild" ]]; then
   fi
 fi
 
-
 pushd ${SCRIPT_HOME} >/dev/null
 
 case "${COMMAND}" in
   build)
       buildImages ${@}
     ;;
-  
+
   rebuild)
       buildImages --no-cache ${@}
     ;;
 
   run)
+      startHarness
+      echo ""
+      runTests ${TAGS} ${@}
+      echo ""
+      stopHarness
+    ;;
+  start)
+      startHarness
+    ;;
+  test)
       runTests ${TAGS} ${@}
     ;;
-
+  stop)
+      stopHarness
+    ;;
+  service)
+      serviceCommand ${@}
+    ;;
   tags)
       grep -h @ aries-test-harness/features/*feature |  tr " " "\n" | sort -u | fmt
     ;;

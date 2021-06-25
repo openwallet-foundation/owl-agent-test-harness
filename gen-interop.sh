@@ -91,7 +91,7 @@ same tests.
 
 The latest interoperability test results are below. Each row is a test agent, its columns
 the results of tests executed in combination with other test agents.
-The bolded cell per row shows the results of all tests run for the given test agent. The link on each test
+The last column ("All Tests") shows the results of all tests run for the given test agent in any role. The link on each test
 agent name provides more details about results for all test combinations for that test agent. On
 that page are links to a full history of the test runs and full details on every executed test. 
 
@@ -112,9 +112,10 @@ aries_interop_footer () {
 
     cat << EOF
 
-- The **bolded results** show all tests involving the "Test Agent", including tests involving only that Test Agent.
+- Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
+- The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
 - Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
-- Select the "Test Agent" links to drill down into the tests being run.
+- Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 EOF
 }
@@ -125,27 +126,35 @@ aries_interop_summary_table_header () {
     for agent in "${ta_shortnames[@]}"; do
         printf "| $agent "
     done
-    printf "|\\n"
+    printf "| **All Tests** |\\n"
 
     printf "| ----- | ----- | ----- "
     for agent in "${ta_shortnames[@]}"; do
         printf "| :----: "
     done
-    printf "|\\n"
+    printf "| :----: |\\n"
 }
 
 sum_print_tests () {
     # Inserts the value of a cell by summing the number of tests involving the two agents
-    # passed in as args 1 and 2. Doesn't include skipped runsets. Prints the result at the end.
-    # Special handling of arg values are the same -- puts markdown bold around the results.
+    # passed in as args 1 and 2. Prints the result at the end.
+    # Special handling if just arg 1 -- only include runsets where ALL the agents are of type arg 1
+    # In all cases SKIP-ped runsets are NOT included in the results.
     passed=0
     total=0
     file_num=0
     for file in ${workflows}; do
-        agents=${ACME[$file_num]}${BOB[$file_num]}${FABER[$file_num]}${MALLORY[$file_num]}
-        if [[ $agents =~ $1 && $agents =~ $2 && "${SKIP[$file_num]}" == "" ]]; then
-            passed=$(expr $passed + ${PASSED[$file_num]} ) 
-            total=$(expr $total + ${TOTAL_CASES[$file_num]} )
+        if [[ -z "$2" ]]; then
+           if [[ ${ACME[$file_num]} =~ $1 && ${BOB[$file_num]} =~ $1 && ${FABER[$file_num]} =~ $1 && ${MALLORY[$file_num]} =~ $1 && "${SKIP[$file_num]}" == "" ]]; then
+               passed=$(expr $passed + ${PASSED[$file_num]} ) 
+               total=$(expr $total + ${TOTAL_CASES[$file_num]} )
+           fi
+        else
+           agents=${ACME[$file_num]}${BOB[$file_num]}${FABER[$file_num]}${MALLORY[$file_num]}
+           if [[ $agents =~ $1 && $agents =~ $2 && "${SKIP[$file_num]}" == "" ]]; then
+               passed=$(expr $passed + ${PASSED[$file_num]} ) 
+               total=$(expr $total + ${TOTAL_CASES[$file_num]} )
+           fi
         fi
         file_num=$(expr ${file_num} + 1 )
     done
@@ -164,6 +173,8 @@ sum_print_tests () {
 aries_interop_summary_table () {
     # Prints the data rows of the summary page table -- iterating over the list of agents
     # Calls the "sum_print_tests" function to sum across runsets for a test agent.
+    # Special handling when the agent and other_agent are the same -- call "sum_print_tests" with just one arg
+    # After, call "sum_print_tests" a last time with agent for both args to get total across all tests.
     count=0
     for agent in "${ta_tlas[@]}"; do
         printf "| [${ta_shortnames[$count]}](${agent}.md)"
@@ -171,8 +182,13 @@ aries_interop_summary_table () {
         printf "| ${ta_exceptions[$count]} "
         count=$(expr $count + 1)
         for other_agent in "${ta_tlas[@]}"; do
-            sum_print_tests $agent $other_agent
+            if [[ "$agent" == "$other_agent" ]]; then
+               sum_print_tests $agent
+            else
+               sum_print_tests $agent $other_agent
+            fi
         done
+        sum_print_tests $agent $agent
         printf "|\\n"
     done
 }

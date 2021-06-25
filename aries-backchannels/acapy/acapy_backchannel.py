@@ -236,11 +236,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the tails server env is not set use the gov.bc TEST tails server.
             result.append(("--tails-server-base-url", "https://tails-server-test.pathfinder.gov.bc.ca"))
         
-        if AIP_CONFIG >= 20 or os.getenv('EMIT-NEW-DIDCOMM-PREFIX') is not None:
+        if AIP_CONFIG >= 20 or os.getenv('EMIT_NEW_DIDCOMM_PREFIX') is not None:
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-prefix"))
 
-        if AIP_CONFIG >= 20 or os.getenv('EMIT-NEW-DIDCOMM-MIME-TYPE') is not None:
+        if AIP_CONFIG >= 20 or os.getenv('EMIT_NEW_DIDCOMM_MIME_TYPE') is not None:
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-mime-type"))
 
@@ -630,7 +630,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             data = None
 
         elif operation == "receive-request-resolvable-did":
-            agent_operation = agent_operation + "receive-request"
+            # as of PR 1182 in aries-cloudagent-python receive-request is no longer needed.
+            # this is done automatically by the responder.
+            # The test expects a connection_id returned so, return the last webhook message
+            #agent_operation = agent_operation + "receive-request"
+            
+            (wh_status, wh_text) = await self.make_agent_GET_request_response(op["topic"], rec_id=None, message_name="didexchange-msg")
+            return (wh_status, wh_text)
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
@@ -940,13 +946,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     async def make_agent_GET_request_response(
-        self, topic, rec_id=None, text=False, params=None
+        self, topic, rec_id=None, text=False, params=None, message_name=None
     ) -> (int, str):
         if topic == "connection" and rec_id:
             connection_msg = pop_resource(rec_id, "connection-msg")
             i = 0
             while connection_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 connection_msg = pop_resource(rec_id, "connection-msg")
                 i = i + 1
 
@@ -962,7 +968,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             didexchange_msg = pop_resource(rec_id, "didexchange-msg")
             i = 0
             while didexchange_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 didexchange_msg = pop_resource(rec_id, "didexchange-msg")
                 i = i + 1
 
@@ -978,10 +984,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # Poping webhook messages wihtout an id is unusual. This code may be removed when issue 944 is fixed
         # see https://app.zenhub.com/workspaces/von---verifiable-organization-network-5adf53987ccbaa70597dbec0/issues/hyperledger/aries-cloudagent-python/944
         if topic == "did-exchange" and rec_id is None:
-            didexchange_msg = pop_resource_latest("connection-msg")
+            await asyncio.sleep(1)
+            if message_name is not None:
+                didexchange_msg = pop_resource_latest(message_name)
+            else:
+                didexchange_msg = pop_resource_latest("connection-msg")
             i = 0
             while didexchange_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 didexchange_msg = pop_resource_latest("connection-msg")
                 i = i + 1
 
@@ -998,7 +1008,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             credential_msg = pop_resource(rec_id, "credential-msg")
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 credential_msg = pop_resource(rec_id, "credential-msg")
                 i = i + 1
 
@@ -1014,7 +1024,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             credential_msg = pop_resource(rec_id, "credential-msg")
             i = 0
             while credential_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 credential_msg = pop_resource(rec_id, "credential-msg")
                 i = i + 1
 
@@ -1030,7 +1040,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             presentation_msg = pop_resource(rec_id, "presentation-msg")
             i = 0
             while presentation_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 presentation_msg = pop_resource(rec_id, "presentation-msg")
                 i = i + 1
 
@@ -1047,7 +1057,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
             i = 0
             while revocation_msg is None and i < MAX_TIMEOUT:
-                sleep(1)
+                await asyncio.sleep(1)
                 revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
                 i = i + 1
 

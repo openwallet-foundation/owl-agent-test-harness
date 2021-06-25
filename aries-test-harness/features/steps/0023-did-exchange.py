@@ -92,11 +92,12 @@ def step_impl(context, requester, responder):
 
     context.requester_public_did_doc = requester_did_doc
 
-    # get the requesters connection id
-    request_id = context.requester_public_did_doc["@id"]
-    (resp_status, resp_text) = agent_backchannel_GET(requester_url + "/agent/response/", "did-exchange", id=request_id)
-    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
+    if "connection_id" not in resp_json:
+        # get the requesters connection id
+        request_id = context.requester_public_did_doc["@id"]
+        (resp_status, resp_text) = agent_backchannel_GET(requester_url + "/agent/response/", "did-exchange", id=request_id)
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+        resp_json = json.loads(resp_text)
 
     # setup the initial connection id dictionary if one doesn't exist.
     if not hasattr(context, 'connection_id_dict'):

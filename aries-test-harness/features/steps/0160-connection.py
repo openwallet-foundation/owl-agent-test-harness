@@ -88,19 +88,23 @@ def step_impl(context, inviter):
     # check and see if the connection_id_dict exists
     # if it does, it was probably used to create another connection in a 3+ agent scenario
     # so that means we need to keep the connection ids around for use in the scenario
-    # so we will not create a new dict which will reset the dict
-    if hasattr(context, 'temp_connection_id_dict'):
-        context.temp_connection_id_dict[inviter] = resp_json["connection_id"]
-    else:
-        context.temp_connection_id_dict = {inviter: resp_json["connection_id"]}
+    # so we will not create a new dict which will reset the dict.
+    # Also, check that the connection_id actually exists in the reponse. Some aries frameworks do not have a connection_id
+    # at this point. If it doesn't exist, it will be aquired in the receive invitation. 
+    if "connection_id" in resp_json:
+        if hasattr(context, 'temp_connection_id_dict'):
+            context.temp_connection_id_dict[inviter] = resp_json["connection_id"]
+        else:
+            context.temp_connection_id_dict = {inviter: resp_json["connection_id"]}
 
     # Check to see if the inviter_name exists in context. If not, antother suite is using it so set the inviter name and url
     if not hasattr(context, 'inviter_name') or context.inviter_name != inviter:
         context.inviter_url = inviter_url
         context.inviter_name = inviter
 
-    # get connection and verify status
-    assert expected_agent_state(inviter_url, "connection", context.temp_connection_id_dict[inviter], "invited")
+    # if we have a connection_id at this point get connection and verify status
+    if "connection_id" in resp_json:
+        assert expected_agent_state(inviter_url, "connection", context.temp_connection_id_dict[inviter], "invited")
 
 @given('"{invitee}" receives the connection invitation')
 @when('"{invitee}" receives the connection invitation')
@@ -120,12 +124,31 @@ def step_impl(context, invitee):
     context.connection_id_dict[invitee][context.inviter_name] = resp_json["connection_id"]
 
     # Also add the inviter into the main connection_id_dict. if the len is 0 that means its already been cleared and this may be Mallory.
-    if len(context.temp_connection_id_dict) != 0:
-        context.connection_id_dict[context.inviter_name] = {invitee: context.temp_connection_id_dict[context.inviter_name]}
+    # if len(context.temp_connection_id_dict) != 0:
+    #     context.connection_id_dict[context.inviter_name] = {invitee: context.temp_connection_id_dict[context.inviter_name]}
 
-    # Check to see if the invitee_name exists in context. If not, antother suite is using it so set the invitee name and url
-    context.invitee_url = invitee_url
-    context.invitee_name = invitee
+    # # Check to see if the invitee_name exists in context. If not, antother suite is using it so set the invitee name and url
+    # context.invitee_url = invitee_url
+    # context.invitee_name = invitee
+
+    if "temp_connection_id_dict" in context:
+        if len(context.temp_connection_id_dict) != 0:
+            context.connection_id_dict[context.inviter_name] = {invitee: context.temp_connection_id_dict[context.inviter_name]}
+            #clear the temp connection id dict used in the initial step. We don't need it anymore.
+            context.temp_connection_id_dict.clear()
+    else:
+        # This means the connection id was not retreived for the inviter in the create invitation step
+        # Get the connection id for the inviter given the invitation_id
+        #context.connection_id_dict[context.inviter_name] = {invitee:  resp_json["connection_id"]}
+        (alt_resp_status, alt_resp_text) = agent_backchannel_GET(context.inviter_url + "/agent/response/", "connection", id=context.inviter_invitation["@id"])
+        assert alt_resp_status == 200, f'resp_status {alt_resp_status} is not 200; {alt_resp_text}'
+        alt_resp_json = json.loads(alt_resp_text)
+        context.connection_id_dict[context.inviter_name] = {invitee: alt_resp_json["connection_id"]}
+
+    # Check to see if the invitee_name exists in context. If not, another suite is using it so set the invitee name and url
+    if not hasattr(context, 'invitee_name'):
+        context.invitee_url = invitee_url
+        context.invitee_name = invitee
 
     # get connection and verify status
     assert expected_agent_state(invitee_url, "connection", context.connection_id_dict[invitee][context.inviter_name], "invited")
