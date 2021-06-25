@@ -46,6 +46,7 @@ async fn download_tails() -> std::result::Result<String, String> {
 pub async fn initialize() -> std::io::Result<AgentConfig> {
     info!("Initializing vcx");
     let genesis_path = download_tails().await.unwrap();
+    let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8080".to_string());
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION); // TODO: Remove payments
     // TODO: Builder methods for these configs
     let pool_config = PoolConfig {
@@ -54,7 +55,7 @@ pub async fn initialize() -> std::io::Result<AgentConfig> {
         pool_name: None
     };
     let agency_config = AgentProvisionConfig {
-        agency_endpoint: "http://localhost:8080".to_string(),
+        agency_endpoint,
         agency_did: "VsKV7grR1BUE29mG2Fm2kX".to_string(),
         agency_verkey: "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR".to_string(),
         agent_seed: None
