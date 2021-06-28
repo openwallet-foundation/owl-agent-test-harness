@@ -34,7 +34,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx"
           TEST_AGENTS: "-d aries-vcx"
-          TEST_SCOPE: "-t @T003-RFC0036 -t @T001-RFC0037 -t @T001-RFC0160 -t @T001.2-RFC0160 -t @T002-RFC0160"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip"
           REPORT_PROJECT: aries-vcx  
         continue-on-error: true
       - name: run-send-gen-test-results-secure

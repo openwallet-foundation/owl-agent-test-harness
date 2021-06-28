@@ -97,12 +97,8 @@ impl Agent {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("trace"));
     let opts: Opts = Opts::parse();
-    let host = match std::env::var("DOCKERHOST").ok() {
-        Some(dockerhost) => dockerhost,
-        None => String::from("localhost")
-    };
 
     ctrlc::set_handler(move || {
         setup::shutdown();
@@ -133,7 +129,7 @@ async fn main() -> std::io::Result<()> {
             )
     })
         .workers(1)
-        .bind(format!("{}:{}", host, opts.port))?
+        .bind(format!("0.0.0.0:{}", opts.port))?
         .run()
         .await
 }

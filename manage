@@ -1,5 +1,5 @@
 #!/bin/bash
-# set -x
+set -x
 
 # Set of valid agents - add new agents here
 export VALID_AGENTS=$(ls aries-backchannels/*/Dockerfile.* | sed "s/^.*file.//" |  tr "\n" " " | sort -u)
@@ -20,10 +20,12 @@ LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
 LEDGER_URL_INTERNAL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
 TAILS_SERVER_URL_HOST="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
 TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
+CLOUD_AGENCY_URL="${CLOUD_AGENCY_URL:-http://localhost:8070}"
 # important: inside the internal URLs, we replace "://localhost:" with "://${DOCKERHOST}:"
 #   so it works inside docker.
 LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
+CLOUD_AGENCY_URL_INTERNAL="$(echo ${CLOUD_AGENCY_URL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
@@ -308,6 +310,43 @@ waitForTailsServer(){
   )
 }
 
+pingCloudAgency(){
+  cloud_agency_url=${1}
+
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${cloud_agency_url})
+  if (( ${rtnCd} == 200 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForCloudAgency(){
+  (
+    # Wait for cloud agency to start ...
+    local startTime=${SECONDS}
+    local rtnCd=0
+    printf "waiting for cloud agency to start"
+    while ! pingCloudAgency "$CLOUD_AGENCY_URL"; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nThe agency failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
+startCloudAgency(){
+    docker-compose -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml up -d
+}
+
+
 pingAgent(){
   name=${1}
   port=${2}
@@ -380,8 +419,7 @@ startAgent() {
       export NGROK_NAME=
     fi
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    local CLOUD_AGENCY_URL="${CLOUD_AGENCY_URL_CONFIG:-http://${DOCKERHOST}:8080}"
-    local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     #docker network connect aath_network "${CONTAINER_NAME}"
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
@@ -520,6 +558,13 @@ startHarness(){
     export STARTED_LOCAL_UNIRESOLVER=true
   fi
 
+  startCloudAgency
+
+  if ! waitForCloudAgency; then
+    echoRed "\nThe cloud agency not running.\n"
+    exit 1
+  fi
+
   export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
   export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
   export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
@@ -534,14 +579,26 @@ startHarness(){
   startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
 
   echo
-  waitForAgent Acme 9020 $ACME_AGENT
-  waitForAgent Bob 9030 $BOB_AGENT
-  waitForAgent Faber 9040 $FABER_AGENT
-  waitForAgent Mallory 9050 $MALLORY_AGENT
+  waitForAgent Acme 9020 acme_agent
+  waitForAgent Bob 9030 bob_agent
+  waitForAgent Faber 9040 faber_agent
+  waitForAgent Mallory 9050 mallory_agent
 
   echo
   # Allure Reports environment.properties file handling
   writeEnvProperties
+}
+
+deleteAgents() {
+    deleteAgent acme_agent
+    deleteAgent bob_agent
+    deleteAgent faber_agent
+    deleteAgent mallory_agent
+}
+
+deleteAgent() {
+    agent=$1
+    docker rm -f $agent || 1
 }
 
 runTests() {
@@ -770,6 +827,9 @@ case "${COMMAND}" in
     ;;
   tags)
       grep -h @ aries-test-harness/features/*feature |  tr " " "\n" | sort -u | fmt
+    ;;
+  rm)
+      deleteAgents
     ;;
 
   tests|scenarios)

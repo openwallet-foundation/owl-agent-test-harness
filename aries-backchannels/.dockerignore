@@ -11,4 +11,6 @@ mobile/**
 pico/**
 python/**
 vcx/**
-aries-vcx/**
+
+aries-vcx/**/target
+aries-vcx/**/*.db*

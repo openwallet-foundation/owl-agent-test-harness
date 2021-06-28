@@ -1,4 +1,5 @@
 use vcx::init::{open_main_pool, PoolConfig, open_as_main_wallet, init_issuer_config}; // TODO: Should we move all Config arguments to a single module?
+use vcx::utils::logger::LibvcxDefaultLogger;
 use vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfig};
 use vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfig};
 use vcx::libindy::utils::pool;
@@ -43,6 +44,7 @@ async fn download_tails() -> std::result::Result<String, String> {
     }
 }
 
+// TODO: Remove unwraps
 pub async fn initialize() -> std::io::Result<AgentConfig> {
     info!("Initializing vcx");
     let genesis_path = download_tails().await.unwrap();
