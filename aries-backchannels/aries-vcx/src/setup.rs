@@ -7,7 +7,7 @@ use vcx::utils::plugins::init_plugin;
 use vcx::settings;
 use std::io::prelude::*;
 use crate::AgentConfig;
-use hyper::Client;
+// use hyper::Client;
 use uuid;
 
 async fn download_tails() -> std::result::Result<String, String> {
@@ -24,14 +24,19 @@ async fn download_tails() -> std::result::Result<String, String> {
             Some(ledger_url) => {
                 info!("Downloading tails file");
                 let genesis_url = format!("{}/genesis", ledger_url);
-                let body = Client::new().get(genesis_url.parse::<hyper::Uri>().unwrap()).await.expect(&format!("Failed to get genesis file from url {}", genesis_url));
+                // let body = Client::new().get(genesis_url.parse::<hyper::Uri>().unwrap()).await.expect(&format!("Failed to get genesis file from url {}", genesis_url));
+                let body = reqwest::get(&genesis_url)
+                    .await.unwrap()
+                    .text()
+                    .await.unwrap();
                 let path = std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn");
                 let mut f = std::fs::OpenOptions::new()
                     .write(true)
                     .create(true)
                     .open(path.clone())
                     .expect("Unable to open file");
-                f.write_all(&hyper::body::to_bytes(body).await.expect("Failed to convert retrieved genesis file to bytes")).expect("Unable to write data");
+                // f.write_all(&hyper::body::to_bytes(body).await.expect("Failed to convert retrieved genesis file to bytes")).expect("Unable to write data");
+                f.write_all(body.as_bytes()).expect("Unable to write data");
                 debug!("Tails file downloaded and saved to {:?}", path);
                 path.to_str().map(|s| s.to_string()).ok_or("Failed to convert genesis file path to string".to_string())
             }

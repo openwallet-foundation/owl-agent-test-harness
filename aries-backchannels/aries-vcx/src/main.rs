@@ -21,7 +21,8 @@ extern crate ctrlc;
 extern crate uuid;
 extern crate futures_util;
 extern crate clap;
-extern crate hyper;
+// extern crate hyper;
+extern crate reqwest;
 
 use clap::{AppSettings, Clap};
 
