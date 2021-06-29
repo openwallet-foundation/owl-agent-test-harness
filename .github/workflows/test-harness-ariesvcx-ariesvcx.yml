@@ -1,19 +1,15 @@
 name: test-harness-ariesvcx-ariesvcx
-# on:
-#   workflow_dispatch:
-#   schedule:
-#     - cron: "35 0 * * *"
 on:
-  push:
-    branches:
-      - "**"
+  workflow_dispatch:
+  schedule:
+    - cron: "35 0 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-      # if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2
@@ -34,7 +30,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx"
           TEST_AGENTS: "-d aries-vcx"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip"
+          TEST_SCOPE: "-t @AcceptanceTest -t @critical -t @AIP10 -t ~@wip"
           REPORT_PROJECT: aries-vcx  
         continue-on-error: true
       - name: run-send-gen-test-results-secure
