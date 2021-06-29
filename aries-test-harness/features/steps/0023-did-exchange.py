@@ -204,7 +204,10 @@ def step_impl(context, requester, responder):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "request-sent"
+    if "responded" in resp_json['state']:
+        context.auto_response = True
+    else:
+        assert resp_json["state"] == "request-sent"
 
 
 @when('"{responder}" receives the request')

@@ -302,7 +302,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg('in webhook, topic is: ' + topic + ' payload is: ' + json.dumps(payload))
 
     async def handle_connections(self, message):
-        if "invitation_msg_id" in message:
+        if message["connection_protocol"] == "didexchange/1.0":
+        #if "invitation_msg_id" in message:
             # This is an did-exchange message based on a Non-Public DID invitation
             invitation_id = message["invitation_msg_id"]
             push_resource(invitation_id, "didexchange-msg", message)
@@ -310,9 +311,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # This is a did-exchange message based on a Public DID non-invitation
             request_id = message["request_id"]
             push_resource(request_id, "didexchange-msg", message)
-        else:
+        elif message["connection_protocol"] == "connections/1.0":
+        #else:
             connection_id = message["connection_id"]
             push_resource(connection_id, "connection-msg", message)
+        else:
+            raise Exception(f"Unknown message type in Connections Webhook: {json.dumps(message)}")
         log_msg('Received a Connection Webhook message: ' + json.dumps(message))
 
     async def handle_issue_credential(self, message):
@@ -1462,8 +1466,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if topic == "connection":
                     # if the response contains invitation id, swap out the connection states for the did exchange states
-                    if "invitation_msg_id" in data:
-                        data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + de_state_trans_method[agent_state] + '"')
+                    if "didexchange/1.0" in data["connection_protocol"]:
+                    # if "invitation_msg_id" in data:
+                         data = data.replace('"state"' + ": " + '"' + agent_state + '"', '"state"' + ": " + '"' + de_state_trans_method[agent_state] + '"')
                     else:
                         data = data.replace(agent_state, self.connectionStateTranslationDict[agent_state])
                 elif topic == "issue-credential":
