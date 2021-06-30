@@ -103,8 +103,8 @@ def step_impl(context, inviter):
         context.inviter_name = inviter
 
     # if we have a connection_id at this point get connection and verify status
-    if "connection_id" in resp_json:
-        assert expected_agent_state(inviter_url, "connection", context.temp_connection_id_dict[inviter], "invited")
+    # if "connection_id" in resp_json:
+    #     assert expected_agent_state(inviter_url, "connection", context.temp_connection_id_dict[inviter], "invited")
 
 @given('"{invitee}" receives the connection invitation')
 @when('"{invitee}" receives the connection invitation')
