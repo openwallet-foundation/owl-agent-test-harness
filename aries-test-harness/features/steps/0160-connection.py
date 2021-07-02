@@ -8,6 +8,7 @@
 #  
 # -----------------------------------------------------------
 
+from time import sleep
 from behave import given, when, then
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
@@ -150,17 +151,14 @@ def step_impl(context, invitee):
 @given('"{inviter}" sends a connection response to "{invitee}"')
 @then('"{inviter}" sends a connection response to "{invitee}"')
 def step_impl(context, inviter, invitee):
-    if context.auto_response:
-        pass
-    else:
-        inviter_url = context.config.userdata.get(inviter)
-        #inviter_connection_id = context.connection_id_dict[inviter]
-        inviter_connection_id = context.connection_id_dict[inviter][invitee]
-        invitee_url = context.config.userdata.get(invitee)
-        invitee_connection_id = context.connection_id_dict[invitee][inviter]
+    inviter_url = context.config.userdata.get(inviter)
+    #inviter_connection_id = context.connection_id_dict[inviter]
+    inviter_connection_id = context.connection_id_dict[inviter][invitee]
+    invitee_url = context.config.userdata.get(invitee)
+    invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
-        (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
 @when('"{invitee}" receives the connection response')
 @given('"{invitee}" receives the connection response')
@@ -169,7 +167,7 @@ def step_impl(context, invitee):
     invitee_connection_id = context.connection_id_dict[invitee][context.inviter_name]
 
     # invitee already recieved the connection response in the accept-request call so get connection and verify status=responded.
-    assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "responded")
+    #assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "responded")
 
 @given('"{invitee}" sends a connection request to "{inviter}"')
 @when('"{invitee}" sends a connection request to "{inviter}"')
@@ -182,11 +180,8 @@ def step_impl(context, invitee, inviter):
     (resp_status, resp_text) = agent_backchannel_POST(invitee_url + "/agent/command/", "connection", operation="accept-invitation", id=invitee_connection_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
-    resp_json = json.loads(resp_text)
-    if "responded" in resp_json['state']:
-        context.auto_response = True
-    else:
-        assert resp_json["state"] == "requested"
+    # resp_json = json.loads(resp_text)
+    # assert resp_json["state"] == "requested"
 
 
 @when('"{inviter}" receives the connection request')
@@ -198,23 +193,21 @@ def step_impl(context, inviter):
     # inviter already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
     # Some agents (Aca-py) when auto respond is on, it won't send responded by the invitee on the accept-invitation,
     # it will set responded on inviter on the connection object. 
-    if not expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=60.0):
-        if expected_agent_state(inviter_url, "connection", inviter_connection_id, "responded", wait_time=60.0):
-            context.auto_response = True
+    # if not expected_agent_state(inviter_url, "connection", inviter_connection_id, "requested", wait_time=60.0):
+    #     if expected_agent_state(inviter_url, "connection", inviter_connection_id, "responded", wait_time=60.0):
+    #         context.auto_response = True
 
 
 @when('"{inviter}" accepts the connection response to "{invitee}"')
 def step_impl(context, inviter, invitee):
-    if context.auto_response:
-        pass
-    else:
-        inviter_url = context.config.userdata.get(inviter)
-        inviter_connection_id = context.connection_id_dict[inviter][invitee]
-        invitee_url = context.config.userdata.get(invitee)
-        invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
-        (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+    inviter_url = context.config.userdata.get(inviter)
+    inviter_connection_id = context.connection_id_dict[inviter][invitee]
+    invitee_url = context.config.userdata.get(invitee)
+    invitee_connection_id = context.connection_id_dict[invitee][inviter]
+
+    (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
+    assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
 @when('"{invitee}" sends a response ping')
 def step_impl(context, invitee):
@@ -371,6 +364,7 @@ def step_impl(context, sender, receiver):
     sender_connection_id = context.connection_id_dict[sender][receiver]
 
     data = {"comment": "acknowledgement from " + sender}
+    sleep(5)
     (resp_status, resp_text) = agent_backchannel_POST(sender_url + "/agent/command/", "connection", operation="send-ping", id=sender_connection_id, data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
