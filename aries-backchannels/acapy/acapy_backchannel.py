@@ -42,6 +42,10 @@ AGENT_NAME = os.getenv("AGENT_NAME", "Agent")
 # AIP level is 10 or 20
 AIP_CONFIG = int(os.getenv("AIP_CONFIG", "10"))
 
+# backchannel-specific args
+EXTRA_ARGS = os.getenv("EXTRA_ARGS")
+
+# other configs ...
 DEFAULT_BIN_PATH = "../venv/bin"
 DEFAULT_PYTHON_PATH = ".."
 
@@ -61,8 +65,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         admin_port: int,
         genesis_data: str = None,
         params: dict = {},
+        extra_args: dict = {},
     ):
-        super().__init__(ident, http_port, admin_port, genesis_data, params)
+        super().__init__(ident, http_port, admin_port, genesis_data, params, extra_args)
 
         # get aca-py version if available
         self.acapy_version = None
@@ -1776,6 +1781,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
 async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
 
+    # check for extra args
+    extra_args = {}
+    if EXTRA_ARGS:
+        print("Got extra args:", EXTRA_ARGS)
+        extra_args = json.loads(EXTRA_ARGS)
+
     genesis = await default_genesis_txns()
     if not genesis:
         print("Error retrieving ledger genesis transactions")
@@ -1785,7 +1796,11 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
     try:
         agent = AcaPyAgentBackchannel(
-            "aca-py." + AGENT_NAME, start_port + 1, start_port + 2, genesis_data=genesis
+            "aca-py." + AGENT_NAME,
+            start_port + 1,
+            start_port + 2,
+            genesis_data=genesis,
+            extra_args=extra_args,
         )
 
         # start backchannel (common across all types of agents)

@@ -45,6 +45,7 @@ We'd love to have help in building out a full Aries interoperability lab.
 - [Aries Agent Backchannels](#aries-agent-backchannels)
   - [Implemented Backchannels](#implemented-backchannels)
 - [The `manage` bash script](#the-manage-bash-script)
+- [Extra Backchannel-Specific Parameters](extra-backchannel-specific-parameters)
 - [Test Tags](#test-tags)
   - [Running Tagged Tests](#running-tagged-tests)
   - [Test Coverage](#test-coverage)
@@ -129,6 +130,20 @@ To enable full control over behave's behaviour (if you will...), the `-i <ini fi
  ```
 
 For a full inventory of tests available to run, use the `./manage tests`. Note that tests in the list tagged @wip are works in progress and should not run.
+
+## Extra Backchannel-Specific Parameters
+
+You can pass backchannel-specific parameters as follows:
+
+```bash
+BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar\"}" ./manage run -d acapy-main -t @AcceptanceTest -t ~@wip
+```
+
+The environment variable name is of the format `-<agent_name>`, where `<agent_name>` is the name of the agent (e.g. `acapy-main`) with hyphens replaced with underscores (i.e. `acapy_main`).
+
+The contents of the environment variable are backchannel-specific.  For aca-py it is a JSON structure containing parameters to use for agent startup.
+
+The above example runs all the tests using the `askar` wallet type (vs `indy`, which is the default).
 
 ## Test Tags
 
