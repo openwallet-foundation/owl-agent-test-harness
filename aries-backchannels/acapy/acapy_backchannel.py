@@ -479,6 +479,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     resp_status = 200
                     resp_text = 'Aca-py agent in auto accept request mode. accept-request operation not called.'
                 else:
+                    # As of adding the Auto Accept and Auto Respond support, it seems a sleep is required here,
+                    # or sometimes the agent isn't in the correct state to accept the operation. Not sure why...
+                    await asyncio.sleep(1)
                     (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
                     if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
                 
@@ -720,6 +723,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 return (resp_status, resp_text)
             else:
                 agent_operation = agent_operation + rec_id + "/accept-request"
+                await asyncio.sleep(1)
 
         elif operation == "create-request-resolvable-did":
             their_public_did = data["their_public_did"]
