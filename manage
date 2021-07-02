@@ -408,8 +408,10 @@ startAgent() {
     if [[ "${USE_NGROK}" = "true" ]]; then
       echo "Starting ngrok for ${NAME} Agent ..."
       if [[ "${IMAGE_NAME}" = "dotnet-master-agent-backchannel" ]]; then
+        #echo "docker run --name \"${CONTAINER_NAME}-ngrok\" wernight/ngrok ngrok http \"${CONTAINER_NAME}:${BACKCHANNEL_PORT}\" --log stdout"
         docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
       else
+        #echo "docker run --name \"${CONTAINER_NAME}-ngrok\" wernight/ngrok ngrok http \"${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}\" --log stdout"
         docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
       fi
       sleep 1
@@ -421,7 +423,9 @@ startAgent() {
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
-    #docker network connect aath_network "${CONTAINER_NAME}"
+    if [[ "${USE_NGROK}" = "true" ]]; then
+      docker network connect aath_network "${CONTAINER_NAME}"
+    fi
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
       echo "Tail-ing log files for ${NAME} agent in ${container_id}"
       docker logs -f ${container_id} &
@@ -630,6 +634,13 @@ runTests() {
   docker logs bob_agent > .logs/bob_agent.log
   docker logs faber_agent > .logs/faber_agent.log
   docker logs mallory_agent > .logs/mallory_agent.log
+
+  if [[ "${USE_NGROK}" = "true" ]]; then
+    docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
+    docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
+    docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
+    docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+  fi
 }
 
 stopIfExists(){

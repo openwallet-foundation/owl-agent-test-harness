@@ -1,8 +1,12 @@
 name: test-harness-ariesvcx-ariesvcx
+  # on:
+  #   workflow_dispatch:
+  #   schedule:
+  #     - cron: "35 0 * * *"
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "35 0 * * *"
+  push:
+    branches:
+      - "**"
 defaults:
   run:
     shell: bash
@@ -30,7 +34,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx"
           TEST_AGENTS: "-d aries-vcx"
-          TEST_SCOPE: "-t @AcceptanceTest -t @critical -t @AIP10 -t ~@wip"
+          TEST_SCOPE: "-t ~@wip"
           REPORT_PROJECT: aries-vcx  
         continue-on-error: true
       - name: run-send-gen-test-results-secure
