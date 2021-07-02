@@ -372,10 +372,8 @@ startAgent() {
     if [[ "${USE_NGROK}" = "true" ]]; then
       echo "Starting ngrok for ${NAME} Agent ..."
       if [[ "${IMAGE_NAME}" = "dotnet-master-agent-backchannel" ]]; then
-        #echo "docker run --name \"${CONTAINER_NAME}-ngrok\" wernight/ngrok ngrok http \"${CONTAINER_NAME}:${BACKCHANNEL_PORT}\" --log stdout"
         docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
       else
-        #echo "docker run --name \"${CONTAINER_NAME}-ngrok\" wernight/ngrok ngrok http \"${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}\" --log stdout"
         docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
       fi
       sleep 1
@@ -385,8 +383,9 @@ startAgent() {
       export NGROK_NAME=
     fi
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    #echo 'docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false'
-    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
+    export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"

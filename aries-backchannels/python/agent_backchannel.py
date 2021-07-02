@@ -80,6 +80,7 @@ class AgentBackchannel:
         admin_port: int,
         genesis_data: str = None,
         params: dict = {},
+        extra_args: dict = {},
     ):
         self.ACTIVE = False
 
@@ -88,6 +89,7 @@ class AgentBackchannel:
         self.admin_port = admin_port
         self.genesis_data = genesis_data
         self.params = params
+        self.extra_args = extra_args
         rand_name = str(random.randint(100_000, 999_999))
         self.seed = ("my_seed_000000000000000000000000" + rand_name)[-32:]
 
@@ -108,7 +110,9 @@ class AgentBackchannel:
         self.admin_url = f"http://{self.internal_host}:{admin_port}"
 
         self.storage_type = "indy"
-        self.wallet_type = "indy"
+        self.wallet_type = (
+            extra_args.get("wallet-type") if extra_args.get("wallet-type") else "indy"
+        )
         self.wallet_name = self.ident.lower().replace(" ", "") + rand_name
         self.wallet_key = self.ident + rand_name
         self.did = None
