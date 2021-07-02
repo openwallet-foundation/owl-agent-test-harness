@@ -221,11 +221,14 @@ buildImages() {
     echo Backchannel Folder: ${BACKCHANNEL_FOLDER}
     if [ -e "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" ]; then
       echo "Building ${agent}-agent-backchannel ..."
-      docker build \
+      if ! docker build \
         ${args} \
         $(initDockerBuildArgs) \
         -t "${agent}-agent-backchannel" \
-        -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"
+        -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"; then
+          echo "Docker image build failed."
+          exit 1
+      fi
     else
       echo "Unable to find Dockerfile to build agent: ${agent}"
       echo "Must be one one of: ${VALID_AGENTS}"
@@ -233,11 +236,14 @@ buildImages() {
   done
 
   echo "Building aries-test-harness ..."
-  docker build \
+  if ! docker build \
     ${args} \
     $(initDockerBuildArgs) \
     -t 'aries-test-harness' \
-    -f 'aries-test-harness/Dockerfile.harness' 'aries-test-harness/'
+    -f 'aries-test-harness/Dockerfile.harness' 'aries-test-harness/'; then
+      echo "Docker image build failed."
+      exit 1
+  fi
 }
 
 pingLedger(){
@@ -379,8 +385,8 @@ startAgent() {
       export NGROK_NAME=
     fi
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    #echo "docker run -d -it --name \"${CONTAINER_NAME}\" --expose \"${PORT_RANGE}\" -p \"${PORT_RANGE}:${PORT_RANGE}\" ${ENV_FILE_ARG} -e \"NGROK_NAME=${NGROK_NAME}\" -e \"DOCKERHOST=${DOCKERHOST}\" -e \"AGENT_NAME=${NAME}\" -e \"LEDGER_URL=${LEDGER_URL_INTERNAL}\" -e \"TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}\" -e \"AIP_CONFIG=${AIP_CONFIG}\" \"${IMAGE_NAME}\" -p \"${BACKCHANNEL_PORT}\" -i false"
-    local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    #echo 'docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false'
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"
@@ -633,7 +639,7 @@ stopHarness(){
 
   cleanupNetwork
 
-  if [ ! "${docker_result}" == "0" ]; then
+  if [ -n "${docker_result}" ] && [ ! "${docker_result}" = "0" ]; then
     echo "Exit with error code ${docker_result}"
     exit ${docker_result}
   fi
