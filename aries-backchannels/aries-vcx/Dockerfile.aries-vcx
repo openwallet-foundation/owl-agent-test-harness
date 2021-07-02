@@ -13,6 +13,7 @@ RUN chown -R agent:agent .
 
 USER agent
 
+ENV X86_64_ALPINE_LINUX_MUSL_OPENSSL_NO_VENDOR true
 RUN cargo build
 
 ENTRYPOINT ["./target/debug/aries-vcx-backchannel"]
