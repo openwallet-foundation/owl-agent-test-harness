@@ -136,7 +136,7 @@ For a full inventory of tests available to run, use the `./manage tests`. Note t
 You can pass backchannel-specific parameters as follows:
 
 ```bash
-
+BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar\"}" ./manage run -d acapy-main -t @AcceptanceTest -t ~@wip
 ```
 
 The environment variable name is of the format `-<agent_name>`, where `<agent_name>` is the name of the agent (e.g. `acapy-main`) with hyphens replaced with underscores (i.e. `acapy_main`).
