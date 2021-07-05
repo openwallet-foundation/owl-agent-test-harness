@@ -1,0 +1,10 @@
+[
+  {
+    "id": "svc1",
+    "type": "did-communication",
+    "priority": 1,
+    "routingKeys": ["key1"],
+    "recipientKeys": ["key1"],
+    "serviceEndpoint": "http://acme_agent:9020"
+  }
+]

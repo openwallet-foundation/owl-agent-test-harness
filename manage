@@ -360,12 +360,21 @@ startAgent() {
   local AIP_CONFIG=$7
   local AGENT_NAME=$8
 
-  local ENV_PATH="$(find aries-backchannels -name *${AGENT_NAME}.env)"
+  local BACKCHANNEL_DIR=$(dirname "$(find aries-backchannels -name *.${agent})" )
+
+  local ENV_PATH="$(find $BACKCHANNEL_DIR -name *${AGENT_NAME}.env)"
   local ENV_FILE_ARG=
 
   if [[ -n $ENV_PATH ]]; then
     ENV_FILE_ARG="--env-file=$ENV_PATH"
     # echo $ENV_FILE_ARG
+  fi
+
+  local DATA_VOLUME_PATH="$(find $BACKCHANNEL_DIR -wholename */${AGENT_NAME}.data)"
+  local DATA_VOLUME_ARG=
+  # optional data volume folder
+  if [[ -n DATA_VOLUME_PATH  ]]; then
+    DATA_VOLUME_ARG="-v $(pwd)/$DATA_VOLUME_PATH:/data-mount"
   fi
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
@@ -385,9 +394,11 @@ startAgent() {
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
     export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
-    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
+      docker network connect aath_network "${CONTAINER_NAME}"
+    elif [[ "${AGENT_NAME}" = "afgo-master" || "${AGENT_NAME}" = "afgo-interop" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"
     fi
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
@@ -477,7 +488,7 @@ serviceCommand() {
         cleanupNetwork
       ;;
     *)
-        echo "unrecognized service command '${SERVICE_COMMAND}', must be one of 'start', 'stop', 'clean', 'logs'"
+        auxiliaryService ${SERVICE_TARGET} ${SERVICE_COMMAND}
       ;;
   esac
 }
