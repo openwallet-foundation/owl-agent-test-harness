@@ -1,0 +1,8 @@
+version: '2'
+
+http_uniresolver:
+  endpoint:
+    http://REPLACE_WITH_DOCKERHOST:8080/1.0/identifiers
+  methods:
+    # - sov
+    - orb

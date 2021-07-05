@@ -1,0 +1,18 @@
+[
+  {
+    "id": "svc1",
+    "type": "did-communication",
+    "priority": 1,
+    "routingKeys": [],
+    "recipientKeys": ["#key1"],
+    "serviceEndpoint": "http://bob_agent:9031"
+  },
+  {
+    "id": "svc2",
+    "type": "IndyAgent",
+    "priority": 2,
+    "routingKeys": [],
+    "recipientKeys": ["#key1"],
+    "serviceEndpoint": "http://bob_agent:9031"
+  }
+]
