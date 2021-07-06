@@ -81,6 +81,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # set the acapy AIP version, defaulting to AIP10
         self.aip_version = "AIP10"
 
+        # set the auto response/request flags
+        self.auto_accept_requests = False
+        self.auto_respond_messages = False
+
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
             "invitation": "invited",
@@ -198,8 +202,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--label", self.label),
             # "--auto-ping-connection",
             # "--auto-accept-invites",
-            # "--auto-accept-requests",
-            # "--auto-respond-messages",
+            #"--auto-accept-requests",
+            #"--auto-respond-messages",
             ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
             ("--outbound-transport", "http"),
             ("--admin", "0.0.0.0", str(self.admin_port)),
@@ -209,6 +213,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
         ]
+
+        # Backchannel needs to handle operations that may be called in the protocol by the tests
+        # but if auto respond or auto accept request in on then the handlers will just return success
+        if "--auto-accept-requests" in result:
+            self.auto_accept_requests = True
+        if "--auto-respond-messages" in result:
+            self.auto_respond_messages = True
 
         if self.get_acapy_version_as_float() > 56:
             result.append(("--auto-provision", "--recreate-wallet"))
@@ -469,13 +480,17 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 agent_operation = "/connections/" + connection_id + "/" + operation
                 log_msg("POST Request: ", agent_operation, data)
 
-                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-
+                if self.auto_accept_requests and operation == "accept-request":
+                    resp_status = 200
+                    resp_text = 'Aca-py agent in auto accept request mode. accept-request operation not called.'
+                else:
+                    # As of adding the Auto Accept and Auto Respond support, it seems a sleep is required here,
+                    # or sometimes the agent isn't in the correct state to accept the operation. Not sure why...
+                    await asyncio.sleep(1)
+                    (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+                    if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+                
                 log_msg(resp_status, resp_text)
-                if resp_status == 200:
-                    resp_text = self.agent_state_translation(
-                        op["topic"], None, resp_text
-                    )
                 return (resp_status, resp_text)
 
         elif op["topic"] == "schema":
@@ -707,7 +722,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = agent_operation + operation
 
         elif operation == "send-response":
-            agent_operation = agent_operation + rec_id + "/accept-request"
+            if self.auto_accept_requests:
+                resp_status = 200
+                resp_text = 'Aca-py agent in auto accept request mode. accept-request operation not called.'
+                return (resp_status, resp_text)
+            else:
+                agent_operation = agent_operation + rec_id + "/accept-request"
+                await asyncio.sleep(1)
 
         elif operation == "create-request-resolvable-did":
             their_public_did = data["their_public_did"]
