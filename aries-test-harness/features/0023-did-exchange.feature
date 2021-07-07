@@ -95,6 +95,8 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Bob" sends complete to "Acme"
       Then "Bob" and "Acme" have a connection
 
+   # This test will give an expected failure when running with Aca-py with the --auto-accept-requests & --auto-respond-messages options.
+   # Do not run this test with those flags on. It may also fail for other agents that do auto_responding depending on how the backchannel is implmented.
    @T007-RFC0023 @normal @AcceptanceTest @NegativeTest @ExceptionTest
    Scenario: Establish a connection with DID Exchange between two agents with attempt to continue after protocol is completed
       Given we have "2" agents
