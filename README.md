@@ -12,13 +12,15 @@ cd von-network
 ./manage build
 ./manage start
 cd ..
-git clone https://github.com/bcgov/aries-agent-test-harness
+git clone https://github.com/hyperledger/aries-agent-test-harness
 cd aries-agent-test-harness
 ./manage build -a acapy -a dotnet
 ./manage run -d acapy -b dotnet -t @AcceptanceTest -t ~@wip
 
 ```
+
 If running the Credential Revocation tests, which the `./manage run -d acapy -t @AcceptanceTest -t ~@wip` command does, make sure the Tail Server is running.
+
 ```bash
 git clone https://github.com/bcgov/indy-tails-server
 cd indy-tails-server/docker
@@ -106,7 +108,7 @@ Backchannels can be found in the [`aries-backchannels`](aries-backchannels) fold
 
 Three backchannels have been implemented, for the [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python), [VCX](https://github.com/hyperledger/indy-sdk/tree/master/vcx), [.NET](https://github.com/hyperledger/aries-framework-dotnet) and [JavaScript](https://github.com/hyperledger/aries-framework-javascript.git) Aries agent frameworks. The ACA-Py and VCX are built on a common Python base (./aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. The ACA-PY (./aries-backchannels/acapy/acapy_backchannel.py) and VCX (./aries-backchannels/vcx/vcx_backchannel.py) implementations extend the base to add support for their respective agent frameworks.
 
-There is also a backchannel to support (manual) testing with [mobile](./aries-backcgannels/mobile) agents.  This backchannel doesn't control the mobile agent directly, rather it will prompt the tester to manually accept connection requests, credential offers etc.  Use of the mobile backchannel is described [here](./MOBILE_AGENT_TESTING.md).
+There is also a backchannel to support (manual) testing with [mobile](./aries-backcgannels/mobile) agents. This backchannel doesn't control the mobile agent directly, rather it will prompt the tester to manually accept connection requests, credential offers etc. Use of the mobile backchannel is described [here](./MOBILE_AGENT_TESTING.md).
 
 ## The `manage` bash script
 
@@ -116,7 +118,7 @@ The AATH `./manage` script in the repo root folder is used to manage running bui
 
 Before running tests, you must build the TA and harness docker images. Use `./manage build -a <TA>` to build the docker images for a TA, and the test harness itself. You may specify multiple `-a` parameters to build multiple TAs at the same time. Leaving off the `-a` option builds docker images for all of the TAs found in the repo.
 
-There are two options for testing [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python) - you can build and run `acapy`, which builds the backchannel based on the latest released code, or you can build and run `acapy-main`, which builds the backchannel based on the latest version of the `main` branch.  (Note that to build the backchannel based on a different repo/branch, edit [this file](https://github.com/hyperledger/aries-agent-test-harness/blob/master/aries-backchannels/acapy/requirements-main.txt) to specify the repo/branch you want to test, and then build/run `acapy-main`.)
+There are two options for testing [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python) - you can build and run `acapy`, which builds the backchannel based on the latest released code, or you can build and run `acapy-main`, which builds the backchannel based on the latest version of the `main` branch. (Note that to build the backchannel based on a different repo/branch, edit [this file](https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-backchannels/acapy/requirements-main.txt) to specify the repo/branch you want to test, and then build/run `acapy-main`.)
 
 To run the tests, use the `./manage run...` sub-command. the `run` command requires defining what TAs will be used for Acme (`-a <TA>`), Bob (`-b <TA>`) and Mallory (`-m <TA>`). To default all the agents to use a single component, use `-d <TA>`. Parameters are processed in order, so you can use `-d` to default the agents to one, and then use `-b` to use a different TA for Bob.
 
@@ -124,10 +126,11 @@ There are two ways to control the behave test engine's selection of test cases t
 
 > Note that the `<tag>` arguments passed in on the command line **cannot** have a space, even if you double-quote the tag or escape the space. This is because the args are going through multiple layers shells (the script, calling docker, calling a script in the docker instance that in turn calls behave...). In all that argument passing, the wrappers around the args get lost. That should be OK in most cases, but if it is a problem, we have the `-i` option as follows...
 
-To enable full control over behave's behaviour (if you will...), the `-i <ini file>` option can be used to pass a behave "ini" format file into the test harness container. The ini file enables full control over the behave engine, add handles the shortcoming of not being able to pass tags arguments with spaces in them. See the behave configuration file options [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files). Note that the file name can be whatever you want. When it lands in the test harness container, it will be called `behave.ini`. There is a default ini file located in `aries-agent-test-harness/aries-test-harness/behave.ini`. This ini file is picked up and used by the test harness without the -i option.  To run the tests with a custom behave ini file, follow this example,
- ```
- ./manage run -d acapy -t @AcceptanceTest -t ~@wip -i aries-test-harness/MyNewBehaveConfig.ini
- ```
+To enable full control over behave's behaviour (if you will...), the `-i <ini file>` option can be used to pass a behave "ini" format file into the test harness container. The ini file enables full control over the behave engine, add handles the shortcoming of not being able to pass tags arguments with spaces in them. See the behave configuration file options [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files). Note that the file name can be whatever you want. When it lands in the test harness container, it will be called `behave.ini`. There is a default ini file located in `aries-agent-test-harness/aries-test-harness/behave.ini`. This ini file is picked up and used by the test harness without the -i option. To run the tests with a custom behave ini file, follow this example,
+
+```
+./manage run -d acapy -t @AcceptanceTest -t ~@wip -i aries-test-harness/MyNewBehaveConfig.ini
+```
 
 For a full inventory of tests available to run, use the `./manage tests`. Note that tests in the list tagged @wip are works in progress and should not run.
 
@@ -141,7 +144,7 @@ BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar\"}" ./manage run -d acapy
 
 The environment variable name is of the format `-<agent_name>`, where `<agent_name>` is the name of the agent (e.g. `acapy-main`) with hyphens replaced with underscores (i.e. `acapy_main`).
 
-The contents of the environment variable are backchannel-specific.  For aca-py it is a JSON structure containing parameters to use for agent startup.
+The contents of the environment variable are backchannel-specific. For aca-py it is a JSON structure containing parameters to use for agent startup.
 
 The above example runs all the tests using the `askar` wallet type (vs `indy`, which is the default).
 
@@ -179,33 +182,35 @@ To get a list of the tests (scenarios) and the associated tags, run the command:
 
 Using tags, one can just run Acceptance Tests...
 
-``` bash
+```bash
 ./manage run -d acapy -t @AcceptanceTest
 ```
 
 or all Priority 1 Acceptance Tests, but not the ones flagged Work In Progress...
 
-``` bash
+```bash
 ./manage run -d acapy -t @P1 -t @AcceptanceTest -t ~@wip
 ```
 
 or derived functional tests
 
-``` bash
+```bash
 ./manage run -d acapy -t @DerivedFunctionalTest
 ```
 
 or all the ExceptionTests...
 
-``` bash
+```bash
 ./manage run -t @ExceptionTest
 ```
 
 Using AND, OR in Test Execution Tags
 Stringing tags together in one `-t` with commas as separators is equivalent to an `OR`. The separate `-t` options is equivalent to an `AND`.
+
 ```bash
-./manage run -d acapy-master -t @RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_JSON-LD
-```  
+./manage run -d acapy-main -t @RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_JSON-LD
+```
+
 So the command above will run tests from RFC0453 or RFC0454, without the wip tag, and without the CredFormat_JSON-LD tag.
 
 To read more on how one can control the execution of test sets based on tags see the [behave documentation](https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags)
@@ -213,7 +218,9 @@ To read more on how one can control the execution of test sets based on tags see
 The option `-i <inifile>` can be used to pass a file in the `behave.ini` format into behave. With that, any behave configuration settings can be specified to control how behave behaves. See the behave documentation about the `behave.ini` configuration file [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files).
 
 ### Test Coverage
-To read about what protocols and features from Aries Interop Profile 1.0, see the [Test Coverage Matrix](./TEST-COVERAGE.md). 
+
+To read about what protocols and features from Aries Interop Profile 1.0, see the [Test Coverage Matrix](./TEST-COVERAGE.md).
 
 ### Test Reporting
+
 For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST-REPORTING.md).
