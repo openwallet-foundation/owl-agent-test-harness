@@ -159,6 +159,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "response": "response-sent",
             "?": "abandoned",
             "active": "completed",
+            "completed": "completed",
         }
 
         # Aca-py : RFC
@@ -677,9 +678,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = (
                 agent_operation
                 + "create-invitation"
-                + "?auto_accept="
-                + auto_accept
-                + "&multi_use="
+                + "?multi_use="
                 + multi_use
             )
 
@@ -700,9 +699,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = (
                 agent_operation
                 + "receive-invitation"
-                + "?auto_accept="
-                + auto_accept
-                + "&use_existing_connection="
+                + "?use_existing_connection="
                 + use_existing_connection
             )
             # agent_operation = "/didexchange/" + "receive-invitation"
