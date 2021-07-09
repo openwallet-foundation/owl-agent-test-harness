@@ -4,9 +4,9 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.7.0-rc0 | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc0 | acapy-main<br>0.7.0-rc0 | AIP 1.0 | [**13 / 13<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0-rc0 | javascript<br>1.0.0 | dotnet-master<br> | acapy-main<br>0.7.0-rc0 | AIP 1.0 | [**11 / 13<br>84%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc0 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**11 / 13<br>84%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc1 | acapy-main<br>0.7.0-rc1 | AIP 1.0 | [**13 / 13<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | dotnet-master<br> | acapy-main<br>0.7.0-rc1 | AIP 1.0 | [**11 / 13<br>84%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**9 / 13<br>69%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afj-dotnet](#runset-afj-dotnet) | javascript<br>1.0.0 | dotnet-master<br> | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**13 / 13<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [afj](#runset-afj) | javascript<br>1.0.0 | javascript<br>1.0.0 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**18 / 18<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-javascript](#runset-dotnet-javascript) | dotnet-master<br> | javascript<br>1.0.0 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**6 / 13<br>46%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
@@ -21,7 +21,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last run: Thu Jul  8 02:01:52 UTC 2021*
+*Last run: Fri Jul  9 01:27:25 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -44,7 +44,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 11 out of 13 (84%)**
 
 
-*Last run: Thu Jul  8 02:37:46 UTC 2021*
+*Last run: Fri Jul  9 01:41:49 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -66,10 +66,10 @@ is required to determine the issue in these three tests.
 Runset Name: AFJ to ACA-PY
 
 ```tip
-**Latest results: 11 out of 13 (84%)**
+**Latest results: 9 out of 13 (69%)**
 
 
-*Last run: Thu Jul  8 02:51:48 UTC 2021*
+*Last run: Fri Jul  9 01:55:08 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -93,7 +93,7 @@ Runset Name: AFJ to AF-.NET
 **Latest results: 13 out of 13 (100%)**
 
 
-*Last run: Thu Jul  8 02:54:25 UTC 2021*
+*Last run: Fri Jul  9 01:58:12 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -116,7 +116,7 @@ Runset Name: AFJ to AFJ
 **Latest results: 18 out of 18 (100%)**
 
 
-*Last run: Thu Jul  8 02:57:31 UTC 2021*
+*Last run: Fri Jul  9 02:12:25 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -139,7 +139,7 @@ Runset Name: AF-.NET to AFJ
 **Latest results: 6 out of 13 (46%)**
 
 
-*Last run: Thu Jul  8 02:57:41 UTC 2021*
+*Last run: Fri Jul  9 02:16:31 UTC 2021*
 ```
 
 #### Current Runset Status
