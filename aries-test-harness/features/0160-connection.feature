@@ -23,28 +23,8 @@ Feature: RFC 0160 Aries agent connection functions
                         # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
                         # the agents under test implement acks.
 
-   @T001.2-RFC0160 @critical @AcceptanceTest
-   Scenario Outline: establish a connection between two agents with role reversal
-      Given we have "2" agents
-         | name  | role    |
-         | Acme | invitee |
-         | Bob   | inviter |
-      When "Bob" generates a connection invitation
-      And "Acme" receives the connection invitation
-      And "Acme" sends a connection request to "Bob"
-      And "Bob" receives the connection request
-      And "Bob" sends a connection response to "Acme"
-      And "Acme" receives the connection response
-      And "Acme" sends <message> to "Bob"
-      Then "Bob" and "Acme" have a connection
-
-      Examples:
-         | message   |
-         | trustping |
-         # | acks      | *Note* in RFC 0302: Aries Interop Profile, it states that Acknowledgements are part of AIP 1.0, however, agents under test have
-                        # implemented trustping which is not part of the AIP 1.0. The acks is removed here in favor of trustping until the RFC is changed or
-                        # the agents under test implement acks.
-
+   #@T001.2-RFC0160 @critical @AcceptanceTest @Deprecated
+   #Scenario Outline: establish a connection between two agents with role reversal
 
    @T002-RFC0160 @critical @AcceptanceTest
    Scenario Outline: Connection established between two agents but inviter sends next message to establish full connection state

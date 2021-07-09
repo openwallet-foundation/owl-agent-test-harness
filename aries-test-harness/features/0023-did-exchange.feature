@@ -20,20 +20,8 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Acme" sends complete to "Bob"
       Then "Acme" and "Bob" have a connection
 
-   @T002-RFC0023 @critical @AcceptanceTest
-   Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with role reversal
-      Given we have "2" agents
-         | name | role      |
-         | Acme | responder |
-         | Bob  | requester |
-      When "Acme" sends an explicit invitation
-      And "Bob" receives the invitation
-      And "Bob" sends the request to "Acme"
-      And "Acme" receives the request
-      And "Acme" sends a response to "Bob"
-      And "Bob" receives the response
-      And "Bob" sends complete to "Acme"
-      Then "Bob" and "Acme" have a connection
+   #@T002-RFC0023 @critical @AcceptanceTest @Deprecated
+   #Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with role reversal
 
    @T003-RFC0023 @normal @AcceptanceTest
    Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with a public DID
@@ -50,20 +38,8 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Acme" sends complete to "Bob"
       Then "Acme" and "Bob" have a connection
 
-   @T004-RFC0023 @normal @AcceptanceTest
-   Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with a public DID with role reversal
-      Given we have "2" agents
-         | name | role      |
-         | Acme | responder |
-         | Bob  | requester |
-      When "Acme" sends an explicit invitation with a public DID
-      And "Bob" receives the invitation
-      And "Bob" sends the request to "Acme"
-      And "Acme" receives the request
-      And "Acme" sends a response to "Bob"
-      And "Bob" receives the response
-      And "Bob" sends complete to "Acme"
-      Then "Bob" and "Acme" have a connection
+   #@T004-RFC0023 @normal @AcceptanceTest @Deprecated
+   #Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with a public DID with role reversal
 
    @T005-RFC0023 @critical @AcceptanceTest
    Scenario: Establish a connection with DID Exchange between two agents with an implicit invitation
@@ -80,20 +56,8 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Acme" sends complete to "Bob"
       Then "Acme" and "Bob" have a connection
 
-   @T006-RFC0023 @critical @AcceptanceTest
-   Scenario: Establish a connection with DID Exchange between two agents with an implicit invitation with role reversal
-      Given we have "2" agents
-         | name | role      |
-         | Acme | responder |
-         | Bob  | requester |
-      And "Acme" has a resolvable DID
-      And "Bob" aquires the resolvable DID
-      When "Bob" sends the request to "Acme" with the public DID
-      And "Acme" receives the request with their public DID
-      And "Acme" sends a response to "Bob"
-      And "Bob" receives the response
-      And "Bob" sends complete to "Acme"
-      Then "Bob" and "Acme" have a connection
+   #@T006-RFC0023 @critical @AcceptanceTest @Deprecated
+   #Scenario: Establish a connection with DID Exchange between two agents with an implicit invitation with role reversal
 
    # This test will give an expected failure when running with Aca-py with the --auto-accept-requests & --auto-respond-messages options.
    # Do not run this test with those flags on. It may also fail for other agents that do auto_responding depending on how the backchannel is implmented.
