@@ -305,7 +305,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             raise Exception(
             f"invitation_ID not found in didexchange_states Webhook Message: {json.dumps(message)}"
             )
-            log_msg('Processed a didexchange_states Webhook message: ' + json.dumps(message))
+        log_msg('Processed a didexchange_states Webhook message: ' + json.dumps(message))
     
     async def handle_didexchange_actions(self, message):
         if "connectionID" in message["message"]["Properties"]:
@@ -647,6 +647,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 resp_json = json.loads(resp_text)
                 if resp_json["code"] == 2005: resp_status = 400
             return (resp_status, resp_text)
+
+
+        elif operation == "create-request-resolvable-did":
+            their_public_did = data["their_public_did"]
+            # create and accept implicit invitation
+            agent_operation = f'/connections/create-implicit-invitation?their_did={their_public_did}'
+
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -1189,15 +1196,36 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "did":
-            agent_operation = "/connections"
-            agent_operation = "/issuecredential/actions"
+            agent_operation = "/vdr/did"
 
-            (resp_status, resp_text) = await self.admin_GET(agent_operation)
-            if resp_status == 200:
-                did = { 'did': 'did:' }
-                resp_text = json.dumps(did)
-           
-            return (resp_status, resp_text)
+            agent_name = os.getenv("AGENT_NAME")
+            orb_did_path = f"/data-mount/orb-dids/{agent_name}.json"
+
+            orb_did_name = os.getenv("AFGO_ORBDID_NAME")
+            if orb_did_name is None or len(orb_did_name) == 0:
+                orb_did_name = "<default orb did>"
+
+            with open(orb_did_path) as orb_did_file:
+                orb_did = orb_did_file.read()
+                # print("ORB DID FILE:", orb_did)
+                orb_did_json = json.loads(orb_did)
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, data={"did": orb_did_json, "name": orb_did_name})
+            if resp_status != 200:
+                if resp_status == 400: # we've already posted the DID to the agent, so we can just return the did
+                    return (200, json.dumps({"did":orb_did_json["id"]}))
+                return (resp_status, "")
+
+            # import the ed25519 private key for orb did
+            priv_key_path = os.getenv("AFGO_ORBDID_PRIVKEY")
+
+            with open(priv_key_path) as priv_key_file:
+                priv_key = priv_key_file.read()
+                # print("PRIV KEY FILE:", priv_key)
+                priv_key_json = json.loads(priv_key)
+                (resp_status, resp_text) = await self.admin_POST("/kms/import", data=priv_key_json)
+                # print(f"/kms/import result: {resp_text}")
+
+            return (resp_status, json.dumps({"did":orb_did_json["id"]}))
 
         elif op["topic"] == "schema":
             schema_id = rec_id
