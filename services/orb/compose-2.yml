@@ -9,7 +9,7 @@ services:
 
   orb.trillian.log.server:
     container_name: orb.trillian.log.server
-    image: ghcr.io/trustbloc/vct-log-server:v0.1.1
+    image: ghcr.io/trustbloc/vct-log-server:v0.1.2
     restart: always
     command:
       - --quota_system=noop
@@ -24,7 +24,7 @@ services:
 
   orb.trillian.log.signer:
     container_name: orb.trillian.log.signer
-    image: ghcr.io/trustbloc/vct-log-signer:v0.1.1
+    image: ghcr.io/trustbloc/vct-log-signer:v0.1.2
     restart: always
     command:
       - --quota_system=noop
@@ -67,12 +67,12 @@ services:
 
   orb.vct:
     container_name: orb.vct
-    image: ghcr.io/trustbloc/vct:v0.1.1
+    image: ghcr.io/trustbloc/vct:v0.1.2
     restart: always
     environment:
       - VCT_API_HOST=0.0.0.0:8077
       - VCT_AUTO_INIT_TREE=true
-      - VCT_LOG_ENDPOINT=orb.trillian.log.server:8090
+      - VCT_LOGS=aath-orb:rw@orb.trillian.log.server:8090
       - VCT_KMS_ENDPOINT=http://orb.kms:7878
       - VCT_TLS_SYSTEMCERTPOOL=true
       - VCT_DSN=couchdb://${COUCHDB_USERNAME}:${COUCHDB_PASSWORD}@couchdb.kms.com:5984

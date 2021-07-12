@@ -11,6 +11,8 @@ runs:
     - name: run-service-command
       run: ./manage service ${{ inputs.SERVICE_COMMAND }}
       shell: bash
+      env:
+        NO_TTY: "1"
       working-directory: test-harness
 branding:
   icon: "aperture"

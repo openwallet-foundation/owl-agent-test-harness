@@ -651,9 +651,14 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif operation == "create-request-resolvable-did":
             their_public_did = data["their_public_did"]
+            if not their_public_did.startswith("did:"):
+                their_public_did = "did:sov:" + their_public_did
             # create and accept implicit invitation
             agent_operation = f'/connections/create-implicit-invitation?their_did={their_public_did}'
 
+        elif operation == "receive-request-resolvable-did":
+            (resp_status, resp_text) = await self.make_agent_GET_request_response("did-exchange", rec_id=data["their_did"])
+            return (resp_status, resp_text)
         
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -1207,7 +1212,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             with open(orb_did_path) as orb_did_file:
                 orb_did = orb_did_file.read()
-                # print("ORB DID FILE:", orb_did)
                 orb_did_json = json.loads(orb_did)
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data={"did": orb_did_json, "name": orb_did_name})
             if resp_status != 200:
@@ -1220,10 +1224,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             with open(priv_key_path) as priv_key_file:
                 priv_key = priv_key_file.read()
-                # print("PRIV KEY FILE:", priv_key)
                 priv_key_json = json.loads(priv_key)
                 (resp_status, resp_text) = await self.admin_POST("/kms/import", data=priv_key_json)
-                # print(f"/kms/import result: {resp_text}")
 
             return (resp_status, json.dumps({"did":orb_did_json["id"]}))
 
