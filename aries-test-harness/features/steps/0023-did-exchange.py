@@ -82,7 +82,8 @@ def step_impl(context, requester, responder):
     requester_did = context.requester_did
 
     data = {
-        "their_public_did": requester_did
+        "their_public_did": requester_did,
+        "their_did": requester_did
     }
 
     (resp_status, resp_text) = agent_backchannel_POST(requester_url + "/agent/command/", "did-exchange", operation="create-request-resolvable-did", data=data)

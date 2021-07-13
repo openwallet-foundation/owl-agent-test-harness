@@ -40,7 +40,7 @@ services:
       - ORB_TLS_CERTIFICATE=/etc/orb/tls/ec-pubCert.pem
       - ORB_TLS_KEY=/etc/orb/tls/ec-key.pem
 
-      - ORB_VCT_URL=http://orb.vct:8077
+      - ORB_VCT_URL=http://orb.vct:8077/aath-orb
     ports:
       - 48326:443
     command: start
@@ -56,7 +56,7 @@ services:
     restart: always
     environment:
       - ORB_KMS_ENDPOINT=http://orb.kms:7878
-      - ORB_VCT_URL=http://orb.vct:8077
+      - ORB_VCT_URL=http://orb.vct:8077/aath-orb
       - LOG_LEVEL=${ORB_SERVER_LOG_LEVEL}
       - ORB_HOST_URL=0.0.0.0:443
       - ORB_EXTERNAL_ENDPOINT=https://orb.domain2.com
