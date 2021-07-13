@@ -37,6 +37,10 @@ jobs:
           TEST_SCOPE: "-t ~@wip"
           REPORT_PROJECT: aries-vcx  
         continue-on-error: true
+      - uses: actions/upload-artifact@v2
+        with:
+          name: agent-logs
+          path: ./logs
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
