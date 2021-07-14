@@ -37,8 +37,6 @@ services:
     container_name: orb.postgres
     image: postgres:13
     restart: always
-    volumes:
-      - ./postgres-config/postgres_config.sql:/docker-entrypoint-initdb.d/postgres_config.sql
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=test
