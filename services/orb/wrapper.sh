@@ -13,7 +13,7 @@ startCommand() {
 
 generateKeys() {
 	mkdir -p .build/keys/tls
-	docker run -i --rm \
+	docker run ${USE_TTY} --rm \
 		-v ${SCRIPT_HOME}:/opt/workspace/orb \
 		--entrypoint "/opt/workspace/orb/key-generation/generate_orb_keys.sh" \
 		--user "$(id -u):$(id -g)" \
@@ -62,23 +62,15 @@ createDID() {
 
 	mkdir -p .build/orb-dids
 
-	agent_names=( "Acme" "Bob" "Faber" "Mallory" )
-
-	for AGENT_NAME in "${agent_names[@]}"; do
-
-		RESULT=$(docker run -it --rm \
-			--name "create-did" \
-			-v "${SCRIPT_HOME}:/etc/orb-cli" \
-			-e "SERVICE_FILE=.build/services/${AGENT_NAME}.json" \
-			-e "AGENT_NAME=${AGENT_NAME}" \
-			--network "aath_network" \
-			--entrypoint "/etc/orb-cli/cli-scripts/create_did.sh" \
-			"ubuntu:latest" \
-		)
-
-		echo $RESULT > .build/orb-dids/${AGENT_NAME}.json
-		echo $RESULT\n
-	done
+	docker run ${USE_TTY} --rm \
+		--name "create-did" \
+		-v "${SCRIPT_HOME}:/etc/orb-cli" \
+		--user "$(id -u):$(id -g)" \
+		-e "SERVICE_FILE=.build/services/${AGENT_NAME}.json" \
+		-e "AGENT_NAME=${AGENT_NAME}" \
+		--network "aath_network" \
+		--entrypoint "/etc/orb-cli/cli-scripts/create_did.sh" \
+		"ubuntu:latest"
 
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-master.data
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-interop.data
