@@ -11,8 +11,8 @@
 | [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | dotnet-master<br> | acapy-main<br>0.7.0-rc1 | AIP 1.0 | [**10 / 12<br>83%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-dotnet](#runset-acapy-dotnet) | acapy-main<br>0.7.0-rc1 | dotnet-master<br> | acapy-main<br>0.7.0-rc1 | acapy-main<br>0.7.0-rc1 | AIP 1.0 | [**26 / 27<br>96%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.7.0-rc1 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**2 / 3<br>66%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**7 / 12<br>58%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [dotnet-acapy](#runset-dotnet-acapy) | dotnet-master<br> | acapy-main<br>0.7.0-rc1 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**1 / 12<br>8%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**8 / 12<br>66%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-acapy](#runset-dotnet-acapy) | dotnet-master<br> | acapy-main<br>0.7.0-rc1 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**0 / 12<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -24,7 +24,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 2 out of 3 (66%)**
 
 
-*Last run: Sun Jul 11 01:22:30 UTC 2021*
+*Last run: Thu Jul 15 01:20:01 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -48,7 +48,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Sun Jul 11 01:29:22 UTC 2021*
+*Last run: Thu Jul 15 01:27:06 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -71,7 +71,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Sun Jul 11 01:34:25 UTC 2021*
+*Last run: Thu Jul 15 01:30:58 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -94,7 +94,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 32 out of 32 (100%)**
 
 
-*Last run: Sun Jul 11 01:47:04 UTC 2021*
+*Last run: Thu Jul 15 01:45:11 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -117,7 +117,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 10 out of 12 (83%)**
 
 
-*Last run: Sun Jul 11 01:42:45 UTC 2021*
+*Last run: Thu Jul 15 01:40:48 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -142,7 +142,7 @@ Runset Name: ACA-PY to AF-.NET
 **Latest results: 26 out of 27 (96%)**
 
 
-*Last run: Sun Jul 11 01:57:24 UTC 2021*
+*Last run: Thu Jul 15 01:53:41 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -167,7 +167,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 2 out of 3 (66%)**
 
 
-*Last run: Sun Jul 11 01:53:43 UTC 2021*
+*Last run: Thu Jul 15 01:50:21 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -188,10 +188,10 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 Runset Name: AFJ to ACA-PY
 
 ```tip
-**Latest results: 7 out of 12 (58%)**
+**Latest results: 8 out of 12 (66%)**
 
 
-*Last run: Sun Jul 11 01:57:46 UTC 2021*
+*Last run: Thu Jul 15 01:54:42 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -212,10 +212,10 @@ as that feature is not supported in AFJ.
 Runset Name: AF-.NET to ACA-PY
 
 ```tip
-**Latest results: 1 out of 12 (8%)**
+**Latest results: 0 out of 12 (0%)**
 
 
-*Last run: Sun Jul 11 02:10:02 UTC 2021*
+*Last run: Thu Jul 15 02:08:49 UTC 2021*
 ```
 
 #### Current Runset Status
