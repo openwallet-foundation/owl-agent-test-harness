@@ -14,10 +14,10 @@ export const rootDir = __dirname;
 })
 export class Server {
   @Inject()
-  app: PlatformApplication;
+  app!: PlatformApplication;
 
   @Configuration()
-  settings: Configuration;
+  settings!: Configuration;
 
   $beforeRoutesInit() {
     this.app.use(bodyParser.json());
