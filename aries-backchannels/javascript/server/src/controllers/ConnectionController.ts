@@ -5,7 +5,7 @@ import {
   ConnectionRecord,
   ConnectionInvitationMessage,
   JsonTransformer,
-} from "aries-framework-javascript";
+} from "aries-framework";
 
 @Controller("/agent/command/connection")
 export class ConnectionController {
@@ -17,7 +17,7 @@ export class ConnectionController {
 
   @Get("/:connectionId")
   async getConnectionById(@PathParams("connectionId") connectionId: string) {
-    const connection = await this.agent.connections.find(connectionId);
+    const connection = await this.agent.connections.findById(connectionId);
 
     if (!connection) {
       throw new NotFound(
@@ -37,10 +37,8 @@ export class ConnectionController {
 
   @Post("/create-invitation")
   async createInvitation() {
-    const {
-      invitation,
-      connectionRecord,
-    } = await this.agent.connections.createConnection();
+    const { invitation, connectionRecord } =
+      await this.agent.connections.createConnection();
 
     return {
       ...this.mapConnection(connectionRecord),

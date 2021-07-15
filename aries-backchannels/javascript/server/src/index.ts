@@ -3,7 +3,7 @@ import { PlatformExpress } from "@tsed/platform-express";
 import { registerProvider } from "@tsed/di";
 import { createAgent } from "./TestAgent";
 import { Server } from "./Server";
-import { Agent } from "aries-framework-javascript";
+import { Agent } from "aries-framework";
 import minimist from "minimist";
 import {
   getGenesisPath,

@@ -6,21 +6,23 @@ import {
   PresentationPreview,
   ProofRequest,
   RequestedCredentials,
-} from "aries-framework-javascript";
-import { ProofRecord } from "aries-framework-javascript/build/lib/storage/ProofRecord";
-import { Body } from "node-fetch";
+  ProofRecord,
+} from "aries-framework";
+import { ProofUtils } from "../utils/ProofUtils";
 
 @Controller("/agent/command/proof")
 export class PresentProofController {
   private agent: Agent;
+  private proofUtils: ProofUtils;
 
   public constructor(agent: Agent) {
     this.agent = agent;
+    this.proofUtils = new ProofUtils(agent);
   }
 
   @Get("/:threadId")
   async getProofByThreadId(@PathParams("threadId") threadId: string) {
-    const proofRecord = await this.agent.proof.getByThreadId(threadId);
+    const proofRecord = await this.proofUtils.getProofByThreadId(threadId);
 
     if (!proofRecord) {
       throw new NotFound(`proof record for thead id "${threadId}" not found.`);
@@ -31,7 +33,7 @@ export class PresentProofController {
 
   @Get("/")
   async getAllProofs() {
-    const proofs = await this.agent.proof.getAll();
+    const proofs = await this.agent.proofs.getAll();
 
     return proofs.map((proof) => this.mapProofRecord(proof));
   }
@@ -49,7 +51,7 @@ export class PresentProofController {
       PresentationPreview
     );
 
-    const proofRecord = await this.agent.proof.proposeProof(
+    const proofRecord = await this.agent.proofs.proposeProof(
       data.connection_id,
       presentationProposal,
       {
@@ -76,7 +78,7 @@ export class PresentProofController {
 
     // TODO: AFJ doesn't support to negotiate proposal yet
     // if thread id is present
-    const proofRecord = await this.agent.proof.requestProof(
+    const proofRecord = await this.agent.proofs.requestProof(
       data.connection_id,
       {
         requestedAttributes: proofRequest.requestedAttributes,
@@ -93,42 +95,56 @@ export class PresentProofController {
   @Post("/send-presentation")
   async sendPresentation(
     @BodyParams("id") threadId: string,
-    @BodyParams("data") data: any
+    @BodyParams("data")
+    data: {
+      self_attested_attributes: Record<string, string>;
+      requested_attributes: Record<
+        string,
+        { cred_id: string; timestamp?: number; revealed: boolean }
+      >;
+      requested_predicates: Record<
+        string,
+        { cred_id: string; revealed: boolean }
+      >;
+      comment: string;
+    }
   ) {
-    let proofRecord = await this.agent.proof.getByThreadId(threadId);
+    let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
 
-    const requestedCredentials = JsonTransformer.fromJSON(
-      {
-        requested_attributes: data.requested_attributes ?? new Map(),
-        requested_predicates: data.requested_predicates ?? new Map(),
-        self_attested_attributes: data.self_attested_attributes ?? new Map(),
-      },
-      RequestedCredentials
-    );
+    if (proofRecord) {
+      const requestedCredentials = JsonTransformer.fromJSON(
+        {
+          requested_attributes: data.requested_attributes ?? new Map(),
+          requested_predicates: data.requested_predicates ?? new Map(),
+          self_attested_attributes: data.self_attested_attributes ?? new Map(),
+        },
+        RequestedCredentials
+      );
 
-    console.log(requestedCredentials);
+      proofRecord = await this.agent.proofs.acceptRequest(
+        proofRecord.id,
+        requestedCredentials,
+        { comment: data.comment }
+      );
 
-    proofRecord = await this.agent.proof.acceptRequest(
-      proofRecord.id,
-      requestedCredentials
-    );
-
-    return this.mapProofRecord(proofRecord);
+      return this.mapProofRecord(proofRecord);
+    }
   }
 
   @Post("/verify-presentation")
   async verifyPresentation(@BodyParams("id") threadId: string) {
-    let proofRecord = await this.agent.proof.getByThreadId(threadId);
-
-    proofRecord = await this.agent.proof.acceptPresentation(proofRecord.id);
-
-    return this.mapProofRecord(proofRecord);
+    let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
+    if (proofRecord) {
+      return this.mapProofRecord(
+        await this.agent.proofs.acceptPresentation(proofRecord.id)
+      );
+    }
   }
 
   private mapProofRecord(proofRecord: ProofRecord) {
     return {
-      state: proofRecord.state.toLowerCase().replace("_", "-"),
-      thread_id: proofRecord.tags.threadId,
+      state: proofRecord.state.toLowerCase(),
+      thread_id: proofRecord.threadId,
     };
   }
 }

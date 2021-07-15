@@ -1,12 +1,14 @@
-import indy from "indy-sdk";
-import { InitConfig, Agent } from "aries-framework-javascript";
-import express from "express";
 import { $log } from "@tsed/common";
-
 import {
-  HttpInboundTransporter,
+  Agent,
+  DidCommMimeType,
   HttpOutboundTransporter,
-} from "./Transporters";
+  InitConfig,
+} from "aries-framework";
+import { NodeFileSystem } from "aries-framework/build/src/storage/fs/NodeFileSystem";
+import express from "express";
+import indy from "indy-sdk";
+import { HttpInboundTransporter } from "./Transporters";
 
 export async function createAgent({
   port,
@@ -19,35 +21,36 @@ export async function createAgent({
   publicDidSeed: string;
   genesisPath: string;
 }) {
+  // TODO: Public did does not seem to be registered
+  // TODO: Schema is prob already registered
   const agentConfig: InitConfig = {
     label: "javascript",
     walletConfig: { id: `aath-javascript-${Date.now()}` },
     walletCredentials: { key: "00000000000000000000000000000Test01" },
-    publicDidSeed,
+    fileSystem: new NodeFileSystem(),
+    poolName: "aries-framework-javascript-pool",
     host: url,
     port,
-    poolName: "aries-framework-javascript-pool",
+    publicDidSeed,
     genesisPath,
+    indy,
   };
+
+  const agent = new Agent(agentConfig);
 
   const app = express();
   app.use(
     express.json({
-      type: "application/ssi-agent-wire",
+      type: [DidCommMimeType.V0, DidCommMimeType.V1],
     })
   );
 
   const inboundTransporter = new HttpInboundTransporter(app);
-  const outboundTransporter = new HttpOutboundTransporter();
 
-  const agent = new Agent(
-    agentConfig,
-    inboundTransporter,
-    outboundTransporter,
-    indy
-  );
+  agent.setInboundTransporter(inboundTransporter);
+  agent.setOutboundTransporter(new HttpOutboundTransporter(agent));
 
-  await agent.init();
+  await agent.initialize();
 
   app.listen(port, async () => {
     inboundTransporter.start(agent);

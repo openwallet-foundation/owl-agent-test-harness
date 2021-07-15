@@ -1,6 +1,6 @@
 import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
 import { InternalServerError, NotFound } from "@tsed/exceptions";
-import { Agent } from "aries-framework-javascript";
+import { Agent } from "aries-framework";
 
 @Controller("/agent/command/credential-definition")
 export class CredentialDefinitionController {
@@ -15,9 +15,8 @@ export class CredentialDefinitionController {
     @PathParams("credentialDefinitionId") credentialDefinitionId: string
   ) {
     try {
-      const credentialDefinition = await this.agent.ledger.getCredentialDefinition(
-        credentialDefinitionId
-      );
+      const credentialDefinition =
+        await this.agent.ledger.getCredentialDefinition(credentialDefinitionId);
 
       return credentialDefinition;
     } catch (error) {
@@ -37,25 +36,32 @@ export class CredentialDefinitionController {
   }
 
   @Post()
-  async createCredentialDefinition(@BodyParams("data") data: any) {
+  async createCredentialDefinition(
+    @BodyParams("data")
+    data: {
+      tag: string;
+      support_revocation: boolean;
+      schema_id: string;
+    }
+  ) {
     // TODO: handle schema not found exception
-    const schema = await this.agent.ledger.getSchema(data.schema_id);
+    try {
+      const schema = await this.agent.ledger.getSchema(data.schema_id);
 
-    const [
-      credentialDefinitionId,
-      credentialDefinition,
-    ] = await this.agent.ledger.registerCredentialDefinition({
-      tag: data.tag,
-      config: {
-        support_revocation: data.support_revocation,
-      },
-      schema,
-      signatureType: "CL",
-    });
+      const credentialDefinition =
+        await this.agent.ledger.registerCredentialDefinition({
+          schema,
+          signatureType: "CL",
+          supportRevocation: data.support_revocation,
+          tag: data.tag,
+        });
 
-    return {
-      credential_definition_id: credentialDefinitionId,
-      credential_definition: credentialDefinition,
-    };
+      return {
+        credential_definition_id: credentialDefinition.id,
+        credential_definition: credentialDefinition,
+      };
+    } catch (e) {
+      // TODO: handle error
+    }
   }
 }
