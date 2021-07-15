@@ -1,4 +1,13 @@
 name: test-harness-ariesvcx-ariesvcx
+# RUNSET_NAME: "aries-vcx to aries-vcx"
+# Scope: AIP 1.0
+# Exceptions: Proof Proposals, Public Dids
+#
+# Current
+# 
+# Passing tests: @T003-RFC0036 @T001-RFC0160 @T002-RFC0160 @T003-RFC0160 @T001-RFC0037
+# 
+# End
   # on:
   #   workflow_dispatch:
   #   schedule:
@@ -34,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx"
           TEST_AGENTS: "-d aries-vcx"
-          TEST_SCOPE: "-t ~@wip"
+          TEST_SCOPE: "-t ~@T001-RFC0036 -t ~@T001.1-RFC0036 -t ~@T002-RFC0036 -t ~@T004-RFC0036 -t ~@T005-RFC0036 -t ~@T006-RFC0036 -t ~@T001.1-RFC0037 -t ~@T001.2-RFC0037 -t ~@T001.3-RFC0037 -t ~@T001.4-RFC0037 -t ~@T001.5-RFC0037 -t ~@T002-RFC0037 -t ~@T003-RFC0037 -t ~@T003.1-RFC0037 -t ~@T004-RFC0037 -t ~@T005-RFC0037 -t ~@T006-RFC0037 -t ~@T004-RFC0160 -t ~@T005-RFC0160 -t ~@T006-RFC0160 -t ~@T007-RFC0160 -t ~@RFC0023 -t ~@revocation -t ~@RFC0453"
           REPORT_PROJECT: aries-vcx  
         continue-on-error: true
       - uses: actions/upload-artifact@v2
