@@ -1,4 +1,5 @@
 import { Controller, Get, Res } from "@tsed/common";
+import packageJson from '../../package.json'
 
 @Controller("/agent/command")
 export class AgentStatusController {
@@ -22,7 +23,6 @@ export class AgentStatusController {
 
   @Get("/version")
   getVersion(@Res() response: Res) {
-    // TODO: return actual version
-    return "1.0.0";
+    return packageJson.version
   }
 }
