@@ -10,9 +10,6 @@ use vcx::aries::handlers::connection::invitee::state_machine::InviteeState;
 use vcx::aries::handlers::connection::inviter::state_machine::InviterState;
 use vcx::api::VcxStateType;
 
-// Unsupported test cases:
-// @T005-RFC0160 - public did
-
 #[derive(Deserialize, Default)]
 struct ConnectionRequest {
     request: String

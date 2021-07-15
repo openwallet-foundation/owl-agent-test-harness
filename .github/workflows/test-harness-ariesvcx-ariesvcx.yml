@@ -1,7 +1,7 @@
 name: test-harness-ariesvcx-ariesvcx
 # RUNSET_NAME: "aries-vcx to aries-vcx"
 # Scope: AIP 1.0
-# Exceptions: Proof Proposals, Public Dids
+# Exceptions: Proof Proposals, Public Dids, Revocations
 #
 # Current
 # 

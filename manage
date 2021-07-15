@@ -218,24 +218,24 @@ buildImages() {
 
   echo Agents to build: ${BUILD_AGENTS}
 
-#   for agent in ${BUILD_AGENTS}; do
-#     export BACKCHANNEL_FOLDER=$(dirname "$(find aries-backchannels -name *.${agent})" )
-#     echo Backchannel Folder: ${BACKCHANNEL_FOLDER}
-#     if [ -e "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" ]; then
-#       echo "Building ${agent}-agent-backchannel ..."
-#       if ! docker build \
-#         ${args} \
-#         $(initDockerBuildArgs) \
-#         -t "${agent}-agent-backchannel" \
-#         -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"; then
-#           echo "Docker image build failed."
-#           exit 1
-#       fi
-#     else
-#       echo "Unable to find Dockerfile to build agent: ${agent}"
-#       echo "Must be one one of: ${VALID_AGENTS}"
-#     fi
-#   done
+  for agent in ${BUILD_AGENTS}; do
+    export BACKCHANNEL_FOLDER=$(dirname "$(find aries-backchannels -name *.${agent})" )
+    echo Backchannel Folder: ${BACKCHANNEL_FOLDER}
+    if [ -e "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" ]; then
+      echo "Building ${agent}-agent-backchannel ..."
+      if ! docker build \
+        ${args} \
+        $(initDockerBuildArgs) \
+        -t "${agent}-agent-backchannel" \
+        -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"; then
+          echo "Docker image build failed."
+          exit 1
+      fi
+    else
+      echo "Unable to find Dockerfile to build agent: ${agent}"
+      echo "Must be one one of: ${VALID_AGENTS}"
+    fi
+  done
 
   echo "Building aries-test-harness ..."
   if ! docker build \
@@ -655,9 +655,11 @@ runTests() {
 
   if [[ "${REPORT}" = "allure" ]]; then
       echo "Executing tests with Allure Reports."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://host.docker.internal:9020 -D Bob=http://host.docker.internal:9030 -D Faber=http://host.docker.internal:9040 -D Mallory=http://host.docker.internal:9050
+      # ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://host.docker.internal:9020 -D Bob=http://host.docker.internal:9030 -D Faber=http://host.docker.internal:9040 -D Mallory=http://host.docker.internal:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   else
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://host.docker.internal:9020 -D Bob=http://host.docker.internal:9030 -D Faber=http://host.docker.internal:9040 -D Mallory=http://host.docker.internal:9050
+      # ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://host.docker.internal:9020 -D Bob=http://host.docker.internal:9030 -D Faber=http://host.docker.internal:9040 -D Mallory=http://host.docker.internal:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
   local docker_result=$?
   rm ${BEHAVE_INI_TMP}
@@ -852,7 +854,7 @@ case "${COMMAND}" in
     ;;
 
   run)
-      # startHarness
+      startHarness
       echo ""
       runTests ${TAGS} ${@}
       echo ""
