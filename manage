@@ -371,9 +371,6 @@ dockerhost_url_templates() {
 pingAgent(){
   name=${1}
   port=${2}
-  container_name=${3}
-
-  docker logs $container_name
 
   # ping agent using a backchannel-exposed api
   rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:${port}/agent/command/status/)
@@ -451,7 +448,7 @@ startAgent() {
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
     export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
-    local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"
@@ -617,10 +614,10 @@ startHarness(){
   startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
 
   echo
-  waitForAgent Acme 9020 acme_agent
-  waitForAgent Bob 9030 bob_agent
-  waitForAgent Faber 9040 faber_agent
-  waitForAgent Mallory 9050 mallory_agent
+  waitForAgent Acme 9020
+  waitForAgent Bob 9030
+  waitForAgent Faber 9040
+  waitForAgent Mallory 9050
 
   echo
   # Allure Reports environment.properties file handling
