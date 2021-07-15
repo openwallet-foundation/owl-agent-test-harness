@@ -38,7 +38,6 @@ fn _get_state(connection: &Connection) -> State {
             InviterState::Requested => State::Requested,
             InviterState::Responded => State::Responded,
             InviterState::Completed => State::Complete
-
         }
     }
 }
@@ -73,8 +72,9 @@ impl Agent {
     pub fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.db.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        if connection.get_state() != ConnectionState::Inviter(InviterState::Requested) {
-            return Err(HarnessError::from_kind(HarnessErrorType::RequestNotAcceptedError));
+        let curr_state = connection.get_state();
+        if curr_state != ConnectionState::Inviter(InviterState::Invited) {
+            return Err(HarnessError::from_msg(HarnessErrorType::RequestNotAcceptedError, &format!("Received state {:?}, expected requested state", curr_state)));
         }
         connection.update_state().map_err(|err| HarnessError::from(err))?;
         self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
