@@ -10,6 +10,7 @@
     "sourceMap": true,
     "noEmit": false,
     "inlineSources": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true
   }
 }

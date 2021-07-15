@@ -4,11 +4,13 @@ import {
   DidCommMimeType,
   HttpOutboundTransporter,
   InitConfig,
+  LogLevel,
 } from "aries-framework";
 import { NodeFileSystem } from "aries-framework/build/src/storage/fs/NodeFileSystem";
 import express from "express";
 import indy from "indy-sdk";
 import { HttpInboundTransporter } from "./Transporters";
+import { TsedLogger } from "./TsedLogger";
 
 export async function createAgent({
   port,
@@ -34,6 +36,11 @@ export async function createAgent({
     publicDidSeed,
     genesisPath,
     indy,
+    logger: new TsedLogger({
+      logLevel: LogLevel.debug,
+      logger: $log,
+      name: "TestHarness",
+    }),
   };
 
   const agent = new Agent(agentConfig);
