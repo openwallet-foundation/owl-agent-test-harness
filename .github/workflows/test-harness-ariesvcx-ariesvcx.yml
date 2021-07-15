@@ -43,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx"
           TEST_AGENTS: "-d aries-vcx"
-          TEST_SCOPE: "-t ~@T001-RFC0036 -t ~@T001.1-RFC0036 -t ~@T002-RFC0036 -t ~@T004-RFC0036 -t ~@T005-RFC0036 -t ~@T006-RFC0036 -t ~@T001.1-RFC0037 -t ~@T001.2-RFC0037 -t ~@T001.3-RFC0037 -t ~@T001.4-RFC0037 -t ~@T001.5-RFC0037 -t ~@T002-RFC0037 -t ~@T003-RFC0037 -t ~@T003.1-RFC0037 -t ~@T004-RFC0037 -t ~@T005-RFC0037 -t ~@T006-RFC0037 -t ~@T004-RFC0160 -t ~@T005-RFC0160 -t ~@T006-RFC0160 -t ~@T007-RFC0160 -t ~@RFC0023 -t ~@revocation -t ~@RFC0453"
+          TEST_SCOPE: "-t ~@T001-RFC0036 -t ~@T001.1-RFC0036 -t ~@T002-RFC0036 -t ~@T004-RFC0036 -t ~@T005-RFC0036 -t ~@T006-RFC0036 -t ~@T001.1-RFC0037 -t ~@T001.2-RFC0037 -t ~@T001.3-RFC0037 -t ~@T001.4-RFC0037 -t ~@T001.5-RFC0037 -t ~@T002-RFC0037 -t ~@T003-RFC0037 -t ~@T003.1-RFC0037 -t ~@T004-RFC0037 -t ~@T005-RFC0037 -t ~@T006-RFC0037 -t ~@T004-RFC0160 -t ~@T005-RFC0160 -t ~@T006-RFC0160 -t ~@T007-RFC0160 -t ~@RFC0023 -t ~@revocation -t ~@RFC0453 -t ~@RFC0454"
           REPORT_PROJECT: aries-vcx  
         continue-on-error: true
       - uses: actions/upload-artifact@v2
