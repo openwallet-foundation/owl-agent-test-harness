@@ -1,0 +1,19 @@
+name: "Run Service Command"
+description: "Run a command for a test-harness service"
+author: "filip.burlacu@securekey.com"
+inputs:
+  SERVICE_COMMAND:
+    description: "Service command and name, <service command> <service name>"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: run-service-command
+      run: ./manage service ${{ inputs.SERVICE_COMMAND }}
+      shell: bash
+      env:
+        NO_TTY: "1"
+      working-directory: test-harness
+branding:
+  icon: "aperture"
+  color: "purple"

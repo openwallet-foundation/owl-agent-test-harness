@@ -7,24 +7,22 @@ use vcx::utils::plugins::init_plugin;
 use vcx::settings;
 use std::io::prelude::*;
 use crate::AgentConfig;
-// use hyper::Client;
 use uuid;
 
-async fn download_tails() -> std::result::Result<String, String> {
-    match std::env::var("TAILS_FILE").ok() {
-        Some(tails_file) => {
-            if !std::path::Path::new(&tails_file).exists() {
-                Err(format!("The file {} does not exist", tails_file))
+async fn download_genesis_file() -> std::result::Result<String, String> {
+    match std::env::var("GENESIS_FILE").ok() {
+        Some(genesis_file) => {
+            if !std::path::Path::new(&genesis_file).exists() {
+                Err(format!("The file {} does not exist", genesis_file))
             } else {
-                info!("Using tails file {}", tails_file);
-                Ok(tails_file)
+                info!("Using genesis file {}", genesis_file);
+                Ok(genesis_file)
             }
         }
         None => match std::env::var("LEDGER_URL").ok() {
             Some(ledger_url) => {
-                info!("Downloading tails file");
+                info!("Downloading genesis file");
                 let genesis_url = format!("{}/genesis", ledger_url);
-                // let body = Client::new().get(genesis_url.parse::<hyper::Uri>().unwrap()).await.expect(&format!("Failed to get genesis file from url {}", genesis_url));
                 let body = reqwest::get(&genesis_url)
                     .await.unwrap()
                     .text()
@@ -35,9 +33,8 @@ async fn download_tails() -> std::result::Result<String, String> {
                     .create(true)
                     .open(path.clone())
                     .expect("Unable to open file");
-                // f.write_all(&hyper::body::to_bytes(body).await.expect("Failed to convert retrieved genesis file to bytes")).expect("Unable to write data");
                 f.write_all(body.as_bytes()).expect("Unable to write data");
-                debug!("Tails file downloaded and saved to {:?}", path);
+                debug!("Genesis file downloaded and saved to {:?}", path);
                 path.to_str().map(|s| s.to_string()).ok_or("Failed to convert genesis file path to string".to_string())
             }
             None => {
@@ -50,7 +47,7 @@ async fn download_tails() -> std::result::Result<String, String> {
 // TODO: Remove unwraps
 pub async fn initialize() -> std::io::Result<AgentConfig> {
     info!("Initializing vcx");
-    let genesis_path = download_tails().await.unwrap();
+    let genesis_path = download_genesis_file().await.unwrap();
     let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8080".to_string());
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION); // TODO: Remove payments
     // TODO: Builder methods for these configs

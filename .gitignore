@@ -21,8 +21,9 @@ Thumbs.db
 # Env file used for debugging
 .env
 
-# build folders
+# build folders and files
 .build
+.srl
 
 # Reports
 reports/

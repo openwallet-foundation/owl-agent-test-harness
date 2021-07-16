@@ -4,34 +4,40 @@ Note that this implementation is against the "old" pico agent.
 There is a re-implementation, so this backchannel needs to be updated.
 
 Pico engine:
-https://github.com/Picolab/pico-engine 
+https://github.com/Picolab/pico-engine
 
 Rulesets are for the aries-cloudagent-pico:
 https://github.com/Picolab/aries-cloudagent-pico
 """
 
 import asyncio
-import functools
 import json
 import logging
 import os
 import random
 import sys
-from timeit import default_timer
-from time import sleep
+
+from typing import Tuple
 
 from aiohttp import (
-    web,
-    ClientSession,
-    ClientRequest,
-    ClientResponse,
     ClientError,
-    ClientTimeout,
 )
 
-from python.agent_backchannel import AgentBackchannel, default_genesis_txns, RUN_MODE, START_TIMEOUT
-from python.utils import require_indy, flatten, log_json, log_msg, log_timer, output_reader, prompt_loop, file_ext, create_uuid
-from python.storage import store_resource, get_resource, delete_resource, pop_resource, get_resources, clear_resource
+from python.agent_backchannel import (
+    AgentBackchannel,
+    default_genesis_txns,
+    RUN_MODE,
+)
+from python.utils import (
+    log_msg,
+    create_uuid,
+)
+from python.storage import (
+    store_resource,
+    get_resource,
+    get_resources,
+    clear_resource,
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -55,20 +61,15 @@ def state_text(connection_state):
 
 class PicoAgentBackchannel(AgentBackchannel):
     def __init__(
-        self, 
+        self,
         ident: str,
-        backchannel_port: int, 
+        backchannel_port: int,
         pico_url: str,
         pico_eci: str,
         genesis_data: str = None,
-        params: dict = {}
+        params: dict = {},
     ):
-        super().__init__(
-            ident,
-            backchannel_port,
-            genesis_data,
-            params
-        )
+        super().__init__(ident, backchannel_port, genesis_data, params)
         self.config = None
         self.pico_url = pico_url
         self.pico_eci = pico_eci
@@ -78,7 +79,7 @@ class PicoAgentBackchannel(AgentBackchannel):
     async def start_agent(self):
         log_msg("pico start_agent()")
 
-        # start pico agent sub-process 
+        # start pico agent sub-process
         await self.start_pico()
 
         self.agent_running = True
@@ -90,7 +91,7 @@ class PicoAgentBackchannel(AgentBackchannel):
         await self.stop_pico()
 
         self.agent_running = False
-        
+
         log_msg(200, '{"status": "inactive"}')
         return (200, '{"status": "inactive"}')
 
@@ -110,7 +111,12 @@ class PicoAgentBackchannel(AgentBackchannel):
         pass
 
     async def pico_create_invitation(self):
-        create_invite_url = self.pico_url + "/sky/cloud/" + self.pico_eci + "/org.sovrin.agent_bc/invitation"
+        create_invite_url = (
+            self.pico_url
+            + "/sky/cloud/"
+            + self.pico_eci
+            + "/org.sovrin.agent_bc/invitation"
+        )
         print("GET:", create_invite_url)
 
         (resp_status, resp_text) = await self.admin_GET(create_invite_url)
@@ -128,10 +134,17 @@ class PicoAgentBackchannel(AgentBackchannel):
         return (invite_url, invite)
 
     async def pico_receive_invitation(self, invitation):
-        receive_invite_url = self.pico_url + "/sky/event/" + self.pico_eci + "/event_id/sovrin/new_invitation"
+        receive_invite_url = (
+            self.pico_url
+            + "/sky/event/"
+            + self.pico_eci
+            + "/event_id/sovrin/new_invitation"
+        )
         print(receive_invite_url)
 
-        receive_invite_url = receive_invite_url + "?c_i=" + self.urlencode_url(invitation)
+        receive_invite_url = (
+            receive_invite_url + "?c_i=" + self.urlencode_url(invitation)
+        )
 
         (resp_status, resp_text) = await self.admin_GET(receive_invite_url)
         print(resp_status, resp_text)
@@ -139,11 +152,16 @@ class PicoAgentBackchannel(AgentBackchannel):
             raise Exception("Error receiving invitation")
 
     async def pico_list_connections(self):
-        list_connections_url = self.pico_url + "/sky/cloud/" + self.pico_eci + "/org.sovrin.agent_bc/connection"
+        list_connections_url = (
+            self.pico_url
+            + "/sky/cloud/"
+            + self.pico_eci
+            + "/org.sovrin.agent_bc/connection"
+        )
 
     async def make_admin_request(
         self, method, path, data=None, text=False, params=None
-    ) -> (int, str):
+    ) -> Tuple[int, str]:
         params = {k: v for (k, v) in (params or {}).items() if v is not None}
         print("request:", method, path)
         async with self.client_session.request(
@@ -155,16 +173,14 @@ class PicoAgentBackchannel(AgentBackchannel):
             print("Text:", resp_text)
             return (resp_status, resp_text)
 
-    async def admin_GET(self, path, text=False, params=None) -> (int, str):
+    async def admin_GET(self, path, text=False, params=None) -> Tuple[int, str]:
         try:
             return await self.make_admin_request("GET", path, None, text, params)
         except ClientError as e:
             self.log(f"Error during GET {path}: {str(e)}")
             raise
 
-    async def admin_POST(
-        self, path, data=None, text=False, params=None
-    ) -> (int, str):
+    async def admin_POST(self, path, data=None, text=False, params=None) -> Tuple[int, str]:
         try:
             return await self.make_admin_request("POST", path, data, text, params)
         except ClientError as e:
@@ -173,7 +189,7 @@ class PicoAgentBackchannel(AgentBackchannel):
 
     async def make_agent_POST_request(
         self, op, rec_id=None, data=None, text=False, params=None
-    ) -> (int, str):
+    ) -> Tuple[int, str]:
         if op["topic"] == "status":
             status = 200 if self.ACTIVE else 418
             status_msg = "Active" if self.ACTIVE else "Inactive"
@@ -187,12 +203,23 @@ class PicoAgentBackchannel(AgentBackchannel):
                 (invitation_url, invitation) = await self.pico_create_invitation()
                 print(invitation_url, invitation)
 
-                connection = {"id": connection_id, "invitation": invitation, "invitation_url": invitation_url}
+                connection = {
+                    "id": connection_id,
+                    "invitation": invitation,
+                    "invitation_url": invitation_url,
+                }
 
                 store_resource(connection_id, "connection", connection)
 
                 resp_status = 200
-                resp_text = json.dumps({"connection_id": connection_id, "invitation": invitation, "invitation_url": invitation_url, "connection": connection})
+                resp_text = json.dumps(
+                    {
+                        "connection_id": connection_id,
+                        "invitation": invitation,
+                        "invitation_url": invitation_url,
+                        "connection": connection,
+                    }
+                )
 
                 return (resp_status, resp_text)
 
@@ -203,24 +230,36 @@ class PicoAgentBackchannel(AgentBackchannel):
                     invitation_url = data["invitation_url"]
                     invitation = self.extract_invite_info(invitation_url)
                 elif "invitation" in data and 0 < len(data["invitation"]):
-                    return (500, '500: No Invitation URL Provided\n\n'.encode('utf8'))
+                    return (500, "500: No Invitation URL Provided\n\n".encode("utf8"))
                 else:
-                    return (500, '500: No Invitation Provided\n\n'.encode('utf8'))
+                    return (500, "500: No Invitation Provided\n\n".encode("utf8"))
 
                 print(invitation_url)
                 print(invitation)
                 await self.pico_receive_invitation(invitation_url)
 
-                connection = {"id": connection_id, "invitation": invitation, "invitation_url": invitation_url}
+                connection = {
+                    "id": connection_id,
+                    "invitation": invitation,
+                    "invitation_url": invitation_url,
+                }
 
                 store_resource(connection_id, "connection", connection)
 
                 resp_status = 200
-                resp_text = json.dumps({"connection_id": connection_id, "invitation": invitation, "invitation_url": invitation_url, "connection": connection})
+                resp_text = json.dumps(
+                    {
+                        "connection_id": connection_id,
+                        "invitation": invitation,
+                        "invitation_url": invitation_url,
+                        "connection": connection,
+                    }
+                )
 
                 return (resp_status, resp_text)
 
-            elif (operation == "accept-invitation" 
+            elif (
+                operation == "accept-invitation"
                 or operation == "accept-request"
                 or operation == "remove"
                 or operation == "start-introduction"
@@ -231,14 +270,20 @@ class PicoAgentBackchannel(AgentBackchannel):
                 if connection:
                     # TODO no op for now
                     resp_status = 200
-                    resp_text = json.dumps({"connection_id": rec_id, "state": "active", "connection": connection_dict})
+                    resp_text = json.dumps(
+                        {
+                            "connection_id": rec_id,
+                            "state": "active",
+                            "connection": connection_dict,
+                        }
+                    )
                     return (resp_status, resp_text)
 
-        return (404, '404: Not Found\n\n'.encode('utf8'))
+        return (404, "404: Not Found\n\n".encode("utf8"))
 
     async def make_agent_GET_request(
         self, op, rec_id=None, text=False, params=None
-    ) -> (int, str):
+    ) -> Tuple[int, str]:
         if op["topic"] == "connection":
             if rec_id:
                 log_msg("Getting connection for", rec_id)
@@ -246,7 +291,13 @@ class PicoAgentBackchannel(AgentBackchannel):
 
                 if connection:
                     resp_status = 200
-                    resp_text = json.dumps({"connection_id": rec_id, "state": "active", "connection": connection})
+                    resp_text = json.dumps(
+                        {
+                            "connection_id": rec_id,
+                            "state": "active",
+                            "connection": connection,
+                        }
+                    )
                     return (resp_status, resp_text)
 
             else:
@@ -256,7 +307,13 @@ class PicoAgentBackchannel(AgentBackchannel):
                 ret_connections = []
                 for connection_id in connections:
                     connection = connections[connection_id]
-                    ret_connections.append({"connection_id": connection_id, "state": "active", "connection": connection})
+                    ret_connections.append(
+                        {
+                            "connection_id": connection_id,
+                            "state": "active",
+                            "connection": connection,
+                        }
+                    )
 
                 resp_status = 200
                 resp_text = json.dumps(ret_connections)
@@ -265,11 +322,11 @@ class PicoAgentBackchannel(AgentBackchannel):
 
         log_msg("Returning 404")
 
-        return (404, '404: Not Found\n\n'.encode('utf8'))
+        return (404, "404: Not Found\n\n".encode("utf8"))
 
     async def make_agent_GET_request_response(
         self, topic, rec_id=None, text=False, params=None
-    ) -> (int, str):
+    ) -> Tuple[int, str]:
         if topic == "connection" and rec_id:
             # TODO no-op for now
             connection = get_resource(rec_id, "connection")
@@ -278,10 +335,12 @@ class PicoAgentBackchannel(AgentBackchannel):
 
             return (resp_status, resp_text)
 
-        return (404, '404: Not Found\n\n'.encode('utf8'))
+        return (404, "404: Not Found\n\n".encode("utf8"))
 
 
-async def main(start_port: int, pico_url: str, pico_eci: str, show_timing: bool = False):
+async def main(
+    start_port: int, pico_url: str, pico_eci: str, show_timing: bool = False
+):
 
     genesis = await default_genesis_txns()
     if not genesis:
@@ -355,8 +414,6 @@ if __name__ == "__main__":
         help="Choose the starting port number to listen on",
     )
     args = parser.parse_args()
-
-    require_indy()
 
     try:
         asyncio.get_event_loop().run_until_complete(main(args.port, args.url, args.eci))
