@@ -5,7 +5,7 @@ import {
   ConnectionRecord,
   ConnectionInvitationMessage,
   JsonTransformer,
-} from "aries-framework";
+} from "@aries-framework/core";
 
 @Controller("/agent/command/connection")
 export class ConnectionController {

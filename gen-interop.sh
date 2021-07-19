@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Configuration Data -- order matters in these arrays. A new entry requires an entry in all "ta_" arrays
-ta_tlas=("acapy" "afgo" "javascript" "dotnet")
+ta_tlas=("acapy" "afgo" "afj" "dotnet")
 ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET")
 ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET")
 ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1")
@@ -277,7 +277,7 @@ for agent in "${ta_tlas[@]}"; do
     echo -e "## Runsets with ${ta_shortnames[$ta_num]}\\n" >>$outfile
     
     # Print a table of details
-    echo "| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | " >>$outfile
+    echo "| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | " >>$outfile
     echo "| ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | " >>$outfile
     runset_num=0
     # Iterate through the workflows and find the ones involving this test agent -- ignoring skipped files

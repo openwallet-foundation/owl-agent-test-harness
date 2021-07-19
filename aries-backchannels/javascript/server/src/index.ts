@@ -1,10 +1,11 @@
 import { $log } from "@tsed/common";
 import { PlatformExpress } from "@tsed/platform-express";
 import { registerProvider } from "@tsed/di";
+import { Agent } from "@aries-framework/core";
+import minimist from "minimist";
+
 import { createAgent } from "./TestAgent";
 import { Server } from "./Server";
-import { Agent } from "aries-framework";
-import minimist from "minimist";
 import {
   getGenesisPath,
   getRandomSeed,
@@ -46,8 +47,8 @@ async function bootstrap() {
   await registerPublicDid(ledgerUrl, publicDidSeed);
 
   const agent = await createAgent({
-    url: endpointUrl,
     port: agentPort,
+    endpoint: `${endpointUrl}:${agentPort}`,
     publicDidSeed,
     genesisPath,
   });

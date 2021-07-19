@@ -7,9 +7,8 @@ import {
   ProofRequest,
   RequestedCredentials,
   ProofRecord,
-  RequestedAttribute,
   IndyCredentialInfo,
-} from "aries-framework";
+} from "@aries-framework/core";
 import { request } from "express";
 import { CredentialUtils } from "../utils/CredentialUtils";
 import { ProofUtils } from "../utils/ProofUtils";
@@ -129,7 +128,7 @@ export class PresentProofController {
       Object.values(requestedCredentials.requestedAttributes).forEach(
         async (requestedAttribute) => {
           const credentialInfo = JsonTransformer.fromJSON(
-            await credentialUtils.getCredentialByThreadId(
+            await credentialUtils.getIndyCredentialById(
               requestedAttribute.credentialId
             ),
             IndyCredentialInfo

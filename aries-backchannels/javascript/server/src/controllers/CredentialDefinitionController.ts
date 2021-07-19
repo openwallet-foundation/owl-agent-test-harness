@@ -1,6 +1,6 @@
 import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
 import { InternalServerError, NotFound } from "@tsed/exceptions";
-import { Agent } from "aries-framework";
+import { Agent } from "@aries-framework/core";
 
 @Controller("/agent/command/credential-definition")
 export class CredentialDefinitionController {

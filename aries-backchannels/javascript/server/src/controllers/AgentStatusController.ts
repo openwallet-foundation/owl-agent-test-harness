@@ -23,7 +23,6 @@ export class AgentStatusController {
 
   @Get("/version")
   getVersion(@Res() response: Res) {
-    // return packageJson.version
-    return "1.0.0";
+    return packageJson.version;
   }
 }

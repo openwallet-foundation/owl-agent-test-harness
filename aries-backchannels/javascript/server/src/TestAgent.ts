@@ -5,37 +5,33 @@ import {
   HttpOutboundTransporter,
   InitConfig,
   LogLevel,
-} from "aries-framework";
-import { NodeFileSystem } from "aries-framework/build/src/storage/fs/NodeFileSystem";
-import express from "express";
-import indy from "indy-sdk";
+} from "@aries-framework/core";
+import { agentDependencies } from "@aries-framework/node";
+
 import { HttpInboundTransporter } from "./Transporters";
 import { TsedLogger } from "./TsedLogger";
 
 export async function createAgent({
   port,
-  url,
+  endpoint,
   publicDidSeed,
   genesisPath,
 }: {
   port: number;
-  url: string;
+  endpoint: string;
   publicDidSeed: string;
   genesisPath: string;
 }) {
   // TODO: Public did does not seem to be registered
   // TODO: Schema is prob already registered
   const agentConfig: InitConfig = {
-    label: "javascript",
+    label: "Aries Framework JavaScript",
     walletConfig: { id: `aath-javascript-${Date.now()}` },
     walletCredentials: { key: "00000000000000000000000000000Test01" },
-    fileSystem: new NodeFileSystem(),
     poolName: "aries-framework-javascript-pool",
-    host: url,
-    port,
+    endpoint,
     publicDidSeed,
     genesisPath,
-    indy,
     logger: new TsedLogger({
       logLevel: LogLevel.debug,
       logger: $log,
@@ -43,26 +39,16 @@ export async function createAgent({
     }),
   };
 
-  const agent = new Agent(agentConfig);
+  const agent = new Agent(agentConfig, agentDependencies);
 
-  const app = express();
-  app.use(
-    express.json({
-      type: [DidCommMimeType.V0, DidCommMimeType.V1],
+  agent.setInboundTransporter(
+    new HttpInboundTransporter({
+      port,
     })
   );
-
-  const inboundTransporter = new HttpInboundTransporter(app);
-
-  agent.setInboundTransporter(inboundTransporter);
-  agent.setOutboundTransporter(new HttpOutboundTransporter(agent));
+  agent.setOutboundTransporter(new HttpOutboundTransporter());
 
   await agent.initialize();
-
-  app.listen(port, async () => {
-    inboundTransporter.start(agent);
-    $log.info(`Agent listening on port ${url}:${port}`);
-  });
 
   return agent;
 }

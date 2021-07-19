@@ -1,4 +1,4 @@
-import { Agent, ProofRepository } from "aries-framework";
+import { Agent, ProofRepository } from "@aries-framework/core";
 
 export class ProofUtils {
   private agent: Agent;

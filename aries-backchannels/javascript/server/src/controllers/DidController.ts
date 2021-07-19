@@ -1,5 +1,5 @@
 import { Controller, Get } from "@tsed/common";
-import { Agent } from "aries-framework";
+import { Agent } from "@aries-framework/core";
 
 @Controller("/agent/command/did")
 export class DidController {

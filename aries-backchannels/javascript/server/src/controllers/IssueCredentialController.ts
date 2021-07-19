@@ -5,7 +5,7 @@ import {
   CredentialPreview,
   CredentialRecord,
   JsonTransformer,
-} from "aries-framework";
+} from "@aries-framework/core";
 import { CredentialUtils } from "../utils/CredentialUtils";
 
 @Controller("/agent/command/issue-credential")

@@ -1,6 +1,5 @@
 import { Controller, Get, PathParams } from "@tsed/common";
-import { Agent } from "aries-framework";
-import { IndyHolderService } from "aries-framework/build/src/modules/indy";
+import { Agent } from "@aries-framework/core";
 import { CredentialUtils } from "../utils/CredentialUtils";
 
 @Controller("/agent/command/credential")
