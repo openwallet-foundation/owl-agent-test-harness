@@ -390,7 +390,7 @@ startAgent() {
   local DATA_VOLUME_ARG=
   # optional data volume folder
   if [[ -n DATA_VOLUME_PATH  ]]; then
-    DATA_VOLUME_ARG="-v $(pwd)/$DATA_VOLUME_PATH:/data-mount"
+    DATA_VOLUME_ARG="-v $(pwd)/$DATA_VOLUME_PATH:/data-mount:z"
   fi
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
