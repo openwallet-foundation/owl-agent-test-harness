@@ -7,7 +7,11 @@ import {
   ProofRequest,
   RequestedCredentials,
   ProofRecord,
+  RequestedAttribute,
+  IndyCredentialInfo,
 } from "aries-framework";
+import { request } from "express";
+import { CredentialUtils } from "../utils/CredentialUtils";
 import { ProofUtils } from "../utils/ProofUtils";
 
 @Controller("/agent/command/proof")
@@ -119,6 +123,19 @@ export class PresentProofController {
           self_attested_attributes: data.self_attested_attributes ?? new Map(),
         },
         RequestedCredentials
+      );
+
+      const credentialUtils = new CredentialUtils(this.agent);
+      Object.values(requestedCredentials.requestedAttributes).forEach(
+        async (requestedAttribute) => {
+          const credentialInfo = JsonTransformer.fromJSON(
+            await credentialUtils.getCredentialByThreadId(
+              requestedAttribute.credentialId
+            ),
+            IndyCredentialInfo
+          );
+          requestedAttribute.credentialInfo = credentialInfo;
+        }
       );
 
       proofRecord = await this.agent.proofs.acceptRequest(
