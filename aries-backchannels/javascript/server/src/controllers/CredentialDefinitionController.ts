@@ -60,8 +60,8 @@ export class CredentialDefinitionController {
         credential_definition_id: credentialDefinition.id,
         credential_definition: credentialDefinition,
       };
-    } catch (e) {
-      // TODO: handle error
+    } catch (error) {
+      throw new InternalServerError(`Error registering credential definition: ${error.message}`, error)
     }
   }
 }

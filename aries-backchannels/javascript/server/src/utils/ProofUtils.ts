@@ -11,10 +11,6 @@ export class ProofUtils {
   }
 
   public async getProofByThreadId(threadId: string) {
-    try {
-      return await this.proofRepository.getSingleByQuery({ threadId });
-    } catch (e) {
-      return false;
-    }
+    return this.proofRepository.getSingleByQuery({ threadId });
   }
 }

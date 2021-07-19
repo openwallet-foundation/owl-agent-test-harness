@@ -10,8 +10,8 @@
     "start:prod": "cross-env NODE_ENV=production node dist/index.js"
   },
   "dependencies": {
-    "@aries-framework/core": "^0.1.0-alpha.228",
-    "@aries-framework/node": "^0.1.0-alpha.228",
+    "@aries-framework/core": "^0.1.0-alpha.230",
+    "@aries-framework/node": "^0.1.0-alpha.230",
     "@tsed/common": "6.25.2",
     "@tsed/core": "6.25.2",
     "@tsed/di": "6.25.2",

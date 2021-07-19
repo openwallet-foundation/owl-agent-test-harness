@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@aries-framework/core@0.1.0-alpha.228+735d578", "@aries-framework/core@^0.1.0-alpha.228":
-  version "0.1.0-alpha.228"
-  resolved "https://registry.yarnpkg.com/@aries-framework/core/-/core-0.1.0-alpha.228.tgz#f7ff6406a8cc62a549ba5faab96a92d10e71b75c"
-  integrity sha512-2N8JkDgTGTGSZGyzJZFx1APJChb4NlJrsa0NJN7oj9OVczSPjW9nhJq81XgSABgYlT5O//G0Ulb3N3a1nBTAxw==
+"@aries-framework/core@0.1.0-alpha.230+69684bc", "@aries-framework/core@^0.1.0-alpha.230":
+  version "0.1.0-alpha.230"
+  resolved "https://registry.yarnpkg.com/@aries-framework/core/-/core-0.1.0-alpha.230.tgz#6042c86f447bcb60ac9f994e66179e241e57a4c2"
+  integrity sha512-srjKbMsSX5kXMafqIyacsSgJcaM9Bt5xsq8iaFJ8rBXi8at6oQBCVqf8qiyvwppFUfFTPlOuN+gY94x9AaKXpw==
   dependencies:
     "@types/indy-sdk" "^1.16.5"
     abort-controller "^3.0.0"
@@ -24,15 +24,16 @@
     tsyringe "^4.5.0"
     uuid "^8.3.2"
 
-"@aries-framework/node@^0.1.0-alpha.228":
-  version "0.1.0-alpha.228"
-  resolved "https://registry.yarnpkg.com/@aries-framework/node/-/node-0.1.0-alpha.228.tgz#3928781754195b8e9f555f3c44a79d35f03dbb3e"
-  integrity sha512-atQ3F9xqbN4Us7yXKcx4RyUNcKDIDxqLpOdUO49EOyYSbaax0vwKrwP6tLB3V1UoAg2c+8ruBgm4ecGfUyzLpA==
+"@aries-framework/node@^0.1.0-alpha.230":
+  version "0.1.0-alpha.230"
+  resolved "https://registry.yarnpkg.com/@aries-framework/node/-/node-0.1.0-alpha.230.tgz#5a5d317d7d4737ea5823a4411a968841463648e0"
+  integrity sha512-YdW9lhClz1RTaZu6HmlT6vi5vh8M8ebEUPPVhiHaC7Ragoqedr0N0N962pY4u/nPeUwZoeNLo96ZdhCgCPVYhg==
   dependencies:
-    "@aries-framework/core" "0.1.0-alpha.228+735d578"
+    "@aries-framework/core" "0.1.0-alpha.230+69684bc"
+    express "^4.17.1"
     indy-sdk "^1.16.0-dev-1634"
     node-fetch "^2.6.1"
-    ws "^7.4.6"
+    ws "^7.5.3"
 
 "@multiformats/base-x@^4.0.1":
   version "4.0.1"
@@ -2754,7 +2755,7 @@ write-file-atomic@^3.0.0:
     signal-exit "^3.0.2"
     typedarray-to-buffer "^3.1.5"
 
-ws@^7.4.6:
+ws@^7.5.3:
   version "7.5.3"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.3.tgz#160835b63c7d97bfab418fc1b8a9fced2ac01a74"
   integrity sha512-kQ/dHIzuLrS6Je9+uv81ueZomEwH0qVYstcAQ4/Z93K8zeko9gtAbttJWzoC5ukqXY1PpoouV3+VSOqEAFt5wg==

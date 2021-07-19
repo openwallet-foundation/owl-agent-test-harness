@@ -15,11 +15,7 @@ export class CredentialUtils {
   }
 
   public async getCredentialByThreadId(threadId: string) {
-    try {
-      return await this.credentialRepository.getSingleByQuery({ threadId });
-    } catch (e) {
-      return false;
-    }
+    return this.credentialRepository.getSingleByQuery({ threadId });
   }
 
   public async getIndyCredentialById(credentialId: string) {

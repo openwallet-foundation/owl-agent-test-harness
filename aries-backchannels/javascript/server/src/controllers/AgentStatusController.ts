@@ -23,6 +23,6 @@ export class AgentStatusController {
 
   @Get("/version")
   getVersion(@Res() response: Res) {
-    return packageJson.version;
+    return packageJson.dependencies["@aries-framework/core"].substring(1);
   }
 }

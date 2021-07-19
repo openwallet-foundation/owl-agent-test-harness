@@ -27,6 +27,7 @@ async function bootstrap() {
   const dockerHost = process.env.DOCKERHOST ?? "host.docker.internal";
   const runMode = process.env.RUN_MODE;
   const externalHost = runMode === "docker" ? dockerHost : "localhost";
+  const agentName =  process.env.AGENT_NAME ? `AFJ ${process.env.AGENT_NAME}` : `AFJ Agent (${agentPort})`;
 
   const endpointUrl = `http://${externalHost}`;
 
@@ -47,6 +48,7 @@ async function bootstrap() {
   await registerPublicDid(ledgerUrl, publicDidSeed);
 
   const agent = await createAgent({
+    agentName,
     port: agentPort,
     endpoint: `${endpointUrl}:${agentPort}`,
     publicDidSeed,

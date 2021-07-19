@@ -82,15 +82,11 @@ export class IssueCredentialController {
     let credentialRecord: CredentialRecord;
 
     if (threadId) {
-      const credential = await this.credentialUtils.getCredentialByThreadId(
+      const { id } = await this.credentialUtils.getCredentialByThreadId(
         threadId
       );
-      if (credential) {
-        credentialRecord = await this.agent.credentials.acceptProposal(
-          credential.id
-        );
-        return this.mapCredential(credentialRecord);
-      }
+      credentialRecord = await this.agent.credentials.acceptProposal(id);
+      return this.mapCredential(credentialRecord);
     } else if (data) {
       credentialRecord = await this.agent.credentials.offerCredential(
         data.connection_id,
@@ -110,15 +106,10 @@ export class IssueCredentialController {
 
   @Post("/send-request")
   async sendRequest(@BodyParams("id") threadId: string) {
-    let credentialRecord = await this.credentialUtils.getCredentialByThreadId(
-      threadId
-    );
-    if (credentialRecord) {
-      credentialRecord = await this.agent.credentials.acceptOffer(
-        credentialRecord.id
-      );
-      return this.mapCredential(credentialRecord);
-    }
+    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
+
+    const credentialRecord = await this.agent.credentials.acceptOffer(id);
+    return this.mapCredential(credentialRecord);
   }
 
   @Post("/issue")
@@ -126,34 +117,25 @@ export class IssueCredentialController {
     @BodyParams("id") threadId: string,
     @BodyParams("data") data?: { comment?: string }
   ) {
-    let credentialRecord = await this.credentialUtils.getCredentialByThreadId(
-      threadId
-    );
-    if (credentialRecord) {
-      credentialRecord = await this.agent.credentials.acceptRequest(
-        credentialRecord.id,
-        { comment: data?.comment }
-      );
-      return this.mapCredential(credentialRecord);
-    }
+    const { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
+
+    const credentialRecord = await this.agent.credentials.acceptRequest(id, {
+      comment: data?.comment,
+    });
+    return this.mapCredential(credentialRecord);
   }
 
   @Post("/store")
   async storeCredential(@BodyParams("id") threadId: string) {
-    let credentialRecord = await this.credentialUtils.getCredentialByThreadId(
-      threadId
-    );
-    if (credentialRecord) {
-      credentialRecord = await this.agent.credentials.acceptCredential(
-        credentialRecord.id
-      );
-      return this.mapCredential(credentialRecord);
-    }
+    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
+    const credentialRecord = await this.agent.credentials.acceptCredential(id);
+
+    return this.mapCredential(credentialRecord);
   }
 
   private mapCredential(credentialRecord: CredentialRecord) {
     return {
-      state: credentialRecord.state.toLowerCase(),
+      state: credentialRecord.state,
       credential_id: credentialRecord.credentialId,
       thread_id: credentialRecord.threadId,
     };

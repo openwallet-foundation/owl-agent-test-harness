@@ -8,18 +8,21 @@ import {
   RequestedCredentials,
   ProofRecord,
   IndyCredentialInfo,
+  AgentConfig,
+  Logger,
 } from "@aries-framework/core";
-import { request } from "express";
 import { CredentialUtils } from "../utils/CredentialUtils";
 import { ProofUtils } from "../utils/ProofUtils";
 
 @Controller("/agent/command/proof")
 export class PresentProofController {
   private agent: Agent;
+  private logger: Logger;
   private proofUtils: ProofUtils;
 
   public constructor(agent: Agent) {
     this.agent = agent;
+    this.logger = agent.injectionContainer.resolve(AgentConfig).logger;
     this.proofUtils = new ProofUtils(agent);
   }
 
@@ -114,37 +117,54 @@ export class PresentProofController {
   ) {
     let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
 
-    if (proofRecord) {
-      const requestedCredentials = JsonTransformer.fromJSON(
-        {
-          requested_attributes: data.requested_attributes ?? new Map(),
-          requested_predicates: data.requested_predicates ?? new Map(),
-          self_attested_attributes: data.self_attested_attributes ?? new Map(),
-        },
-        RequestedCredentials
-      );
+    const requestedCredentials = JsonTransformer.fromJSON(
+      {
+        requested_attributes: data.requested_attributes ?? {},
+        requested_predicates: data.requested_predicates ?? {},
+        self_attested_attributes: data.self_attested_attributes ?? {},
+      },
+      RequestedCredentials
+    );
 
-      const credentialUtils = new CredentialUtils(this.agent);
-      Object.values(requestedCredentials.requestedAttributes).forEach(
-        async (requestedAttribute) => {
-          const credentialInfo = JsonTransformer.fromJSON(
-            await credentialUtils.getIndyCredentialById(
-              requestedAttribute.credentialId
-            ),
-            IndyCredentialInfo
-          );
-          requestedAttribute.credentialInfo = credentialInfo;
-        }
-      );
+    this.logger.info("Created requested credentials ", {
+      requestedCredentials: JSON.stringify(requestedCredentials.toJSON(), null, 2),
+    });
 
-      proofRecord = await this.agent.proofs.acceptRequest(
-        proofRecord.id,
-        requestedCredentials,
-        { comment: data.comment }
-      );
+    const credentialUtils = new CredentialUtils(this.agent);
+    Object.values(requestedCredentials.requestedAttributes).forEach(
+      async (requestedAttribute) => {
+        const credentialInfo = JsonTransformer.fromJSON(
+          await credentialUtils.getIndyCredentialById(
+            requestedAttribute.credentialId
+          ),
+          IndyCredentialInfo
+        );
+        requestedAttribute.credentialInfo = credentialInfo;
+      }
+    );
+    Object.values(requestedCredentials.requestedPredicates).forEach(
+      async (requestedPredicate) => {
+        const credentialInfo = JsonTransformer.fromJSON(
+          await credentialUtils.getIndyCredentialById(
+            requestedPredicate.credentialId
+          ),
+          IndyCredentialInfo
+        );
+        requestedPredicate.credentialInfo = credentialInfo;
+      }
+    );
 
-      return this.mapProofRecord(proofRecord);
-    }
+    this.logger.info("Created proof request ", {
+      requestedCredentials: requestedCredentials.toJSON(),
+    });
+
+    proofRecord = await this.agent.proofs.acceptRequest(
+      proofRecord.id,
+      requestedCredentials,
+      { comment: data.comment }
+    );
+
+    return this.mapProofRecord(proofRecord);
   }
 
   @Post("/verify-presentation")
@@ -159,7 +179,7 @@ export class PresentProofController {
 
   private mapProofRecord(proofRecord: ProofRecord) {
     return {
-      state: proofRecord.state.toLowerCase(),
+      state: proofRecord.state,
       thread_id: proofRecord.threadId,
     };
   }

@@ -89,7 +89,7 @@ export class ConnectionController {
 
   private mapConnection(connection: ConnectionRecord) {
     return {
-      state: connection.state.toLowerCase(),
+      state: connection.state,
       connection_id: connection.id,
       connection,
     };
