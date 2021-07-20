@@ -406,6 +406,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
         return ex_id
 
+    async def expected_agent_state(self, path, status_txt, wait_time=2.0, sleep_time=0.5):
+        await asyncio.sleep(sleep_time)
+        state = "None"
+        if type(status_txt) != list:
+            status_txt = [status_txt]
+        for i in range(int(wait_time/sleep_time)):
+            (resp_status, resp_text) = await self.make_admin_request("GET", path)
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                state = resp_json["state"]
+                if state in status_txt:
+                    return True
+            await asyncio.sleep(sleep_time)
+        print("Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
+        return False
+
     async def make_admin_request(
         self, method, path, data=None, text=False, params=None
     ) -> (int, str):
@@ -481,6 +497,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 or operation == "send-ping"
             ):
                 connection_id = rec_id
+
+                # wait for the connection to be in "requested" status
+                if operation == "accept-request":
+                    if not await self.expected_agent_state("/connections/" + connection_id, "request", wait_time=60.0):
+                        raise Exception(f"Expected state request but note recevied")
+
                 agent_operation = "/connections/" + connection_id + "/" + operation
                 log_msg("POST Request: ", agent_operation, data)
 
