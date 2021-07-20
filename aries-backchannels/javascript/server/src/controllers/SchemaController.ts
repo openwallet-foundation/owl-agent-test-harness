@@ -1,10 +1,14 @@
 import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
 import { InternalServerError, NotFound } from "@tsed/exceptions";
-import { Agent } from "aries-framework-javascript";
+import { Agent } from "@aries-framework/core";
+import { Schema } from "indy-sdk";
 
 @Controller("/agent/command/schema")
 export class SchemaController {
   private agent: Agent;
+  private createdSchemas: {
+    [schemaName: string]: Schema;
+  } = {};
 
   public constructor(agent: Agent) {
     this.agent = agent;
@@ -32,16 +36,25 @@ export class SchemaController {
 
   @Post()
   async createSchema(@BodyParams("data") data: any) {
-    const [schemaId, schema] = await this.agent.ledger.registerCredentialSchema(
-      {
-        attributes: data.attributes,
-        name: data.schema_name,
-        version: data.schema_version,
-      }
-    );
+    if (this.createdSchemas[data.schema_name]) {
+      const schema = this.createdSchemas[data.schema_name];
+
+      return {
+        schema_id: schema.id,
+        schema,
+      };
+    }
+
+    const schema = await this.agent.ledger.registerSchema({
+      attributes: data.attributes,
+      name: data.schema_name,
+      version: data.schema_version,
+    });
+
+    this.createdSchemas[schema.name] = schema;
 
     return {
-      schema_id: schemaId,
+      schema_id: schema.id,
       schema,
     };
   }

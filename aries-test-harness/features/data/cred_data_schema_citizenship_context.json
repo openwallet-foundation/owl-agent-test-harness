@@ -1,0 +1,34 @@
+{
+  "Data_Citizenship": {
+    "cred_name": "Schema_Citizenship_Context_Full",
+    "schema_name": "Schema_Citizenship_Context",
+    "schema_version": "1.0.0",
+    "attributes": [],
+    "filters": {
+      "json-ld": {
+        "credential": {
+          "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            "https://w3id.org/security/bbs/v1",
+            "https://w3id.org/citizenship/v1"
+          ],
+          "type": ["VerifiableCredential", "PermanentResident"],
+          "id": "https://credential.example.com/residents/1234567890",
+          "issuer": "replace_me",
+          "issuanceDate": "2020-01-01T12:00:00Z",
+          "credentialSubject": {
+            "type": ["PermanentResident"],
+            "givenName": "ALICE",
+            "familyName": "SMITH",
+            "gender": "Female",
+            "birthCountry": "Bahamas",
+            "birthDate": "1958-07-17"
+          }
+        },
+        "options": {
+          "proofType": "replace_me"
+        }
+      }
+    }
+  }
+}

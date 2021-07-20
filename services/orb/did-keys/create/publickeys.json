@@ -1,0 +1,14 @@
+[
+ {
+  "id": "key1",
+  "type": "Ed25519VerificationKey2018",
+  "purposes": ["authentication"],
+  "jwkPath": "./did-keys/create/key1_jwk.json"
+ },
+ {
+  "id": "key2",
+  "type": "JsonWebKey2020",
+  "purposes": ["capabilityInvocation"],
+  "jwkPath": "./did-keys/create/key2_jwk.json"
+ }
+]

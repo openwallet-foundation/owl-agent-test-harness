@@ -277,7 +277,7 @@ for agent in "${ta_tlas[@]}"; do
     echo -e "## Runsets with ${ta_shortnames[$ta_num]}\\n" >>$outfile
     
     # Print a table of details
-    echo "| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | " >>$outfile
+    echo "| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | " >>$outfile
     echo "| ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | " >>$outfile
     runset_num=0
     # Iterate through the workflows and find the ones involving this test agent -- ignoring skipped files

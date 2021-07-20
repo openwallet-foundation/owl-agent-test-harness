@@ -1,58 +1,50 @@
-import indy from "indy-sdk";
-import { InitConfig, Agent } from "aries-framework-javascript";
-import express from "express";
 import { $log } from "@tsed/common";
-
 import {
-  HttpInboundTransporter,
+  Agent,
   HttpOutboundTransporter,
-} from "./Transporters";
+  InitConfig,
+  LogLevel,
+} from "@aries-framework/core";
+import { agentDependencies, HttpInboundTransport } from "@aries-framework/node";
+
+import { TsedLogger } from "./TsedLogger";
 
 export async function createAgent({
   port,
-  url,
+  endpoint,
   publicDidSeed,
   genesisPath,
+  agentName
 }: {
   port: number;
-  url: string;
+  endpoint: string;
   publicDidSeed: string;
   genesisPath: string;
+  agentName: string
 }) {
+  // TODO: Public did does not seem to be registered
+  // TODO: Schema is prob already registered
   const agentConfig: InitConfig = {
-    label: "javascript",
+    label: agentName,
     walletConfig: { id: `aath-javascript-${Date.now()}` },
     walletCredentials: { key: "00000000000000000000000000000Test01" },
-    publicDidSeed,
-    host: url,
-    port,
     poolName: "aries-framework-javascript-pool",
+    endpoint,
+    publicDidSeed,
     genesisPath,
+    logger: new TsedLogger({
+      logLevel: LogLevel.debug,
+      logger: $log,
+      name: agentName,
+    }),
   };
 
-  const app = express();
-  app.use(
-    express.json({
-      type: "application/ssi-agent-wire",
-    })
-  );
+  const agent = new Agent(agentConfig, agentDependencies);
 
-  const inboundTransporter = new HttpInboundTransporter(app);
-  const outboundTransporter = new HttpOutboundTransporter();
+  agent.setInboundTransporter(new HttpInboundTransport({ port }));
+  agent.setOutboundTransporter(new HttpOutboundTransporter());
 
-  const agent = new Agent(
-    agentConfig,
-    inboundTransporter,
-    outboundTransporter,
-    indy
-  );
-
-  await agent.init();
-
-  app.listen(port, async () => {
-    inboundTransporter.start(agent);
-    $log.info(`Agent listening on port ${url}:${port}`);
-  });
+  await agent.initialize();
 
   return agent;
 }

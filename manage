@@ -221,11 +221,14 @@ buildImages() {
     echo Backchannel Folder: ${BACKCHANNEL_FOLDER}
     if [ -e "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" ]; then
       echo "Building ${agent}-agent-backchannel ..."
-      docker build \
+      if ! docker build \
         ${args} \
         $(initDockerBuildArgs) \
         -t "${agent}-agent-backchannel" \
-        -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"
+        -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"; then
+          echo "Docker image build failed."
+          exit 1
+      fi
     else
       echo "Unable to find Dockerfile to build agent: ${agent}"
       echo "Must be one one of: ${VALID_AGENTS}"
@@ -233,11 +236,14 @@ buildImages() {
   done
 
   echo "Building aries-test-harness ..."
-  docker build \
+  if ! docker build \
     ${args} \
     $(initDockerBuildArgs) \
     -t 'aries-test-harness' \
-    -f 'aries-test-harness/Dockerfile.harness' 'aries-test-harness/'
+    -f 'aries-test-harness/Dockerfile.harness' 'aries-test-harness/'; then
+      echo "Docker image build failed."
+      exit 1
+  fi
 }
 
 pingLedger(){
@@ -308,6 +314,54 @@ waitForTailsServer(){
   )
 }
 
+pingUniresolver(){
+
+  # ping uniresolver server
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:8080)
+  if (( ${rtnCd} == 200 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForUniresolver(){
+  (
+    # Wait for uniresolver to start ...
+    local startTime=${SECONDS}
+    local rtnCd=0
+    printf "waiting for uniresolver to start"
+    while ! pingUniresolver ; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nUniversal Resolver failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
+dockerhost_url_templates() {
+  # generate acapy plugin config file, writing $DOCKERHOST into URLs
+  pushd ${SCRIPT_HOME}/aries-backchannels/acapy/ > /dev/null
+
+  mkdir -p .build/acapy-main.data
+  mkdir -p .build/acapy.data
+
+  sed "s/REPLACE_WITH_DOCKERHOST/${DOCKERHOST}/g" plugin-config.template | tee > .build/plugin-config.yml
+
+  rm -f .build/acapy-main.data/plugin-config.yml .build/acapy.data/plugin-config.yml
+  cp .build/plugin-config.yml .build/acapy-main.data/plugin-config.yml
+  mv .build/plugin-config.yml .build/acapy.data/plugin-config.yml
+
+  popd > /dev/null
+}
+
 pingAgent(){
   name=${1}
   port=${2}
@@ -354,12 +408,21 @@ startAgent() {
   local AIP_CONFIG=$7
   local AGENT_NAME=$8
 
-  local ENV_PATH="$(find aries-backchannels -name *${AGENT_NAME}.env)"
+  local BACKCHANNEL_DIR=$(dirname "$(find aries-backchannels -name *.${AGENT_NAME})" )
+
+  local ENV_PATH="$(find $BACKCHANNEL_DIR -name *${AGENT_NAME}.env)"
   local ENV_FILE_ARG=
 
   if [[ -n $ENV_PATH ]]; then
     ENV_FILE_ARG="--env-file=$ENV_PATH"
     # echo $ENV_FILE_ARG
+  fi
+
+  local DATA_VOLUME_PATH="$(find $BACKCHANNEL_DIR -wholename */${AGENT_NAME}.data)"
+  local DATA_VOLUME_ARG=
+  # optional data volume folder
+  if [[ -n DATA_VOLUME_PATH  ]]; then
+    DATA_VOLUME_ARG="-v $(pwd)/$DATA_VOLUME_PATH:/data-mount:z"
   fi
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
@@ -377,9 +440,15 @@ startAgent() {
       export NGROK_NAME=
     fi
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
-    local container_id=$(docker run -d -it --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
+    export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     sleep 1
-    #docker network connect aath_network "${CONTAINER_NAME}"
+    if [[ "${USE_NGROK}" = "true" ]]; then
+      docker network connect aath_network "${CONTAINER_NAME}"
+    elif [[ "${AGENT_NAME}" = "afgo-master" || "${AGENT_NAME}" = "afgo-interop" ]]; then
+      docker network connect aath_network "${CONTAINER_NAME}"
+    fi
     if [[ "${IMAGE_NAME}" = "mobile-agent-backchannel" ]]; then
       echo "Tail-ing log files for ${NAME} agent in ${container_id}"
       docker logs -f ${container_id} &
@@ -467,7 +536,7 @@ serviceCommand() {
         cleanupNetwork
       ;;
     *)
-        echo "unrecognized service command '${SERVICE_COMMAND}', must be one of 'start', 'stop', 'clean', 'logs'"
+        auxiliaryService ${SERVICE_TARGET} ${SERVICE_COMMAND}
       ;;
   esac
 }
@@ -496,6 +565,12 @@ startHarness(){
     exit 1
   fi
 
+  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
+      echo "starting local uniresolver..."
+    auxiliaryService uniresolver start
+    export STARTED_LOCAL_UNIRESOLVER=true
+  fi
+
   # if we're *not* using an external indy tails server, start the local one
   if [[ -z ${TAILS_SERVER_URL_CONFIG} ]]; then
     if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]]; then
@@ -510,11 +585,12 @@ startHarness(){
     exit 1
   fi
 
-  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
-      echo "starting local uniresolver..."
-    auxiliaryService uniresolver start
-    export STARTED_LOCAL_UNIRESOLVER=true
+  if ! waitForUniresolver; then
+    echoRed "\nUniversal Resolver is not running.\n"
+    exit 1
   fi
+
+  dockerhost_url_templates
 
   export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
   export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
@@ -569,6 +645,13 @@ runTests() {
   docker logs bob_agent > .logs/bob_agent.log
   docker logs faber_agent > .logs/faber_agent.log
   docker logs mallory_agent > .logs/mallory_agent.log
+
+  if [[ "${USE_NGROK}" = "true" ]]; then
+    docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
+    docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
+    docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
+    docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+  fi
 }
 
 stopIfExists(){
@@ -621,7 +704,7 @@ stopHarness(){
 
   cleanupNetwork
 
-  if [ ! "${docker_result}" == "0" ]; then
+  if [ -n "${docker_result}" ] && [ ! "${docker_result}" = "0" ]; then
     echo "Exit with error code ${docker_result}"
     exit ${docker_result}
   fi
@@ -738,11 +821,11 @@ pushd ${SCRIPT_HOME} >/dev/null
 
 case "${COMMAND}" in
   build)
-      buildImages ${@}
+      buildImages ${@} --platform linux/amd64
     ;;
 
   rebuild)
-      buildImages --no-cache ${@}
+      buildImages --no-cache ${@} --platform linux/amd64
     ;;
 
   run)

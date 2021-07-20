@@ -1,5 +1,5 @@
 import { Controller, Get } from "@tsed/common";
-import { Agent } from "aries-framework-javascript";
+import { Agent } from "@aries-framework/core";
 
 @Controller("/agent/command/did")
 export class DidController {
@@ -11,7 +11,7 @@ export class DidController {
 
   @Get()
   getPublicDid() {
-    const didInfo = this.agent.getPublicDid();
+    const didInfo = this.agent.publicDid;
 
     return didInfo;
   }

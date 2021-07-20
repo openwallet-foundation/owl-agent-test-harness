@@ -1,5 +1,6 @@
 import { Controller, Get, PathParams } from "@tsed/common";
-import { Agent } from "aries-framework-javascript";
+import { Agent } from "@aries-framework/core";
+import { CredentialUtils } from "../utils/CredentialUtils";
 
 @Controller("/agent/command/credential")
 export class CredentialController {
@@ -11,16 +12,8 @@ export class CredentialController {
 
   @Get("/:credentialId")
   async getCredentialById(@PathParams("credentialId") credentialId: string) {
-    const indyCredential = await this.agent.credentials.getIndyCredential(
+    return await new CredentialUtils(this.agent).getIndyCredentialById(
       credentialId
     );
-
-    // TODO: add state 'done' check
-    return {
-      referent: indyCredential.referent,
-      schema_id: indyCredential.schemaId,
-      cred_def_id: indyCredential.credentialDefinitionId,
-      credential: indyCredential.toJSON(),
-    };
   }
 }
