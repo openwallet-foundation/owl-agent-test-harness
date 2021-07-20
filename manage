@@ -784,11 +784,11 @@ pushd ${SCRIPT_HOME} >/dev/null
 
 case "${COMMAND}" in
   build)
-      buildImages ${@}
+      buildImages ${@} --platform linux/amd64
     ;;
 
   rebuild)
-      buildImages --no-cache ${@}
+      buildImages --no-cache ${@} --platform linux/amd64
     ;;
 
   run)

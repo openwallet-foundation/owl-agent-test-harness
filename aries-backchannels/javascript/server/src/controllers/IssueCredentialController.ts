@@ -1,28 +1,31 @@
-import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
+import { BodyParams, Controller, Get, PathParams, Post } from "@tsed/common";
 import { BadRequest, NotFound } from "@tsed/exceptions";
 import {
   Agent,
-  JsonTransformer,
-  CredentialRecord,
   CredentialPreview,
-} from "aries-framework-javascript";
+  CredentialRecord,
+  JsonTransformer,
+} from "@aries-framework/core";
+import { CredentialUtils } from "../utils/CredentialUtils";
 
 @Controller("/agent/command/issue-credential")
 export class IssueCredentialController {
   private agent: Agent;
+  private credentialUtils: CredentialUtils;
 
   public constructor(agent: Agent) {
     this.agent = agent;
+    this.credentialUtils = new CredentialUtils(agent);
   }
 
   @Get("/:threadId")
   async getCredentialByThreadId(@PathParams("threadId") threadId: string) {
-    const credential = await this.agent.credentials.getByThreadId(threadId);
-
+    const credential = await this.credentialUtils.getCredentialByThreadId(
+      threadId
+    );
     if (!credential) {
       throw new NotFound(`credential for thead id "${threadId}" not found.`);
     }
-
     return this.mapCredential(credential);
   }
 
@@ -79,11 +82,11 @@ export class IssueCredentialController {
     let credentialRecord: CredentialRecord;
 
     if (threadId) {
-      const credential = await this.agent.credentials.getByThreadId(threadId);
-
-      credentialRecord = await this.agent.credentials.acceptProposal(
-        credential.id
+      const { id } = await this.credentialUtils.getCredentialByThreadId(
+        threadId
       );
+      credentialRecord = await this.agent.credentials.acceptProposal(id);
+      return this.mapCredential(credentialRecord);
     } else if (data) {
       credentialRecord = await this.agent.credentials.offerCredential(
         data.connection_id,
@@ -95,58 +98,46 @@ export class IssueCredentialController {
           ),
         }
       );
+      return this.mapCredential(credentialRecord);
     } else {
       throw new BadRequest(`Missing both id and data properties`);
     }
-
-    return this.mapCredential(credentialRecord);
   }
 
   @Post("/send-request")
   async sendRequest(@BodyParams("id") threadId: string) {
-    let credentialRecord = await this.agent.credentials.getByThreadId(threadId);
+    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
 
-    credentialRecord = await this.agent.credentials.acceptOffer(
-      credentialRecord.id
-    );
-
+    const credentialRecord = await this.agent.credentials.acceptOffer(id);
     return this.mapCredential(credentialRecord);
   }
 
   @Post("/issue")
   async acceptRequest(
     @BodyParams("id") threadId: string,
-    // TODO: add credential_preview
     @BodyParams("data") data?: { comment?: string }
   ) {
-    let credentialRecord = await this.agent.credentials.getByThreadId(threadId);
+    const { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
 
-    credentialRecord = await this.agent.credentials.acceptRequest(
-      credentialRecord.id
-    );
-
+    const credentialRecord = await this.agent.credentials.acceptRequest(id, {
+      comment: data?.comment,
+    });
     return this.mapCredential(credentialRecord);
   }
 
   @Post("/store")
-  async storeCredential(
-    @BodyParams("id") threadId: string,
-    @BodyParams("data") data: any
-  ) {
-    let credentialRecord = await this.agent.credentials.getByThreadId(threadId);
-
-    credentialRecord = await this.agent.credentials.acceptCredential(
-      credentialRecord.id
-    );
+  async storeCredential(@BodyParams("id") threadId: string) {
+    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
+    const credentialRecord = await this.agent.credentials.acceptCredential(id);
 
     return this.mapCredential(credentialRecord);
   }
 
-  private mapCredential(credential: CredentialRecord) {
+  private mapCredential(credentialRecord: CredentialRecord) {
     return {
-      state: credential.state.toLowerCase().replace("_", "-"),
-      credential_id: credential.credentialId,
-      thread_id: credential.tags.threadId,
+      state: credentialRecord.state,
+      credential_id: credentialRecord.credentialId,
+      thread_id: credentialRecord.threadId,
     };
   }
 }
