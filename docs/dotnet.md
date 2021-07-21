@@ -2,13 +2,13 @@
 
 ## Runsets with AF-.NET
 
-| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | 
+| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0 | javascript<br>1.0.0 | dotnet-master<br> | acapy-main<br>0.7.0 | AIP 1.0 | [**10 / 12<br>83%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0 | javascript<br>0.1.0-alpha.230 | dotnet-master<br> | acapy-main<br>0.7.0 | AIP 1.0 | [**6 / 12<br>50%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-dotnet](#runset-acapy-dotnet) | acapy-main<br>0.7.0 | dotnet-master<br> | acapy-main<br>0.7.0 | acapy-main<br>0.7.0 | AIP 1.0 | [**26 / 27<br>96%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-dotnet](#runset-afj-dotnet) | javascript<br>1.0.0 | dotnet-master<br> | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-dotnet](#runset-afj-dotnet) | javascript<br>0.1.0-alpha.230 | dotnet-master<br> | javascript<br>0.1.0-alpha.230 | javascript<br>0.1.0-alpha.230 | AIP 1.0 | [**0 / 12<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-acapy](#runset-dotnet-acapy) | dotnet-master<br> | acapy-main<br>0.7.0 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**0 / 12<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [dotnet-javascript](#runset-dotnet-javascript) | dotnet-master<br> | javascript<br>1.0.0 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**5 / 12<br>41%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-javascript](#runset-dotnet-javascript) | dotnet-master<br> | javascript<br>0.1.0-alpha.230 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**0 / 12<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet](#runset-dotnet) | dotnet-master<br> | dotnet-master<br> | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
@@ -18,10 +18,10 @@
 Runset Name: ACA-PY to AF-.NET to AFJ
 
 ```tip
-**Latest results: 10 out of 12 (83%)**
+**Latest results: 6 out of 12 (50%)**
 
 
-*Last run: Fri Jul 16 01:40:55 UTC 2021*
+*Last run: Wed Jul 21 01:38:28 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -46,7 +46,7 @@ Runset Name: ACA-PY to AF-.NET
 **Latest results: 26 out of 27 (96%)**
 
 
-*Last run: Fri Jul 16 01:55:16 UTC 2021*
+*Last run: Wed Jul 21 02:00:08 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -68,10 +68,10 @@ https://github.com/hyperledger/aries-framework-dotnet/issues/184
 Runset Name: AFJ to AF-.NET
 
 ```tip
-**Latest results: 12 out of 12 (100%)**
+**Latest results: 0 out of 12 (0%)**
 
 
-*Last run: Fri Jul 16 01:58:17 UTC 2021*
+*Last run: Wed Jul 21 02:03:40 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -94,7 +94,7 @@ Runset Name: AF-.NET to ACA-PY
 **Latest results: 0 out of 12 (0%)**
 
 
-*Last run: Fri Jul 16 02:10:49 UTC 2021*
+*Last run: Wed Jul 21 02:10:48 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -114,10 +114,10 @@ More tests are failing than are passing when Aries Framework .NET is playing the
 Runset Name: AF-.NET to AFJ
 
 ```tip
-**Latest results: 5 out of 12 (41%)**
+**Latest results: 0 out of 12 (0%)**
 
 
-*Last run: Fri Jul 16 02:17:35 UTC 2021*
+*Last run: Wed Jul 21 02:15:16 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -140,7 +140,7 @@ Runset Name: AF-.NET to AF-.NET
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Fri Jul 16 02:18:56 UTC 2021*
+*Last run: Wed Jul 21 02:16:44 UTC 2021*
 ```
 
 #### Current Runset Status
