@@ -128,7 +128,7 @@ namespace DotNet.Backchannel.Controllers
             _credentialCache.Set(THCredentialExchange.ThreadId, THCredentialExchange);
 
             // Listen for credential offer to update the state
-            UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.OfferReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.OfferCredential && _.ThreadId == THCredentialExchange.ThreadId);
+            UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.OfferReceived, _ => new[] { MessageTypes.IssueCredentialNames.OfferCredential, MessageTypesHttps.IssueCredentialNames.OfferCredential }.Contains(_.MessageType) && _.ThreadId == THCredentialExchange.ThreadId);
 
             await _messageService.SendAsync(context, credentialProposeMessage, connection);
 
@@ -220,7 +220,7 @@ namespace DotNet.Backchannel.Controllers
             var connection = await _connectionService.GetAsync(context, connectionId);
 
             // Listen for credential request to update the state
-            UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.RequestReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.RequestCredential && _.ThreadId == THCredentialExchange.ThreadId);
+            UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.RequestReceived, _ => new[] { MessageTypes.IssueCredentialNames.RequestCredential, MessageTypesHttps.IssueCredentialNames.RequestCredential, }.Contains(_.MessageType) && _.ThreadId == THCredentialExchange.ThreadId);
 
             await _messageService.SendAsync(context, credentialOffer, connection);
 
@@ -239,7 +239,7 @@ namespace DotNet.Backchannel.Controllers
             THCredentialExchange.State = TestHarnessCredentialExchangeState.RequestSent;
 
             // Listen for issue credential to update the state
-            UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.CredentialReceived, _ => _.MessageType == MessageTypes.IssueCredentialNames.IssueCredential && _.ThreadId == THCredentialExchange.ThreadId);
+            UpdateStateOnMessage(THCredentialExchange, TestHarnessCredentialExchangeState.CredentialReceived, _ => new[] { MessageTypes.IssueCredentialNames.IssueCredential, MessageTypesHttps.IssueCredentialNames.IssueCredential }.Contains(_.MessageType) && _.ThreadId == THCredentialExchange.ThreadId);
 
             var connection = await _connectionService.GetAsync(context, credentialRecord.ConnectionId);
             await _messageService.SendAsync(context, credentialRequest, connection);

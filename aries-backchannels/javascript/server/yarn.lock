@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@aries-framework/core@0.1.0-alpha.230+69684bc", "@aries-framework/core@^0.1.0-alpha.230":
-  version "0.1.0-alpha.230"
-  resolved "https://registry.yarnpkg.com/@aries-framework/core/-/core-0.1.0-alpha.230.tgz#6042c86f447bcb60ac9f994e66179e241e57a4c2"
-  integrity sha512-srjKbMsSX5kXMafqIyacsSgJcaM9Bt5xsq8iaFJ8rBXi8at6oQBCVqf8qiyvwppFUfFTPlOuN+gY94x9AaKXpw==
+"@aries-framework/core@0.1.0-alpha.233+cdf2edd", "@aries-framework/core@^0.1.0-alpha.233":
+  version "0.1.0-alpha.233"
+  resolved "https://registry.yarnpkg.com/@aries-framework/core/-/core-0.1.0-alpha.233.tgz#5cb3bc5187c03218606253c986c7b2286d30927d"
+  integrity sha512-JfXoSurnPS6iLcqJdXWYtXcv4P3KshZ+wK2/kAXWzV+A3jy5M1xAKcoH/F0lMCeY88T/EzrEizo/suqjJdRCaA==
   dependencies:
     "@types/indy-sdk" "^1.16.5"
     abort-controller "^3.0.0"
@@ -24,12 +24,12 @@
     tsyringe "^4.5.0"
     uuid "^8.3.2"
 
-"@aries-framework/node@^0.1.0-alpha.230":
-  version "0.1.0-alpha.230"
-  resolved "https://registry.yarnpkg.com/@aries-framework/node/-/node-0.1.0-alpha.230.tgz#5a5d317d7d4737ea5823a4411a968841463648e0"
-  integrity sha512-YdW9lhClz1RTaZu6HmlT6vi5vh8M8ebEUPPVhiHaC7Ragoqedr0N0N962pY4u/nPeUwZoeNLo96ZdhCgCPVYhg==
+"@aries-framework/node@^0.1.0-alpha.233":
+  version "0.1.0-alpha.233"
+  resolved "https://registry.yarnpkg.com/@aries-framework/node/-/node-0.1.0-alpha.233.tgz#f25660ef599e29b2e16fd655ba04f5a77814bf69"
+  integrity sha512-O6wNZ2dXZeF+/2Kb8Kho00pY62LXh+HF4ItaeF3qXWQMchvT0RLl3V8YF89+QFvoFpyi1hjUESlRMzgIo9fMUg==
   dependencies:
-    "@aries-framework/core" "0.1.0-alpha.230+69684bc"
+    "@aries-framework/core" "0.1.0-alpha.233+cdf2edd"
     express "^4.17.1"
     indy-sdk "^1.16.0-dev-1634"
     node-fetch "^2.6.1"

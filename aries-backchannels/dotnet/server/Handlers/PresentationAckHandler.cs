@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hyperledger.Aries.Agents;
-using Hyperledger.Aries.Features.IssueCredential;
 using Hyperledger.Aries;
 using DotNet.Backchannel.Messages;
 using DotNet.Backchannel.Models;
@@ -30,7 +29,8 @@ namespace DotNet.Backchannel.Handlers
         /// </value>
         public IEnumerable<MessageType> SupportedMessageTypes => new MessageType[]
         {
-           CustomMessageTypes.AckPresentation
+           CustomMessageTypes.AckPresentation,
+           CustomMessageTypes.AckPresentationHttps
         };
 
         /// <summary>
@@ -45,6 +45,7 @@ namespace DotNet.Backchannel.Handlers
             switch (messageContext.GetMessageType())
             {
                 case CustomMessageTypes.AckPresentation:
+                case CustomMessageTypes.AckPresentationHttps:
                     {
                         var presentationAck = messageContext.GetMessage<AckPresentationMessage>();
 
