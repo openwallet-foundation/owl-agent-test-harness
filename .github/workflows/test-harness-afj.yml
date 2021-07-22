@@ -9,9 +9,9 @@ name: test-harness-javascript-javascript
 # that are expected to pass given the current state of the framework's support for AIP 1. Tests related to revocation (Indy HIPE 0011) are not included.
 #
 # Current
-# 
+#
 # All of the tests being executed in this runset are passing.
-# 
+#
 # *Status Note Updated: 2021.03.05*
 #
 # End
@@ -43,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript"
           TEST_AGENTS: "-d javascript"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@RFC0023 -t ~@DIDExchangeConnection"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10"
           REPORT_PROJECT: javascript
         continue-on-error: true
       - name: run-send-gen-test-results-secure

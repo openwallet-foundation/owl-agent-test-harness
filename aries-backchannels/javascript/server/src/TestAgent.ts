@@ -14,13 +14,13 @@ export async function createAgent({
   endpoint,
   publicDidSeed,
   genesisPath,
-  agentName
+  agentName,
 }: {
   port: number;
   endpoint: string;
   publicDidSeed: string;
   genesisPath: string;
-  agentName: string
+  agentName: string;
 }) {
   // TODO: Public did does not seem to be registered
   // TODO: Schema is prob already registered
@@ -32,11 +32,7 @@ export async function createAgent({
     endpoint,
     publicDidSeed,
     genesisPath,
-    logger: new TsedLogger({
-      logLevel: LogLevel.debug,
-      logger: $log,
-      name: agentName,
-    }),
+    logger: new TsedLogger($log),
   };
 
   const agent = new Agent(agentConfig, agentDependencies);
