@@ -47,7 +47,7 @@ We'd love to have help in building out a full Aries interoperability lab.
 - [Aries Agent Backchannels](#aries-agent-backchannels)
   - [Implemented Backchannels](#implemented-backchannels)
 - [The `manage` bash script](#the-manage-bash-script)
-- [Extra Backchannel-Specific Parameters](extra-backchannel-specific-parameters)
+- [Extra Backchannel-Specific Parameters](#extra-backchannel-specific-parameters)
 - [Test Tags](#test-tags)
   - [Running Tagged Tests](#running-tagged-tests)
   - [Test Coverage](#test-coverage)
@@ -152,21 +152,19 @@ The above example runs all the tests using the `askar` wallet type (vs `indy`, w
 
 The test harness has utilized tags in the BDD feature files to be able to narrow down a test set to be executed at runtime. The general AATH tags currently utilized are as follows:
 
-- @AcceptanceTest - Tests based on requirements specifically stated in the RFC
+- @AcceptanceTest - Tests based on requirements specifically stated in the RFC.
 - @DerivedFunctionalTest - Tests derived on requirements but not specifically stated in the RFC.
-- @P1 - Test Priority
-- @P2 - Test Priority
-- @P3 - Test Priority
-- @P4 - Test Priority
+- @P1, @P2, @P3, @P4 - Test Priority.
 - @NegativeTest - Test that attempts to break the software. ie. change workflow order, use invalid data, etc.
 - @ExceptionTest - Tests that are based on requirements that suggest exception cases.
 - @SmokeTest - Tests that can be used as a builds smoke or sanity tests.
 - @NeedsReview - Tests that have not been reviewed or approved.
-- @ReviewedApproved - obvious
-- @wip - Tests that are a work in progress and incomplete
-- @Done - Finished tests that are expected to Pass if executed against an Agent.
-- @AIP10 - Aries Interop Profile version the tests are written for
-- @T01-AIP10-RFC0160 - Test Unique Identifier
+- @ReviewedApproved - Tests that have been reviewed and approved.
+- @wip - Tests that are a work in progress and incomplete.
+- @Done - Finished tests that are expected to Pass if executed against a Test Agent.
+- @AIP10, @AIP20 - The Aries Interop Profile version for which the tests are written.
+- @MobileTest - The test (likely) works when using the "mobile" Test Agent.
+- @T01-AIP10-RFC0160 - Unique Test Identifiers.
 
 Proposed Connection Protocol Tags
 
