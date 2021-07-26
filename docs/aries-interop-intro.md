@@ -81,7 +81,7 @@ The Allure reports accessible from this site provide a lot of information about 
    4. If it has passed in earlier runs, drill into the passing test to see if you can learn anything from that.
    5. Dive into the weeds...look at the stack trace, find the associated code, and see if you can figure out what happened. Find anything?  Report it via an issue, or even better, submit a Pull Request to fix the issue. Remember to consider all of the possible places an error could occur (above).
 
-In addition to drilling into a specific test scenario (aka "stories")/case (aka "behavior")/step, you can look at the entire runset history. On the left side menu, click on "Overview", and then take a look at the big "history" graph in the top right, showing how the runset execution has varied over time. Ideally, it's all green, but since you started from a runset that had failures, it won't be. Pretty much every part of the overview page is a drill down link into more and more detailed information about the runset, a specific run of the runset, a specific test case and so on. Lots to look at!
+In addition to drilling into a specific test scenario (aka "stories")/case (aka "behavior")/step, you can look at the recent runset history (last 20 runs). On the left side menu, click on "Overview", and then take a look at the big "history" graph in the top right, showing how the runset execution has varied over time. Ideally, it's all green, but since you started from a runset that had failures, it won't be. Pretty much every part of the overview page is a drill down link into more and more detailed information about the runset, a specific run of the runset, a specific test case and so on. Lots to look at!
 
 ## What is Aries Interop Profile?
 
