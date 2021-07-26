@@ -95,6 +95,10 @@ A further complication is that as tests are added to the test suite, the backcha
 
 Backchannels can be found in the [`aries-backchannels`](aries-backchannels) folder of this repo. For more information on building a backchannel, see the documentation in the [`aries-backchannels` README](aries-backchannels/README.md), and look at the code of the existing backchannels. To get help in building a backchannel for a component you want tested, please use GitHub issues and/or ask questions on the [Hyperledger Chat](https://chat.hyperledger.org) `#aries-agent-test-harness` channel (free Linux Foundation account required).
 
+Three backchannels have been implemented, for the [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python), [VCX](https://github.com/hyperledger/indy-sdk/tree/master/vcx), [.NET](https://github.com/hyperledger/aries-framework-dotnet) and [JavaScript](https://github.com/hyperledger/aries-framework-javascript.git) Aries agent frameworks. The ACA-Py and VCX are built on a common Python base (./aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. The ACA-PY (./aries-backchannels/acapy/acapy_backchannel.py) and VCX (./aries-backchannels/vcx/vcx_backchannel.py) implementations extend the base to add support for their respective agent frameworks.
+
+There is also a backchannel to support (manual) testing with [mobile](./aries-backcgannels/mobile) agents. This backchannel doesn't control the mobile agent directly, rather it will prompt the tester to manually accept connection requests, credential offers etc. Use of the mobile backchannel is described [here](./MOBILE_AGENT_TESTING.md).
+
 ## The `manage` bash script
 
 The AATH `./manage` script in the repo root folder is used to manage running builds of TA images and initiate test runs. Running the script with no arguments or just `help` to see the script's usage information. The following summarizes the key concepts.
