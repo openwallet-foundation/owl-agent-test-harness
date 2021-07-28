@@ -18,7 +18,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 3 out of 3 (100%)**
 
 
-*Last run: Sat Jul 24 01:21:25 UTC 2021*
+*Last run: Wed Jul 28 01:26:10 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -30,8 +30,8 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
 
 
 ### Runset **afgo-acapy**
@@ -42,7 +42,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 3 out of 3 (100%)**
 
 
-*Last run: Sat Jul 24 01:50:27 UTC 2021*
+*Last run: Wed Jul 28 01:55:47 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -54,8 +54,8 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo-b-acapy/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo-b-acapy/reports/latest)
 
 
 ### Runset **afgo**
@@ -66,7 +66,7 @@ Runset Name: AF-Go to AF-Go
 **Latest results: 6 out of 6 (100%)**
 
 
-*Last run: Sat Jul 24 01:54:18 UTC 2021*
+*Last run: Wed Jul 28 01:59:27 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -78,8 +78,8 @@ supported in Aries Framework Go.
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
 
 Jump back to the [interoperability summary](./README.md).
 
