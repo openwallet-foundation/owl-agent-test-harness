@@ -30,6 +30,7 @@
                 "path": ["$.credentialSubject.familyName"],
                 "purpose": "Just making sure your family name is Smith",
                 "filter": {
+                  "type": "string",
                   "const": "SMITH"
                 }
               },

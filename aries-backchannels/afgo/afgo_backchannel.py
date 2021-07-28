@@ -123,6 +123,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         # AATH API : AFGO Admin API
         self.issueCredentialOperationTranslationDict = {
+            "prepare-json-ld": "prepare-json-ld",
             "send-proposal": "send-proposal",
             "send-offer": "send-offer",
             "send-request": "send-request"
@@ -159,6 +160,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         # AATH API : AFGO Admin API
         self.proofOperationTranslationDict = {
+            "prepare-json-ld": "",
             "send-proposal": "send-propose-presentation",
             "send-request": "send-request-presentation",
             "send-presentation": "accept-request-presentation",
@@ -677,8 +679,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if data is not None: log_msg(f"Data passed to backchannel by test for operation: {agent_operation}", data)
 
         if operation == "prepare-json-ld":
-            # TODO Not sure what to do here if anything?
-            pass
+            return (200, json.dumps({"did":"dummy-value"}))
 
         if operation == "send-proposal" or operation == "send-offer":
             if data is None:
@@ -749,10 +750,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             }
                         ]
                         # add formats to the data with attach_id and format
+                        if "json-ld" in data["filter"]:
+                            filter_format = "aries/ld-proof-vc@v1.0"
+                        else:
+                            filter_format = "hlindy/cred-filter@v2.0"
+
                         data["propose_credential"]["formats"] = [
                             {
                                 "attach_id": filter_id,
-                                "format": "hlindy/cred-filter@v2.0"
+                                "format": filter_format
                             }
                         ]
 
@@ -787,10 +793,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             }
                         ]
                         # add formats to the data with attach_id and format
+                        if "json-ld" in data["filter"]:
+                            filter_format = "aries/ld-proof-vc@v1.0"
+                        else:
+                            filter_format = "hlindy/cred-filter@v2.0"
+
                         data["propose_credential"]["formats"] = [
                             {
                                 "attach_id": filter_id,
-                                "format": "hlindy/cred-filter@v2.0"
+                                "format": filter_format
                             }
                         ]
                         
@@ -934,9 +945,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         dat["data"]["json"]["issuer"] = {
                             "id": json.loads(wh_text)["message"]["Properties"]["myDID"]
                         }
+
+                        if "json-ld" in dat["data"]["json"]:
+                            dat["data"]["json"]["json-ld"]["credential"]["issuer"] = {
+                                "id": json.loads(wh_text)["message"]["Properties"]["myDID"]
+                            }
+                            dat["data"]["json"]["json-ld"]["credential"]["issuanceDate"] = str(datetime.datetime.now().isoformat(timespec='seconds'))  + "Z"
+                            dat["data"]["json"]["json-ld"]["credential"]["id"] = json.loads(wh_text)["message"]["Properties"]["theirDID"]
+                            dat["data"]["json"]["json-ld"]["credential"]["type"] = "VerifiableCredential"
+
                         dat["data"]["json"]["type"] = [
-                            "VerifiableCredential",
-                            "AATHTestCredential"
+                            # "AATHTestCredential",
+                            "VerifiableCredential"
                         ]
                 #data["issue_credential"]["credentials~attach"]["data"]["json"].append(afgo_ammendment)
 
@@ -1006,7 +1026,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
         return (resp_status, resp_text)
 
-
     async def handle_present_proof_POST(self, op, rec_id=None, data=None):
         topic = op["topic"]
         operation = op["operation"]
@@ -1036,9 +1055,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # create extra fields needed in presentation
             attach_id = str(uuid.uuid1())
             if "indy" in data["presentation_proposal"]["format"]:
-                format = "hlindy/proof-req@v2.0"
-            elif "json_ld" in data["presentation_proposal"]["format"]:
-                format = "dif/presentation-exchange/definitions@v1.0"
+                format_key = "hlindy/proof-req@v2.0"
+                mime_type = "application/json"
+            elif "json_ld" in data["presentation_proposal"]["format"] or "json-ld" in data["presentation_proposal"]["format"]:
+                format_key = "dif/presentation-exchange/definitions@v1.0"
+                mime_type = "application/ld+json"
             else:
                 raise Exception(f"format not recognized: {data}")
 
@@ -1054,7 +1075,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     "formats":[
                         {
                             "attach_id": attach_id,
-                            "format": format
+                            "format": format_key
                         }
                     ],
                     "request_presentations~attach": [
@@ -1063,13 +1084,27 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             "data": {
                                 "json": data["presentation_proposal"]["data"]
                             },
-                            "mime_type": "application/json"
+                            "mime-type": mime_type
                         }
 
                     ],
                     "will_confirm": True #not sure we need this
                 }
             }
+
+            replace_strings = {
+                "https://www.w3.org/2018/credentials#": "https://www.w3.org/2018/credentials/v1#"
+            }
+
+            if "json_ld" in data["presentation_proposal"]["format"] or "json-ld" in data["presentation_proposal"]["format"]:
+                descs = ammended_data["request_presentation"]["request_presentations~attach"][0]["data"]["json"]["presentation_definition"]["input_descriptors"]
+                for idx, input_descriptor in enumerate(descs):
+                    for idx2, schema in enumerate(input_descriptor["schema"]):
+                        if "uri" in schema:
+                            new_uri = schema["uri"]
+                            for old, new in replace_strings.items():
+                                new_uri = new_uri.replace(old, new, 1)
+                            schema["uri"] = new_uri
 
             data = ammended_data
 
@@ -1098,6 +1133,32 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 "VerifiablePresentation",
                 "CredentialManagerPresentation"
             ]
+
+            ammended_data["presentation"]["request_presentations~attach"] = ammended_data["presentation"]["presentations~attach"]
+
+            if "json_ld" in data["format"] or "json-ld" in data["format"]:
+                cred_attach_list = []
+
+                if "record_ids" in data:
+                    for record_id_list in data["record_ids"].values():
+                        for record_id in record_id_list:
+                            cred_record_list = get_resource(record_id, "credential-cache-msg")
+
+                            if len(cred_record_list) > 0:
+                                cred_attachments = cred_record_list[-1]["message"]["Message"]["credentials~attach"]
+                                for cred_attach in cred_attachments:
+                                    cred_attach_list.append(cred_attach)
+
+                for cred_attach in cred_attach_list:
+                    cred_attach["mime-type"] = "application/ld+json"
+
+                    # merge the cred proper with its wrapping
+                    cred_attach["data"]["json"]["json-ld"]["credential"]["issuer"] = cred_attach["data"]["json"]["issuer"]
+                    cred_attach["data"]["json"]["json-ld"]["credential"]["issuanceDate"] = cred_attach["data"]["json"]["issuanceDate"]
+
+                    cred_attach["data"]["json"] = cred_attach["data"]["json"]["json-ld"]["credential"]
+
+                ammended_data["presentation"]["presentations~attach"] = cred_attach_list
 
             data = ammended_data
 
@@ -1281,6 +1342,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 # take the name (which was saved as the cred_id) and make it the referent
                 if "name" in resp_json:
                     resp_json["referent"] = resp_json["name"]
+                    resp_json["credential_id"] = resp_json["name"]
                     resp_text = json.dumps(resp_json)
                 else:
                     raise Exception(f"No name/id found in response for: {agent_operation}")
@@ -1433,6 +1495,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if "filters~attach" in credential_msg_txt:
                 thread_id = credential_msg["message"]["Properties"]["piid"]
                 push_resource(thread_id, "credential-details-msg", credential_msg)
+                log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
+            if "credentials~attach" in credential_msg_txt:
+                thread_id = credential_msg["message"]["Properties"]["piid"]
+                push_resource(thread_id, "credential-cache-msg", credential_msg)
                 log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
                 
             resp_status = 200
