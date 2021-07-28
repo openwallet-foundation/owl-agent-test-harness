@@ -11,8 +11,8 @@
 | [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0 | javascript<br>0.1.0-alpha.233 | dotnet-master<br> | acapy-main<br>0.7.0 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-dotnet](#runset-acapy-dotnet) | acapy-main<br>0.7.0 | dotnet-master<br> | acapy-main<br>0.7.0 | acapy-main<br>0.7.0 | AIP 1.0 | [**26 / 27<br>96%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.7.0 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**3 / 3<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>0.1.0-alpha.233 | acapy-main<br>0.7.0 | javascript<br>0.1.0-alpha.233 | javascript<br>0.1.0-alpha.233 | AIP 1.0 | [**11 / 17<br>64%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [dotnet-acapy](#runset-dotnet-acapy) | dotnet-master<br> | acapy-main<br>0.7.0 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**1 / 12<br>8%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>0.1.0-alpha.233 | acapy-main<br>0.7.0 | javascript<br>0.1.0-alpha.233 | javascript<br>0.1.0-alpha.233 | AIP 1.0 | [**12 / 17<br>70%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-acapy](#runset-dotnet-acapy) | dotnet-master<br> | acapy-main<br>0.7.0 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**0 / 12<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -24,7 +24,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 3 out of 3 (100%)**
 
 
-*Last run: Sat Jul 24 01:21:25 UTC 2021*
+*Last run: Wed Jul 28 01:26:10 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -36,8 +36,8 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
 
 
 ### Runset **acapy-afj**
@@ -48,7 +48,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Sat Jul 24 01:30:12 UTC 2021*
+*Last run: Wed Jul 28 01:32:48 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -59,8 +59,8 @@ Most of the tests are running. The tests not passing are being investigated.
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-javascript/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-javascript/reports/latest)
 
 
 ### Runset **acapy-aip10**
@@ -71,7 +71,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Sat Jul 24 01:30:08 UTC 2021*
+*Last run: Wed Jul 28 01:36:03 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -82,8 +82,8 @@ All of the tests being executed in this runset are passing.
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip10/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-aip10/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip10/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-aip10/reports/latest)
 
 
 ### Runset **acapy-aip20**
@@ -94,7 +94,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 32 out of 32 (100%)**
 
 
-*Last run: Sat Jul 24 01:42:46 UTC 2021*
+*Last run: Wed Jul 28 01:49:30 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -105,8 +105,8 @@ All of the tests being executed in this runset are passing.
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip20/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-aip20/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip20/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-aip20/reports/latest)
 
 
 ### Runset **acapy-dotnet-javascript**
@@ -117,7 +117,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Sat Jul 24 01:38:42 UTC 2021*
+*Last run: Wed Jul 28 01:44:38 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -130,8 +130,8 @@ is required to determine the issue in these three tests.
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-javascript-f-dotnet/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-javascript-f-dotnet/reports/latest)
 
 
 ### Runset **acapy-dotnet**
@@ -142,7 +142,7 @@ Runset Name: ACA-PY to AF-.NET
 **Latest results: 26 out of 27 (96%)**
 
 
-*Last run: Sat Jul 24 01:54:59 UTC 2021*
+*Last run: Wed Jul 28 01:59:04 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -155,8 +155,8 @@ https://github.com/hyperledger/aries-framework-dotnet/issues/184
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
 
 
 ### Runset **afgo-acapy**
@@ -167,7 +167,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 3 out of 3 (100%)**
 
 
-*Last run: Sat Jul 24 01:50:27 UTC 2021*
+*Last run: Wed Jul 28 01:55:47 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -179,8 +179,8 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo-b-acapy/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo-b-acapy/reports/latest)
 
 
 ### Runset **afj-acapy**
@@ -188,10 +188,10 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 Runset Name: AFJ to ACA-PY
 
 ```tip
-**Latest results: 11 out of 17 (64%)**
+**Latest results: 12 out of 17 (70%)**
 
 
-*Last run: Sat Jul 24 02:08:07 UTC 2021*
+*Last run: Wed Jul 28 02:13:43 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -202,8 +202,8 @@ All AIP10 tests are currently running.
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-acapy/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-acapy/reports/latest)
 
 
 ### Runset **dotnet-acapy**
@@ -211,10 +211,10 @@ All AIP10 tests are currently running.
 Runset Name: AF-.NET to ACA-PY
 
 ```tip
-**Latest results: 1 out of 12 (8%)**
+**Latest results: 0 out of 12 (0%)**
 
 
-*Last run: Sat Jul 24 02:07:10 UTC 2021*
+*Last run: Wed Jul 28 02:13:07 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -225,8 +225,8 @@ More tests are failing than are passing when Aries Framework .NET is playing the
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet-b-acapy/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet-b-acapy/reports/latest)
 
 Jump back to the [interoperability summary](./README.md).
 
