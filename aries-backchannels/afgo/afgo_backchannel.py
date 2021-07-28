@@ -1060,6 +1060,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
             elif "json_ld" in data["presentation_proposal"]["format"] or "json-ld" in data["presentation_proposal"]["format"]:
                 format_key = "dif/presentation-exchange/definitions@v1.0"
                 mime_type = "application/ld+json"
+
+                await self.load_jsonld_contexts()
+
             else:
                 raise Exception(f"format not recognized: {data}")
 
@@ -1137,6 +1140,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
             ammended_data["presentation"]["request_presentations~attach"] = ammended_data["presentation"]["presentations~attach"]
 
             if "json_ld" in data["format"] or "json-ld" in data["format"]:
+
+                await self.load_jsonld_contexts()
+
                 cred_attach_list = []
 
                 if "record_ids" in data:
@@ -1202,7 +1208,45 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
 
-   
+    async def load_jsonld_contexts(self):
+        if not hasattr(self, "loaded_jsonld_contexts"):
+            self.loaded_jsonld_contexts = []
+
+        context_data = [
+            {
+                "url": "https://w3id.org/citizenship/v1",
+                "documentURL": "https://w3c-ccg.github.io/citizenship-vocab/contexts/citizenship-v1.jsonld",
+                "filePath": "afgo/citizenship-v1.jsonld"
+            }
+        ]
+
+        req = {
+            "documents": []
+        }
+
+        should_post = False
+
+        for jsonld_context in context_data:
+            if jsonld_context["url"] not in self.loaded_jsonld_contexts:
+                req_doc = {
+                    "url": jsonld_context["url"],
+                    "documentURL": jsonld_context["documentURL"]
+                }
+
+                with open(jsonld_context["filePath"], "r") as in_file:
+                    schema_text = in_file.read()
+                    req_doc["content"] = json.loads(schema_text)
+
+                req["documents"].append(req_doc)
+
+                should_post = True
+                self.loaded_jsonld_contexts.append(jsonld_context["url"])
+
+        if should_post:
+            (resp_status, resp_text) = await self.admin_POST("/context/add", data=req)
+            if resp_status != 200:
+                raise Exception(f"Could not add contexts: {resp_text}")
+
     def add_did_exchange_state_to_response(self, operation, raw_response):
         resp_json = json.loads(raw_response)
         
