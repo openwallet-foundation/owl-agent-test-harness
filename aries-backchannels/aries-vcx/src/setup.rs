@@ -7,7 +7,27 @@ use vcx::utils::plugins::init_plugin;
 use vcx::settings;
 use std::io::prelude::*;
 use crate::AgentConfig;
+use rand::{thread_rng, Rng};
 use uuid;
+
+#[derive(Debug, Deserialize)]
+struct SeedResponse {
+    did: String,
+    seed: String,
+    verkey: String
+}
+
+async fn get_trustee_seed() -> std::result::Result<String, String> {
+let ledger_url = std::env::var("LEDGER_URL").unwrap_or("http://localhost:9000".to_string());
+    let url = format!("{}/register", ledger_url);
+    let mut rng = thread_rng();
+    let client = reqwest::Client::new();
+    let body = json!({
+        "role": "TRUST_ANCHOR",
+        "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
+    }).to_string();
+    Ok(client.post(&url).body(body).send().await.unwrap().json::<SeedResponse>().await.unwrap().seed)
+}
 
 async fn download_genesis_file() -> std::result::Result<String, String> {
     match std::env::var("GENESIS_FILE").ok() {
@@ -77,8 +97,8 @@ pub async fn initialize() -> std::io::Result<AgentConfig> {
     let _wh = open_as_main_wallet(&wallet_config).unwrap();
     let _ph = open_main_pool(&pool_config).unwrap();
 
-    let enterprise_seed = "000000000000000000000000Trustee1";
-    let issuer_config = configure_issuer_wallet(enterprise_seed).unwrap();
+    let enterprise_seed = get_trustee_seed().await.unwrap();
+    let issuer_config = configure_issuer_wallet(&enterprise_seed).unwrap();
     init_issuer_config(&issuer_config).unwrap();
     let agency_config = provision_cloud_agent(&agency_config).unwrap();
 
