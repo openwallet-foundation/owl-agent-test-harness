@@ -4,9 +4,9 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc1 | acapy-main<br>0.7.0-rc1 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | dotnet-master<br> | acapy-main<br>0.7.0-rc1 | AIP 1.0 | [**10 / 12<br>83%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>1.0.0 | acapy-main<br>0.7.0-rc1 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**8 / 12<br>66%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.7.0 | javascript<br>1.0.0 | acapy-main<br>0.7.0 | acapy-main<br>0.7.0 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.0 | javascript<br>1.0.0 | dotnet-master<br> | acapy-main<br>0.7.0 | AIP 1.0 | [**10 / 12<br>83%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>1.0.0 | acapy-main<br>0.7.0 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**8 / 12<br>66%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afj-dotnet](#runset-afj-dotnet) | javascript<br>1.0.0 | dotnet-master<br> | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [afj](#runset-afj) | javascript<br>1.0.0 | javascript<br>1.0.0 | javascript<br>1.0.0 | javascript<br>1.0.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-javascript](#runset-dotnet-javascript) | dotnet-master<br> | javascript<br>1.0.0 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**5 / 12<br>41%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
@@ -21,7 +21,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Jul 15 01:27:06 UTC 2021*
+*Last run: Fri Jul 16 01:30:13 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -44,7 +44,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 10 out of 12 (83%)**
 
 
-*Last run: Thu Jul 15 01:40:48 UTC 2021*
+*Last run: Fri Jul 16 01:40:55 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -69,7 +69,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 8 out of 12 (66%)**
 
 
-*Last run: Thu Jul 15 01:54:42 UTC 2021*
+*Last run: Fri Jul 16 01:56:45 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -93,7 +93,7 @@ Runset Name: AFJ to AF-.NET
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Jul 15 01:56:36 UTC 2021*
+*Last run: Fri Jul 16 01:58:17 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -116,7 +116,7 @@ Runset Name: AFJ to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Jul 15 02:10:59 UTC 2021*
+*Last run: Fri Jul 16 02:12:32 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -139,7 +139,7 @@ Runset Name: AF-.NET to AFJ
 **Latest results: 5 out of 12 (41%)**
 
 
-*Last run: Thu Jul 15 02:16:03 UTC 2021*
+*Last run: Fri Jul 16 02:17:35 UTC 2021*
 ```
 
 #### Current Runset Status

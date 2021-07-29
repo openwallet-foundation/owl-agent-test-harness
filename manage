@@ -327,6 +327,17 @@ pingCloudAgency(){
   fi
 }
 
+pingUniresolver(){
+
+  # ping uniresolver server
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:8080)
+  if (( ${rtnCd} == 200 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
 waitForCloudAgency(){
   (
     # Wait for cloud agency to start ...
@@ -338,6 +349,27 @@ waitForCloudAgency(){
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
         echoRed "\nThe agency failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
+waitForUniresolver(){
+  (
+    # Wait for uniresolver to start ...
+    local startTime=${SECONDS}
+    local rtnCd=0
+    printf "waiting for uniresolver to start"
+    while ! pingUniresolver ; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nUniversal Resolver failed to start within ${duration} seconds.\n"
         rtnCd=1
         break
       fi
@@ -428,7 +460,7 @@ startAgent() {
   local DATA_VOLUME_ARG=
   # optional data volume folder
   if [[ -n DATA_VOLUME_PATH  ]]; then
-    DATA_VOLUME_ARG="-v $(pwd)/$DATA_VOLUME_PATH:/data-mount"
+    DATA_VOLUME_ARG="-v $(pwd)/$DATA_VOLUME_PATH:/data-mount:z"
   fi
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
@@ -571,6 +603,12 @@ startHarness(){
     exit 1
   fi
 
+  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
+      echo "starting local uniresolver..."
+    auxiliaryService uniresolver start
+    export STARTED_LOCAL_UNIRESOLVER=true
+  fi
+
   # if we're *not* using an external indy tails server, start the local one
   if [[ -z ${TAILS_SERVER_URL_CONFIG} ]]; then
     if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]]; then
@@ -585,10 +623,9 @@ startHarness(){
     exit 1
   fi
 
-  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
-      echo "starting local uniresolver..."
-    auxiliaryService uniresolver start
-    export STARTED_LOCAL_UNIRESOLVER=true
+  if ! waitForUniresolver; then
+    echoRed "\nUniversal Resolver is not running.\n"
+    exit 1
   fi
 
   startCloudAgency
@@ -841,11 +878,11 @@ pushd ${SCRIPT_HOME} >/dev/null
 
 case "${COMMAND}" in
   build)
-      buildImages ${@}
+      buildImages ${@} --platform linux/amd64
     ;;
 
   rebuild)
-      buildImages --no-cache ${@}
+      buildImages --no-cache ${@} --platform linux/amd64
     ;;
 
   run)

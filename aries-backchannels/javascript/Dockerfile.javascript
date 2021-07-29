@@ -39,7 +39,6 @@ ENV RUN_MODE="docker"
 
 COPY javascript/server/package.json package.json
 COPY javascript/server/yarn.lock yarn.lock
-COPY javascript/aries-framework-javascript-v1.0.0.tgz ../aries-framework-javascript-v1.0.0.tgz
 
 # Run install after copying only depdendency file
 # to make use of docker layer caching

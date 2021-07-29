@@ -16,13 +16,13 @@ services:
 
   uni-resolver-web.local:
     container_name: uni-resolver-web.local
-    image: universalresolver/uni-resolver-web:latest
+    image: universalresolver/uni-resolver-web:0.3.0
     ports:
       - "8080:8080"
     expose:
       - "8080"
     volumes:
-      - ./uni-resolver-web/config.json:/var/lib/jetty/config.json
+      - ./uni-resolver-web/config.json:/opt/uni-resolver-java/uni-resolver-web/config.json
      # - ./uni-resolver-web/run-uni-resolver-web.sh:/opt/uni-resolver-java/uni-resolver-web/docker/run-uni-resolver-web.sh
     networks:
       - aath_network

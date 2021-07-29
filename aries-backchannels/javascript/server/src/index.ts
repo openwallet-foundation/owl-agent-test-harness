@@ -1,10 +1,11 @@
 import { $log } from "@tsed/common";
 import { PlatformExpress } from "@tsed/platform-express";
 import { registerProvider } from "@tsed/di";
+import { Agent } from "@aries-framework/core";
+import minimist from "minimist";
+
 import { createAgent } from "./TestAgent";
 import { Server } from "./Server";
-import { Agent } from "aries-framework-javascript";
-import minimist from "minimist";
 import {
   getGenesisPath,
   getRandomSeed,
@@ -26,6 +27,7 @@ async function bootstrap() {
   const dockerHost = process.env.DOCKERHOST ?? "host.docker.internal";
   const runMode = process.env.RUN_MODE;
   const externalHost = runMode === "docker" ? dockerHost : "localhost";
+  const agentName =  process.env.AGENT_NAME ? `AFJ ${process.env.AGENT_NAME}` : `AFJ Agent (${agentPort})`;
 
   const endpointUrl = `http://${externalHost}`;
 
@@ -46,8 +48,9 @@ async function bootstrap() {
   await registerPublicDid(ledgerUrl, publicDidSeed);
 
   const agent = await createAgent({
-    url: endpointUrl,
+    agentName,
     port: agentPort,
+    endpoint: `${endpointUrl}:${agentPort}`,
     publicDidSeed,
     genesisPath,
   });
