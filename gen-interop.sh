@@ -309,8 +309,8 @@ for agent in "${ta_tlas[@]}"; do
             fi
             # Links to the allure results
             echo -e "#### Runset Details\\n" >>$outfile
-            echo -e "- Results grouped by [executed Aries RFCs executed](${ALLURE_BEHAVIORS_LINK[$runset_num]})" >>$outfile
-            echo -e "- Results by [history](${ALLURE_LINK[$runset_num]})\\n" >>$outfile
+            echo -e "- [Results by executed Aries RFCs](${ALLURE_BEHAVIORS_LINK[$runset_num]})" >>$outfile
+            echo -e "- [Test execution history](${ALLURE_LINK[$runset_num]})\\n" >>$outfile
         fi
         runset_num=$( expr ${runset_num} + 1)
     done

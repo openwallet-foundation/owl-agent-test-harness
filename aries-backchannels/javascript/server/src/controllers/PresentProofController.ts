@@ -49,11 +49,23 @@ export class PresentProofController {
     @BodyParams("data")
     data: {
       connection_id: string;
-      presentation_proposal: any;
+      presentation_proposal: {
+        comment?: string;
+        requested_attributes: any;
+        requested_predicates: any;
+      };
     }
   ) {
+    const { requested_attributes, requested_predicates, ...restProposal } =
+      data.presentation_proposal;
+
+    const newPresentationProposal = {
+      ...restProposal,
+      attributes: requested_attributes,
+      predicates: requested_predicates,
+    };
     const presentationProposal = JsonTransformer.fromJSON(
-      data.presentation_proposal,
+      newPresentationProposal,
       PresentationPreview
     );
 
@@ -127,7 +139,11 @@ export class PresentProofController {
     );
 
     this.logger.info("Created requested credentials ", {
-      requestedCredentials: JSON.stringify(requestedCredentials.toJSON(), null, 2),
+      requestedCredentials: JSON.stringify(
+        requestedCredentials.toJSON(),
+        null,
+        2
+      ),
     });
 
     const credentialUtils = new CredentialUtils(this.agent);

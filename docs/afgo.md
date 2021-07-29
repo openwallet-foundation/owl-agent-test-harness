@@ -2,10 +2,10 @@
 
 ## Runsets with AF-Go
 
-| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | 
+| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.7.0 | afgo-interop<br>unknown | acapy-main<br>0.7.0 | acapy-main<br>0.7.0 | pre-AIP 2.0 | [**2 / 3<br>66%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
-| [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.7.0 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**2 / 3<br>66%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.7.0 | afgo-interop<br>unknown | acapy-main<br>0.7.0 | acapy-main<br>0.7.0 | pre-AIP 2.0 | [**3 / 3<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
+| [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.7.0 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**3 / 3<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo](#runset-afgo) | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | pre-AIP 2.0 | [**6 / 6<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
@@ -15,10 +15,10 @@
 Runset Name: ACA-PY to AF-Go
 
 ```tip
-**Latest results: 2 out of 3 (66%)**
+**Latest results: 3 out of 3 (100%)**
 
 
-*Last run: Fri Jul 16 01:21:30 UTC 2021*
+*Last run: Wed Jul 28 01:26:10 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -30,8 +30,8 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
 
 
 ### Runset **afgo-acapy**
@@ -39,10 +39,10 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 Runset Name: AF-Go to ACA-PY
 
 ```tip
-**Latest results: 2 out of 3 (66%)**
+**Latest results: 3 out of 3 (100%)**
 
 
-*Last run: Fri Jul 16 01:51:36 UTC 2021*
+*Last run: Wed Jul 28 01:55:47 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -54,8 +54,8 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo-b-acapy/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo-b-acapy/reports/latest)
 
 
 ### Runset **afgo**
@@ -66,7 +66,7 @@ Runset Name: AF-Go to AF-Go
 **Latest results: 6 out of 6 (100%)**
 
 
-*Last run: Fri Jul 16 01:57:53 UTC 2021*
+*Last run: Wed Jul 28 01:59:27 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -78,8 +78,8 @@ supported in Aries Framework Go.
 
 #### Runset Details
 
-- Results grouped by [executed Aries RFCs executed](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
-- Results by [history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
 
 Jump back to the [interoperability summary](./README.md).
 

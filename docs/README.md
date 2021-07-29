@@ -25,10 +25,10 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 | Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | **All Tests** |
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | 49 / 49<br>100% | 4 / 6<br>66% | 30 / 36<br>83% | 36 / 51<br>70% | **109 / 130<br>83%** |
-| [AF-Go](afgo.md)| AIP 2 | None | 4 / 6<br>66% | 6 / 6<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | **10 / 12<br>83%** |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 30 / 36<br>83% | 0 / 0<br>0% | 17 / 17<br>100% | 27 / 36<br>75% | **64 / 77<br>83%** |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 36 / 51<br>70% | 0 / 0<br>0% | 27 / 36<br>75% | 12 / 12<br>100% | **65 / 87<br>74%** |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 49 / 49<br>100% | 6 / 6<br>100% | 41 / 46<br>89% | 38 / 51<br>74% | **122 / 140<br>87%** |
+| [AF-Go](afgo.md)| AIP 2 | None | 6 / 6<br>100% | 6 / 6<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | **12 / 12<br>100%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 41 / 46<br>89% | 0 / 0<br>0% | 17 / 17<br>100% | 36 / 36<br>100% | **82 / 87<br>94%** |
+| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 38 / 51<br>74% | 0 / 0<br>0% | 36 / 36<br>100% | 12 / 12<br>100% | **74 / 87<br>85%** |
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
 - The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
@@ -36,5 +36,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Fri Jul 16 03:52:10 UTC 2021*
+*Results last updated: Wed Jul 28 03:52:13 UTC 2021*
 

@@ -8,7 +8,9 @@ using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Models.Events;
 using Microsoft.Extensions.Caching.Memory;
 using Hyperledger.Aries.Contracts;
+using System.Linq;
 using System.Reactive.Linq;
+
 using System;
 
 namespace DotNet.Backchannel.Controllers
@@ -84,7 +86,7 @@ namespace DotNet.Backchannel.Controllers
             _connectionCache.Set(connection.Id, testHarnessConnection);
 
             // Listen for connection request to update the state
-            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Requested, _ => _.MessageType == MessageTypes.ConnectionRequest && _.RecordId == connection.Id);
+            UpdateStateOnMessage(testHarnessConnection, TestHarnessConnectionState.Requested, _ => new[] { MessageTypes.ConnectionRequest, MessageTypesHttps.ConnectionRequest }.Contains(_.MessageType) && _.RecordId == connection.Id);
 
             return Ok(new { connection_id = testHarnessConnection.ConnectionId, state = testHarnessConnection.State, invitation });
         }
@@ -124,7 +126,7 @@ namespace DotNet.Backchannel.Controllers
             catch { return NotFound(); }
 
             // Listen for connection response to update the state
-            UpdateStateOnMessage(THConnection, TestHarnessConnectionState.Responded, _ => _.MessageType == MessageTypes.ConnectionResponse && _.RecordId == connection.Id);
+            UpdateStateOnMessage(THConnection, TestHarnessConnectionState.Responded, _ => new[] { MessageTypes.ConnectionResponse, MessageTypesHttps.ConnectionResponse }.Contains(_.MessageType) && _.RecordId == connection.Id);
 
             await _messageService.SendAsync(context, THConnection.Request, connection);
 
