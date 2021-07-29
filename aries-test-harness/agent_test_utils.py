@@ -123,3 +123,4 @@ def amend_presentation_definition_with_runtime_data(context, presentation_defini
         presentation_definition["presentation_definition"]["format"]["ldp_vp"]["proof_type"] = ldp_vp_proof_type
 
     return presentation_definition
+

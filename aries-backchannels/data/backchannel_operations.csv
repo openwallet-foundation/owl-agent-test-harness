@@ -9,6 +9,7 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0160 Connection Protocol,X,,connection,POST,send-ping,Y,Y,Acknowledge acceptance of connectionr request,connection_id,ack,"connection_id, state"
 0160 Connection Protocol,,X,connection,GET,,Y,Y,Receive problem report,connection_id,ack,"connection_id, state"
 0160 Connection Protocol,X,,connection,POST,,Y,Y,Reject connection request and send message,connection_id,rejection,"connection_id, state"
+0160 Connection Protocol,X,,active-connection,GET,,Y,,Retrieve an active connection based on the did of the other role,thier_did,,"connection_id, my_did"
 0015 Acks,X,,,POST,,,Y,"General purpose, will be part of another protocol",,ack,
 0015 Acks,,X,,GET,,,Y,"General purpose, will be part of another protocol",,ack,
 0095 Basic Message,X,,message,POST,,Y,Y,Send a basic message,connection_id,message,"connection_id, message"
@@ -70,7 +71,6 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0036 Issue Credential,X,,issue-credential,POST,store,Y,Y,Send credential acknowledgement with ID ,cred_exchange_id,"offer = {
     ""credential_id"": ""issue-credential exchange id string""
 }",cred_exchange_id
-0453 Issue Credential v2,X,,issue-credential-v2,POST,prepare-json-ld,,Y,Prepare for issuing a JSON-LD credential,,"data = { ""did_method"": ""key"", ""key_type"": ""ed25519"" }",did
 0453 Issue Credential v2,X,,issue-credential-v2,POST,send-proposal,,Y,Send a credential proposal,,"proposal = {
    ""connection_id"":""d71cd2f1-f075-4083-9b63-73f507813836"",
    ""credential_preview"":{
@@ -181,9 +181,9 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0037 Present Proof,X,,proof,GET,,Y,,Get a stored presentation from the wallet ,presentation_id,,presentation
 0037 Present Proof,X,,proof,GET,,Y,,Fetch a specific credential by ID ,presentation_exchange_id,,presentation_exchange_id
 0037 Present Proof,X,,proof,POST,create-send-connectionless-request,,Y,Send a proof request in reference to a proposal,,proposal,pres_exchange_id
-0454 Present Proof v2,X,,proof-v2,POST,create-send-connectionless-request,,Y,Send a proof request created without an agent to agent connection,,presentation_proposal,"status, thread_id, pres_exchange_id"
-0454 Present Proof v2,X,,proof-v2,POST,send-request,,Y,Send a proof request without a proposal command,,"presentation_proposal, connection_id","status, thread_id, pres_exchange_id"
-0454 Present Proof v2,,X,proof-v2,GET,,Y,,Get a stored presentation from the wallet ,presentation_thread_id,,"status, presentation"
-0454 Present Proof v2,X,,proof-v2,POST,send-request,Y,,Send a proof request in response to a proposal,presentation_thread_id,,status
+0454 Present Proof v2,X,,proof-v2,POST,create-send-connectionless-request,,Y,Send a proof request created without an agent to agent connection,,presentation_proposal,"state, thread_id, pres_exchange_id"
+0454 Present Proof v2,X,,proof-v2,POST,send-request,,Y,Send a proof request without a proposal command,,"presentation_proposal, connection_id","state, thread_id, pres_exchange_id"
+0454 Present Proof v2,,X,proof-v2,GET,,Y,,Get a stored presentation from the wallet ,presentation_thread_id,,"state, presentation"
+0454 Present Proof v2,X,,proof-v2,POST,send-request,Y,,Send a proof request in response to a proposal,presentation_thread_id,,state
 0454 Present Proof v2,X,,proof-v2,POST,send-presentation,Y,Y,Send a proof presentation,presentation_thread_id,presentation,state
 0454 Present Proof v2,X,,proof-v2,POST,verify-presentation,Y,,Verify a received proof presentation,presentation_thread_id,,state

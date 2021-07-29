@@ -673,6 +673,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
         agent_operation = "/out-of-band/"
+        log_msg(
+            f"Data passed to backchannel by test for operation: {agent_operation}", data
+        )
         if operation == "send-invitation-message":
             # http://localhost:8022/out-of-band/create-invitation?auto_accept=false&multi_use=false
             # TODO Check the data for auto_accept and multi_use. If it exists use those values then pop them out, otherwise false.
@@ -696,8 +699,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif operation == "receive-invitation":
             # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
-            # TODO add use_existing_connection=false in data in the test to pass to here.
-            use_existing_connection = "false"
+            if "use_existing_connection" in data:
+                use_existing_connection = str(data["use_existing_connection"]).lower()
+                data.pop("use_existing_connection")
+            else:
+                use_existing_connection = "false"
             auto_accept = "false"
             agent_operation = (
                 agent_operation
@@ -707,7 +713,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
             # agent_operation = "/didexchange/" + "receive-invitation"
 
+        log_msg(
+            f"Data translated by backchannel to send to agent for operation: {agent_operation}",
+            data,
+        )
+
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        log_msg(resp_status, resp_text)
         if resp_status == 200:
             resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
@@ -966,6 +978,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             resp_text = json.dumps(did)
             return (resp_status, resp_text)
+
+        elif op["topic"] == "active-connection" and rec_id:
+            agent_operation = f"/connections?their_did={rec_id}"
+
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
+
+            # find the first active connection 
+            resp_json = json.loads(resp_text)
+            for connection in resp_json["results"]:
+                if connection["state"] == "active":
+                    resp_text = json.dumps(connection)
+                    return (resp_status, resp_text)
+
+            return (400, f"Active connection not found for their_did {rec_id}")
 
         elif op["topic"] == "schema":
             schema_id = rec_id
