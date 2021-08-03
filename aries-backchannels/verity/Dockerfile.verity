@@ -1,0 +1,31 @@
+
+FROM evernymdev/verity-server-dev:stable
+WORKDIR /root
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 97080EBDA5D46DAF
+ENV VERITY_APPLICATION_VERSION=0.4.125606469.19a6981
+
+RUN apt-get update && apt-get install -y \
+    npm \
+    ; exit 0
+
+RUN apt-get update && apt-get install -y \
+    verity-application=${VERITY_APPLICATION_VERSION} \
+    ; exit 0
+
+RUN rm -rf /etc/verity/verity-application/*
+ADD verity/configuration/ /etc/verity/verity-application/.
+
+ENV RUN_MODE="docker"
+
+ADD verity/verity_backchannel.js verity_backchannel.js
+ADD verity/package.json package.json
+ADD verity/package-lock.json package-lock.json
+
+RUN npm install -g npm@5.6.0
+RUN npm install
+
+ADD verity/run_verity.sh run_verity.sh
+
+RUN echo "Starting Verity Backchannel"
+
+ENTRYPOINT ["node", "verity_backchannel.js"]
