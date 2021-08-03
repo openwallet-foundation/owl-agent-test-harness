@@ -1095,20 +1095,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 }
             }
 
-            replace_strings = {
-                "https://www.w3.org/2018/credentials#": "https://www.w3.org/2018/credentials/v1#"
-            }
-
-            if "json_ld" in data["presentation_proposal"]["format"] or "json-ld" in data["presentation_proposal"]["format"]:
-                descs = ammended_data["request_presentation"]["request_presentations~attach"][0]["data"]["json"]["presentation_definition"]["input_descriptors"]
-                for idx, input_descriptor in enumerate(descs):
-                    for idx2, schema in enumerate(input_descriptor["schema"]):
-                        if "uri" in schema:
-                            new_uri = schema["uri"]
-                            for old, new in replace_strings.items():
-                                new_uri = new_uri.replace(old, new, 1)
-                            schema["uri"] = new_uri
-
             data = ammended_data
 
         elif operation == "send-presentation":
