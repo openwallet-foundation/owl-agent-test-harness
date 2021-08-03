@@ -153,13 +153,14 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
          | Invalid signature                       |
          | unknown processing error                |
 
-   @T012-RFC0023 @normal @DerivedFunctionalTest
+   @T012-RFC0023 @normal @DerivedFunctionalTest @wip
    Scenario: Attempt to Establish a connection with DID Exchange between two agents with an explicit invitation with connection reuse
       Given we have "2" agents
          | name | role      |
          | Acme | requester |
          | Bob  | responder |
-      When "Bob" sends an explicit invitation
+      And "Acme" and "Bob" have an existing connection with a public DID
+      When "Bob" sends an explicit invitation wih a public DID
       And "Acme" receives the invitation while wanting to reuse an existing connection
       And "Acme" sends the request to "Bob"
       And "Bob" receives the request

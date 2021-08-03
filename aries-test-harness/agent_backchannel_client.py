@@ -162,7 +162,10 @@ def setup_already_connected(context, requester_connection_info_json, requester, 
         # Populate connection id dictionary in context
         if not hasattr(context, 'connection_id_dict'):
             context.connection_id_dict = {}
+        
+        if requester not in context.connection_id_dict:
             context.connection_id_dict[requester] = {}
+        if responder not in context.connection_id_dict:
             context.connection_id_dict[responder] = {}
     
         context.connection_id_dict[requester][responder] = requester_connection_id
