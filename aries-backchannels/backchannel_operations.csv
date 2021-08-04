@@ -9,6 +9,7 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0160 Connection Protocol,X,,connection,POST,send-ping,Y,Y,Acknowledge acceptance of connectionr request,connection_id,ack,"connection_id, state"
 0160 Connection Protocol,,X,connection,GET,,Y,Y,Receive problem report,connection_id,ack,"connection_id, state"
 0160 Connection Protocol,X,,connection,POST,,Y,Y,Reject connection request and send message,connection_id,rejection,"connection_id, state"
+0160 Connection Protocol,X,,active-connection,GET,,Y,,Retrieve an active connection based on the did of the other role,thier_did,,"connection_id, my_did"
 0015 Acks,X,,,POST,,,Y,"General purpose, will be part of another protocol",,ack,
 0015 Acks,,X,,GET,,,Y,"General purpose, will be part of another protocol",,ack,
 0095 Basic Message,X,,message,POST,,Y,Y,Send a basic message,connection_id,message,"connection_id, message"
@@ -70,6 +71,7 @@ rfc,command,response,topic,method,operation,id,data,description,id_details,data_
 0036 Issue Credential,X,,issue-credential,POST,store,Y,Y,Send credential acknowledgement with ID ,cred_exchange_id,"offer = {
     ""credential_id"": ""issue-credential exchange id string""
 }",cred_exchange_id
+0453 Issue Credential v2,X,,issue-credential-v2,POST,prepare-json-ld,,Y,Prepare for issuing a JSON-LD credential,,"data = { ""did_method"": ""key"", ""key_type"": ""ed25519"" }",did
 0453 Issue Credential v2,X,,issue-credential-v2,POST,send-proposal,,Y,Send a credential proposal,,"proposal = {
    ""connection_id"":""d71cd2f1-f075-4083-9b63-73f507813836"",
    ""credential_preview"":{

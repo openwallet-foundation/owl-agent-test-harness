@@ -12,7 +12,7 @@
 from time import sleep
 from behave import given, when, then
 import json, time
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state, setup_already_connected
 
 
 @when('"{responder}" sends an explicit invitation')
@@ -179,23 +179,32 @@ def step_impl(context, responder):
 
 @when('"{requester}" receives the invitation')
 def step_impl(context, requester):
-
+    # if feature is DID Exchange then set use existing connection to false
+    if "0023" in context.feature.name:
+        context.use_existing_connection = False
     data = context.responder_invitation
+    data["use_existing_connection"] = context.use_existing_connection
     (resp_status, resp_text) = agent_backchannel_POST(context.requester_url + "/agent/command/", "out-of-band", operation="receive-invitation", data=data)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
 
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "invitation-received"
 
-    if not hasattr(context, 'connection_id_dict'):
-        context.connection_id_dict = {}
+    if context.use_existing_connection and resp_json["state"] == "completed":
+        context.use_existing_connection_successful = True
+        setup_already_connected(context, resp_json, requester, context.responder_name)
+    else:
 
-    # Check for responder key existing in dict
-    if requester not in context.connection_id_dict:
-        context.connection_id_dict[requester] = {}
+        assert resp_json["state"] == "invitation-received"
 
-    #context.connection_id_dict[requester] = {context.responder_name: resp_json["connection_id"]}
-    context.connection_id_dict[requester][context.responder_name] = resp_json["connection_id"]
+        if not hasattr(context, 'connection_id_dict'):
+            context.connection_id_dict = {}
+
+        # Check for responder key existing in dict
+        if requester not in context.connection_id_dict:
+            context.connection_id_dict[requester] = {}
+
+        #context.connection_id_dict[requester] = {context.responder_name: resp_json["connection_id"]}
+        context.connection_id_dict[requester][context.responder_name] = resp_json["connection_id"]
 
 
 @when('"{requester}" sends the request to "{responder}"')
