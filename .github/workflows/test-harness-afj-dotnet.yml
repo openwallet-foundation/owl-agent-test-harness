@@ -18,6 +18,9 @@ name: test-harness-javascript-dotnet
 #
 # End
 on:
+  pull_request:
+    branches:
+    - main
   workflow_dispatch:
   schedule:
     - cron: "55 0 * * *"
