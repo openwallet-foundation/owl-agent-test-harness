@@ -1046,6 +1046,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # Ammend
             pass
 
+        await self.load_jsonld_contexts()
+
         if operation == "send-request":
             # Get myDID and theirDID from connection object from connection_id in data
             (their_did, my_did) = await self.get_DIDs_for_participants(data["presentation_proposal"]["connection_id"])
@@ -1126,8 +1128,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
             ammended_data["presentation"]["request_presentations~attach"] = ammended_data["presentation"]["presentations~attach"]
 
             if "json_ld" in data["format"] or "json-ld" in data["format"]:
-
-                await self.load_jsonld_contexts()
 
                 cred_attach_list = []
 
@@ -1229,7 +1229,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 self.loaded_jsonld_contexts.append(jsonld_context["url"])
 
         if should_post:
-            (resp_status, resp_text) = await self.admin_POST("/context/add", data=req)
+            (resp_status, resp_text) = await self.admin_POST("/ld/context", data=req)
             if resp_status != 200:
                 raise Exception(f"Could not add contexts: {resp_text}")
 
