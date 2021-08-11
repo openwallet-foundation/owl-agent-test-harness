@@ -1430,81 +1430,81 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if topic == "proof":
 
             if operation == "send-request" or operation == "create-request":
-                if operation == "send-proposal":
-                    request_type = "presentation_proposal"
-                    attachment = "presentations~attach"
-                else:
-                    request_type = "proof_request"
-                    attachment = "request_presentations~attach"
+                # if operation == "send-proposal":
+                #     request_type = "presentation_proposal"
+                #     attachment = "presentations~attach"
+                # else:
+                request_type = "proof_request"
+                #attachment = "request_presentations~attach"
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("requested_attributes")
                     is None
                 ):
                     requested_attributes = {}
                 else:
-                    requested_attributes = data["presentation_proposal"][attachment][
+                    requested_attributes = data["presentation_request"][request_type][
                         "data"
                     ]["requested_attributes"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("requested_predicates")
                     is None
                 ):
                     requested_predicates = {}
                 else:
-                    requested_predicates = data["presentation_proposal"][attachment][
+                    requested_predicates = data["presentation_request"][request_type][
                         "data"
                     ]["requested_predicates"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("name")
                     is None
                 ):
                     proof_request_name = "test proof"
                 else:
-                    proof_request_name = data["presentation_proposal"][attachment][
+                    proof_request_name = data["presentation_request"][request_type][
                         "data"
                     ]["name"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("version")
                     is None
                 ):
                     proof_request_version = "1.0"
                 else:
-                    proof_request_version = data["presentation_proposal"][attachment][
+                    proof_request_version = data["presentation_request"][request_type][
                         "data"
                     ]["version"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("non_revoked")
                     is None
                 ):
                     non_revoked = None
                 else:
-                    non_revoked = data["presentation_proposal"][attachment]["data"][
+                    non_revoked = data["presentation_request"][request_type]["data"][
                         "non_revoked"
                     ]
 
                 if "connection_id" in data:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         "connection_id": data["connection_id"],
                         request_type: {
@@ -1516,7 +1516,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     }
                 else:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         request_type: {
                             "name": proof_request_name,
@@ -1605,22 +1605,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             if operation == "send-request":
                 request_type = "presentation_request"
 
-                presentation_proposal = data.get("presentation_proposal", {})
-                pres_proposal_data = presentation_proposal.get("data", {})
-                cred_format = presentation_proposal.get("format")
+                presentation_request_orig = data.get("presentation_request", {})
+                pres_request_data = presentation_request_orig.get("data", {})
+                cred_format = presentation_request_orig.get("format")
 
                 if cred_format is None:
                     raise Exception("Credential format not specified for presentation")
                 elif cred_format == "indy":
-                    requested_attributes = pres_proposal_data.get(
+                    requested_attributes = pres_request_data.get(
                         "requested_attributes", {}
                     )
-                    requested_predicates = pres_proposal_data.get(
+                    requested_predicates = pres_request_data.get(
                         "requested_predicates", {}
                     )
-                    proof_request_name = pres_proposal_data.get("name", "test proof")
-                    proof_request_version = pres_proposal_data.get("version", "1.0")
-                    non_revoked = pres_proposal_data.get("non_revoked")
+                    proof_request_name = pres_request_data.get("name", "test proof")
+                    proof_request_version = pres_request_data.get("version", "1.0")
+                    non_revoked = pres_request_data.get("non_revoked")
 
                     presentation_request = {
                         cred_format: {
@@ -1636,18 +1636,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 elif cred_format == "json-ld":
                     # We use DIF format for JSON-LD credentials
-                    presentation_request = {"dif": pres_proposal_data}
+                    presentation_request = {"dif": pres_request_data}
                 else:
                     raise Exception(f"Unknown credential format: {cred_format}")
 
                 admin_data = {
-                    "comment": presentation_proposal["comment"],
+                    "comment": presentation_request_orig["comment"],
                     "trace": False,
                     request_type: presentation_request,
                 }
 
-                if "connection_id" in presentation_proposal:
-                    admin_data["connection_id"] = presentation_proposal["connection_id"]
+                if "connection_id" in presentation_request_orig:
+                    admin_data["connection_id"] = presentation_request_orig["connection_id"]
 
             elif operation == "send-presentation":
 

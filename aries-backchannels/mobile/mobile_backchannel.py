@@ -388,81 +388,81 @@ class MobileAgentBackchannel(AgentBackchannel):
         if topic == "proof":
 
             if operation == "send-request" or operation == "create-request":
-                if operation == "send-proposal":
-                    request_type = "presentation_proposal"
-                    attachment = "presentations~attach"
-                else:
-                    request_type = "proof_request"
-                    attachment = "request_presentations~attach"
+                # if operation == "send-proposal":
+                #     request_type = "presentation_proposal"
+                #     attachment = "presentations~attach"
+                # else:
+                request_type = "proof_request"
+                    #attachment = "request_presentations~attach"
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("requested_attributes")
                     is None
                 ):
                     requested_attributes = {}
                 else:
-                    requested_attributes = data["presentation_proposal"][attachment][
+                    requested_attributes = data["presentation_request"][request_type][
                         "data"
                     ]["requested_attributes"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("requested_predicates")
                     is None
                 ):
                     requested_predicates = {}
                 else:
-                    requested_predicates = data["presentation_proposal"][attachment][
+                    requested_predicates = data["presentation_request"][request_type][
                         "data"
                     ]["requested_predicates"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("name")
                     is None
                 ):
                     proof_request_name = "test proof"
                 else:
-                    proof_request_name = data["presentation_proposal"][attachment][
+                    proof_request_name = data["presentation_request"][request_type][
                         "data"
                     ]["name"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("version")
                     is None
                 ):
                     proof_request_version = "1.0"
                 else:
-                    proof_request_version = data["presentation_proposal"][attachment][
+                    proof_request_version = data["presentation_request"][request_type][
                         "data"
                     ]["version"]
 
                 if (
-                    data.get("presentation_proposal", {})
-                    .get(attachment, {})
+                    data.get("presentation_request", {})
+                    .get(request_type, {})
                     .get("data", {})
                     .get("non_revoked")
                     is None
                 ):
                     non_revoked = None
                 else:
-                    non_revoked = data["presentation_proposal"][attachment]["data"][
+                    non_revoked = data["presentation_request"][request_type]["data"][
                         "non_revoked"
                     ]
 
                 if "connection_id" in data:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         "connection_id": data["connection_id"],
                         request_type: {
@@ -474,7 +474,7 @@ class MobileAgentBackchannel(AgentBackchannel):
                     }
                 else:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         request_type: {
                             "name": proof_request_name,

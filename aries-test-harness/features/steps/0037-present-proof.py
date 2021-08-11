@@ -143,47 +143,44 @@ def step_impl(context, verifier, prover):
                     }
                 }
 
+    presentation_request = {
+        "presentation_request": {
+            "comment": "This is a comment for the request for presentation.",
+            "proof_request": {
+                "data":  data
+            }
+        }
+    }
     if ('connectionless' in context) and (context.connectionless == True):
-        presentation_proposal = {
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
-            }
-        }
-        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="create-send-connectionless-request", data=presentation_proposal)
+        # presentation_proposal = {
+        #     "presentation_proposal": {
+        #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+        #         "comment": "This is a comment for the request for presentation.",
+        #         "request_presentations~attach": {
+        #             "@id": "libindy-request-presentation-0",
+        #             "mime-type": "application/json",
+        #             "data":  data
+        #         }
+        #     }
+        # }
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="create-send-connectionless-request", data=presentation_request)
     else:
-        presentation_proposal = {
-            "connection_id": context.connection_id_dict[verifier][prover],
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
-            }
-        }
-
-    # if ('connectionless' in context) and (context.connectionless == True):
-    #     resp_json = json.loads(resp_text)
-
-    #     presentation_proposal["~service"] = {
-    #             "recipientKeys": [
-    #                 resp_json["presentation_exchange_id"]
-    #             ],
-    #             "routingKeys": None,
-    #             "serviceEndpoint": context.verifier_url
-    #             }
-
+        presentation_request["connection_id"] = context.connection_id_dict[verifier][prover]
+        # presentation_request = {
+        #     "connection_id": context.connection_id_dict[verifier][prover],
+        #     "presentation_proposal": {
+        #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+        #         "comment": "This is a comment for the request for presentation.",
+        #         "request_presentations~attach": {
+        #             "@id": "libindy-request-presentation-0",
+        #             "mime-type": "application/json",
+        #             "data":  data
+        #         }
+        #     }
+        # }
 
         # send presentation request
-        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_request)
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
@@ -207,7 +204,7 @@ def step_impl(context, verifier, request_for_proof, prover):
     try:
         request_for_proof_json_file = open('features/data/' + request_for_proof + '.json')
         request_for_proof_json = json.load(request_for_proof_json_file)
-        context.request_for_proof = request_for_proof_json["presentation_proposal"]
+        context.request_for_proof = request_for_proof_json["presentation_request"]
 
     except FileNotFoundError:
         print(FileNotFoundError + ': features/data/' + request_for_proof + '.json')
@@ -394,18 +391,25 @@ def step_impl(context, verifier):
             }
         }
     }
-
     presentation_request = {
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
+        "presentation_request": {
+            "comment": "This is a comment for the request for presentation.",
+            "proof_request": {
+                "data":  data
             }
         }
+    }
+    # presentation_request = {
+    #         "presentation_proposal": {
+    #             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+    #             "comment": "This is a comment for the request for presentation.",
+    #             "request_presentations~attach": {
+    #                 "@id": "libindy-request-presentation-0",
+    #                 "mime-type": "application/json",
+    #                 "data":  data
+    #             }
+    #         }
+    #     }
 
     if ('connectionless' not in context) or (context.connectionless != True):
         presentation_request["connection_id"] = context.connection_id_dict[verifier][context.prover_name]

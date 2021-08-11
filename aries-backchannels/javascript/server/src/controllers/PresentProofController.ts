@@ -86,11 +86,11 @@ export class PresentProofController {
     @BodyParams("data")
     data: {
       connection_id: string;
-      presentation_proposal: any;
+      presentation_request: any;
     }
   ) {
     const proofRequest = JsonTransformer.fromJSON(
-      data.presentation_proposal["request_presentations~attach"].data,
+      data.presentation_request["proof_request"].data,
       ProofRequest
     );
 
@@ -103,7 +103,7 @@ export class PresentProofController {
         requestedPredicates: proofRequest.requestedPredicates,
       },
       {
-        comment: data.presentation_proposal.comment,
+        comment: data.presentation_request.comment,
       }
     );
 
