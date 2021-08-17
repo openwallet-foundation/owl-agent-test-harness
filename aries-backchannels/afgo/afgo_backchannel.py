@@ -1740,12 +1740,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if topic == "proof":
 
             if operation == "send-request" or operation == "create-request":
-                # if operation == "send-proposal":
-                #     request_type = "presentation_proposal"
-                #     attachment = "presentations~attach"
-                # else:
+
                 request_type = "proof_request"
-                    #attachment = "request_presentations~attach"
                 
                 if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("requested_attributes") is None:
                     requested_attributes = {}
@@ -1814,15 +1810,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 else:
                     predicates = data["presentation_proposal"]["predicates"]
                 
-                # admin_data = {
-                #         "comment": data["presentation_proposal"]["comment"],
-                #         "trace": False,
-                #         request_type: {
-                #             "@type": data["presentation_proposal"]["@type"],
-                #             "attributes": requested_attributes,
-                #             "predicates": requested_predicates
-                #         }
-                #     }
                 admin_data = {
                         "comment": data["presentation_proposal"]["comment"],
                         "trace": False,

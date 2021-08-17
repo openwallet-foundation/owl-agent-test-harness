@@ -1430,12 +1430,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if topic == "proof":
 
             if operation == "send-request" or operation == "create-request":
-                # if operation == "send-proposal":
-                #     request_type = "presentation_proposal"
-                #     attachment = "presentations~attach"
-                # else:
                 request_type = "proof_request"
-                #attachment = "request_presentations~attach"
 
                 if (
                     data.get("presentation_request", {})
@@ -1554,15 +1549,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         "predicates"
                     ]
 
-                # admin_data = {
-                #     "comment": data["presentation_proposal"]["comment"],
-                #     "trace": False,
-                #     request_type: {
-                #         "@type": data["presentation_proposal"]["@type"],
-                #         "attributes": requested_attributes,
-                #         "predicates": requested_predicates,
-                #     },
-                # }
                 admin_data = {
                     "comment": data["presentation_proposal"]["comment"],
                     "trace": False,
