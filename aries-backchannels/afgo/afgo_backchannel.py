@@ -1804,23 +1804,31 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
                 request_type = "presentation_proposal"
                 
-                if data.get("presentation_proposal", {}).get("requested_attributes") == None:
-                    requested_attributes = []
+                if data.get("presentation_proposal", {}).get("attributes") == None:
+                    attributes = []
                 else:
-                    requested_attributes = data["presentation_proposal"]["requested_attributes"]
+                    attributes = data["presentation_proposal"]["attributes"]
 
-                if data.get("presentation_proposal", {}).get("requested_predicates") == None:
-                    requested_predicates = []
+                if data.get("presentation_proposal", {}).get("predicates") == None:
+                    predicates = []
                 else:
-                    requested_predicates = data["presentation_proposal"]["requested_predicates"]
+                    predicates = data["presentation_proposal"]["predicates"]
                 
+                # admin_data = {
+                #         "comment": data["presentation_proposal"]["comment"],
+                #         "trace": False,
+                #         request_type: {
+                #             "@type": data["presentation_proposal"]["@type"],
+                #             "attributes": requested_attributes,
+                #             "predicates": requested_predicates
+                #         }
+                #     }
                 admin_data = {
                         "comment": data["presentation_proposal"]["comment"],
                         "trace": False,
                         request_type: {
-                            "@type": data["presentation_proposal"]["@type"],
-                            "attributes": requested_attributes,
-                            "predicates": requested_predicates
+                            "attributes": attributes,
+                            "predicates": predicates
                         }
                     }
 

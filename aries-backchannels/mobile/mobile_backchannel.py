@@ -493,32 +493,41 @@ class MobileAgentBackchannel(AgentBackchannel):
                 request_type = "presentation_proposal"
 
                 if (
-                    data.get("presentation_proposal", {}).get("requested_attributes")
+                    data.get("presentation_proposal", {}).get("attributes")
                     == None
                 ):
-                    requested_attributes = []
+                    attributes = []
                 else:
-                    requested_attributes = data["presentation_proposal"][
-                        "requested_attributes"
+                    attributes = data["presentation_proposal"][
+                        "attributes"
                     ]
 
                 if (
-                    data.get("presentation_proposal", {}).get("requested_predicates")
+                    data.get("presentation_proposal", {}).get("predicates")
                     == None
                 ):
-                    requested_predicates = []
+                    predicates = []
                 else:
-                    requested_predicates = data["presentation_proposal"][
-                        "requested_predicates"
+                    predicates = data["presentation_proposal"][
+                        "predicates"
                     ]
+
+                # admin_data = {
+                #     "comment": data["presentation_proposal"]["comment"],
+                #     "trace": False,
+                #     request_type: {
+                #         "@type": data["presentation_proposal"]["@type"],
+                #         "attributes": requested_attributes,
+                #         "predicates": requested_predicates,
+                #     },
+                # }
 
                 admin_data = {
                     "comment": data["presentation_proposal"]["comment"],
                     "trace": False,
                     request_type: {
-                        "@type": data["presentation_proposal"]["@type"],
-                        "attributes": requested_attributes,
-                        "predicates": requested_predicates,
+                        "attributes": attributes,
+                        "predicates": predicates,
                     },
                 }
 

@@ -51,18 +51,18 @@ export class PresentProofController {
       connection_id: string;
       presentation_proposal: {
         comment?: string;
-        requested_attributes: any;
-        requested_predicates: any;
+        attributes: any;
+        predicates: any;
       };
     }
   ) {
-    const { requested_attributes, requested_predicates, ...restProposal } =
+    const { attributes, predicates, ...restProposal } =
       data.presentation_proposal;
 
     const newPresentationProposal = {
       ...restProposal,
-      attributes: requested_attributes,
-      predicates: requested_predicates,
+      attributes: attributes,
+      predicates: predicates,
     };
     const presentationProposal = JsonTransformer.fromJSON(
       newPresentationProposal,

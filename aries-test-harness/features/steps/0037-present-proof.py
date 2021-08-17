@@ -152,32 +152,9 @@ def step_impl(context, verifier, prover):
         }
     }
     if ('connectionless' in context) and (context.connectionless == True):
-        # presentation_proposal = {
-        #     "presentation_proposal": {
-        #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-        #         "comment": "This is a comment for the request for presentation.",
-        #         "request_presentations~attach": {
-        #             "@id": "libindy-request-presentation-0",
-        #             "mime-type": "application/json",
-        #             "data":  data
-        #         }
-        #     }
-        # }
         (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="create-send-connectionless-request", data=presentation_request)
     else:
         presentation_request["connection_id"] = context.connection_id_dict[verifier][prover]
-        # presentation_request = {
-        #     "connection_id": context.connection_id_dict[verifier][prover],
-        #     "presentation_proposal": {
-        #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-        #         "comment": "This is a comment for the request for presentation.",
-        #         "request_presentations~attach": {
-        #             "@id": "libindy-request-presentation-0",
-        #             "mime-type": "application/json",
-        #             "data":  data
-        #         }
-        #     }
-        # }
 
         # send presentation request
         (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_request)
@@ -332,28 +309,27 @@ def step_impl(context, prover):
         data = context.presentation_proposal
     else:   
         data = {
-            "requested_attributes": [
+            "attributes": [
                 {
                     "name": "attr_2",
                     "cred_def_id": context.credential_definition_id_dict[context.schema["schema_name"]],
                 }
             ]
         }
-    if data.get("requested_attributes") == None:
-        requested_attributes = []
+    if data.get("attributes") == None:
+        attributes = []
     else:
-        requested_attributes = data["requested_attributes"]
-    if data.get("requested_predicates") == None:
-        requested_predicates = []
+        attributes = data["attributes"]
+    if data.get("predicates") == None:
+        predicates = []
     else:
-        requested_predicates = data["requested_predicates"]
+        predicates = data["predicates"]
 
     presentation_proposal = {
         "presentation_proposal": {
-            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
             "comment": "This is a comment for the presentation proposal.",
-            "requested_attributes": requested_attributes,
-            "requested_predicates": requested_predicates
+            "attributes": attributes,
+            "predicates": predicates
         }
     }
 
@@ -399,17 +375,6 @@ def step_impl(context, verifier):
             }
         }
     }
-    # presentation_request = {
-    #         "presentation_proposal": {
-    #             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-    #             "comment": "This is a comment for the request for presentation.",
-    #             "request_presentations~attach": {
-    #                 "@id": "libindy-request-presentation-0",
-    #                 "mime-type": "application/json",
-    #                 "data":  data
-    #             }
-    #         }
-    #     }
 
     if ('connectionless' not in context) or (context.connectionless != True):
         presentation_request["connection_id"] = context.connection_id_dict[verifier][context.prover_name]
