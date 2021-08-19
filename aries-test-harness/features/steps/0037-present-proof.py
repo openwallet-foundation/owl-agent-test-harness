@@ -404,22 +404,22 @@ def step_impl(context, prover, proposal, verifier=None):
 
         # replace the cred_def_id with the actual id based on the cred type name
         try:
-            for i in range(json.dumps(context.presentation_proposal["requested_attributes"]).count("cred_def_id")):
-                # Get the cred type name from the loaded presentation for each requested attributes
-                cred_type_name = context.presentation_proposal["requested_attributes"][i]["cred_type_name"]
-                context.presentation_proposal["requested_attributes"][i]["cred_def_id"] = context.credential_definition_id_dict[cred_type_name]
+            for i in range(json.dumps(context.presentation_proposal["attributes"]).count("cred_def_id")):
+                # Get the cred type name from the loaded presentation for each attribute
+                cred_type_name = context.presentation_proposal["attributes"][i]["cred_type_name"]
+                context.presentation_proposal["attributes"][i]["cred_def_id"] = context.credential_definition_id_dict[cred_type_name]
                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
-                context.presentation_proposal["requested_attributes"][i].pop("cred_type_name")
+                context.presentation_proposal["attributes"][i].pop("cred_type_name")
         except KeyError:
             pass
         
         try:
-            for i in range(json.dumps(context.presentation_proposal["requested_predicates"]).count("cred_def_id")):
-                # Get the schema name from the loaded presentation for each requested predicates
-                cred_type_name = context.presentation_proposal["requested_predicates"][i]["cred_type_name"]
-                context.presentation_proposal["requested_predicates"][i]["cred_def_id"] = context.credential_definition_id_dict[cred_type_name] 
+            for i in range(json.dumps(context.presentation_proposal["predicates"]).count("cred_def_id")):
+                # Get the schema name from the loaded presentation for each predicate
+                cred_type_name = context.presentation_proposal["predicates"][i]["cred_type_name"]
+                context.presentation_proposal["predicates"][i]["cred_def_id"] = context.credential_definition_id_dict[cred_type_name] 
                 # Remove the cred_type_name from this part of the presentation since it won't be needed in the actual request.
-                context.presentation_proposal["requested_predicates"][i].pop("cred_type_name")
+                context.presentation_proposal["predicates"][i].pop("cred_type_name")
         except KeyError:
             pass
 

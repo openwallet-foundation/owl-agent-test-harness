@@ -859,11 +859,11 @@ paths:
                   type: object
                   required:
                     - connection_id
-                    - presentation_proposal
+                    - presentation_request
                   properties:
                     connection_id:
                       $ref: "#/components/schemas/ConnectionId"
-                    presentation_proposal:
+                    presentation_request:
                       $ref: "#/components/schemas/PresentationRequestMessage"
       responses:
         200:
@@ -1278,7 +1278,6 @@ components:
                 type: string
       example:
         {
-          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
           "attributes":
             [
               {
@@ -1305,12 +1304,9 @@ components:
       type: object
       example:
         {
-          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
           "comment": "This is a comment for the request for presentation.",
-          "request_presentations~attach":
+          "proof_request":
             {
-              "@id": "libindy-request-presentation-0",
-              "mime-type": "application/json",
               "data":
                 {
                   "requested_attributes":
