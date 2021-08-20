@@ -51,18 +51,18 @@ export class PresentProofController {
       connection_id: string;
       presentation_proposal: {
         comment?: string;
-        requested_attributes: any;
-        requested_predicates: any;
+        attributes: any;
+        predicates: any;
       };
     }
   ) {
-    const { requested_attributes, requested_predicates, ...restProposal } =
+    const { attributes, predicates, ...restProposal } =
       data.presentation_proposal;
 
     const newPresentationProposal = {
       ...restProposal,
-      attributes: requested_attributes,
-      predicates: requested_predicates,
+      attributes: attributes,
+      predicates: predicates,
     };
     const presentationProposal = JsonTransformer.fromJSON(
       newPresentationProposal,
@@ -86,11 +86,11 @@ export class PresentProofController {
     @BodyParams("data")
     data: {
       connection_id: string;
-      presentation_proposal: any;
+      presentation_request: any;
     }
   ) {
     const proofRequest = JsonTransformer.fromJSON(
-      data.presentation_proposal["request_presentations~attach"].data,
+      data.presentation_request["proof_request"].data,
       ProofRequest
     );
 
@@ -103,7 +103,7 @@ export class PresentProofController {
         requestedPredicates: proofRequest.requestedPredicates,
       },
       {
-        comment: data.presentation_proposal.comment,
+        comment: data.presentation_request.comment,
       }
     );
 

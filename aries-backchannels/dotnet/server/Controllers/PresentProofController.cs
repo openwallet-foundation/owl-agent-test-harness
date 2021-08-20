@@ -99,7 +99,7 @@ namespace DotNet.Backchannel.Controllers
 
             var presentationRequest = body.Data;
             var connectionId = (string)presentationRequest["connection_id"];
-            var presentationRequestMessage = presentationRequest["presentation_proposal"]["request_presentations~attach"]["data"];
+            var presentationRequestMessage = presentationRequest["presentation_request"]["proof_request"]["data"];
 
             var proofRequest = new ProofRequest
             {

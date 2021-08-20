@@ -87,7 +87,7 @@ def step_impl(context, verifier, request_for_proof, prover):
     try:
         request_for_proof_json_file = open('features/data/' + request_for_proof + '.json')
         request_for_proof_json = json.load(request_for_proof_json_file)
-        context.request_for_proof = request_for_proof_json["presentation_proposal"]
+        context.request_for_proof = request_for_proof_json["presentation_request"]
 
     except FileNotFoundError:
         print(FileNotFoundError + ': features/data/' + request_for_proof + '.json')
@@ -105,8 +105,8 @@ def step_impl(context, verifier, request_for_proof, prover):
         else:
             raise Exception(f"Unknown cred format {context.current_cred_format}")
 
-    presentation_proposal = {
-        "presentation_proposal": {
+    presentation_request = {
+        "presentation_request": {
             "format": context.current_cred_format,
             "comment": "This is a comment for the request for presentation.",
             "data":  data
@@ -114,12 +114,12 @@ def step_impl(context, verifier, request_for_proof, prover):
     }
 
     if ('connectionless' in context) and (context.connectionless == True):
-        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="create-send-connectionless-request", data=presentation_proposal)
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="create-send-connectionless-request", data=presentation_request)
     else:
-        presentation_proposal["presentation_proposal"]["connection_id"] = context.connection_id_dict[verifier][prover]
+        presentation_request["presentation_request"]["connection_id"] = context.connection_id_dict[verifier][prover]
 
         # send presentation request
-        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="send-request", data=presentation_proposal)
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof-v2", operation="send-request", data=presentation_request)
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)

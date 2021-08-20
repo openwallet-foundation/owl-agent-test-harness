@@ -1,6 +1,6 @@
 {
    "presentation_proposal": {
-      "requested_attributes": [
+      "attributes": [
          {
              "name": "health_id_num",
              "cred_def_id": "replace_me",

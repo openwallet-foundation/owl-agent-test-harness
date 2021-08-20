@@ -147,7 +147,7 @@ The credential data json file references the credential type name in the main sc
 The following is an example of a simple proof request for one attribute with some restrictions.
 ```
 {
-   "presentation_proposal": {
+   "presentation_request": {
       "requested_attributes": {
          "address_attrs": {
             "name": "address",
@@ -166,7 +166,7 @@ The following is an example of a simple proof request for one attribute with som
 The following is an example of a proof request using more than one credential.
 ```
 {
-   "presentation_proposal": {
+   "presentation_request": {
       "name": "Health Consent Proof",
       "requested_attributes": {
          "bioindicators_attrs": {

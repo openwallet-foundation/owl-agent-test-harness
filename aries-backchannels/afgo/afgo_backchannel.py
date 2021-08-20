@@ -1050,16 +1050,16 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         if operation == "send-request":
             # Get myDID and theirDID from connection object from connection_id in data
-            (their_did, my_did) = await self.get_DIDs_for_participants(data["presentation_proposal"]["connection_id"])
+            (their_did, my_did) = await self.get_DIDs_for_participants(data["presentation_request"]["connection_id"])
             # store off myDID incase it is needed later.
             self.myDID = my_did
 
             # create extra fields needed in presentation
             attach_id = str(uuid.uuid1())
-            if "indy" in data["presentation_proposal"]["format"]:
+            if "indy" in data["presentation_request"]["format"]:
                 format_key = "hlindy/proof-req@v2.0"
                 mime_type = "application/json"
-            elif "json_ld" in data["presentation_proposal"]["format"] or "json-ld" in data["presentation_proposal"]["format"]:
+            elif "json_ld" in data["presentation_request"]["format"] or "json-ld" in data["presentation_request"]["format"]:
                 format_key = "dif/presentation-exchange/definitions@v1.0"
                 mime_type = "application/ld+json"
 
@@ -1076,7 +1076,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 "their_did": their_did,
                 "request_presentation": {
                     "@type": "https://didcomm.org/present-proof/2.0/request-presentation",
-                    "comment": data["presentation_proposal"]["comment"],
+                    "comment": data["presentation_request"]["comment"],
                     "formats":[
                         {
                             "attach_id": attach_id,
@@ -1087,7 +1087,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         {
                             "@id": attach_id,
                             "data": {
-                                "json": data["presentation_proposal"]["data"]
+                                "json": data["presentation_request"]["data"]
                             },
                             "mime-type": mime_type
                         }
@@ -1740,41 +1740,37 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if topic == "proof":
 
             if operation == "send-request" or operation == "create-request":
-                if operation == "send-proposal":
-                    request_type = "presentation_proposal"
-                    attachment = "presentations~attach"
-                else:
-                    request_type = "proof_request"
-                    attachment = "request_presentations~attach"
+
+                request_type = "proof_request"
                 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_attributes") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("requested_attributes") is None:
                     requested_attributes = {}
                 else:
-                    requested_attributes = data["presentation_proposal"][attachment]["data"]["requested_attributes"]
+                    requested_attributes = data["presentation_request"][request_type]["data"]["requested_attributes"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_predicates") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("requested_predicates") is None:
                     requested_predicates = {}
                 else:
-                    requested_predicates = data["presentation_proposal"][attachment]["data"]["requested_predicates"]
+                    requested_predicates = data["presentation_request"][request_type]["data"]["requested_predicates"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("name") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("name") is None:
                     proof_request_name = "test proof"
                 else:
-                    proof_request_name = data["presentation_proposal"][attachment]["data"]["name"]
+                    proof_request_name = data["presentation_request"][request_type]["data"]["name"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("version") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("version") is None:
                     proof_request_version = "1.0"
                 else:
-                    proof_request_version = data["presentation_proposal"][attachment]["data"]["version"]
+                    proof_request_version = data["presentation_request"][request_type]["data"]["version"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("non_revoked") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("non_revoked") is None:
                     non_revoked = None
                 else:
-                    non_revoked = data["presentation_proposal"][attachment]["data"]["non_revoked"]
+                    non_revoked = data["presentation_request"][request_type]["data"]["non_revoked"]
                 
                 if "connection_id" in data:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         "connection_id": data["connection_id"],
                         request_type: {
@@ -1786,7 +1782,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     }
                 else:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         request_type: {
                             "name": proof_request_name,
@@ -1804,23 +1800,22 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
                 request_type = "presentation_proposal"
                 
-                if data.get("presentation_proposal", {}).get("requested_attributes") == None:
-                    requested_attributes = []
+                if data.get("presentation_proposal", {}).get("attributes") == None:
+                    attributes = []
                 else:
-                    requested_attributes = data["presentation_proposal"]["requested_attributes"]
+                    attributes = data["presentation_proposal"]["attributes"]
 
-                if data.get("presentation_proposal", {}).get("requested_predicates") == None:
-                    requested_predicates = []
+                if data.get("presentation_proposal", {}).get("predicates") == None:
+                    predicates = []
                 else:
-                    requested_predicates = data["presentation_proposal"]["requested_predicates"]
+                    predicates = data["presentation_proposal"]["predicates"]
                 
                 admin_data = {
                         "comment": data["presentation_proposal"]["comment"],
                         "trace": False,
                         request_type: {
-                            "@type": data["presentation_proposal"]["@type"],
-                            "attributes": requested_attributes,
-                            "predicates": requested_predicates
+                            "attributes": attributes,
+                            "predicates": predicates
                         }
                     }
 
