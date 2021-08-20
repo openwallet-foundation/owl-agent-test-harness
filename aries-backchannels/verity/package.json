@@ -4,7 +4,7 @@
   "description": "",
   "main": "verity_backchannel.js",
   "dependencies": {
-    "verity-sdk": "^0.4.8",
+    "verity-sdk": "^0.4.9",
     "axios": "^0.21.1",
     "base64url": "^3.0.1",
     "express": "^4.17.1",

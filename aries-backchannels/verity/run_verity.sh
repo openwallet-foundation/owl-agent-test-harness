@@ -137,17 +137,21 @@ start_verity() {
   echo "**********************       VERITY STARTUP         ******************"
   # If public URL for docker Host is not specified start Ngrok tunnel to obtain public Verity Application endpoint
   echo -n Starting ngrok..
-  start_ngrok
-  export HOST_ADDRESS=$(curl -m 1 -s http://127.0.0.1:4040/api/tunnels 2> /dev/null | jq -M -r '.tunnels[0].public_url')
-
-  export HOST_DOMAIN=`echo $HOST_ADDRESS |  cut -d'/' -f3`
+  if [ "$RUNNING_IN_GITLAB"=true ] ; then
+    start_ngrok
+    export HOST_ADDRESS=$(curl -m 1 -s http://127.0.0.1:4040/api/tunnels 2> /dev/null | jq -M -r '.tunnels[0].public_url')
+    export HOST_DOMAIN=`echo $HOST_ADDRESS |  cut -d'/' -f3`
+  else
+    export HOST_ADDRESS=`127.0.0.1:${AGENT_PORT}`
+    export HOST_DOMAIN=`127.0.0.1`
+  fi
 
   echo
   printf "Verity Endpoint is: ${ANSII_GREEN}${HOST_ADDRESS}${ANSII_RESET}"
   echo
 
   # Start Verity Application
-  /usr/bin/java -cp /etc/verity/verity-application:.m2/repository/org/fusesource/leveldbjni/leveldbjni-all/1.8/leveldbjni-all-1.8.jar:./verity-assembly-0.4.0-SNAPSHOT.jar \
+  /usr/bin/java -cp /etc/verity/verity-application:.m2/repository/org/fusesource/leveldbjni/leveldbjni-all/1.8/leveldbjni-all-1.8.jar:/usr/lib/verity-application/verity-application-assembly.jar \
   com.evernym.verity.Main &
 
   echo

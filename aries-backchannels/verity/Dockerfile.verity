@@ -1,21 +1,19 @@
 
 FROM evernymdev/verity-server-dev:stable
 WORKDIR /root
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 97080EBDA5D46DAF
-ENV VERITY_APPLICATION_VERSION=0.4.125606469.19a6981
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 97080EBDA5D46DAF
 
 RUN apt-get update && apt-get install -y \
+    net-tools \
     npm \
-    ; exit 0
-
-RUN apt-get update && apt-get install -y \
-    verity-application=${VERITY_APPLICATION_VERSION} \
     ; exit 0
 
 RUN rm -rf /etc/verity/verity-application/*
 ADD verity/configuration/ /etc/verity/verity-application/.
 
 ENV RUN_MODE="docker"
+ENV RUNNING_IN_GITLAB=false
+RUN echo $VERITY_APPLICATION_VERSION
 
 ADD verity/verity_backchannel.js verity_backchannel.js
 ADD verity/package.json package.json

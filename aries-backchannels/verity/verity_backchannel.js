@@ -3,7 +3,7 @@ const minimist = require("minimist");
 //Express
 const axios = require('axios')
 const express = require("express");
-const sdk = require('@evernym/verity-sdk');
+const sdk = require('verity-sdk');
 const shell = require('shelljs')
 const base64url = require('base64url');
 
@@ -25,10 +25,9 @@ async function main() {
     const BACKCHANNEL_PORT = Number(cliArguments.port)
     const AGENT_PORT = BACKCHANNEL_PORT+1
     process.env.AGENT_PORT = AGENT_PORT
-    const AGENT_NAME = process.env.AGENT_NAME
+    const BACKCHANNEL_URL = `127.0.0.1:${BACKCHANNEL_PORT}`
 
     var VERITY_URL = null
-    var backchannel_url = null
 
     console.log("setup agent and backchannel variables")
 
@@ -73,14 +72,19 @@ async function main() {
     async function getVerityUrl() {
         let result
         console.log('Retrieving Verity url')
-        await axios.get('http://127.0.0.1:4040/api/tunnels', {timeout: 2})
-            .then((response) => {
-                result = response.data.tunnels[0].public_url
-            }).catch((error) => {
-                console.log('Could not get verity url')
-                result = null
-            })
-        return result
+        
+        if(process.env.RUNNING_IN_GITLAB == "true") {
+            await axios.get('http://127.0.0.1:4040/api/tunnels', {timeout: 2})
+                .then((response) => {
+                    result = response.data.tunnels[0].public_url
+                }).catch((error) => {
+                    console.log('Could not get verity url')
+                    result = null
+                })
+            return result
+        } else {
+            return `http://127.0.0.1:${AGENT_PORT}`
+        }
     }
 
     async function provisionAgent () {
@@ -90,7 +94,7 @@ async function main() {
         console.log('Creating Verity Context')
         console.log(`Wallet name: ${WALLET_NAME}`)
         console.log(`Wallet key: ${WALLET_KEY}`)
-        const ctx = await sdk.Context.create(WALLET_NAME, WALLET_KEY, VERITY_URL, '')
+        const ctx = await sdk.Context.create(WALLET_NAME, WALLET_KEY, VERITY_URL)
         console.log(`context created:`)
         console.log(ctx)
         const provision = new sdk.protocols.v0_7.Provision(null, null)
@@ -105,13 +109,8 @@ async function main() {
     }
     
     async function updateEndpoint () {
-        if(process.env.RUNNING_IN_GITLAB) {
-            console.log(`Updating webhook endpoint to http://127.0.0.1:${BACKCHANNEL_PORT}/webhook`)
-            context.endpointUrl = `http://127.0.0.1:${BACKCHANNEL_PORT}/webhook`
-        } else{
-            console.log(`Updating webhook endpoint to ${VERITY_URL}/webhook`)
-            context.endpointUrl = `${VERITY_URL}/webhook`
-        }
+        console.log(`Updating webhook endpoint to ${BACKCHANNEL_URL}/webhook`)
+        context.endpointUrl = `${BACKCHANNEL_URL}/webhook`
         // request that verity application use specified webhook endpoint
         await new sdk.protocols.UpdateEndpoint().update(context)
     }
@@ -122,9 +121,11 @@ async function main() {
             case 'create-invitation': 
                 result = await createInvitation()
                 if(result[0] == null) {
-                    res.status(200).send(`{"connection_id": \"${result[0]}\", \"state\": \"error, unable to create invitation\", \"invitation\": ${JSON.stringify(result[1])}}`)
+                    console.log(`{"connection_id": \"${result[0]}\", \"state\": \"error, unable to create invitation\\", \"invitation\": ${JSON.stringify(result[1])}}`)
+                    res.status(500).send(`{"connection_id": \"${result[0]}\", \"state\": \"error, unable to create invitation\", \"invitation\": ${JSON.stringify(result[1])}}`)
+                } else {
+                    res.status(200).send(`{"connection_id": \"${result[0]}\", \"state\": \"N/A\", \"invitation\": ${JSON.stringify(result[1])}}`)
                 }
-                res.status(200).send(`{"connection_id": \"${result[0]}\", \"state\": \"N/A\", \"invitation\": ${JSON.stringify(result[1])}}`)
                 break;
             case 'receive-invitation': 
                 console.log('Verity does not support the Invitee Role')
@@ -580,7 +581,6 @@ async function main() {
                 break;
             case 'status':
                 console.log(`Matched topic: GET ${req.params.topic}`)
-                var url = await getVerityUrl()
                 var status = await attempt(checkVerity, 5)
                 if(status != null) {
                     res.status(200).send()
@@ -621,18 +621,13 @@ async function main() {
         return (result != "") ? true : null
     }
 
-    if(process.env.RUNNING_IN_GITLAB) {
-        
+    if(process.env.RUNNING_IN_GITLAB == "true") {
+        // This ugly workaround is necessary in gitlab due to limitations of gitlab services
+        console.log('Outputting logs to /tmp/webserver/output.log')
         shell.exec('./run_verity.sh 2>&1 > /tmp/webserver/output.log &', {async:true})
-
     } else {
         shell.exec('./run_verity.sh', {async:true})
     }
-    
-    // console.log("provisioning agent")
-    // context = await provisionAgent()
-    // await updateEndpoint()
-    // console.log("Backchannel webhook endpoint updated")
 }
 console.log("Starting Main Function")
 main()
