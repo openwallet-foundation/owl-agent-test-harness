@@ -500,8 +500,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 # wait for the connection to be in "requested" status
                 if operation == "accept-request":
+                    # if self.auto_accept_requests:
+                    #     if not await self.expected_agent_state("/connections/" + connection_id, "response", wait_time=60.0):
+                    #         raise Exception(f"Expected state responded but not received")
+                    # else:
                     if not await self.expected_agent_state("/connections/" + connection_id, "request", wait_time=60.0):
-                        raise Exception(f"Expected state request but note recevied")
+                        raise Exception(f"Expected state request but not received")
 
                 agent_operation = "/connections/" + connection_id + "/" + operation
                 log_msg("POST Request: ", agent_operation, data)
