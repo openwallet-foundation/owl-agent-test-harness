@@ -208,13 +208,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--label", self.label),
             # "--auto-ping-connection",
             # "--auto-accept-invites",
-            "--auto-accept-requests",
-            "--auto-respond-messages",
-            "--auto-respond-credential-proposal",
-            "--auto-respond-credential-offer",
-            "--auto-respond-credential-request",
-            "--auto-respond-presentation-proposal",
-            "--auto-respond-presentation-request",
+            #"--auto-accept-requests",
+            #"--auto-respond-messages",
+            #"--auto-respond-credential-proposal",
+            #"--auto-respond-credential-offer",
+            #"--auto-respond-credential-request",
+            #"--auto-respond-presentation-proposal",
+            #"--auto-respond-presentation-request",
             ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
             ("--outbound-transport", "http"),
             ("--admin", "0.0.0.0", str(self.admin_port)),
@@ -395,6 +395,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         cred_def_id = message["cred_def_id"]
         push_resource(cred_def_id, "revocation-registry-msg", message)
         log_msg("Received Revocation Registry Webhook message: " + json.dumps(message))
+
+    # TODO Handle handle_issuer_cred_rev (this must be newer than the revocation tests?)
+    # TODO Handle handle_issue_credential_v2_0_indy
 
     async def handle_oob_invitation(self, message):
         # No thread id in the webhook for revocation registry messages
