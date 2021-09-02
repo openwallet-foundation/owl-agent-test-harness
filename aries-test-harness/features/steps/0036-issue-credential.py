@@ -254,7 +254,8 @@ def step_impl(context, issuer):
     ##assert resp_json["state"] == "offer-sent"
 
     # Check the state of the holder after issuers call of send-offer
-    ##assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "offer-received")
+    # TODO Removing this line causes too many failures in Acapy-Dotnet Acapy-Afgo. 
+    assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "offer-received")
 
     
 @when('"{holder}" requests the credential')

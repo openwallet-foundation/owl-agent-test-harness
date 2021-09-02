@@ -170,7 +170,8 @@ def step_impl(context, verifier, prover):
     # check the state of the presentation from the provers perspective
     # if the protocol is connectionless then don't do this, the prover has not recieved anything yet.
     if ('connectionless' not in context) or (context.connectionless == False):
-        #assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
+        # TODO Removing this line causes too many failures in Acapy-Dotnet Acapy-Afgo. 
+        assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
         pass
     else:
         # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
