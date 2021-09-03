@@ -598,7 +598,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         or operation == "issue"
                         or operation == "store"
                     ):
-                            
+                    
                         # swap thread id for cred ex id from the webhook
                         cred_ex_id = await self.swap_thread_id_for_exchange_id(
                             rec_id, "credential-msg", "credential_exchange_id"
@@ -606,6 +606,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         agent_operation = (
                             acapy_topic + "records/" + cred_ex_id + "/" + operation
                         )
+
+                        # wait for the issue cred to be in "request-received" status
+                        if operation == "issue" and not self.auto_respond_credential_request:
+                                if not await self.expected_agent_state(acapy_topic + "records/" + cred_ex_id, "request_received", wait_time=60.0):
+                                    raise Exception(f"Expected state request-received but not received")
+
                     # Make Special provisions for revoke since it is passing multiple query params not just one id.
                     elif operation == "revoke":
                         cred_rev_id = rec_id
@@ -717,6 +723,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         agent_operation = (
                             "/present-proof/records/" + pres_ex_id + "/" + operation
                         )
+
+                         # wait for the proof to be in "presentation-received" status
+                        if operation == "verify-presentation" and not self.auto_respond_presentation_request:
+                            if not await self.expected_agent_state("/present-proof/records/" + pres_ex_id, "presentation_received", wait_time=60.0):
+                                raise Exception(f"Expected state presentation-received but not received")
 
                     else:
                         agent_operation = "/present-proof/" + operation
