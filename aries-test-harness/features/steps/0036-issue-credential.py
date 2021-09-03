@@ -248,10 +248,6 @@ def step_impl(context, issuer):
         # If context has the credential thread id then the proposal was done. 
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential", operation="send-offer", id=context.cred_thread_id)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-        ##resp_json = json.loads(resp_text)
-        
-    # Check the issuers State
-    ##assert resp_json["state"] == "offer-sent"
 
     # Check the state of the holder after issuers call of send-offer
     # TODO Removing this line causes too many failures in Acapy-Dotnet Acapy-Afgo. 
@@ -279,11 +275,6 @@ def step_impl(context, holder):
     # If the protocol starts with a request we need a thread_id to call the issue command
     if "cred_thread_id" not in context:
             context.cred_thread_id = resp_json["thread_id"]
-
-    ##assert resp_json["state"] == "request-sent"
-
-    # Verify issuer status
-    ##assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received", wait_time=60.0)
 
 
 @when('"{issuer}" issues the credential')
