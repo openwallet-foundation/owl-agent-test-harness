@@ -253,7 +253,7 @@ def step_impl(context, responder):
             # else:
             #     assert False, f'Could not retreive responders connection_id'
 
-    responder_connection_id = context.connection_id_dict[responder][context.requester_name]
+    #responder_connection_id = context.connection_id_dict[responder][context.requester_name]
 
     # responder already recieved the connection request in the send-request call so get connection and verify status.
     #assert expected_agent_state(responder_url, "did-exchange", responder_connection_id, "request-received")

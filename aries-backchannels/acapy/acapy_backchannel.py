@@ -84,6 +84,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # set the auto response/request flags
         self.auto_accept_requests = False
         self.auto_respond_messages = False
+        self.auto_respond_credential_proposal = False
+        self.auto_respond_credential_offer = False
+        self.auto_respond_credential_request = False
+        self.auto_respond_presentation_proposal = False
+        self.auto_respond_presentation_request = False
 
         # Aca-py : RFC
         self.connectionStateTranslationDict = {
@@ -205,6 +210,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # "--auto-accept-invites",
             #"--auto-accept-requests",
             #"--auto-respond-messages",
+            #"--auto-respond-credential-proposal",
+            #"--auto-respond-credential-offer",
+            #"--auto-respond-credential-request",
+            #"--auto-respond-presentation-proposal",
+            #"--auto-respond-presentation-request",
             ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
             ("--outbound-transport", "http"),
             ("--admin", "0.0.0.0", str(self.admin_port)),
@@ -221,6 +231,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             self.auto_accept_requests = True
         if "--auto-respond-messages" in result:
             self.auto_respond_messages = True
+        if "--auto-respond-credential-proposal" in result:
+            self.auto_respond_credential_proposal = True
+        if "--auto-respond-credential-offer" in result:
+            self.auto_respond_credential_offer = True
+        if "--auto-respond-credential-request" in result:
+            self.auto_respond_credential_request = True
+        if "--auto-respond-presentation-proposal" in result:
+            self.auto_respond_presentation_proposal = True
+        if "--auto-respond-presentation-request" in result:
+            self.auto_respond_presentation_request = True
 
         if self.get_acapy_version_as_float() > 56:
             result.append(("--auto-provision", "--recreate-wallet"))
@@ -376,6 +396,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         push_resource(cred_def_id, "revocation-registry-msg", message)
         log_msg("Received Revocation Registry Webhook message: " + json.dumps(message))
 
+    # TODO Handle handle_issuer_cred_rev (this must be newer than the revocation tests?)
+    # TODO Handle handle_issue_credential_v2_0_indy
+
     async def handle_oob_invitation(self, message):
         # No thread id in the webhook for revocation registry messages
         invitation_id = message["invitation_id"]
@@ -500,8 +523,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 # wait for the connection to be in "requested" status
                 if operation == "accept-request":
-                    if not await self.expected_agent_state("/connections/" + connection_id, "request", wait_time=60.0):
-                        raise Exception(f"Expected state request but note recevied")
+                    # if self.auto_accept_requests:
+                    #     if not await self.expected_agent_state("/connections/" + connection_id, "response", wait_time=60.0):
+                    #         raise Exception(f"Expected state responded but not received")
+                    # else:
+                    if not self.auto_accept_requests:
+                        if not await self.expected_agent_state("/connections/" + connection_id, "request", wait_time=60.0):
+                            raise Exception(f"Expected state request but not received")
 
                 agent_operation = "/connections/" + connection_id + "/" + operation
                 log_msg("POST Request: ", agent_operation, data)
@@ -548,49 +576,73 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             acapy_topic = "/issue-credential/"
 
-            if rec_id is None:
-                agent_operation = acapy_topic + operation
+            if self.auto_respond_credential_proposal and operation == "send-offer" and rec_id:
+                resp_status = 200
+                resp_text = '{"message": "Aca-py agent in auto respond mode for proposal. send-offer operation not called."}'
+                return (resp_status, resp_text)
+            elif self.auto_respond_credential_offer and operation == "send-request":
+                resp_status = 200
+                resp_text = '{"message": "Aca-py agent in auto respond mode for offer. send-request operation not called."}'
+                return (resp_status, resp_text)
+            elif self.auto_respond_credential_request and operation == "issue":
+                resp_status = 200
+                resp_text = '{"message": "Aca-py agent in auto respond mode for request. issue operation not called."}'
+                return (resp_status, resp_text)
             else:
-                if (
-                    operation == "send-offer"
-                    or operation == "send-request"
-                    or operation == "issue"
-                    or operation == "store"
-                ):
-                    # swap thread id for cred ex id from the webhook
-                    cred_ex_id = await self.swap_thread_id_for_exchange_id(
-                        rec_id, "credential-msg", "credential_exchange_id"
-                    )
-                    agent_operation = (
-                        acapy_topic + "records/" + cred_ex_id + "/" + operation
-                    )
-                # Make Special provisions for revoke since it is passing multiple query params not just one id.
-                elif operation == "revoke":
-                    cred_rev_id = rec_id
-                    rev_reg_id = data["rev_registry_id"]
-                    publish = data["publish_immediately"]
-                    agent_operation = (
-                        acapy_topic
-                        + operation
-                        + "?cred_rev_id="
-                        + cred_rev_id
-                        + "&rev_reg_id="
-                        + rev_reg_id
-                        + "&publish="
-                        + str(publish).lower()
-                    )
-                    data = None
-                else:
+                if rec_id is None:
                     agent_operation = acapy_topic + operation
+                else:
+                    if (
+                        operation == "send-offer"
+                        or operation == "send-request"
+                        or operation == "issue"
+                        or operation == "store"
+                    ):
+                    
+                        # swap thread id for cred ex id from the webhook
+                        cred_ex_id = await self.swap_thread_id_for_exchange_id(
+                            rec_id, "credential-msg", "credential_exchange_id"
+                        )
+                        agent_operation = (
+                            acapy_topic + "records/" + cred_ex_id + "/" + operation
+                        )
 
-            log_msg(agent_operation, data)
+                        # wait for the issue cred to be in "request-received" status
+                        if operation == "issue" and not self.auto_respond_credential_request:
+                                if not await self.expected_agent_state(acapy_topic + "records/" + cred_ex_id, "request_received", wait_time=60.0):
+                                    raise Exception(f"Expected state request-received but not received")
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+                    # Make Special provisions for revoke since it is passing multiple query params not just one id.
+                    elif operation == "revoke":
+                        cred_rev_id = rec_id
+                        rev_reg_id = data["rev_registry_id"]
+                        publish = data["publish_immediately"]
+                        agent_operation = (
+                            acapy_topic
+                            + operation
+                            + "?cred_rev_id="
+                            + cred_rev_id
+                            + "&rev_reg_id="
+                            + rev_reg_id
+                            + "&publish="
+                            + str(publish).lower()
+                        )
+                        data = None
+                    else:
+                        agent_operation = acapy_topic + operation
 
-            log_msg(resp_status, resp_text)
-            if resp_status == 200 and self.aip_version != "AIP20":
-                resp_text = self.agent_state_translation(op["topic"], None, resp_text)
-            return (resp_status, resp_text)
+                log_msg(agent_operation, data)
+
+                # As of adding the Auto Accept and Auto Respond support and not taking time to check interim states
+                # it seems a sleep is required here,
+                # or sometimes the agent isn't in the correct state to accept the operation. Not sure why...
+                await asyncio.sleep(1)
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+                log_msg(resp_status, resp_text)
+                if resp_status == 200 and self.aip_version != "AIP20":
+                    resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+                return (resp_status, resp_text)
 
         # Handle issue credential v2 POST operations
         elif op["topic"] == "issue-credential-v2":
@@ -599,7 +651,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
             return (resp_status, resp_text)
 
-        # Handle issue credential v2 POST operations
+        # Handle proof v2 POST operations
         elif op["topic"] == "proof-v2":
             (resp_status, resp_text) = await self.handle_proof_v2_POST(
                 op, rec_id=rec_id, data=data
@@ -635,48 +687,69 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             operation = op["operation"]
             if operation == "create-send-connectionless-request":
                 operation = "create-request"
-            if rec_id is None:
-                agent_operation = "/present-proof/" + operation
-            else:
-                if (
-                    operation == "send-presentation"
-                    or operation == "send-request"
-                    or operation == "verify-presentation"
-                    or operation == "remove"
-                ):
 
+            if self.auto_respond_presentation_proposal and operation == "send-request" and rec_id:
+                resp_status = 200
+                resp_text = '{"message": "Aca-py agent in auto respond mode for presentation proposal. send-request operation not called."}'
+                log_msg("Aca-py agent in auto respond mode for presentation proposal. send-request operation not called.")
+                return (resp_status, resp_text)
+            elif self.auto_respond_presentation_request and operation == "send-presentation":
+                resp_status = 200
+                resp_text = '{"message": "Aca-py agent in auto respond mode for presentation request. send-presentation operation not called."}'
+                log_msg("Aca-py agent in auto respond mode for presentation request. send-presentation operation not called.")
+                return (resp_status, resp_text)
+            else:
+                if rec_id is None:
+                    agent_operation = "/present-proof/" + operation
+                else:
                     if (
-                        operation not in "send-presentation"
-                        or operation not in "send-request"
-                    ) and (data is None or "~service" not in data):
-                        # swap thread id for pres ex id from the webhook
-                        pres_ex_id = await self.swap_thread_id_for_exchange_id(
-                            rec_id, "presentation-msg", "presentation_exchange_id"
+                        operation == "send-presentation"
+                        or operation == "send-request"
+                        or operation == "verify-presentation"
+                        or operation == "remove"
+                    ):
+
+                        if (
+                            operation not in "send-presentation"
+                            or operation not in "send-request"
+                        ) and (data is None or "~service" not in data):
+                            # swap thread id for pres ex id from the webhook
+                            pres_ex_id = await self.swap_thread_id_for_exchange_id(
+                                rec_id, "presentation-msg", "presentation_exchange_id"
+                            )
+                        else:
+                            # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
+                            pres_ex_id = data["~service"]["recipientKeys"][0]
+                        agent_operation = (
+                            "/present-proof/records/" + pres_ex_id + "/" + operation
                         )
+
+                         # wait for the proof to be in "presentation-received" status
+                        if operation == "verify-presentation" and not self.auto_respond_presentation_request:
+                            if not await self.expected_agent_state("/present-proof/records/" + pres_ex_id, "presentation_received", wait_time=60.0):
+                                raise Exception(f"Expected state presentation-received but not received")
+
                     else:
-                        # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
-                        pres_ex_id = data["~service"]["recipientKeys"][0]
-                    agent_operation = (
-                        "/present-proof/records/" + pres_ex_id + "/" + operation
+                        agent_operation = "/present-proof/" + operation
+
+                log_msg(agent_operation, data)
+
+                if data is not None:
+                    # Format the message data that came from the test, to what the Aca-py admin api expects.
+                    data = self.map_test_json_to_admin_api_json(
+                        op["topic"], operation, data
                     )
 
-                else:
-                    agent_operation = "/present-proof/" + operation
+                # As of adding the Auto Accept and Auto Respond support and not taking time to check interim states
+                # it seems a sleep is required here,
+                # or sometimes the agent isn't in the correct state to accept the operation. Not sure why...
+                await asyncio.sleep(1)
+                (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
-            log_msg(agent_operation, data)
-
-            if data is not None:
-                # Format the message data that came from the test, to what the Aca-py admin api expects.
-                data = self.map_test_json_to_admin_api_json(
-                    op["topic"], operation, data
-                )
-
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-
-            log_msg(resp_status, resp_text)
-            if resp_status == 200:
-                resp_text = self.agent_state_translation(op["topic"], None, resp_text)
-            return (resp_status, resp_text)
+                log_msg(resp_status, resp_text)
+                if resp_status == 200:
+                    resp_text = self.agent_state_translation(op["topic"], None, resp_text)
+                return (resp_status, resp_text)
 
         # Handle out of band POST operations
         elif op["topic"] == "out-of-band":
@@ -791,128 +864,154 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         operation = op["operation"]
         topic = op["topic"]
 
-        if operation == "prepare-json-ld":
-            key_type = self.proofTypeKeyTypeTranslationDict[data["proof_type"]]
+        if self.auto_respond_credential_proposal and operation == "send-offer" and rec_id:
+            resp_status = 200
+            resp_text = '{"message": "Aca-py agent in auto respond mode for proposal. send-offer operation not called."}'
+            return (resp_status, resp_text)
+        elif self.auto_respond_credential_offer and operation == "send-request":
+            resp_status = 200
+            resp_text = '{"message": "Aca-py agent in auto respond mode for offer. send-request operation not called."}'
+            return (resp_status, resp_text)
+        elif self.auto_respond_credential_request and operation == "issue":
+            resp_status = 200
+            resp_text = '{"message": "Aca-py agent in auto respond mode for request. issue operation not called."}'
+            return (resp_status, resp_text)
+        else:
 
-            # Retrieve matching dids
-            resp_status, resp_text = await self.admin_GET(
-                "/wallet/did",
-                params={"method": data["did_method"], "key_type": key_type},
-            )
+            if operation == "prepare-json-ld":
+                key_type = self.proofTypeKeyTypeTranslationDict[data["proof_type"]]
 
-            did = None
-            if resp_status == 200:
-                resp_json = json.loads(resp_text)
-
-                # If there is a matching did use it
-                if len(resp_json["results"]) > 0:
-                    # Get first matching did
-                    did = resp_json["results"][0]["did"]
-
-            # If there was no matching did create a new one
-            if not did:
-                (resp_status, resp_text) = await self.admin_POST(
-                    "/wallet/did/create",
-                    {"method": data["did_method"], "options": {"key_type": key_type}},
+                # Retrieve matching dids
+                resp_status, resp_text = await self.admin_GET(
+                    "/wallet/did",
+                    params={"method": data["did_method"], "key_type": key_type},
                 )
+
+                did = None
                 if resp_status == 200:
                     resp_json = json.loads(resp_text)
-                    did = resp_json["result"]["did"]
 
-            if did:
-                resp_text = json.dumps({"did": did})
+                    # If there is a matching did use it
+                    if len(resp_json["results"]) > 0:
+                        # Get first matching did
+                        did = resp_json["results"][0]["did"]
+
+                # If there was no matching did create a new one
+                if not did:
+                    (resp_status, resp_text) = await self.admin_POST(
+                        "/wallet/did/create",
+                        {"method": data["did_method"], "options": {"key_type": key_type}},
+                    )
+                    if resp_status == 200:
+                        resp_json = json.loads(resp_text)
+                        did = resp_json["result"]["did"]
+
+                if did:
+                    resp_text = json.dumps({"did": did})
+
+                log_msg(resp_status, resp_text)
+                return (resp_status, resp_text)
+
+            if rec_id is None:
+                agent_operation = (
+                    self.TopicTranslationDict[topic]
+                    + self.issueCredentialv2OperationTranslationDict[operation]
+                )
+            else:
+                # swap thread id for cred ex id from the webhook
+                cred_ex_id = await self.swap_thread_id_for_exchange_id(
+                    rec_id, "credential-msg", "cred_ex_id"
+                )
+                agent_operation = (
+                    self.TopicTranslationDict[topic]
+                    + "records/"
+                    + cred_ex_id
+                    + "/"
+                    + self.issueCredentialv2OperationTranslationDict[operation]
+                )
+
+            # Map AATH filter keys to ACA-Py filter keys
+            # e.g. data.filters.json-ld becomes data.filters.ld_proof
+            if data and "filter" in data:
+                data["filter"] = dict(
+                    (self.credFormatFilterTranslationDict[name], val)
+                    for name, val in data["filter"].items()
+                )
+
+            log_msg(agent_operation, data)
+            await asyncio.sleep(1)
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            if operation == "store":
+                resp_json = json.loads(resp_text)
+
+                if resp_json["ld_proof"]:
+                    resp_json["json-ld"] = resp_json.pop("ld_proof")
+
+                # Return less ACA-Py specific credential identifier key
+                for key in resp_json:
+                    if resp_json[key] and resp_json[key].get("cred_id_stored"):
+                        resp_json[key]["credential_id"] = resp_json[key].get(
+                            "cred_id_stored"
+                        )
+
+                resp_text = json.dumps(resp_json)
 
             log_msg(resp_status, resp_text)
+            # Looks like all v2 states are RFC states. Yah!
+            # if resp_status == 200: resp_text = self.agent_state_translation(topic], None, resp_text)
+            resp_text = self.move_field_to_top_level(resp_text, "state")
             return (resp_status, resp_text)
-
-        if rec_id is None:
-            agent_operation = (
-                self.TopicTranslationDict[topic]
-                + self.issueCredentialv2OperationTranslationDict[operation]
-            )
-        else:
-            # swap thread id for cred ex id from the webhook
-            cred_ex_id = await self.swap_thread_id_for_exchange_id(
-                rec_id, "credential-msg", "cred_ex_id"
-            )
-            agent_operation = (
-                self.TopicTranslationDict[topic]
-                + "records/"
-                + cred_ex_id
-                + "/"
-                + self.issueCredentialv2OperationTranslationDict[operation]
-            )
-
-        # Map AATH filter keys to ACA-Py filter keys
-        # e.g. data.filters.json-ld becomes data.filters.ld_proof
-        if data and "filter" in data:
-            data["filter"] = dict(
-                (self.credFormatFilterTranslationDict[name], val)
-                for name, val in data["filter"].items()
-            )
-
-        log_msg(agent_operation, data)
-
-        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
-
-        if operation == "store":
-            resp_json = json.loads(resp_text)
-
-            if resp_json["ld_proof"]:
-                resp_json["json-ld"] = resp_json.pop("ld_proof")
-
-            # Return less ACA-Py specific credential identifier key
-            for key in resp_json:
-                if resp_json[key] and resp_json[key].get("cred_id_stored"):
-                    resp_json[key]["credential_id"] = resp_json[key].get(
-                        "cred_id_stored"
-                    )
-
-            resp_text = json.dumps(resp_json)
-
-        log_msg(resp_status, resp_text)
-        # Looks like all v2 states are RFC states. Yah!
-        # if resp_status == 200: resp_text = self.agent_state_translation(topic], None, resp_text)
-        resp_text = self.move_field_to_top_level(resp_text, "state")
-        return (resp_status, resp_text)
 
     async def handle_proof_v2_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]
         topic = op["topic"]
 
-        if rec_id is None:
-            agent_operation = (
-                self.TopicTranslationDict[topic]
-                + self.proofv2OperationTranslationDict[operation]
-            )
+        if self.auto_respond_presentation_proposal and operation == "send-request" and rec_id:
+            resp_status = 200
+            resp_text = '{"message": "Aca-py agent in auto respond mode for presentation proposal. send-request operation not called."}'
+            log_msg("Aca-py agent in auto respond mode for presentation proposal. send-request operation not called.")
+            return (resp_status, resp_text)
+        elif self.auto_respond_presentation_request and operation == "send-presentation":
+            resp_status = 200
+            resp_text = '{"message": "Aca-py agent in auto respond mode for presentation request. send-presentation operation not called."}'
+            log_msg("Aca-py agent in auto respond mode for presentation request. send-presentation operation not called.")
+            return (resp_status, resp_text)
         else:
-            # swap thread id for cred ex id from the webhook
-            pres_ex_id = await self.swap_thread_id_for_exchange_id(
-                rec_id, "presentation-msg", "pres_ex_id"
-            )
-            agent_operation = (
-                self.TopicTranslationDict[topic]
-                + "records/"
-                + pres_ex_id
-                + "/"
-                + self.proofv2OperationTranslationDict[operation]
-            )
+            if rec_id is None:
+                agent_operation = (
+                    self.TopicTranslationDict[topic]
+                    + self.proofv2OperationTranslationDict[operation]
+                )
+            else:
+                # swap thread id for cred ex id from the webhook
+                pres_ex_id = await self.swap_thread_id_for_exchange_id(
+                    rec_id, "presentation-msg", "pres_ex_id"
+                )
+                agent_operation = (
+                    self.TopicTranslationDict[topic]
+                    + "records/"
+                    + pres_ex_id
+                    + "/"
+                    + self.proofv2OperationTranslationDict[operation]
+                )
 
-        log_msg(
-            f"Data passed to backchannel by test for operation: {agent_operation}", data
-        )
-        if data is not None:
-            # Format the message data that came from the test, to what the Aca-py admin api expects.
-            data = self.map_test_json_to_admin_api_json("proof-v2", operation, data)
-        log_msg(
-            f"Data translated by backchannel to send to agent for operation: {agent_operation}",
-            data,
-        )
-        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            log_msg(
+                f"Data passed to backchannel by test for operation: {agent_operation}", data
+            )
+            if data is not None:
+                # Format the message data that came from the test, to what the Aca-py admin api expects.
+                data = self.map_test_json_to_admin_api_json("proof-v2", operation, data)
+            log_msg(
+                f"Data translated by backchannel to send to agent for operation: {agent_operation}",
+                data,
+            )
+            await asyncio.sleep(1)
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
-        log_msg(resp_status, resp_text)
-        resp_text = self.move_field_to_top_level(resp_text, "state")
-        return (resp_status, resp_text)
+            log_msg(resp_status, resp_text)
+            resp_text = self.move_field_to_top_level(resp_text, "state")
+            return (resp_status, resp_text)
 
     def move_field_to_top_level(self, resp_text, field_to_move):
         # Some reponses have been changed to nest fields that were once at top level.
