@@ -62,6 +62,7 @@ The AATH is executed with varying configurations and Aries Agent types at pre-de
 - [JavaScript to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-dotnet/reports/latest)
 - [Acapy to AFGO Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
 - [AFGO to AFGO Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
+- [AFGO to Verity Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-verity/reports/latest)
 
 ## Other Reporting Options
 

@@ -1,15 +1,16 @@
 #! /bin/bash
 
 # Configuration Data -- order matters in these arrays. A new entry requires an entry in all "ta_" arrays
-ta_tlas=("acapy" "afgo" "javascript" "dotnet")
-ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET")
-ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET")
-ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1")
-ta_exceptions=("None" "None" "Revocation" "Proof Proposal")
+ta_tlas=("acapy" "afgo" "javascript" "dotnet" "verity")
+ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET" "Evernym Verity")
+ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET" "Verity")
+ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1" "AIP 1")
+ta_exceptions=("None" "None" "Revocation" "Proof Proposal" "None")
 ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
 https://github.com/hyperledger/aries-framework-go \
 https://github.com/hyperledger/aries-framework-javascript \
-https://github.com/hyperledger/aries-framework-dotnet)
+https://github.com/hyperledger/aries-framework-dotnet \
+https://github.com/evernym/verity)
 workflows=".github/workflows/test-harness-*"
 
 unameOut="$(uname -s)"
