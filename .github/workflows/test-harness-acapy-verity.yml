@@ -41,7 +41,7 @@ jobs:
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
           BUILD_AGENTS: "-a acapy-main -a verity"
-          TEST_AGENTS: "-d acapy-main -b verity"
+          TEST_AGENTS: "-d acapy-main -a verity"
           TEST_SCOPE: "-t @RFC0160 -t @AcceptanceTest -t ~@wip"
           REPORT_PROJECT: acapy-b-verity
         continue-on-error: true
