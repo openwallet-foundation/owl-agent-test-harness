@@ -17,18 +17,20 @@ The following test agents are currently supported:
 - [Aries Framework Go](https://github.com/hyperledger/aries-framework-go) (AF-Go)
 - [Aries Framework JavaScript](https://github.com/hyperledger/aries-framework-javascript) (AFJ)
 - [Aries Framework .NET](https://github.com/hyperledger/aries-framework-dotnet) (AF-.NET)
+- [Evernym Verity](https://github.com/evernym/verity) (Verity)
 
 Want to add your Aries component to this page? You need to add a runset to the
 [Aries Agent Test Harness](https://github.com/hyperledger/aries-agent-test-harness).
 
 ## Latest Interoperability Results
 
-| Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | **All Tests** |
-| ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | 49 / 49<br>100% | 6 / 6<br>100% | 43 / 46<br>93% | 39 / 51<br>76% | **125 / 140<br>89%** |
-| [AF-Go](afgo.md)| AIP 2 | None | 6 / 6<br>100% | 12 / 12<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | **18 / 18<br>100%** |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 43 / 46<br>93% | 0 / 0<br>0% | 17 / 17<br>100% | 36 / 36<br>100% | **84 / 87<br>96%** |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 39 / 51<br>76% | 0 / 0<br>0% | 36 / 36<br>100% | 12 / 12<br>100% | **75 / 87<br>86%** |
+| Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | Verity | **All Tests** |
+| ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: | :----: |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 49 / 49<br>100% | 3 / 6<br>50% | 34 / 46<br>73% | 40 / 51<br>78% | 1 / 2<br>50% | **115 / 142<br>80%** |
+| [AF-Go](afgo.md)| AIP 2 | None | 3 / 6<br>50% | 12 / 12<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **15 / 18<br>83%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 34 / 46<br>73% | 0 / 0<br>0% | 17 / 17<br>100% | 36 / 36<br>100% | 0 / 0<br>0% | **75 / 87<br>86%** |
+| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 40 / 51<br>78% | 0 / 0<br>0% | 36 / 36<br>100% | 12 / 12<br>100% | 0 / 0<br>0% | **76 / 87<br>87%** |
+| [Verity](verity.md)| AIP 1 | None | 1 / 2<br>50% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **1 / 2<br>50%** |
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
 - The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
@@ -36,5 +38,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Tue Aug 31 03:52:14 UTC 2021*
+*Results last updated: Thu Sep 16 03:52:12 UTC 2021*
 
