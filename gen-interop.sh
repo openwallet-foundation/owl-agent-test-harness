@@ -1,16 +1,17 @@
 #! /bin/bash
 
-# Configuration Data -- order matters in these arrays. A new entry requires an entry in all "ta_" arrays
-ta_tlas=("acapy" "afgo" "javascript" "dotnet" "verity")
-ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET" "Evernym Verity")
-ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET" "Verity")
-ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1" "AIP 1")
-ta_exceptions=("None" "None" "Revocation" "Proof Proposal" "None")
+# Configuration Data -- order matters in these arrays. A new entry requires an entry in ALL "ta_" arrays
+ta_tlas=("acapy" "afgo" "javascript" "dotnet" "verity" "findy")
+ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET" "Evernym Verity" "Findy Agent")
+ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET" "Verity" "Findy")
+ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1" "AIP 1" "AIP 1")
+ta_exceptions=("None" "None" "Revocation" "Proof Proposal" "Credential Exchange" "Revocation")
 ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
 https://github.com/hyperledger/aries-framework-go \
 https://github.com/hyperledger/aries-framework-javascript \
 https://github.com/hyperledger/aries-framework-dotnet \
-https://github.com/evernym/verity)
+https://github.com/evernym/verity \
+https://github.com/findy-network/findy-agent)
 workflows=".github/workflows/test-harness-*"
 
 unameOut="$(uname -s)"
@@ -217,10 +218,10 @@ for file in ${workflows}; do
     BOB[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*acme.agent/acme.agent/' | sed 's/bob.agent.*/bob.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
     FABER[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*bob.agent/bob.agent/' | sed 's/faber.agent.*/faber.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
     MALLORY[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*faber.agent/faber.agent/' | sed 's/mallory.agent.*/mallory.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
-    ACME_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.acme//' | sed 's/acme.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
-    BOB_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.bob//' | sed 's/bob.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
-    FABER_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.faber//' | sed 's/faber.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
-    MALLORY_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.mallory//' | sed 's/mallory.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
+    ACME_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.acme//' | sed 's/acme.agent.*//' | sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
+    BOB_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.bob//' | sed 's/bob.agent.*//'| sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
+    FABER_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.faber//' | sed 's/faber.agent.*//' | sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
+    MALLORY_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.mallory//' | sed 's/mallory.agent.*//' | sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
     TOTAL_CASES[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"total" : \([0-9]*\).*/\1/' )
     PASSED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
     FAILED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
