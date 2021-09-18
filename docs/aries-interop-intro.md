@@ -23,6 +23,8 @@ The Aries frameworks and agents currently tested for interoperability with AATH 
 - [Aries Framework .NET](https://github.com/hyperledger/aries-framework-dotnet)
 - [Aries Framework Go](https://github.com/hyperledger/aries-framework-go)
 - [Aries Framework JavaScript](https://github.com/hyperledger/aries-framework-javascript)
+- [Verity by Evernym](https://github.com/evernym/verity)
+- [Findy Agent](https://findy-network.github.io/)
 
 ## How is interoperability assessed?
 
