@@ -25,19 +25,7 @@ setupCLI() {
 	pushd .build > /dev/null
 
 	if [[ ! -f orb-cli ]]; then
-		if [[ -f ~/go/src/github.com/trustbloc/orb/.build/dist/bin/orb-cli-linux-amd64 ]]; then
-			echo copying cli binary from local orb repo...
-			cp ~/go/src/github.com/trustbloc/orb/.build/dist/bin/orb-cli-linux-amd64 orb-cli
-		elif [[ -f ~/go/src/github.com/trustbloc/orb/.build/dist/bin/orb-cli-linux-amd64.tar.gz ]]; then
-			echo copying cli binary from local orb repo...
-			cp ~/go/src/github.com/trustbloc/orb/.build/dist/bin/orb-cli-linux-amd64.tar.gz orb-cli.tar.gz
-			tar -xzf orb-cli.tar.gz
-			mv orb-cli-linux-amd64 orb-cli
-			rm orb-cli.tar.gz
-		# else
-		#	# -- TODO: can't use v.0.1.1 orb cli any more
-		# 	curl -sL https://github.com/trustbloc/orb/releases/download/v0.1.1/orb-cli-linux-amd64.tar.gz | tar -x -z -O -f - > orb-cli
-		fi
+		curl -sL https://github.com/trustbloc/orb/releases/download/v0.1.3/orb-cli-linux-amd64.tar.gz | tar -x -z -O -f - > orb-cli
 		chmod +x orb-cli
 	fi
 
@@ -87,11 +75,11 @@ createDID() {
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-master.data
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-interop.data
 
-	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-master.data/
-	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-interop.data/
+	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-master.data
+	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-interop.data
 
-	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-master.data/
-	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-interop.data/
+	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-master.data
+	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-interop.data
 
 
 	popd > /dev/null # to caller
