@@ -1,0 +1,17 @@
+{
+  "Ed25519Signature2018": {
+    "kty":"OKP",
+    "crv":"Ed25519",
+    "kid": "EX6zbuWZCABtwk7dpYm7t6uCfe9y0KZYoTCGra7l4cc",
+    "d":"ez77KrfyV059aMvZi_2JNpZVvAV5-nlu-PhY-JlpPJk",
+    "x":"HyggxTz873aKJcjRPKcASEStx_FginCLZI9n8XZDJJI",
+    "y":""
+  },
+  "BbsBlsSignature2020": {
+    "kty":"EC",
+    "crv":"BLS12381_G2",
+    "kid": "oqAJot77k-nHS1wIGWnsbQnTSbha78phuwjGAnBQwCf",
+    "x":"oqAJot77k-nHS1wIGWnsbQnTSbha78phuwjGAnBQwCf6Y7ojdW9c9CPoAufenSEzBTWJ6ZQN_6I63Jc0uDfn-gCSFYZJkEh1LYpS160VRtORUls95eR_csuFduSbbqpR",
+    "d":"P6yf2ydsLHmx9BwEBH9i7xdoTfynmfPza2dxZUBNX64"
+  }
+}

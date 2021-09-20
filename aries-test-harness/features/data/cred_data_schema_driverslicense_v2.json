@@ -36,7 +36,7 @@
                   "https://www.w3.org/2018/credentials/v1", 
                   "https://w3id.org/security/bbs/v1",
                   {
-                     "dl": "http://example.com/drivers-license",
+                     "dl": "http://example.com/drivers-license#",
                      "AATHDriversLicense": "dl:AATHDriversLicense",
                      "address": "dl:address",
                      "DL_number": "dl:DL_number",

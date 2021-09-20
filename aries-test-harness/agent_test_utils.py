@@ -1,4 +1,5 @@
 import time
+import datetime
 
 def create_non_revoke_interval(timeframe):
     # timeframe containes two variables, the To and from of the non-revoked to and from parameters in the send presentation request message
@@ -105,6 +106,9 @@ def amend_filters_with_runtime_data(context, filters):
                 credential["issuer"]["id"] = issuer
         if options.get("proofType") == "replace_me":
             options["proofType"] = context.proof_type
+        if "issuanceDate" in credential:
+            created_datetime = str(datetime.datetime.now().replace(microsecond=0).isoformat(timespec='seconds'))  + "Z"
+            credential["issuanceDate"] = created_datetime
 
 
     return filters

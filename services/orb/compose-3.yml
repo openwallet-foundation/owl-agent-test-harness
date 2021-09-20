@@ -33,6 +33,7 @@ services:
       - HTTP_SIGNATURES_ENABLED=true
       - ORB_EXTERNAL_ENDPOINT=https://orb.domain1.com
       - ORB_HOST_URL=0.0.0.0:443
+      - ORB_HOST_METRICS_URL=0.0.0.0:48327
       - ORB_KMS_ENDPOINT=http://orb.kms:7878
 
       - LOG_LEVEL=${ORB_SERVER_LOG_LEVEL}
@@ -43,6 +44,7 @@ services:
       - ORB_VCT_URL=http://orb.vct:8077/aath-orb
     ports:
       - 48326:443
+      - 48327:48327
     command: start
     volumes:
       - ./.build/keys/tls:/etc/orb/tls
@@ -59,6 +61,7 @@ services:
       - ORB_VCT_URL=http://orb.vct:8077/aath-orb
       - LOG_LEVEL=${ORB_SERVER_LOG_LEVEL}
       - ORB_HOST_URL=0.0.0.0:443
+      - ORB_HOST_METRICS_URL=0.0.0.0:48527
       - ORB_EXTERNAL_ENDPOINT=https://orb.domain2.com
       - ORB_TLS_CERTIFICATE=/etc/orb/tls/ec-pubCert.pem
       - ORB_TLS_KEY=/etc/orb/tls/ec-key.pem
@@ -80,6 +83,7 @@ services:
       - ORB_AUTH_TOKENS=admin=ADMIN_TOKEN,read=READ_TOKEN
     ports:
       - 48426:443
+      - 48527:48527
     command: start
     volumes:
       - ./.build/keys/tls:/etc/orb/tls
