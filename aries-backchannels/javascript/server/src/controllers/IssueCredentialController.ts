@@ -80,7 +80,7 @@ export class IssueCredentialController {
     }
   ) {
     let credentialRecord: CredentialRecord;
-    await new Promise(f => setTimeout(f, 5000));
+    await new Promise(f => setTimeout(f, 10000));
     if (threadId) {
       const { id } = await this.credentialUtils.getCredentialByThreadId(
         threadId
