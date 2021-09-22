@@ -2,7 +2,7 @@ name: test-harness-findy-findy
 # RUNSET_NAME: "findy to findy"
 # Scope: AIP 1.0
 # Exceptions: Revocation
-# SKIP
+# 
 # 
 # Summary
 #
