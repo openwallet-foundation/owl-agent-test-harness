@@ -185,7 +185,7 @@ export class PresentProofController {
 
   @Post("/verify-presentation")
   async verifyPresentation(@BodyParams("id") threadId: string) {
-    await new Promise(f => setTimeout(f, 10000));
+    await new Promise(f => setTimeout(f, 20000));
     let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
     if (proofRecord) {
       return this.mapProofRecord(
