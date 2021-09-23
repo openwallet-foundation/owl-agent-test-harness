@@ -12,7 +12,7 @@ name: test-harness-verity-dotnet
 #
 # Current
 #
-# All the Connection tests are running. All tests are passing
+# Initial implementation to get the tests running smoothly. Currently testing connection only.
 #
 # *Status Note Updated: 2021.09.23*
 #

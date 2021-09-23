@@ -6,13 +6,14 @@ name: test-harness-verity-afj
 #
 # Summary
 #
+# Initial implementation to get the tests running smoothly. Currently testing connection only.
 # This runset uses the current main branch of Javascript for all of the agents except Acme (Issuer),
 # which uses the dev branch of Evernym Verity. The runset covers all of the AIP 1.0 tests
 # under the connection protocol RFC0160.
 #
 # Current
 #
-# All the Connection tests are running. All tests are passing
+# Initial implementation to get the tests running smoothly. Currently testing connection only.
 #
 # *Status Note Updated: 2021.09.23*
 #
