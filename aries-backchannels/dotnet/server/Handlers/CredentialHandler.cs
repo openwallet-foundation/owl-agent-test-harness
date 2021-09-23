@@ -62,6 +62,11 @@ namespace DotNet.Backchannel.Handlers
             MessageTypes.IssueCredentialNames.OfferCredential,
             MessageTypes.IssueCredentialNames.RequestCredential,
             MessageTypes.IssueCredentialNames.IssueCredential,
+            MessageTypesHttps.IssueCredentialNames.ProposeCredential,
+            MessageTypesHttps.IssueCredentialNames.OfferCredential,
+            MessageTypesHttps.IssueCredentialNames.RequestCredential,
+            MessageTypesHttps.IssueCredentialNames.IssueCredential,
+
         };
 
         /// <summary>
@@ -76,6 +81,7 @@ namespace DotNet.Backchannel.Handlers
             switch (messageContext.GetMessageType())
             {
                 case MessageTypes.IssueCredentialNames.ProposeCredential:
+                case MessageTypesHttps.IssueCredentialNames.ProposeCredential:
                     {
                         var credentialProposal = messageContext.GetMessage<CustomCredentialProposeMessage>();
 
@@ -144,6 +150,7 @@ namespace DotNet.Backchannel.Handlers
                         return null;
                     }
                 case MessageTypes.IssueCredentialNames.OfferCredential:
+                case MessageTypesHttps.IssueCredentialNames.OfferCredential:
                     {
                         var offer = messageContext.GetMessage<CredentialOfferMessage>();
                         var recordId = await this.ProcessOfferAsync(
@@ -154,6 +161,7 @@ namespace DotNet.Backchannel.Handlers
                         return null;
                     }
                 case MessageTypes.IssueCredentialNames.RequestCredential:
+                case MessageTypesHttps.IssueCredentialNames.RequestCredential:
                     {
                         var request = messageContext.GetMessage<CredentialRequestMessage>();
                         var recordId = await _credentialService.ProcessCredentialRequestAsync(
@@ -174,6 +182,7 @@ namespace DotNet.Backchannel.Handlers
                     }
 
                 case MessageTypes.IssueCredentialNames.IssueCredential:
+                case MessageTypesHttps.IssueCredentialNames.IssueCredential:
                     {
                         var credential = messageContext.GetMessage<CredentialIssueMessage>();
                         var recordId = await _credentialService.ProcessCredentialAsync(

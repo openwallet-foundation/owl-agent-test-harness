@@ -12,6 +12,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Hyperledger.Aries.Utils;
 using Hyperledger.Aries.Models.Events;
 using System.Reactive.Linq;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using Hyperledger.Indy.AnonCredsApi;
@@ -98,7 +99,7 @@ namespace DotNet.Backchannel.Controllers
 
             var presentationRequest = body.Data;
             var connectionId = (string)presentationRequest["connection_id"];
-            var presentationRequestMessage = presentationRequest["presentation_proposal"]["request_presentations~attach"]["data"];
+            var presentationRequestMessage = presentationRequest["presentation_request"]["proof_request"]["data"];
 
             var proofRequest = new ProofRequest
             {
@@ -124,7 +125,7 @@ namespace DotNet.Backchannel.Controllers
             };
             _proofCache.Set(THPresentationExchange.ThreadId, THPresentationExchange);
 
-            UpdateStateOnMessage(THPresentationExchange, TestHarnessPresentationExchangeState.PresentationReceived, _ => _.MessageType == MessageTypes.PresentProofNames.Presentation && _.ThreadId == THPresentationExchange.ThreadId);
+            UpdateStateOnMessage(THPresentationExchange, TestHarnessPresentationExchangeState.PresentationReceived, _ => new[] { MessageTypes.PresentProofNames.Presentation, MessageTypesHttps.PresentProofNames.Presentation }.Contains(_.MessageType) && _.ThreadId == THPresentationExchange.ThreadId);
 
             _logger.LogDebug("Send Presentation Request {requestPresentationMessage}", requestPresentationMessage.ToJson());
 
@@ -144,7 +145,7 @@ namespace DotNet.Backchannel.Controllers
 
             var requestedCredentials = requestedCredentialsJson.ToObject<RequestedCredentials>();
 
-            _logger.LogInformation("SendProofPresentation {requestedCredentials}", requestedCredentials.ToJson());
+            _logger.LogInformation("SendProofPresentation {id} {requestedCredentials}", THPresentationExchange.RecordId, requestedCredentials.ToJson());
 
             var (presentationMessage, proofRecord) = await _proofService.CreatePresentationAsync(context, THPresentationExchange.RecordId, requestedCredentials);
 

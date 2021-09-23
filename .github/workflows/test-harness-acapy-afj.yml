@@ -11,9 +11,9 @@ name: test-harness-acapy-javascript
 # notably those that involve revocation.
 #
 # Current
-# 
+#
 # Most of the tests are running. The tests not passing are being investigated.
-# 
+#
 # *Status Note Updated: 2021.03.18*
 #
 # End
@@ -45,7 +45,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a javascript"
           TEST_AGENTS: "-d acapy-main -b javascript"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@ProofProposal"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip"
           REPORT_PROJECT: acapy-b-javascript
         continue-on-error: true
       - name: run-send-gen-test-results-secure

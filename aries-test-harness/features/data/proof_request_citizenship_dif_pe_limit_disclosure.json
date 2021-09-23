@@ -1,5 +1,5 @@
 {
-  "presentation_proposal": {
+  "presentation_request": {
     "options": {
       "challenge": "881701fa-2e0d-4024-89eb-bd1fd6e6da55",
       "domain": "9a9bv9v9n90f"
@@ -30,6 +30,7 @@
                 "path": ["$.credentialSubject.familyName"],
                 "purpose": "Just making sure your family name is Smith",
                 "filter": {
+                  "type": "string",
                   "const": "SMITH"
                 }
               },

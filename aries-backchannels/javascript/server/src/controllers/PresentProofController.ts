@@ -49,11 +49,23 @@ export class PresentProofController {
     @BodyParams("data")
     data: {
       connection_id: string;
-      presentation_proposal: any;
+      presentation_proposal: {
+        comment?: string;
+        attributes: any;
+        predicates: any;
+      };
     }
   ) {
+    const { attributes, predicates, ...restProposal } =
+      data.presentation_proposal;
+
+    const newPresentationProposal = {
+      ...restProposal,
+      attributes: attributes,
+      predicates: predicates,
+    };
     const presentationProposal = JsonTransformer.fromJSON(
-      data.presentation_proposal,
+      newPresentationProposal,
       PresentationPreview
     );
 
@@ -74,11 +86,11 @@ export class PresentProofController {
     @BodyParams("data")
     data: {
       connection_id: string;
-      presentation_proposal: any;
+      presentation_request: any;
     }
   ) {
     const proofRequest = JsonTransformer.fromJSON(
-      data.presentation_proposal["request_presentations~attach"].data,
+      data.presentation_request["proof_request"].data,
       ProofRequest
     );
 
@@ -91,7 +103,7 @@ export class PresentProofController {
         requestedPredicates: proofRequest.requestedPredicates,
       },
       {
-        comment: data.presentation_proposal.comment,
+        comment: data.presentation_request.comment,
       }
     );
 
@@ -127,7 +139,11 @@ export class PresentProofController {
     );
 
     this.logger.info("Created requested credentials ", {
-      requestedCredentials: JSON.stringify(requestedCredentials.toJSON(), null, 2),
+      requestedCredentials: JSON.stringify(
+        requestedCredentials.toJSON(),
+        null,
+        2
+      ),
     });
 
     const credentialUtils = new CredentialUtils(this.agent);
@@ -169,6 +185,7 @@ export class PresentProofController {
 
   @Post("/verify-presentation")
   async verifyPresentation(@BodyParams("id") threadId: string) {
+    await new Promise(f => setTimeout(f, 20000));
     let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
     if (proofRecord) {
       return this.mapProofRecord(

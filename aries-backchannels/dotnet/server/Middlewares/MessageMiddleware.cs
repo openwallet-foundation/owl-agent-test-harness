@@ -26,37 +26,46 @@ namespace DotNet.Backchannel.Middlewares
         /// <inheritdoc />
         public async Task OnMessageAsync(IAgentContext agentContext, UnpackedMessageContext messageContext)
         {
-            // TrustPingMessage event aggregator event doesn't include the connection so we can't verify whether the
-            // received trust ping comes from the connection we send the connection response to.
-            // For this reason we handle this specific case through a middleware where we do have the
-            // connection from which the trust ping message came
-            if (messageContext.GetMessageType() == MessageTypes.TrustPingMessageType)
+            switch (messageContext.GetMessageType())
             {
-                var message = messageContext.GetMessage<TrustPingMessage>();
+                // TrustPingMessage event aggregator event doesn't include the connection so we can't verify whether the
+                // received trust ping comes from the connection we send the connection response to.
+                // For this reason we handle this specific case through a middleware where we do have the
+                // connection from which the trust ping message came
+                case MessageTypes.TrustPingMessageType:
+                case MessageTypesHttps.TrustPingMessageType:
+                    {
+                        var message = messageContext.GetMessage<TrustPingMessage>();
 
-                var THConnection = _cache.Get<TestHarnessConnection>(messageContext.Connection.Id);
+                        var THConnection = _cache.Get<TestHarnessConnection>(messageContext.Connection.Id);
 
-                if (THConnection != null && THConnection.State == TestHarnessConnectionState.Responded)
-                {
-                    THConnection.State = TestHarnessConnectionState.Complete;
-                }
-            }
-            // When we receive a request presentation message we need to create a TestHarnessPresentationExchange and
-            // store it in the cache for future use. This allow us to keep track of the current state of the presentation exchange
-            else if (messageContext.GetMessageType() == MessageTypes.PresentProofNames.RequestPresentation)
-            {
-                var message = messageContext.GetMessage<RequestPresentationMessage>();
+                        if (THConnection != null && THConnection.State == TestHarnessConnectionState.Responded)
+                        {
+                            THConnection.State = TestHarnessConnectionState.Complete;
+                        }
 
-                var proofRecord = await _proofService.GetByThreadIdAsync(agentContext, message.GetThreadId());
+                        break;
+                    }
+                // When we receive a request presentation message we need to create a TestHarnessPresentationExchange and
+                // store it in the cache for future use. This allow us to keep track of the current state of the presentation exchange
+                case MessageTypes.PresentProofNames.RequestPresentation:
+                case MessageTypesHttps.PresentProofNames.RequestPresentation:
+                    {
+                        var message = messageContext.GetMessage<RequestPresentationMessage>();
 
-                var THPresentationExchange = new TestHarnessPresentationExchange
-                {
-                    ThreadId = message.GetThreadId(),
-                    RecordId = proofRecord.Id,
-                    State = TestHarnessPresentationExchangeState.RequestReceived,
-                };
+                        var proofRecord = await _proofService.GetByThreadIdAsync(agentContext, message.GetThreadId());
 
-                _cache.Set(THPresentationExchange.ThreadId, THPresentationExchange);
+                        var THPresentationExchange = new TestHarnessPresentationExchange
+                        {
+                            ThreadId = message.GetThreadId(),
+                            RecordId = proofRecord.Id,
+                            State = TestHarnessPresentationExchangeState.RequestReceived,
+                        };
+
+                        _cache.Set(THPresentationExchange.ThreadId, THPresentationExchange);
+
+                        break;
+                    }
             }
         }
     }

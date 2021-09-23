@@ -16,21 +16,9 @@ export class TsedLogger extends BaseLogger {
     [LogLevel.fatal]: "fatal",
   } as const;
 
-  public constructor({
-    logger,
-    logLevel,
-    name,
-  }: {
-    logger: Logger;
-    logLevel: LogLevel;
-    name?: string;
-  }) {
-    super(logLevel);
-    this.logger = logger ?? new Logger(name);
-
-    if (this.logLevel !== LogLevel.off) {
-      this.logger.level = this.tsedLogLevelMap[this.logLevel];
-    }
+  public constructor(logger: Logger) {
+    super(LogLevel.test);
+    this.logger = logger;
   }
 
   private log(
@@ -39,8 +27,6 @@ export class TsedLogger extends BaseLogger {
     data?: Record<string, any>
   ): void {
     const tsedLogLevel = this.tsedLogLevelMap[level];
-
-    if (this.logLevel === LogLevel.off) return;
 
     if (data) {
       this.logger[tsedLogLevel](message, data);

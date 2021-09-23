@@ -123,6 +123,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         # AATH API : AFGO Admin API
         self.issueCredentialOperationTranslationDict = {
+            "prepare-json-ld": "prepare-json-ld",
             "send-proposal": "send-proposal",
             "send-offer": "send-offer",
             "send-request": "send-request"
@@ -159,6 +160,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         # AATH API : AFGO Admin API
         self.proofOperationTranslationDict = {
+            "prepare-json-ld": "",
             "send-proposal": "send-propose-presentation",
             "send-request": "send-request-presentation",
             "send-presentation": "accept-request-presentation",
@@ -677,8 +679,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if data is not None: log_msg(f"Data passed to backchannel by test for operation: {agent_operation}", data)
 
         if operation == "prepare-json-ld":
-            # TODO Not sure what to do here if anything?
-            pass
+            return (200, json.dumps({"did":"dummy-value"}))
 
         if operation == "send-proposal" or operation == "send-offer":
             if data is None:
@@ -749,10 +750,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             }
                         ]
                         # add formats to the data with attach_id and format
+                        if "json-ld" in data["filter"]:
+                            filter_format = "aries/ld-proof-vc@v1.0"
+                        else:
+                            filter_format = "hlindy/cred-filter@v2.0"
+
                         data["propose_credential"]["formats"] = [
                             {
                                 "attach_id": filter_id,
-                                "format": "hlindy/cred-filter@v2.0"
+                                "format": filter_format
                             }
                         ]
 
@@ -787,10 +793,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             }
                         ]
                         # add formats to the data with attach_id and format
+                        if "json-ld" in data["filter"]:
+                            filter_format = "aries/ld-proof-vc@v1.0"
+                        else:
+                            filter_format = "hlindy/cred-filter@v2.0"
+
                         data["propose_credential"]["formats"] = [
                             {
                                 "attach_id": filter_id,
-                                "format": "hlindy/cred-filter@v2.0"
+                                "format": filter_format
                             }
                         ]
                         
@@ -934,9 +945,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         dat["data"]["json"]["issuer"] = {
                             "id": json.loads(wh_text)["message"]["Properties"]["myDID"]
                         }
+
+                        if "json-ld" in dat["data"]["json"]:
+                            dat["data"]["json"]["json-ld"]["credential"]["issuer"] = {
+                                "id": json.loads(wh_text)["message"]["Properties"]["myDID"]
+                            }
+                            dat["data"]["json"]["json-ld"]["credential"]["issuanceDate"] = str(datetime.datetime.now().isoformat(timespec='seconds'))  + "Z"
+                            dat["data"]["json"]["json-ld"]["credential"]["id"] = json.loads(wh_text)["message"]["Properties"]["theirDID"]
+                            dat["data"]["json"]["json-ld"]["credential"]["type"] = "VerifiableCredential"
+
                         dat["data"]["json"]["type"] = [
-                            "VerifiableCredential",
-                            "AATHTestCredential"
+                            # "AATHTestCredential",
+                            "VerifiableCredential"
                         ]
                 #data["issue_credential"]["credentials~attach"]["data"]["json"].append(afgo_ammendment)
 
@@ -1006,7 +1026,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], None, resp_text)
         return (resp_status, resp_text)
 
-
     async def handle_present_proof_POST(self, op, rec_id=None, data=None):
         topic = op["topic"]
         operation = op["operation"]
@@ -1027,18 +1046,25 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # Ammend
             pass
 
+        await self.load_jsonld_contexts()
+
         if operation == "send-request":
             # Get myDID and theirDID from connection object from connection_id in data
-            (their_did, my_did) = await self.get_DIDs_for_participants(data["presentation_proposal"]["connection_id"])
+            (their_did, my_did) = await self.get_DIDs_for_participants(data["presentation_request"]["connection_id"])
             # store off myDID incase it is needed later.
             self.myDID = my_did
 
             # create extra fields needed in presentation
             attach_id = str(uuid.uuid1())
-            if "indy" in data["presentation_proposal"]["format"]:
-                format = "hlindy/proof-req@v2.0"
-            elif "json_ld" in data["presentation_proposal"]["format"]:
-                format = "dif/presentation-exchange/definitions@v1.0"
+            if "indy" in data["presentation_request"]["format"]:
+                format_key = "hlindy/proof-req@v2.0"
+                mime_type = "application/json"
+            elif "json_ld" in data["presentation_request"]["format"] or "json-ld" in data["presentation_request"]["format"]:
+                format_key = "dif/presentation-exchange/definitions@v1.0"
+                mime_type = "application/ld+json"
+
+                await self.load_jsonld_contexts()
+
             else:
                 raise Exception(f"format not recognized: {data}")
 
@@ -1050,20 +1076,20 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 "their_did": their_did,
                 "request_presentation": {
                     "@type": "https://didcomm.org/present-proof/2.0/request-presentation",
-                    "comment": data["presentation_proposal"]["comment"],
+                    "comment": data["presentation_request"]["comment"],
                     "formats":[
                         {
                             "attach_id": attach_id,
-                            "format": format
+                            "format": format_key
                         }
                     ],
                     "request_presentations~attach": [
                         {
                             "@id": attach_id,
                             "data": {
-                                "json": data["presentation_proposal"]["data"]
+                                "json": data["presentation_request"]["data"]
                             },
-                            "mime_type": "application/json"
+                            "mime-type": mime_type
                         }
 
                     ],
@@ -1098,6 +1124,33 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 "VerifiablePresentation",
                 "CredentialManagerPresentation"
             ]
+
+            ammended_data["presentation"]["request_presentations~attach"] = ammended_data["presentation"]["presentations~attach"]
+
+            if "json_ld" in data["format"] or "json-ld" in data["format"]:
+
+                cred_attach_list = []
+
+                if "record_ids" in data:
+                    for record_id_list in data["record_ids"].values():
+                        for record_id in record_id_list:
+                            cred_record_list = get_resource(record_id, "credential-cache-msg")
+
+                            if len(cred_record_list) > 0:
+                                cred_attachments = cred_record_list[-1]["message"]["Message"]["credentials~attach"]
+                                for cred_attach in cred_attachments:
+                                    cred_attach_list.append(cred_attach)
+
+                for cred_attach in cred_attach_list:
+                    cred_attach["mime-type"] = "application/ld+json"
+
+                    # merge the cred proper with its wrapping
+                    cred_attach["data"]["json"]["json-ld"]["credential"]["issuer"] = cred_attach["data"]["json"]["issuer"]
+                    cred_attach["data"]["json"]["json-ld"]["credential"]["issuanceDate"] = cred_attach["data"]["json"]["issuanceDate"]
+
+                    cred_attach["data"]["json"] = cred_attach["data"]["json"]["json-ld"]["credential"]
+
+                ammended_data["presentation"]["presentations~attach"] = cred_attach_list
 
             data = ammended_data
 
@@ -1141,7 +1194,45 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
 
-   
+    async def load_jsonld_contexts(self):
+        if not hasattr(self, "loaded_jsonld_contexts"):
+            self.loaded_jsonld_contexts = []
+
+        context_data = [
+            {
+                "url": "https://w3id.org/citizenship/v1",
+                "documentURL": "https://w3c-ccg.github.io/citizenship-vocab/contexts/citizenship-v1.jsonld",
+                "filePath": "afgo/citizenship-v1.jsonld"
+            }
+        ]
+
+        req = {
+            "documents": []
+        }
+
+        should_post = False
+
+        for jsonld_context in context_data:
+            if jsonld_context["url"] not in self.loaded_jsonld_contexts:
+                req_doc = {
+                    "url": jsonld_context["url"],
+                    "documentURL": jsonld_context["documentURL"]
+                }
+
+                with open(jsonld_context["filePath"], "r") as in_file:
+                    schema_text = in_file.read()
+                    req_doc["content"] = json.loads(schema_text)
+
+                req["documents"].append(req_doc)
+
+                should_post = True
+                self.loaded_jsonld_contexts.append(jsonld_context["url"])
+
+        if should_post:
+            (resp_status, resp_text) = await self.admin_POST("/ld/context", data=req)
+            if resp_status != 200:
+                raise Exception(f"Could not add contexts: {resp_text}")
+
     def add_did_exchange_state_to_response(self, operation, raw_response):
         resp_json = json.loads(raw_response)
         
@@ -1281,6 +1372,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 # take the name (which was saved as the cred_id) and make it the referent
                 if "name" in resp_json:
                     resp_json["referent"] = resp_json["name"]
+                    resp_json["credential_id"] = resp_json["name"]
                     resp_text = json.dumps(resp_json)
                 else:
                     raise Exception(f"No name/id found in response for: {agent_operation}")
@@ -1433,6 +1525,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
             if "filters~attach" in credential_msg_txt:
                 thread_id = credential_msg["message"]["Properties"]["piid"]
                 push_resource(thread_id, "credential-details-msg", credential_msg)
+                log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
+            if "credentials~attach" in credential_msg_txt:
+                thread_id = credential_msg["message"]["Properties"]["piid"]
+                push_resource(thread_id, "credential-cache-msg", credential_msg)
                 log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
                 
             resp_status = 200
@@ -1644,41 +1740,37 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if topic == "proof":
 
             if operation == "send-request" or operation == "create-request":
-                if operation == "send-proposal":
-                    request_type = "presentation_proposal"
-                    attachment = "presentations~attach"
-                else:
-                    request_type = "proof_request"
-                    attachment = "request_presentations~attach"
+
+                request_type = "proof_request"
                 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_attributes") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("requested_attributes") is None:
                     requested_attributes = {}
                 else:
-                    requested_attributes = data["presentation_proposal"][attachment]["data"]["requested_attributes"]
+                    requested_attributes = data["presentation_request"][request_type]["data"]["requested_attributes"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("requested_predicates") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("requested_predicates") is None:
                     requested_predicates = {}
                 else:
-                    requested_predicates = data["presentation_proposal"][attachment]["data"]["requested_predicates"]
+                    requested_predicates = data["presentation_request"][request_type]["data"]["requested_predicates"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("name") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("name") is None:
                     proof_request_name = "test proof"
                 else:
-                    proof_request_name = data["presentation_proposal"][attachment]["data"]["name"]
+                    proof_request_name = data["presentation_request"][request_type]["data"]["name"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("version") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("version") is None:
                     proof_request_version = "1.0"
                 else:
-                    proof_request_version = data["presentation_proposal"][attachment]["data"]["version"]
+                    proof_request_version = data["presentation_request"][request_type]["data"]["version"]
 
-                if data.get("presentation_proposal", {}).get(attachment, {}).get("data", {}).get("non_revoked") is None:
+                if data.get("presentation_request", {}).get(request_type, {}).get("data", {}).get("non_revoked") is None:
                     non_revoked = None
                 else:
-                    non_revoked = data["presentation_proposal"][attachment]["data"]["non_revoked"]
+                    non_revoked = data["presentation_request"][request_type]["data"]["non_revoked"]
                 
                 if "connection_id" in data:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         "connection_id": data["connection_id"],
                         request_type: {
@@ -1690,7 +1782,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     }
                 else:
                     admin_data = {
-                        "comment": data["presentation_proposal"]["comment"],
+                        "comment": data["presentation_request"]["comment"],
                         "trace": False,
                         request_type: {
                             "name": proof_request_name,
@@ -1708,23 +1800,22 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
                 request_type = "presentation_proposal"
                 
-                if data.get("presentation_proposal", {}).get("requested_attributes") == None:
-                    requested_attributes = []
+                if data.get("presentation_proposal", {}).get("attributes") == None:
+                    attributes = []
                 else:
-                    requested_attributes = data["presentation_proposal"]["requested_attributes"]
+                    attributes = data["presentation_proposal"]["attributes"]
 
-                if data.get("presentation_proposal", {}).get("requested_predicates") == None:
-                    requested_predicates = []
+                if data.get("presentation_proposal", {}).get("predicates") == None:
+                    predicates = []
                 else:
-                    requested_predicates = data["presentation_proposal"]["requested_predicates"]
+                    predicates = data["presentation_proposal"]["predicates"]
                 
                 admin_data = {
                         "comment": data["presentation_proposal"]["comment"],
                         "trace": False,
                         request_type: {
-                            "@type": data["presentation_proposal"]["@type"],
-                            "attributes": requested_attributes,
-                            "predicates": requested_predicates
+                            "attributes": attributes,
+                            "predicates": predicates
                         }
                     }
 

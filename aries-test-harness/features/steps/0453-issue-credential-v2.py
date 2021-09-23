@@ -88,9 +88,6 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
 
-    # Check the State of the credential
-    assert resp_json["state"] == "proposal-sent"
-
     # Get the thread ID from the response text.
     context.cred_thread_id = resp_json["thread_id"]
 
@@ -125,12 +122,6 @@ def step_impl(context, issuer, cred_format):
         (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential-v2", operation="send-offer", id=context.cred_thread_id)
         assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
         resp_json = json.loads(resp_text)
-        
-    # Check the issuers State
-    assert resp_json["state"] == "offer-sent"
-
-    # Check the state of the holder after issuers call of send-offer
-    assert expected_agent_state(context.holder_url, "issue-credential-v2", context.cred_thread_id, "offer-received")
 
 
 @when('"{holder}" requests the "{cred_format}" credential')
@@ -148,11 +139,6 @@ def step_impl(context, holder, cred_format):
     #     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential-v2", operation="send-request", id=context.connection_id_dict[holder][context.issuer_name])
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "request-sent"
-
-    # Verify issuer status
-    assert expected_agent_state(context.issuer_url, "issue-credential-v2", context.cred_thread_id, "request-received")
 
 
 @when('"{issuer}" issues the "{cred_format}" credential')
@@ -165,11 +151,6 @@ def step_impl(context, issuer, cred_format):
 
     (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential-v2", operation="issue", id=context.cred_thread_id, data=credential_issue)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "credential-issued"
-
-    # Verify holder status
-    assert expected_agent_state(context.holder_url, "issue-credential-v2", context.cred_thread_id, "credential-received")
 
 
 @when('"{holder}" acknowledges the "{cred_format}" credential issue')

@@ -68,6 +68,7 @@ export class ConnectionController {
 
   @Post("/accept-request")
   async acceptRequest(@BodyParams("id") connectionId: string) {
+    await new Promise(f => setTimeout(f, 20000));
     const connection = await this.agent.connections.acceptRequest(connectionId);
 
     return this.mapConnection(connection);

@@ -1,0 +1,55 @@
+name: test-harness-findy-findy
+# RUNSET_NAME: "findy to findy"
+# Scope: AIP 1.0
+# Exceptions: Revocation
+# 
+# 
+# Summary
+#
+# This runset uses the latest release of findy-agent for all of the agents. The runset runs all of the tests in the suite
+# that are expected to pass given the current state of ACA-Py support for AIP 1.
+#
+# Current
+# 
+# All of the tests being executed in this runset are passing.
+# 
+# *Status Note Updated: 2021.09.14*
+#
+# End
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 1 * * *"
+defaults:
+  run:
+    shell: bash
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    env:
+      LEDGER_URL_CONFIG: "http://localhost:9000"
+      TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
+    steps:
+      - name: checkout-test-harness
+        uses: actions/checkout@v2
+        with:
+          path: test-harness
+      - name: run-von-network
+        uses: ./test-harness/actions/run-von-network
+      - name: run-indy-tails-server
+        uses: ./test-harness/actions/run-indy-tails-server
+      - name: run-test-harness-wo-reports
+        uses: ./test-harness/actions/run-test-harness-wo-reports
+        with:
+          BUILD_AGENTS: "-a findy"
+          TEST_AGENTS: "-d findy"
+          REPORT_PROJECT: findy  
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation"
+        continue-on-error: true
+      - name: run-send-gen-test-results-secure
+        uses: ./test-harness/actions/run-send-gen-test-results-secure
+        with:
+          REPORT_PROJECT: findy 
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}

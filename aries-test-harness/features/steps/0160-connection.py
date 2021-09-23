@@ -11,7 +11,7 @@
 from time import sleep
 from behave import given, when, then
 import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state, check_if_already_connected
 
 @given('{n} agents')
 @given(u'we have {n} agents')
@@ -269,29 +269,35 @@ def step_impl(context, inviter, invitee):
 
 @given('"{sender}" and "{receiver}" have an existing connection')
 def step_impl(context, sender, receiver):
-    if "DIDExchangeConnection" in context.tags:
-        context.execute_steps(u'''
-            When "''' + sender + '''" sends an explicit invitation
-            And "''' + receiver + '''" receives the invitation
-            And "''' + receiver + '''" sends the request to "''' + sender + '''"
-            And "''' + sender + '''" receives the request
-            And "''' + sender + '''" sends a response to "''' + receiver + '''"
-            And "''' + receiver + '''" receives the response
-            And "''' + receiver + '''" sends complete to "''' + sender + '''"
-            Then "''' + sender + '''" and "''' + receiver + '''" have a connection
-        ''')
+    if not check_if_already_connected(context, sender, receiver):
+        if "DIDExchangeConnection" in context.tags:
+            context.use_existing_connection = True
+            context.use_existing_connection_successful = False
+            context.execute_steps(u'''
+                When "''' + sender + '''" sends an explicit invitation with a public DID
+                And "''' + receiver + '''" receives the invitation
+            ''')
+            if not context.use_existing_connection_successful:
+                context.execute_steps(u'''
+                    When "''' + receiver + '''" sends the request to "''' + sender + '''"
+                    And "''' + sender + '''" receives the request
+                    And "''' + sender + '''" sends a response to "''' + receiver + '''"
+                    And "''' + receiver + '''" receives the response
+                    And "''' + receiver + '''" sends complete to "''' + sender + '''"
+                    Then "''' + sender + '''" and "''' + receiver + '''" have a connection
+                ''')
 
-    else:
-        context.execute_steps(u'''
-            When "''' + sender + '''" generates a connection invitation
-            And "''' + receiver + '''" receives the connection invitation
-            And "''' + receiver + '''" sends a connection request to "''' + sender + '''"
-            And "''' + sender + '''" receives the connection request
-            And "''' + sender + '''" sends a connection response to "''' + receiver + '''"
-            And "''' + receiver + '''" receives the connection response
-            And "''' + receiver + '''" sends trustping to "''' + sender + '''"
-            Then "''' + sender + '''" and "''' + receiver + '''" have a connection
-        ''')
+        else:
+            context.execute_steps(u'''
+                When "''' + sender + '''" generates a connection invitation
+                And "''' + receiver + '''" receives the connection invitation
+                And "''' + receiver + '''" sends a connection request to "''' + sender + '''"
+                And "''' + sender + '''" receives the connection request
+                And "''' + sender + '''" sends a connection response to "''' + receiver + '''"
+                And "''' + receiver + '''" receives the connection response
+                And "''' + receiver + '''" sends trustping to "''' + sender + '''"
+                Then "''' + sender + '''" and "''' + receiver + '''" have a connection
+            ''')
 
 @when(u'"{sender}" sends a trust ping')
 def step_impl(context, sender):
