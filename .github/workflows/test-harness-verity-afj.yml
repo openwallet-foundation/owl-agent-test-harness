@@ -18,8 +18,8 @@ name: test-harness-verity-afj
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "25 1 * * *"
+  # schedule:
+  #   - cron: "25 1 * * *"
 defaults:
   run:
     shell: bash
@@ -44,10 +44,10 @@ jobs:
           TEST_AGENTS: "-d javascript -a verity"
           TEST_SCOPE: "-t @RFC0160 -t @AcceptanceTest -t ~@wip"
           REPORT_PROJECT: javascript-a-verity
-        continue-on-error: true
-      - name: run-send-gen-test-results-secure
-        uses: ./test-harness/actions/run-send-gen-test-results-secure
-        with:
-          REPORT_PROJECT: acapy-b-verity
-          ADMIN_USER: ${{ secrets.AllureAdminUser }}
-          ADMIN_PW: ${{ secrets.AllureAdminPW }}
+      #   continue-on-error: true
+      # - name: run-send-gen-test-results-secure
+      #   uses: ./test-harness/actions/run-send-gen-test-results-secure
+      #   with:
+      #     REPORT_PROJECT: javascript-a-verity
+      #     ADMIN_USER: ${{ secrets.AllureAdminUser }}
+      #     ADMIN_PW: ${{ secrets.AllureAdminPW }}
