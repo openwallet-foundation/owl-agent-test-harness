@@ -5,14 +5,13 @@ use uuid;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::{Agent, State};
 use crate::controllers::Request;
-use vcx::aries::messages::proof_presentation::presentation_request::PresentationRequest as VcxPresentationRequest;
-use vcx::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
-use vcx::aries::messages::attachment::Attachments;
-use vcx::aries::handlers::proof_presentation::verifier::verifier::Verifier;
-use vcx::aries::handlers::proof_presentation::prover::prover::Prover;
-use vcx::aries::messages::a2a::A2AMessage;
-use vcx::api::VcxStateType;
-use vcx::aries::messages::status::Status;
+use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest as VcxPresentationRequest;
+use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
+use aries_vcx::messages::attachment::Attachments;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::status::Status;
+use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
+use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 struct PresentationProposal {
@@ -34,21 +33,23 @@ pub struct ProofRequestData {
 }
 
 fn _get_state_prover(prover: &Prover) -> State {
-    match VcxStateType::from_u32(prover.state()) {
-        VcxStateType::VcxStateInitialized => State::Initial,
-        VcxStateType::VcxStateOfferSent => State::PresentationSent,
-        VcxStateType::VcxStateRequestReceived => State::RequestReceived,
-        VcxStateType::VcxStateAccepted => State::Done,
+    match prover.get_state() {
+        ProverState::Initial => State::Initial,
+        // ProverState::PresentationPrepared => State::PresentationSent,
+        ProverState::PresentationSent => State::PresentationSent,
+        // ProverState::VcxStateRequestReceived => State::RequestReceived,
+        ProverState::Finished => State::Done,
+        ProverState::PresentationPreparationFailed | ProverState::Failed => State::Failure,
         _ => State::Unknown
     }
 }
 
 fn _get_state_verifier(verifier: &Verifier) -> State {
-    match VcxStateType::from_u32(verifier.state()) {
-        VcxStateType::VcxStateInitialized => State::Initial,
-        VcxStateType::VcxStateOfferSent => State::OfferSent,
-        VcxStateType::VcxStateRequestReceived => State::RequestReceived,
-        VcxStateType::VcxStateAccepted => State::PresentationReceived,
+    match verifier.get_state() {
+        VerifierState::Initial => State::Initial,
+        VerifierState::PresentationRequestSent => State::OfferSent,
+        // VerifierState::RequestReceived => State::RequestReceived,
+        VerifierState::Finished => State::PresentationReceived,
         _ => State::Unknown
     }
 }

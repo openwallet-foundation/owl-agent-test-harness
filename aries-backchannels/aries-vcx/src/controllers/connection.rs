@@ -4,11 +4,10 @@ use uuid;
 use crate::{Agent, State};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::controllers::Request;
-use vcx::aries::messages::connection::invite::Invitation;
-use vcx::aries::handlers::connection::connection::{Connection, ConnectionState};
-use vcx::aries::handlers::connection::invitee::state_machine::InviteeState;
-use vcx::aries::handlers::connection::inviter::state_machine::InviterState;
-use vcx::api::VcxStateType;
+use aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
+use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
+use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
 
 #[derive(Deserialize, Default)]
 struct ConnectionRequest {
@@ -50,9 +49,9 @@ impl Agent {
         Ok(json!({ "connection_id": id, "invitation": invite }).to_string())
     }
 
-    pub fn receive_invitation(&mut self, invite: Invitation) -> HarnessResult<String> {
+    pub fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create_with_invite(&id, invite, false).map_err(|err| HarnessError::from(err))?;
+        let mut connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).map_err(|err| HarnessError::from(err))?;
         self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string())
     }
@@ -106,7 +105,7 @@ pub async fn create_invitation(agent: web::Data<Mutex<Agent>>) -> impl Responder
 }
 
 #[post("/receive-invitation")]
-pub async fn receive_invitation(req: web::Json<Request<Invitation>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
+pub async fn receive_invitation(req: web::Json<Request<PairwiseInvitation>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().receive_invitation(req.data.clone())
 }
 

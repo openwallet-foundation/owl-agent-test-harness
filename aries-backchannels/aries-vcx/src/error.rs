@@ -49,8 +49,8 @@ impl HarnessError {
     }
 }
 
-impl std::convert::From<vcx::error::VcxError> for HarnessError {
-    fn from(vcx_err: vcx::error::VcxError) -> HarnessError {
+impl std::convert::From<aries_vcx::error::VcxError> for HarnessError {
+    fn from(vcx_err: aries_vcx::error::VcxError) -> HarnessError {
         let kind = HarnessErrorType::InternalServerError;
         HarnessError { message: vcx_err.to_string(), kind }
     }

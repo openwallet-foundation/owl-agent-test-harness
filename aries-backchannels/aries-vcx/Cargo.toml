@@ -9,9 +9,9 @@ description = "Backchannel for aries-vcx"
 actix-web = "3.3.2"
 ctrlc = "3.1.6"
 derive_more = "0.99.14"
-clap = "3.0.0-beta.2"
-reqwest = { version = "0.11.4", features = ["json"] }
-rand = "0.8.4"
+clap = "3.0.0-beta.4"
+reqwest = { version = "*", features = ["json"] }
+rand = "*"
 serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
@@ -22,4 +22,4 @@ pickledb = "0.4.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 futures-util = "0.3.15"
 futures = "0.3.15"
-libvcx = { git = "https://github.com/hyperledger/aries-vcx", rev = "642cf159cafe7d41a57ac203885d137950b86376" }
+aries-vcx = { git = "https://github.com/hyperledger/aries-vcx", version = "0.20.2" }

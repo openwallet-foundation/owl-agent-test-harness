@@ -1,17 +1,14 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use vcx::issuer_credential;
-use vcx::libindy::utils::anoncreds;
-use vcx::aries::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
-use vcx::aries::handlers::issuance::holder::holder::Holder;
-use vcx::aries::handlers::connection::connection::Connection;
-use vcx::api::VcxStateType;
+use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
+use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
+use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::issuance::credential_offer::CredentialOffer as VcxCredentialOffer;
 use uuid;
 use crate::{Agent, State};
 use crate::controllers::Request;
-use vcx::aries::messages::a2a::A2AMessage;
-use vcx::aries::messages::issuance::credential_offer::CredentialOffer as VcxCredentialOffer;
 
 #[derive(Serialize, Deserialize, Default)]
 struct CredentialPreview {
@@ -40,20 +37,22 @@ struct CredentialId {
 }
 
 fn _get_state_issuer(issuer: &Issuer) -> State {
-    match VcxStateType::from_u32(issuer.get_state().unwrap()) {
-        VcxStateType::VcxStateInitialized => State::Initial,
-        VcxStateType::VcxStateOfferSent => State::OfferSent,
-        VcxStateType::VcxStateRequestReceived => State::RequestReceived,
-        VcxStateType::VcxStateAccepted => State::CredentialSent,
+    match issuer.get_state() {
+        IssuerState::Initial => State::Initial,
+        IssuerState::OfferSent => State::OfferSent,
+        IssuerState::RequestReceived => State::RequestReceived,
+        IssuerState::CredentialSent => State::CredentialSent,
+        IssuerState::Failed => State::Failure,
         _ => State::Unknown
     }
 }
 
 fn _get_state_holder(holder: &Holder) -> State {
-    match VcxStateType::from_u32(holder.get_state()) {
-        VcxStateType::VcxStateRequestReceived => State::OfferReceived,
-        VcxStateType::VcxStateOfferSent => State::RequestSent,
-        VcxStateType::VcxStateAccepted => State::CredentialReceived,
+    match holder.get_state() {
+        HolderState::OfferReceived => State::OfferReceived,
+        HolderState::RequestSent => State::RequestSent,
+        HolderState::Finished => State::CredentialReceived,
+        HolderState::Failed => State::Failure,
         _ => State::Unknown
     }
 }

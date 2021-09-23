@@ -1,9 +1,9 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use vcx::schema::{create_and_publish_schema, get_schema_id};
-use vcx::schema;
-use vcx::libindy::utils::anoncreds;
+use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+use aries_vcx::handlers::issuance::schema::schema::Schema as VcxSchema;
+use aries_vcx::libindy::utils::anoncreds;
 use uuid;
 use crate::Agent;
 use crate::controllers::Request;
@@ -13,6 +13,25 @@ struct Schema {
     schema_name: String,
     schema_version: String,
     attributes: Vec<String>
+}
+
+fn create_and_publish_schema(source_id: &str,
+                             issuer_did: String,
+                             name: String,
+                             version: String,
+                             data: String) -> HarnessResult<(String, String)> {
+    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data)?;
+    let payment_txn = anoncreds::publish_schema(&schema)?;
+    let schema_json = VcxSchema {
+        source_id: source_id.to_string(),
+        name,
+        data: serde_json::from_str(&data).unwrap_or_default(),
+        version,
+        schema_id: schema_id.to_string(),
+        payment_txn,
+        state: PublicEntityStateType::Built
+    }.to_string()?;
+    Ok((schema_id, schema_json))
 }
 
 impl Agent {
@@ -25,7 +44,7 @@ impl Agent {
                 warn!("Error: {:?}, schema probably exists on ledger, skipping schema publish", err);
                 anoncreds::create_schema(&schema.schema_name.to_string(), &schema.schema_version.to_string(), &attrs).map_err(|err| HarnessError::from(err))?
             }
-            Ok(sh) => (get_schema_id(sh).map_err(|err| HarnessError::from(err))?, schema::to_string(sh)?)
+            Ok((schema_id, schema_json)) => (schema_id, schema_json)
         };
         self.db.set(&schema_id, &schema_json).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "schema_id": schema_id }).to_string())

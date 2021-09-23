@@ -1,4 +1,4 @@
-FROM docker.pkg.github.com/hyperledger/aries-vcx/libvcx:0.17.3
+FROM ghcr.io/hyperledger/aries-vcx/libvcx:0.20.2
 
 USER root
 

@@ -1,9 +1,8 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use vcx::credential_def::{create_and_publish_credentialdef, get_cred_def_id};
-use vcx::credential_def;
-use vcx::libindy::utils::anoncreds;
+use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+use aries_vcx::libindy::utils::anoncreds;
 use uuid;
 use crate::Agent;
 use crate::controllers::Request;
@@ -22,12 +21,12 @@ impl Agent {
         let revocation_details = json!({ "support_revocation": cred_def.support_revocation }).to_string();
         let schema_json: String = self.db.get(&cred_def.schema_id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Cannot create credential definition - schema with id {} not found", id)))?;
-        let (cred_def_id, cred_def_json) = match create_and_publish_credentialdef(id.to_string(), id.to_string(), did.to_string(), cred_def.schema_id.to_string(), cred_def.tag.to_string(), revocation_details) {
+        let (cred_def_id, cred_def_json) = match CredentialDef::create(id.to_string(), id.to_string(), did.to_string(), cred_def.schema_id.to_string(), cred_def.tag.to_string(), revocation_details) {
             Err(err) => {
                 warn!("Error: {:?}, cred def probably exists on ledger, skipping cred def publish", err);
                 anoncreds::generate_cred_def(&did, &schema_json, &cred_def.tag.to_string(), None, Some(cred_def.support_revocation))?
             }
-            Ok(cdh) => (get_cred_def_id(cdh)?, credential_def::to_string(cdh)?)
+            Ok(cd) => (cd.id.to_string(), cd.to_string()?)
         };
         self.db.set(&cred_def_id, &cred_def_json).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "credential_definition_id": cred_def_id }).to_string())

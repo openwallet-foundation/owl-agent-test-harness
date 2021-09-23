@@ -1,10 +1,9 @@
-use vcx::init::{open_main_pool, PoolConfig, open_as_main_wallet, init_issuer_config}; // TODO: Should we move all Config arguments to a single module?
-use vcx::utils::logger::LibvcxDefaultLogger;
-use vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfig};
-use vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfig};
-use vcx::libindy::utils::pool;
-use vcx::utils::plugins::init_plugin;
-use vcx::settings;
+use aries_vcx::init::{open_main_pool, PoolConfig, open_as_main_wallet, init_issuer_config}; // TODO: Should we move all Config arguments to a single module?
+use aries_vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfig};
+use aries_vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfig};
+use aries_vcx::utils::plugins::init_plugin;
+use aries_vcx::libindy::utils::pool;
+use aries_vcx::settings;
 use std::io::prelude::*;
 use crate::AgentConfig;
 use rand::{thread_rng, Rng};

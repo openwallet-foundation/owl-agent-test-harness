@@ -8,7 +8,7 @@ use std::env;
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web, guard, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 use crate::controllers::{general, connection, credential_definition, issuance, schema, presentation};
-use vcx::aries::handlers::connection::connection::Connection;
+use aries_vcx::handlers::connection::connection::Connection;
  
 extern crate serde;
 #[macro_use]
