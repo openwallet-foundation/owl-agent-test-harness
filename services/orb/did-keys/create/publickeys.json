@@ -2,7 +2,7 @@
  {
   "id": "key1",
   "type": "Ed25519VerificationKey2018",
-  "purposes": ["authentication"],
+  "purposes": ["authentication", "assertionMethod"],
   "jwkPath": "./did-keys/create/key1_jwk.json"
  },
  {
@@ -10,5 +10,11 @@
   "type": "JsonWebKey2020",
   "purposes": ["capabilityInvocation"],
   "jwkPath": "./did-keys/create/key2_jwk.json"
+ },
+ {
+  "id": "key3",
+  "type": "Bls12381G2Key2020",
+  "purposes": ["assertionMethod"],
+  "b58Key":"y2BD5ZME7awdMPYS4FY5AFsk18qjwh45ZJi3vMrjATiGL74eL7tgK7p96ztNtvZFAGVKm5SwNMPhg5qmGaZgvJWHR9cHGEisrdKvGHWSTDN2uc6wTA1C1pPDXqiaRiA6WyN"
  }
 ]

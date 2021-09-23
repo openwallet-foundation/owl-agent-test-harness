@@ -209,6 +209,10 @@ function initEnv() {
   export RUST_LOG=${RUST_LOG:-warning}
 }
 
+# TODO: set up image builds so you don't need to use `./manage rebuild` to refresh remote source repo
+# - image Dockerfile has an ARG for the commit hash,
+# - build script grabs the HEAD commit hash from the agent's github repo
+
 # Build images -- add more backchannels here...
 # TODO: Define args to build only what's needed
 buildImages() {
@@ -515,6 +519,89 @@ auxiliaryService() {
   fi
 }
 
+startServices() {
+  # sets if services this procedure starts should be stopped automatically
+  local AUTO_CLEANUP
+  if [[ "auto" = $1 ]]; then
+    AUTO_CLEANUP=true
+  else
+    AUTO_CLEANUP=false
+  fi
+
+  if [[ "all" = $1 ]]; then
+    auxiliaryService orb start
+  fi
+
+  # if we're *not* using an external VON ledger, start the local one
+  if [[ -z ${LEDGER_URL_CONFIG} ]]; then
+    if [[ -z `docker ps -q --filter="name=von_webserver_1"` ]]; then
+      echo "starting local von-network..."
+      auxiliaryService von-network start
+      if [[ $AUTO_CLEANUP ]]; then
+        export STARTED_LOCAL_LEDGER=true
+      fi
+    fi
+  fi
+
+  if ! waitForLedger; then
+    echoRed "\nThe Indy Ledger is not running.\n"
+    exit 1
+  fi
+
+  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
+      echo "starting local uniresolver..."
+    auxiliaryService uniresolver start
+    if [[ $AUTO_CLEANUP ]]; then
+      export STARTED_LOCAL_UNIRESOLVER=true
+    fi
+  fi
+
+  # if we're *not* using an external indy tails server, start the local one
+  if [[ -z ${TAILS_SERVER_URL_CONFIG} ]]; then
+    if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]]; then
+      echo "starting local indy-tails-server..."
+      auxiliaryService indy-tails start
+      if [[ $AUTO_CLEANUP ]]; then
+        export STARTED_LOCAL_TAILS=true
+      fi
+    fi
+  fi
+
+  if ! waitForTailsServer; then
+    echoRed "\nThe Indy Tails Server is not running.\n"
+    exit 1
+  fi
+
+  if ! waitForUniresolver; then
+    echoRed "\nUniversal Resolver is not running.\n"
+    exit 1
+  fi
+}
+
+stopServices() {
+  if [[ "auto" = $1 ]]; then
+    if [[ ${STARTED_LOCAL_UNIRESOLVER} ]]; then
+      echo "stopping local uniresolver..."
+      auxiliaryService uniresolver stop
+    fi
+
+    if [[ ${STARTED_LOCAL_TAILS} ]]; then
+      echo "stopping local indy-tails-server..."
+      auxiliaryService indy-tails stop
+    fi
+
+    if [[ ${STARTED_LOCAL_LEDGER} ]]; then
+      echo "stopping local von-network..."
+      auxiliaryService von-network stop
+    fi
+  elif [[ "all" = $1 ]]; then
+    auxiliaryService uniresolver stop
+    auxiliaryService orb stop
+    auxiliaryService indy-tails stop
+    auxiliaryService von-network stop
+  fi
+}
+
 serviceCommand() {
   local SERVICE_COMMAND
   SERVICE_COMMAND=$1
@@ -522,6 +609,23 @@ serviceCommand() {
   SERVICE_TARGET=$2
 
   # TODO: allow multiple services to be named - but can we handle logs command then?
+  if [[ "all" = $SERVICE_TARGET ]]; then
+    case "${SERVICE_COMMAND}" in
+      start)
+          createNetwork
+          startServices all
+        ;;
+      stop)
+          stopServices all
+          cleanupNetwork
+        ;;
+      *)
+          echo err: \'start\' and \'stop\' are only valid commands for target \'all\'
+        ;;
+    esac
+
+    return
+  fi
 
   case "${SERVICE_COMMAND}" in
     start)
@@ -551,44 +655,7 @@ startHarness(){
 
   createNetwork
 
-  # if we're *not* using an external VON ledger, start the local one
-  if [[ -z ${LEDGER_URL_CONFIG} ]]; then
-    if [[ -z `docker ps -q --filter="name=von_webserver_1"` ]]; then
-      echo "starting local von-network..."
-      auxiliaryService von-network start
-      export STARTED_LOCAL_LEDGER=true
-    fi
-  fi
-
-  if ! waitForLedger; then
-    echoRed "\nThe Indy Ledger is not running.\n"
-    exit 1
-  fi
-
-  if [[ -z `docker ps -q --filter="name=uni-resolver-web.local"` ]]; then
-      echo "starting local uniresolver..."
-    auxiliaryService uniresolver start
-    export STARTED_LOCAL_UNIRESOLVER=true
-  fi
-
-  # if we're *not* using an external indy tails server, start the local one
-  if [[ -z ${TAILS_SERVER_URL_CONFIG} ]]; then
-    if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]]; then
-      echo "starting local indy-tails-server..."
-      auxiliaryService indy-tails start
-      export STARTED_LOCAL_TAILS=true
-    fi
-  fi
-
-  if ! waitForTailsServer; then
-    echoRed "\nThe Indy Tails Server is not running.\n"
-    exit 1
-  fi
-
-  if ! waitForUniresolver; then
-    echoRed "\nUniversal Resolver is not running.\n"
-    exit 1
-  fi
+  startServices auto
 
   dockerhost_url_templates
 
@@ -687,20 +754,7 @@ stopHarness(){
     fi
   fi
 
-  if [[ ${STARTED_LOCAL_UNIRESOLVER} ]]; then
-      echo "stopping local uniresolver..."
-      auxiliaryService uniresolver stop
-  fi
-
-  if [[ ${STARTED_LOCAL_TAILS} ]]; then
-      echo "stopping local indy-tails-server..."
-      auxiliaryService indy-tails stop
-  fi
-
-  if [[ ${STARTED_LOCAL_LEDGER} ]]; then
-      echo "stopping local von-network..."
-      auxiliaryService von-network stop
-  fi
+  stopServices auto
 
   cleanupNetwork
 

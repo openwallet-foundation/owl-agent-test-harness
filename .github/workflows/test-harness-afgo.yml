@@ -48,7 +48,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a afgo-master"
           TEST_AGENTS: "-d afgo-master"
-          TEST_SCOPE: "-t @RFC0023,@T001.1-RFC0036,@RFC0453,@RFC0454 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023  -t ~@T005-RFC0023 -t ~@T006-RFC0023"
+          TEST_SCOPE: "-t @RFC0023,@T001.1-RFC0036,@RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_Indy"
           REPORT_PROJECT: afgo 
         continue-on-error: true
       - name: run-send-gen-test-results-secure
