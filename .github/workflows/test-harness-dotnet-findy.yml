@@ -5,21 +5,22 @@ name: test-harness-findy-acapy
 #
 # Summary
 #
-# This runset uses the latest release of findy-agent for all of the agents except Bob (holder),
-# which uses the current main branch of ACA-Py. The runset covers all of the AIP 1.0 tests that 
-# are known to work with the ACA-Py as the holder. Excluded are those tests that involve Revocation.
+# This runset uses the latest release of Aries Framework DotNet for all of the agents except Bob (holder),
+# which uses the current main branch of findy-agent. The runset covers all of the AIP 1.0 tests that 
+# are known to work with findy as the holder. Excluded are those tests that involve Revocation.
 #
 # Current
 # 
-# All of the tests being executed in this runset are passing.
+# All of the tests being executed in this runset are failing. There is an issue with dotnet sending the connection 
+# response, and throws an unhandled exception.
 # 
-# *Status Note Updated: 2021.09.14*
+# *Status Note Updated: 2021.09.28*
 #
 # End
 on:
   workflow_dispatch:
   schedule:
-    - cron: "25 1 * * *"
+    - cron: "40 1 * * *"
 defaults:
   run:
     shell: bash

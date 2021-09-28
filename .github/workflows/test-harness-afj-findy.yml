@@ -1,18 +1,18 @@
 name: test-harness-findy-acapy
-# RUNSET_NAME: "findy to AFJ"
+# RUNSET_NAME: "findy to ACA-PY"
 # Scope: AIP 1.0
 # Exceptions: Revocation
 #
 # Summary
 #
-# This runset uses the latest release of findy-agent for all of the agents except Bob (holder),
-# which uses the current main branch of Aries Framework Javascript. The runset covers all of the AIP 1.0 tests that 
-# are known to work with AFJ as the holder. Excluded are those tests that involve Revocation.
+# This runset uses the latest release of Aries Framework Javascript for all of the agents except Bob (holder),
+# which uses the current main branch of findy-agent. The runset covers all of the AIP 1.0 tests that 
+# are known to work with findy as the holder. Excluded are those tests that involve Revocation.
 #
 # Current
 # 
-# All of the tests being executed in this runset are failing. There is an issue with findy sending the final trust-ping 
-# to the holder with the error connection not found for connection id. 
+# All of the tests being executed in this runset are failing. There is an issue with afj sending the connection 
+# response, and throws an error processing inbound message.
 # 
 # *Status Note Updated: 2021.09.28*
 #
@@ -20,7 +20,7 @@ name: test-harness-findy-acapy
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 1 * * *"
+    - cron: "45 1 * * *"
 defaults:
   run:
     shell: bash
@@ -44,13 +44,13 @@ jobs:
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
           BUILD_AGENTS: "-a javascript -a findy"
-          TEST_AGENTS: "-d findy -b javascript"
+          TEST_AGENTS: "-d javascript -b findy"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation"
-          REPORT_PROJECT: findy-b-javascript
+          REPORT_PROJECT: javascript-b-findy
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: findy-b-javascript
+          REPORT_PROJECT: javascript-b-findy
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
