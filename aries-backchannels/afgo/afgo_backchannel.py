@@ -667,7 +667,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             # Note: we don't provide any rec_id in the receive-request-resolvable-did case.
             # this is because the agent with the public DID doesn't have a connection ID until it's received the front-channel
             # OOB message from the invitee.
-            (resp_status, resp_text) = await self.make_agent_GET_request_response("did-exchange")
+            (resp_status, resp_text) = await self.request_response_did_exchange()
             return (resp_status, resp_text)
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
@@ -698,7 +698,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 if rec_id is None:
                     raise Exception(f"Cannot have both data and rec_id empty for issuecredential/{op['operation']}")
 
-                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
+                (wh_status, wh_text) = await self.request_response_issue_credential(rec_id=rec_id, message_name="issue-credential-actions-msg")
                 issue_credential_actions_msg = json.loads(wh_text)
                 # Format the proposal for afgo offer
 
@@ -861,7 +861,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         rec_id = resp_json["piid"]
                     else:
                         raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
-                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                (wh_status, wh_text) = await self.request_response_issue_credential(rec_id)
                 issue_credential_states_msg = json.loads(wh_text)
                 if "StateID" in issue_credential_states_msg["message"]:
                     resp_json["state"] = issue_credential_states_msg["message"]["StateID"]
@@ -889,7 +889,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         rec_id = resp_json["piid"]
                     else:
                         raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
-                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                (wh_status, wh_text) = await self.request_response_issue_credential(rec_id)
                 issue_credential_states_msg = json.loads(wh_text)
                 if "StateID" in issue_credential_states_msg["message"]:
                     resp_json["state"] = issue_credential_states_msg["message"]["StateID"]
@@ -924,7 +924,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         rec_id = resp_json["piid"]
                     else:
                         raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
-                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                (wh_status, wh_text) = await self.request_response_issue_credential(rec_id)
                 issue_credential_states_msg = json.loads(wh_text)
                 if "StateID" in issue_credential_states_msg["message"]:
                     resp_json["state"] = self.issueCredentialStateTranslationDict[issue_credential_states_msg["message"]["StateID"]]
@@ -955,8 +955,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 if rec_id is None:
                     raise Exception(f"Have not passed a thread id for issuecredential/{op['operation']}")
 
-                #(wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-actions-msg")
-                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="issue-credential-states-msg")
+                (wh_status, wh_text) = await self.request_response_issue_credential(rec_id=rec_id, message_name="issue-credential-states-msg")
                 log_msg(f"Credential Data retreived from webhook message: ", wh_text)
 
                 # if the messsage doesn't contain credential details get it from the credential_details_msg
@@ -1109,7 +1108,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         rec_id = resp_json["piid"]
                     else:
                         raise Exception(f"No piid found to retrieve State from webhook message: {resp_text}")
-                (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id)
+                (wh_status, wh_text) = await self.request_response_issue_credential(rec_id)
                 issue_credential_states_msg = json.loads(wh_text)
                 if "StateID" in issue_credential_states_msg["message"]:
                     resp_json["state"] = self.issueCredentialStateTranslationDict[issue_credential_states_msg["message"]["StateID"]]
@@ -1211,7 +1210,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif operation == "send-presentation":
             # Get the presentation details from the webook data
-            (wh_status, wh_text) = await self.make_agent_GET_request_response(topic, rec_id=rec_id, message_name="present-proof-actions-msg")
+            (wh_status, wh_text) = await self.request_response_present_proof(topic, rec_id=rec_id, message_name="present-proof-actions-msg")
             if wh_status == 200 and wh_text is not None:
                 present_proof_msg = json.loads(wh_text)
             else:
@@ -1219,12 +1218,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             # Prepare the payload from the webhook data
             ammended_data = {
-                "presentation": present_proof_msg["message"]["Message"]
+                "presentation": present_proof_msg["message"]["Message"],
+                "piid": present_proof_msg["message"]["Message"]["@id"]
             }
+
+            ammended_data["presentation"]["@type"] = "https://didcomm.org/present-proof/2.0/presentation"
             ammended_data["presentation"]["presentations~attach"] = ammended_data["presentation"]["request_presentations~attach"]
-            ammended_data["presentation"].pop("request_presentations~attach")
-            ammended_data["presentation"].pop("~thread")
-            ammended_data["presentation"].pop("will_confirm")
+            ammended_data["presentation"].pop("request_presentations~attach", None)
+            ammended_data["presentation"].pop("~thread", None)
+            ammended_data["presentation"].pop("will_confirm", None)
             ammended_data["presentation"]["presentations~attach"][0]["data"]["json"] = data
 
             ammended_data["presentation"]["presentations~attach"][0]["data"]["json"]["@context"] = [
@@ -1291,7 +1293,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 wh_id = resp_json["piid"]
             else:
                 wh_id = rec_id
-            #(wh_status, wh_text) = await self.make_agent_GET_request_response(topic, wh_id)
             await asyncio.sleep(1)
             present_proof_states_msg = pop_resource_latest("present-proof-states-msg")
             #present_proof_states_msg = json.loads(wh_text)
@@ -1440,7 +1441,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (200, json.dumps(resp_json))
 
         elif op["topic"] == "issue-credential" or op["topic"] == "issue-credential-v2":
-            (wh_status, wh_text) = await self.make_agent_GET_request_response(op["topic"], rec_id)
+            (wh_status, wh_text) = await self.request_response_issue_credential(rec_id)
             issue_credential_states_msg = json.loads(wh_text)
             if "StateID" in issue_credential_states_msg["message"]:
                 resp_json = {"state": issue_credential_states_msg["message"]["StateID"]}
@@ -1470,7 +1471,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "proof" or op["topic"] == "proof-v2":
-            (wh_status, wh_text) = await self.make_agent_GET_request_response(op["topic"], rec_id)
+            (wh_status, wh_text) = await self.request_response_present_proof(op["topic"], rec_id)
             present_proof_states_msg = json.loads(wh_text)
             if "StateID" in present_proof_states_msg["message"]:
                 resp_json = {"state": present_proof_states_msg["message"]["StateID"]}
@@ -1551,216 +1552,252 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
+    async def request_response_connection(
+        self, rec_id
+    ) -> (int, str):
+        # TODO: no result will ever be found, since nothing ever pushes 'connection-msg'
+        connection_msg = pop_resource(rec_id, "connection-msg")
+        i = 0
+        while connection_msg is None and i < MAX_TIMEOUT:
+            await asyncio.sleep(1)
+            connection_msg = pop_resource(rec_id, "connection-msg")
+            i = i + 1
+
+        resp_status = 200
+        if connection_msg:
+            resp_text = json.dumps(connection_msg)
+        else:
+            resp_text = "{}"
+
+        return (resp_status, resp_text)
+
+    async def request_response_did_exchange(
+        self, rec_id=None
+    ) -> (int, str):
+        if rec_id:
+            try:
+                didexchange_msg = await pop_message_queue("didexchange-states-msg" + ","+rec_id, MAX_TIMEOUT)
+            except:
+                print("didex timeout waiting for didexchange-states-msg")
+                return (200, "{}")
+        else:
+            try:
+                # fallback: check last message if none is available under rec_id
+                # for implicit invitation the harness can't pass in the invitation ID
+                await asyncio.sleep(2)
+                didexchange_msg = await pop_message_stack("didexchange-states-msg", MAX_TIMEOUT)
+            except:
+                print("didex timeout waiting for didexchange-states-msg fallback")
+                return (200, "{}")
+
+        resp_status = 200
+        if didexchange_msg:
+            resp_text = json.dumps(didexchange_msg)
+            resp_text = self.agent_state_translation("did-exchange", None, resp_text)
+
+            if 'message' in didexchange_msg:
+                conn_id = didexchange_msg['message']['Properties']['connectionID']
+                resp_text = json.dumps({ 'connection_id': conn_id, 'data': didexchange_msg })
+
+        else:
+            print("didex NO RESULT FOUND for didexchange-states-msg")
+            resp_text = "{}"
+
+        return (resp_status, resp_text)
+
+    async def request_response_out_of_band(
+        self, rec_id
+    ) -> (int, str):
+        # TODO: no result will ever be found, since nothing ever pushes 'didexchange-msg'
+        c_msg = pop_resource(rec_id, "didexchange-msg")
+        i = 0
+        while didexchange_msg is None and i < MAX_TIMEOUT:
+            await asyncio.sleep(1)
+            didexchange_msg = pop_resource(rec_id, "didexchange-msg")
+            i = i + 1
+
+        resp_status = 200
+        if didexchange_msg:
+            resp_text = json.dumps(didexchange_msg)
+            resp_text = self.agent_state_translation("out-of-band", None, resp_text)
+
+            if 'message' in didexchange_msg:
+                conn_id = didexchange_msg['message']['Properties']['connectionID']
+                resp_text = json.dumps({ 'connection_id': conn_id, 'data': didexchange_msg })
+
+        else:
+            resp_text = "{}"
+
+        return (resp_status, resp_text)
+
+    async def request_response_issue_credential(
+        self, rec_id, message_name=None
+    ) -> (int, str):
+        if message_name is None:
+            message_name = "issue-credential-states-msg"
+        await asyncio.sleep(1)
+
+        credential_msg = pop_resource_latest(message_name)
+        i = 0
+        while credential_msg is None and i < MAX_TIMEOUT:
+            await asyncio.sleep(1)
+            credential_msg = pop_resource_latest(message_name)
+            i = i + 1
+
+        # If we couldn't get a state out of the states webhook message, see if we can get the type and determine what the
+        # state should be. This is a guess as afgo doesn't return states to receivers.
+        if (message_name == "issue-credential-states-msg") and (credential_msg == None or "message" not in credential_msg):
+            message_name = "issue-credential-actions-msg"
+            credential_msg = get_resource_latest(message_name)
+            i = 0
+            while credential_msg is None and i < MAX_TIMEOUT:
+                await asyncio.sleep(1)
+                # TODO May need to get instead of pop because the msg may be needed elsewhere.
+                #credential_msg = pop_resource_latest(message_name)
+                credential_msg = get_resource_latest(message_name)
+                i = i + 1
+            if "message" in credential_msg:
+                op_type = credential_msg["message"]["Message"]["@type"]
+                state = self.IssueCredentialTypeToStateTranslationDict[op_type]
+                credential_msg["message"]["StateID"] = state
+                credential_msg["state"] = state
+            else:
+                raise Exception(f"Could not retieve State from webhook message: {issue_credential_actions_msg}")
+
+        # There is an issue with the issue command and it needs the credential~attach as well as the thread_id
+        # Because we are popping the webhook off the stack because we are getting the protocol state we are losing
+        # the credential details (it isn't contained in every webhook message), and it is no longer being sent by
+        # the tests. So, if the credential message contains the full credential like filters~attach, then re-add
+        # it to the stack again keyed by the piid called credential_details_msg. This way if any call has a problem
+        # getting the cred details from the webhook messages, we have it here to fall back on.
+        credential_msg_txt = json.dumps(credential_msg)
+        if "filters~attach" in credential_msg_txt:
+            thread_id = credential_msg["message"]["Properties"]["piid"]
+            push_resource(thread_id, "credential-details-msg", credential_msg)
+            log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
+        if "credentials~attach" in credential_msg_txt:
+            thread_id = credential_msg["message"]["Properties"]["piid"]
+            push_resource(thread_id, "credential-cache-msg", credential_msg)
+            log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
+
+        resp_status = 200
+        if credential_msg:
+            resp_text = json.dumps(credential_msg)
+        else:
+            resp_text = "{}"
+
+        return (resp_status, resp_text)
+
+    async def request_response_credential(
+        self, rec_id
+    ) -> (int, str):
+        credential_msg = pop_resource(rec_id, "credential-msg")
+        i = 0
+        while credential_msg is None and i < MAX_TIMEOUT:
+            await asyncio.sleep(1)
+            credential_msg = pop_resource(rec_id, "credential-msg")
+            i = i + 1
+
+        resp_status = 200
+        if credential_msg:
+            resp_text = json.dumps(credential_msg)
+        else:
+            resp_text = "{}"
+
+        return (resp_status, resp_text)
+
+    async def request_response_present_proof(
+        self, topic, rec_id, message_name=None
+    ) -> (int, str):
+        if message_name is None:
+            message_name = "present-proof-states-msg"
+
+        await asyncio.sleep(1)
+        presentation_msg = pop_resource(rec_id, message_name)
+        i = 0
+        while presentation_msg is None and i < MAX_TIMEOUT:
+            await asyncio.sleep(1)
+            presentation_msg = pop_resource(rec_id, message_name)
+            i = i + 1
+
+        # If we couldn't get a state out of the states webhook message, see if we can get the type and determine what the
+        # state should be. This is a guess as afgo doesn't return states to receivers.
+        if (message_name == "present-proof-states-msg") and (presentation_msg == None or "message" not in presentation_msg):
+            message_name = "present-proof-actions-msg"
+            presentation_msg = get_resource_latest(message_name)
+            i = 0
+            while presentation_msg is None and i < MAX_TIMEOUT:
+                await asyncio.sleep(1)
+                # TODO May need to get instead of pop because the msg may be needed elsewhere.
+                #credential_msg = pop_resource_latest(message_name)
+                presentation_msg = get_resource_latest(message_name)
+                i = i + 1
+            if "message" in presentation_msg:
+                op_type = presentation_msg["message"]["Message"]["@type"]
+                state = self.ProofTypeToStateTranslationDict[op_type]
+                presentation_msg["message"]["StateID"] = state
+                presentation_msg["state"] = state
+            else:
+                raise Exception(f"Could not retieve State from webhook message: {presentation_msg}")
+
+        resp_status = 200
+        if presentation_msg:
+            resp_text = json.dumps(presentation_msg)
+            if resp_status == 200: resp_text = self.agent_state_translation(topic, None, resp_text)
+        else:
+            resp_text = "{}"
+
+        return (resp_status, resp_text)
+
+    async def request_response_revocation_registry(
+        self, rec_id
+    ) -> (int, str):
+        revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
+        i = 0
+        while revocation_msg is None and i < MAX_TIMEOUT:
+            await asyncio.sleep(1)
+            revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
+            i = i + 1
+
+        resp_status = 200
+        if revocation_msg:
+            resp_text = json.dumps(revocation_msg)
+        else:
+            resp_text = "{}"
+
+        return (resp_status, resp_text)
+
     async def make_agent_GET_request_response(
         self, topic, rec_id=None, text=False, params=None, message_name=None
     ) -> (int, str):
-        # TODO: make_agent_GET_request_response() is only called for didexchange, issue-credential, and present-proof
         if topic == "connection" and rec_id:
-            connection_msg = pop_resource(rec_id, "connection-msg")
-            i = 0
-            while connection_msg is None and i < MAX_TIMEOUT:
-                await asyncio.sleep(1)
-                connection_msg = pop_resource(rec_id, "connection-msg")
-                i = i + 1
-
-            resp_status = 200
-            if connection_msg:
-                resp_text = json.dumps(connection_msg)
-            else:
-                resp_text = "{}"
-
-            return (resp_status, resp_text)
+            return await self.request_response_connection(rec_id)
 
         elif topic == "did":
             # TODO: change to actual method call
             return (200, 'some stats')
 
         elif topic == "did-exchange":
-            if rec_id:
-                try:
-                    didexchange_msg = await pop_message_queue("didexchange-states-msg" + ","+rec_id, MAX_TIMEOUT)
-                except:
-                    print("didex timeout waiting for didexchange-states-msg")
-                    return (200, "{}")
-            else:
-                try:
-                    # fallback: check last message if none is available under rec_id
-                    # for implicit invitation the harness can't pass in the invitation ID
-                    await asyncio.sleep(2)
-                    didexchange_msg = await pop_message_stack("didexchange-states-msg", MAX_TIMEOUT)
-                except:
-                    print("didex timeout waiting for didexchange-states-msg fallback")
-                    return (200, "{}")
-
-            resp_status = 200
-            if didexchange_msg:
-                resp_text = json.dumps(didexchange_msg)
-                resp_text = self.agent_state_translation(topic, None, resp_text)
-
-                if 'message' in didexchange_msg:
-                    conn_id = didexchange_msg['message']['Properties']['connectionID']
-                    resp_text = json.dumps({ 'connection_id': conn_id, 'data': didexchange_msg })
-
-            else:
-                print("didex NO RESULT FOUND for didexchange-states-msg")
-                resp_text = "{}"
-
-            return (resp_status, resp_text)
+            return await self.request_response_did_exchange(rec_id)
 
         elif topic == "out-of-band" and rec_id:
-            # TODO: no result will ever be found in this branch, since nothing ever pushes 'didexchange-msg'
-            c_msg = pop_resource(rec_id, "didexchange-msg")
-            i = 0
-            while didexchange_msg is None and i < MAX_TIMEOUT:
-                await asyncio.sleep(1)
-                didexchange_msg = pop_resource(rec_id, "didexchange-msg")
-                i = i + 1
-
-            resp_status = 200
-            if didexchange_msg:
-                resp_text = json.dumps(didexchange_msg)
-                resp_text = self.agent_state_translation(topic, None, resp_text)
-
-                if 'message' in didexchange_msg:
-                    conn_id = didexchange_msg['message']['Properties']['connectionID']
-                    resp_text = json.dumps({ 'connection_id': conn_id, 'data': didexchange_msg })
-
-            else:
-                resp_text = "{}"
-
-            return (resp_status, resp_text)
+            return await self.request_response_out_of_band(rec_id)
 
         elif (topic == "issue-credential" or topic == "issue-credential-v2") and rec_id:
-            if message_name is None:
-                message_name = "issue-credential-states-msg"
-            await asyncio.sleep(1)
-
-            credential_msg = pop_resource_latest(message_name)
-            i = 0
-            while credential_msg is None and i < MAX_TIMEOUT:
-                await asyncio.sleep(1)
-                credential_msg = pop_resource_latest(message_name)
-                i = i + 1
-
-            # If we couldn't get a state out of the states webhook message, see if we can get the type and determine what the 
-            # state should be. This is a guess as afgo doesn't return states to receivers.
-            if (message_name == "issue-credential-states-msg") and (credential_msg == None or "message" not in credential_msg):
-                message_name = "issue-credential-actions-msg"
-                credential_msg = get_resource_latest(message_name)
-                i = 0
-                while credential_msg is None and i < MAX_TIMEOUT:
-                    await asyncio.sleep(1)
-                    # TODO May need to get instead of pop because the msg may be needed elsewhere.
-                    #credential_msg = pop_resource_latest(message_name)
-                    credential_msg = get_resource_latest(message_name)
-                    i = i + 1
-                if "message" in credential_msg:
-                    op_type = credential_msg["message"]["Message"]["@type"]
-                    state = self.IssueCredentialTypeToStateTranslationDict[op_type]
-                    credential_msg["message"]["StateID"] = state
-                    credential_msg["state"] = state
-                else:
-                    raise Exception(f"Could not retieve State from webhook message: {issue_credential_actions_msg}")
-
-            # There is an issue with the issue command and it needs the credential~attach as well as the thread_id
-            # Because we are popping the webhook off the stack because we are getting the protocol state we are losing
-            # the credential details (it isn't contained in every webhook message), and it is no longer being sent by 
-            # the tests. So, if the credential message contains the full credential like filters~attach, then re-add 
-            # it to the stack again keyed by the piid called credential_details_msg. This way if any call has a problem
-            # getting the cred details from the webhook messages, we have it here to fall back on.
-            credential_msg_txt = json.dumps(credential_msg)
-            if "filters~attach" in credential_msg_txt:
-                thread_id = credential_msg["message"]["Properties"]["piid"]
-                push_resource(thread_id, "credential-details-msg", credential_msg)
-                log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
-            if "credentials~attach" in credential_msg_txt:
-                thread_id = credential_msg["message"]["Properties"]["piid"]
-                push_resource(thread_id, "credential-cache-msg", credential_msg)
-                log_msg(f'Added credential details back into webhook storage: {json.dumps(credential_msg)}')
-                
-            resp_status = 200
-            if credential_msg:
-                resp_text = json.dumps(credential_msg)
-            else:
-                resp_text = "{}"
-
-            return (resp_status, resp_text)
+            return await self.request_response_issue_credential(rec_id, message_name=message_name)
 
         elif topic == "credential" and rec_id:
-            credential_msg = pop_resource(rec_id, "credential-msg")
-            i = 0
-            while credential_msg is None and i < MAX_TIMEOUT:
-                await asyncio.sleep(1)
-                credential_msg = pop_resource(rec_id, "credential-msg")
-                i = i + 1
+            return await self.request_response_credential(rec_id)
 
-            resp_status = 200
-            if credential_msg:
-                resp_text = json.dumps(credential_msg)
-            else:
-                resp_text = "{}"
-
-            return (resp_status, resp_text)
-        
         elif (topic == "proof" or topic == "proof-v2") and rec_id:
-            if message_name is None:
-                message_name = "present-proof-states-msg"
-            await asyncio.sleep(1)
-            presentation_msg = pop_resource(rec_id, message_name)
-            i = 0
-            while presentation_msg is None and i < MAX_TIMEOUT:
-                await asyncio.sleep(1)
-                presentation_msg = pop_resource(rec_id, message_name)
-                i = i + 1
-
-            # If we couldn't get a state out of the states webhook message, see if we can get the type and determine what the 
-            # state should be. This is a guess as afgo doesn't return states to receivers.
-            if (message_name == "present-proof-states-msg") and (presentation_msg == None or "message" not in presentation_msg):
-                message_name = "present-proof-actions-msg"
-                presentation_msg = get_resource_latest(message_name)
-                i = 0
-                while presentation_msg is None and i < MAX_TIMEOUT:
-                    await asyncio.sleep(1)
-                    # TODO May need to get instead of pop because the msg may be needed elsewhere.
-                    #credential_msg = pop_resource_latest(message_name)
-                    presentation_msg = get_resource_latest(message_name)
-                    i = i + 1
-                if "message" in presentation_msg:
-                    op_type = presentation_msg["message"]["Message"]["@type"]
-                    state = self.ProofTypeToStateTranslationDict[op_type]
-                    presentation_msg["message"]["StateID"] = state
-                    presentation_msg["state"] = state
-                else:
-                    raise Exception(f"Could not retieve State from webhook message: {presentation_msg}")
-
-            resp_status = 200
-            if presentation_msg:
-                resp_text = json.dumps(presentation_msg)
-                if resp_status == 200: resp_text = self.agent_state_translation(topic, None, resp_text)
-            else:
-                resp_text = "{}"
-            
-            return (resp_status, resp_text)
+            return await self.request_response_present_proof(topic, rec_id, message_name=message_name)
 
         elif topic == "revocation-registry" and rec_id:
-            revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
-            i = 0
-            while revocation_msg is None and i < MAX_TIMEOUT:
-                await asyncio.sleep(1)
-                revocation_msg = pop_resource(rec_id, "revocation-registry-msg")
-                i = i + 1
-
-            resp_status = 200
-            if revocation_msg:
-                resp_text = json.dumps(revocation_msg)
-            else:
-                resp_text = "{}"
-
-            return (resp_status, resp_text)
+            return await self.request_response_revocation_registry(rec_id)
 
         elif topic == "pass-registry" and rec_id:
             pass
-        
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
 
     def _process(self, args, env, loop):
