@@ -13,11 +13,10 @@ name: test-harness-findy-javascript-dotnet
 #
 # Current
 # 
-# All tests are working, except for three tests that include Faber in the test run as an issuer.
-# These tests are; T001-RFC0037@1.2, T001.2-RFC0037@1.2, T001.4-RFC0037@1.1 . Further investigation 
-# is required to determine the issue in these three tests.
+# All of the tests being executed in this runset are failing. There is an issue with findy sending the final trust-ping 
+# to the holder with the error connection not found for connection id. 
 # 
-# *Status Note Updated: 2021.03.18*
+# *Status Note Updated: 2021.03.28*
 #
 # End
 on:
