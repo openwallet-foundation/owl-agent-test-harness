@@ -11,10 +11,9 @@ name: test-harness-afgo-acapy
 #
 # Current
 # 
-# None of the tests are currently working and issues have been created to try to determine three identified issues.
-# One might be in the test suite, while two others appear to be in the Aries Framework Go.
-# 
-# *Status Note Updated: 2021.03.17*
+# All of the tests being executed in this runset are passing.
+#
+# *Status Note Updated: 2021.09.27*
 #
 # End
 on:
