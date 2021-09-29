@@ -9,7 +9,7 @@ name: test-harness-afgo-afgo
 # that are expected to pass given the current state of Aries Framework Go support for 2 DID exchange.
 #
 # Current
-#
+# 
 # All of the tests being executed in this runset are passing.
 #
 # *Status Note Updated: 2021.09.27*

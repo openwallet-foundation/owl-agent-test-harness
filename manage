@@ -225,9 +225,24 @@ buildImages() {
     echo Backchannel Folder: ${BACKCHANNEL_FOLDER}
     if [ -e "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" ]; then
       echo "Building ${agent}-agent-backchannel ..."
+      local REPO_ARGS
+      REPO_ARGS=
+      if [[ -f "${BACKCHANNEL_FOLDER}/${agent}.repoenv" ]]; then
+        source "${BACKCHANNEL_FOLDER}/${agent}.repoenv"
+        if [[ -n "${REPO_URL}" ]]; then
+          local REPO_COMMIT
+          if [[ -z ${REPO_BRANCH} ]]; then
+            REPO_BRANCH=HEAD
+          fi
+          REPO_COMMIT=$(git ls-remote ${REPO_URL} ${REPO_BRANCH} | cut -f1)
+          REPO_ARGS="--build-arg REPO_URL=${REPO_URL} --build-arg REPO_COMMIT=${REPO_COMMIT}"
+        fi
+      fi
+
       if ! docker build \
         ${args} \
         $(initDockerBuildArgs) \
+        ${REPO_ARGS} \
         -t "${agent}-agent-backchannel" \
         -f "${BACKCHANNEL_FOLDER}/Dockerfile.${agent}" "aries-backchannels/"; then
           echo "Docker image build failed."
