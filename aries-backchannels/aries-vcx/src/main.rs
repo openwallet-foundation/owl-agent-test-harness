@@ -3,9 +3,8 @@ mod setup;
 mod error;
 
 use std::sync::Mutex;
-use std::env;
 
-use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web, guard, middleware};
+use actix_web::{App, HttpServer, web, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 use crate::controllers::{general, connection, credential_definition, issuance, schema, presentation};
 use aries_vcx::handlers::connection::connection::Connection;

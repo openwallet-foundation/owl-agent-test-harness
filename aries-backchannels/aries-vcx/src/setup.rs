@@ -17,15 +17,18 @@ struct SeedResponse {
 }
 
 async fn get_trustee_seed() -> std::result::Result<String, String> {
-let ledger_url = std::env::var("LEDGER_URL").unwrap_or("http://localhost:9000".to_string());
-    let url = format!("{}/register", ledger_url);
-    let mut rng = thread_rng();
-    let client = reqwest::Client::new();
-    let body = json!({
-        "role": "TRUST_ANCHOR",
-        "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
-    }).to_string();
-    Ok(client.post(&url).body(body).send().await.unwrap().json::<SeedResponse>().await.unwrap().seed)
+    if let Some(ledger_url) = std::env::var("LEDGER_URL").ok() {
+        let url = format!("{}/register", ledger_url);
+        let mut rng = thread_rng();
+        let client = reqwest::Client::new();
+        let body = json!({
+            "role": "TRUST_ANCHOR",
+            "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
+        }).to_string();
+        Ok(client.post(&url).body(body).send().await.unwrap().json::<SeedResponse>().await.unwrap().seed)
+    } else {
+        Ok("000000000000000000000000Trustee1".to_string())
+    }
 }
 
 async fn download_genesis_file() -> std::result::Result<String, String> {

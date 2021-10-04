@@ -3,7 +3,7 @@ name: test-harness-ariesvcx-ariesvcx
 # Scope: AIP 1.0
 # Exceptions: Proof Proposals, Public Dids, Revocations
 #
-# Current
+# Credential exchange only supported when beginning with credential offer
 # 
 # Passing tests: @T003-RFC0036 @T001-RFC0160 @T002-RFC0160 @T003-RFC0160 @T001-RFC0037
 # 

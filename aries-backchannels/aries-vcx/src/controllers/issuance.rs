@@ -140,6 +140,7 @@ impl Agent {
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
         holder.update_state(connection).map_err(|err| HarnessError::from(err))?;
+        self.db.set(&id, &holder).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "state": "done", "credential_id": id }).to_string()) // TODO: Test we are in Finished state
     }
 

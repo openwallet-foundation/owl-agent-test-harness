@@ -6,38 +6,33 @@ use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::{Agent, State};
 use crate::controllers::Request;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest as VcxPresentationRequest;
-use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
-use aries_vcx::messages::attachment::Attachments;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::status::Status;
 use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
 use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
 
 #[derive(Serialize, Deserialize, Default, Debug)]
-struct PresentationProposal {
+struct PresentationRequestWrapper {
     connection_id: String,
-    presentation_proposal: PresentationRequest
+    presentation_request: PresentationRequest
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    #[serde(rename = "request_presentations~attach")]
-    pub request_presentations_attach: Attachments,
+    pub proof_request: ProofRequestData,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct ProofRequestData {
-    pub requested_attributes: serde_json::Value,
+    pub data: serde_json::Value,
 }
 
 fn _get_state_prover(prover: &Prover) -> State {
     match prover.get_state() {
-        ProverState::Initial => State::Initial,
-        // ProverState::PresentationPrepared => State::PresentationSent,
+        ProverState::Initial => State::RequestReceived,
         ProverState::PresentationSent => State::PresentationSent,
-        // ProverState::VcxStateRequestReceived => State::RequestReceived,
         ProverState::Finished => State::Done,
         ProverState::PresentationPreparationFailed | ProverState::Failed => State::Failure,
         _ => State::Unknown
@@ -48,7 +43,6 @@ fn _get_state_verifier(verifier: &Verifier) -> State {
     match verifier.get_state() {
         VerifierState::Initial => State::Initial,
         VerifierState::PresentationRequestSent => State::OfferSent,
-        // VerifierState::RequestReceived => State::RequestReceived,
         VerifierState::Finished => State::PresentationReceived,
         _ => State::Unknown
     }
@@ -76,17 +70,16 @@ fn _select_credentials(resolved_creds: &str) -> HarnessResult<String> {
 }
 
 impl Agent {
-    pub fn send_proof_request(&mut self, presentation_proposal: &PresentationProposal) -> HarnessResult<String> {
+    pub fn send_proof_request(&mut self, presentation_proposal: &PresentationRequestWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
-        let content = presentation_proposal.presentation_proposal.request_presentations_attach.content().map_err(|err| HarnessError::from(err))?;
-        let req_data: ProofRequestData = serde_json::from_str(&content).map_err(|err| HarnessError::from(err))?;
-        let requested_attrs = req_data.requested_attributes.to_string();
+        let req_data = presentation_proposal.presentation_request.proof_request.data.clone();
+        let requested_attrs = req_data["requested_attributes"].to_string();
         let mut verifier = Verifier::create(id.to_string(), requested_attrs, "[]".to_string(), "{}".to_string(), id.to_string()).map_err(|err| HarnessError::from(err))?;
         verifier.send_presentation_request(connection.send_message_closure().map_err(|err| HarnessError::from(err))?, None).map_err(|err| HarnessError::from(err))?;
         self.db.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
-        Ok(json!({"state": State::RequestSent, "thread_id": id}).to_string())
+        Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": id}).to_string())
     }
 
     pub fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
@@ -157,7 +150,7 @@ impl Agent {
 }
 
 #[post("/send-request")]
-pub async fn send_proof_request(req: web::Json<Request<PresentationProposal>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
+pub async fn send_proof_request(req: web::Json<Request<PresentationRequestWrapper>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_proof_request(&req.data)
 }
 

@@ -1,8 +1,7 @@
 use std::sync::Mutex;
-use actix_web::{web, HttpResponse, HttpRequest, Responder, post, get};
-use crate::{Agent, State};
-use crate::controllers::Request;
-use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
+use actix_web::{web, HttpResponse, Responder, get};
+use crate::Agent;
+use crate::error::HarnessResult;
 
 impl Agent {
     pub fn get_status_json(&self) -> HarnessResult<String> {

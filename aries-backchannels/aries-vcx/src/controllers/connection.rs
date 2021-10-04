@@ -81,7 +81,6 @@ impl Agent {
         let mut connection: Connection = self.db.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         connection.update_state().map_err(|err| HarnessError::from(err))?;
-
         self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
