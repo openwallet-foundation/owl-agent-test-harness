@@ -163,6 +163,12 @@ namespace DotNet.Backchannel.Controllers
         [HttpPost("verify-presentation")]
         public async Task<IActionResult> VerifyPresentation(OperationBody body)
         {
+            // Adding a delay here. It seems that with the removal of the state checks in the tests,
+            // Some agents are not yet in the appropriate state for this call. 
+            // TODO There may be a better way to do this but adding the wait is a quick fix to get the tests
+            // running again.
+            await Task.Delay(10000);
+
             var context = await _agentContextProvider.GetContextAsync();
             var threadId = body.Id;
             var THPresentationExchange = _proofCache.Get<TestHarnessPresentationExchange>(threadId);

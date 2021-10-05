@@ -147,6 +147,12 @@ namespace DotNet.Backchannel.Controllers
             CredentialOfferMessage credentialOffer;
             CredentialRecord credentialRecord;
 
+            // Adding a delay here. It seems that with the removal of the state checks in the tests,
+            // Some agents are not yet in the appropriate state for this call. 
+            // TODO There may be a better way to do this but adding the wait is a quick fix to get the tests
+            // running again.
+            await Task.Delay(5000);
+
             // Send offer in response to proposal
             if (threadId != null)
             {
@@ -250,6 +256,13 @@ namespace DotNet.Backchannel.Controllers
         [HttpPost("issue")]
         public async Task<IActionResult> IssueCredentialAsync(OperationBody body)
         {
+
+            // Adding a delay here. It seems that with the removal of the state checks in the tests,
+            // Some agents are not yet in the appropriate state for this call. 
+            // TODO There may be a better way to do this but adding the wait is a quick fix to get the tests
+            // running again.
+            await Task.Delay(10000);
+
             var threadId = body.Id;
             var context = await _agentContextProvider.GetContextAsync();
             var THCredentialExchange = _credentialCache.Get<TestHarnessCredentialExchange>(threadId);

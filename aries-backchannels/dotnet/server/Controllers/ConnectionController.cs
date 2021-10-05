@@ -143,6 +143,12 @@ namespace DotNet.Backchannel.Controllers
             var connectionId = body.Id;
             var context = await _agentContextProvider.GetContextAsync();
 
+            // Adding a delay here. It seems that with the removal of the state checks in the tests,
+            // Some agents are not yet in the appropriate state for this call. 
+            // TODO There may be a better way to do this but adding the wait is a quick fix to get the tests
+            // running again.
+            await Task.Delay(5000);
+
             var THConnection = _connectionCache.Get<TestHarnessConnection>(connectionId);
             if (THConnection == null) return NotFound(); // Return early if not found
 
