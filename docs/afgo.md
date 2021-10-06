@@ -4,7 +4,7 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.7.1 | afgo-interop<br>unknown | acapy-main<br>0.7.1 | acapy-main<br>0.7.1 | pre-AIP 2.0 | [**9 / 10<br>90%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.7.1 | afgo-interop<br>unknown | acapy-main<br>0.7.1 | acapy-main<br>0.7.1 | pre-AIP 2.0 | [**10 / 10<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.7.1 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**10 / 10<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo](#runset-afgo) | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | AIP 2.0 | [**11 / 11<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
 
@@ -15,10 +15,10 @@
 Runset Name: ACA-PY to AF-Go
 
 ```tip
-**Latest results: 9 out of 10 (90%)**
+**Latest results: 10 out of 10 (100%)**
 
 
-*Last run: Thu Sep 30 01:32:45 UTC 2021*
+*Last run: Wed Oct  6 01:44:18 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -41,7 +41,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 10 out of 10 (100%)**
 
 
-*Last run: Thu Sep 30 02:03:58 UTC 2021*
+*Last run: Wed Oct  6 02:25:11 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -64,7 +64,7 @@ Runset Name: AF-Go to AF-Go
 **Latest results: 11 out of 11 (100%)**
 
 
-*Last run: Thu Sep 30 02:04:47 UTC 2021*
+*Last run: Wed Oct  6 02:33:27 UTC 2021*
 ```
 
 #### Current Runset Status
