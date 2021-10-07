@@ -179,8 +179,8 @@ def step_impl(context, responder):
 
 @when('"{requester}" receives the invitation')
 def step_impl(context, requester):
-    # if feature is DID Exchange then set use existing connection to false
-    if "0023" in context.feature.name:
+    # if feature is DID Exchange or MIME Types then set use existing connection to false
+    if "0023" in context.feature.name or "0044" in context.feature.name:
         context.use_existing_connection = False
     data = context.responder_invitation
     data["use_existing_connection"] = context.use_existing_connection
