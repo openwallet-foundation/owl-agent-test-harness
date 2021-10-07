@@ -272,11 +272,6 @@ def step_impl(context, holder):
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    resp_state = resp_json["state"]
-    assert resp_state == "request-sent", f'resp_state {resp_state} is not request-sent'
-
-    # Verify issuer status
-    assert expected_agent_state(context.issuer_url, "issue-credential", context.cred_thread_id, "request-received", wait_time=60.0)
     
     # If the protocol starts with a request we need a thread_id to call the issue command
     if "cred_thread_id" not in context:

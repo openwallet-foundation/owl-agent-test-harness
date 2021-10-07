@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 # Set of valid agents - add new agents here
 export VALID_AGENTS=$(ls aries-backchannels/*/Dockerfile.* | sed "s/^.*file.//" |  tr "\n" " " | sort -u)

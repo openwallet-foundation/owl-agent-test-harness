@@ -1,16 +1,7 @@
 # This is needed because indy-sdk needs to be installed
 # specifically for the platform it is installed. So we can't
 # mount the node modules from the host
-javascript/**
-acapy/**
-afgo/**
-data/**
-demo/**
-dotnet/**
-mobile/**
-pico/**
-python/**
-vcx/**
+javascript/server/node_modules
 
 aries-vcx/**/target
 aries-vcx/**/*.db*
