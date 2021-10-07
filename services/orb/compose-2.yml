@@ -57,7 +57,7 @@ services:
       - KMS_KEY_MANAGER_STORAGE_TYPE=couchdb
       - KMS_KEY_MANAGER_STORAGE_URL=${COUCHDB_USERNAME}:${COUCHDB_PASSWORD}@couchdb.kms.com:5984
       - KMS_KEY_MANAGER_STORAGE_PREFIX=kmskm
-      - KMS_LOG_LEVEL=debug
+      - KMS_LOG_LEVEL=WARNING
     ports:
       - 7878:7878
     entrypoint: ""
@@ -78,6 +78,7 @@ services:
       - VCT_DSN=couchdb://${COUCHDB_USERNAME}:${COUCHDB_PASSWORD}@couchdb.kms.com:5984
       - VCT_DATABASE_PREFIX=vct-db
       - VCT_TLS_CACERTS=/etc/orb/tls/ec-cacert.pem
+      - VCT_LOG_LEVEL=WARNING
     volumes:
       - ./.build/keys/tls:/etc/orb/tls
     ports:

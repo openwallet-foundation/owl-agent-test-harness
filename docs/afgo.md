@@ -4,9 +4,9 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.7.1 | afgo-interop<br>unknown | acapy-main<br>0.7.1 | acapy-main<br>0.7.1 | pre-AIP 2.0 | [**2 / 3<br>66%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
-| [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.7.1 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**3 / 3<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [afgo](#runset-afgo) | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | pre-AIP 2.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.7.1 | afgo-interop<br>unknown | acapy-main<br>0.7.1 | acapy-main<br>0.7.1 | pre-AIP 2.0 | [**10 / 10<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
+| [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.7.1 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**10 / 10<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [afgo](#runset-afgo) | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | AIP 2.0 | [**11 / 11<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -15,18 +15,17 @@
 Runset Name: ACA-PY to AF-Go
 
 ```tip
-**Latest results: 2 out of 3 (66%)**
+**Latest results: 10 out of 10 (100%)**
 
 
-*Last run: Thu Sep 23 01:28:17 UTC 2021*
+*Last run: Wed Oct  6 01:44:18 UTC 2021*
 ```
 
 #### Current Runset Status
 
-None of the tests are currently working and issues have been created to try to determine three identified issues.
-One might be in the test suite, while two others appear to be in the Aries Framework Go.
+All of the tests being executed in this runset are passing.
 
-*Status Note Updated: 2021.03.05*
+*Status Note Updated: 2021.09.27*
 
 #### Runset Details
 
@@ -39,18 +38,17 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 Runset Name: AF-Go to ACA-PY
 
 ```tip
-**Latest results: 3 out of 3 (100%)**
+**Latest results: 10 out of 10 (100%)**
 
 
-*Last run: Thu Sep 23 01:57:28 UTC 2021*
+*Last run: Wed Oct  6 02:25:11 UTC 2021*
 ```
 
 #### Current Runset Status
 
-None of the tests are currently working and issues have been created to try to determine three identified issues.
-One might be in the test suite, while two others appear to be in the Aries Framework Go.
+All of the tests being executed in this runset are passing.
 
-*Status Note Updated: 2021.03.17*
+*Status Note Updated: 2021.09.27*
 
 #### Runset Details
 
@@ -63,18 +61,17 @@ One might be in the test suite, while two others appear to be in the Aries Frame
 Runset Name: AF-Go to AF-Go
 
 ```tip
-**Latest results: 12 out of 12 (100%)**
+**Latest results: 11 out of 11 (100%)**
 
 
-*Last run: Thu Sep 23 02:01:50 UTC 2021*
+*Last run: Wed Oct  6 02:33:27 UTC 2021*
 ```
 
 #### Current Runset Status
 
-The tests that use an implicit invitation are not currently working. The issue is being investigated -- this feature may not be
-supported in Aries Framework Go.
+All of the tests being executed in this runset are passing.
 
-*Status Note Updated: 2021.03.05*
+*Status Note Updated: 2021.09.27*
 
 #### Runset Details
 

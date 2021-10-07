@@ -7,53 +7,72 @@
 ARG GO_VER=1.16
 ARG ALPINE_VER=3.12
 
-FROM golang:${GO_VER}-alpine${ALPINE_VER} as golang
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    git \
-    libtool \
-    bash \
-    make;
-ADD . $GOPATH/src/github.com/hyperledger
-WORKDIR $GOPATH/src/github.com/hyperledger
+################
+# build afgo
+
+FROM golang:${GO_VER}-alpine${ALPINE_VER} as go-build
+
+RUN apk add --no-cache make git bash
 ENV EXECUTABLES go git
 
-RUN git clone https://github.com/hyperledger/aries-framework-go.git
-WORKDIR $GOPATH/src/github.com/hyperledger/aries-framework-go
+RUN mkdir -p /go/src/github.com/hyperledger
+WORKDIR /go/src/github.com/hyperledger
 
-FROM golang as aries-framework
+ARG REPO_URL
+RUN git clone ${REPO_URL}
+WORKDIR /go/src/github.com/hyperledger/aries-framework-go
+ARG REPO_COMMIT
+RUN git fetch origin && git checkout ${REPO_COMMIT}
+
 ARG GO_TAGS=
 ARG GOPROXY=
 RUN GO_TAGS=${GO_TAGS} GOPROXY=${GOPROXY} make agent-rest-acapy-interop
-#
-# Install the test harness backchannel
-#
+
+################
+# python base image
+
+FROM alpine:${ALPINE_VER} as python-base
 
 ENV PYTHONUNBUFFERED=1
-RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
-RUN apk add --update --no-cache python3-dev
+RUN apk add --update --no-cache python3
+RUN ln -sf python3 /usr/bin/python
+
+RUN mkdir -p /root/.local/bin
+ENV PATH=/root/.local/bin:$PATH
+
+RUN mkdir -p /agent-home
+WORKDIR /agent-home
+
+################
+# build python deps
+
+FROM python-base as python-build
+
+RUN apk add --update --no-cache python3-dev git gcc make libtool musl-dev bash
+
 RUN python3 -m ensurepip
 RUN pip3 install --no-cache --upgrade pip setuptools
 
-RUN mkdir -p $GOPATH/aries-backchannels
-WORKDIR $GOPATH/aries-backchannels
+COPY python/requirements.txt .
+RUN pip3 install --user -r requirements.txt
 
-ENV RUNMODE=docker
+################
+# build final image
 
-COPY python/requirements.txt python/
-RUN pip3 install -r python/requirements.txt
+FROM python-base as run-stage
+
+ENV RUNMODE=docker PYTHONPATH=/agent-home
+RUN mkdir -p ./bin
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 COPY python python
 COPY afgo afgo
 COPY data ./
 
-# aries-agent-rest is in $GOPATH/src/github.com/hyperledger/aries-framework-go/build/bin. 
-# The Backchannel is looking for it in ./bin, create a link to it in ./bin
-RUN mkdir -p ./bin
-RUN ln -s $GOPATH/src/github.com/hyperledger/aries-framework-go/build/bin/aries-agent-rest ./bin/aries-agent-rest
-ENV PYTHONPATH=$GOPATH/aries-backchannels
+# use python dependencies built in build stage
+COPY --from=python-build /root/.local /root/.local
 
+# The Backchannel is looking for aries-agent-rest in ./bin, copy it from the go-build stage
+COPY --from=go-build /go/src/github.com/hyperledger/aries-framework-go/build/bin/aries-agent-rest ./bin/aries-agent-rest
 
 ENTRYPOINT ["python", "afgo/afgo_backchannel.py"]

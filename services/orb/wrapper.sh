@@ -25,7 +25,7 @@ setupCLI() {
 	pushd .build > /dev/null
 
 	if [[ ! -f orb-cli ]]; then
-		curl -sL https://github.com/trustbloc/orb/releases/download/v0.1.1/orb-cli-linux-amd64.tar.gz | tar -x -z -O -f - > orb-cli
+		curl -sL https://github.com/trustbloc/orb/releases/download/v0.1.3/orb-cli-linux-amd64.tar.gz | tar -x -z -O -f - > orb-cli
 		chmod +x orb-cli
 	fi
 
@@ -75,11 +75,11 @@ createDID() {
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-master.data
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-interop.data
 
-	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-master.data/
-	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-interop.data/
+	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-master.data
+	cp -r .build/orb-dids ../../aries-backchannels/afgo/.build/afgo-interop.data
 
-	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-master.data/
-	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-interop.data/
+	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-master.data
+	cp -r did-keys/priv ../../aries-backchannels/afgo/.build/afgo-interop.data
 
 
 	popd > /dev/null # to caller
