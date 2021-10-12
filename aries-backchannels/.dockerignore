@@ -2,3 +2,6 @@
 # specifically for the platform it is installed. So we can't
 # mount the node modules from the host
 javascript/server/node_modules
+
+aries-vcx/**/target
+aries-vcx/**/*.db*

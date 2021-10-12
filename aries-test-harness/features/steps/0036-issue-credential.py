@@ -4,6 +4,7 @@ from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_PO
 from agent_test_utils import format_cred_proposal_by_aip_version
 from time import sleep
 import time
+from random import *
 
 # This step is defined in another feature file
 # Given "Acme" and "Bob" have an existing connection
@@ -18,7 +19,7 @@ SCHEMA_TEMPLATE = {
 CRED_DEF_TEMPLATE = {
   "support_revocation": False,
   "schema_id": "",
-  "tag": "default"
+  "tag": str(randint(1, 10000))
 }
 
 CREDENTIAL_ATTR_TEMPLATE = [
