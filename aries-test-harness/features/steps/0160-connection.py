@@ -129,6 +129,8 @@ def step_impl(context, invitee):
     if "temp_connection_id_dict" in context:
         if len(context.temp_connection_id_dict) != 0:
             context.connection_id_dict[context.inviter_name] = {invitee: context.temp_connection_id_dict[context.inviter_name]}
+            #clear the temp connection id dict used in the initial step. We don't need it anymore.
+            context.temp_connection_id_dict.clear()
     else:
         # This means the connection id was not retreived for the inviter in the create invitation step
         # Get the connection id for the inviter given the invitation_id
@@ -429,7 +431,7 @@ def step_impl(context, inviteinterceptor, inviter):
 @then(u'"{inviter}" sends a request_not_accepted error')
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter][context.inviteinterceptor_name]
+    inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # TODO It is expected that accept-request should send a request not accepted error, not a 500
     (resp_status, resp_text) = agent_backchannel_POST(inviter_url + "/agent/command/", "connection", operation="accept-request", id=inviter_connection_id)
