@@ -4,10 +4,10 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.7.1 | findy<br>0.25.2 | acapy-main<br>0.7.1 | acapy-main<br>0.7.1 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.7.2-rc0 | findy<br>0.25.6 | acapy-main<br>0.7.2-rc0 | acapy-main<br>0.7.2-rc0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-verity](#runset-acapy-verity) | acapy<br>0.7.1 | findy<br>0.24.27 | acapy<br>0.7.1 | acapy<br>0.7.1 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-verity/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-acapy](#runset-findy-acapy) | findy<br>0.25.2 | acapy-main<br>0.7.1 | findy<br>0.25.2 | findy<br>0.25.2 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [findy](#runset-findy) | findy<br>0.25.2 | findy<br>0.25.2 | findy<br>0.25.2 | findy<br>0.25.2 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-acapy](#runset-findy-acapy) | findy<br>0.25.6 | acapy-main<br>0.7.2-rc0 | findy<br>0.25.6 | findy<br>0.25.6 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy](#runset-findy) | findy<br>0.25.6 | findy<br>0.25.6 | findy<br>0.25.6 | findy<br>0.25.6 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -19,7 +19,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Oct  6 02:44:36 UTC 2021*
+*Last run: Tue Oct 12 02:23:19 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -65,7 +65,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Oct  6 02:48:56 UTC 2021*
+*Last run: Tue Oct 12 02:24:18 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -88,7 +88,7 @@ Runset Name: findy to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Oct  6 02:47:39 UTC 2021*
+*Last run: Tue Oct 12 02:22:23 UTC 2021*
 ```
 
 #### Current Runset Status
