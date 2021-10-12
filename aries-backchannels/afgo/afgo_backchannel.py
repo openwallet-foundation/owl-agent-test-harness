@@ -71,6 +71,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             params
         )
 
+        self.output_handler_futures = []
+
         # Afgo : RFC
         self.connectionResponderStateTranslationDict = {
             "invited": "invitation-received",
@@ -179,6 +181,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "issue-credential-v2": "/issuecredential/",
             "proof": "/presentproof/",
             "proof-v2": "/presentproof/"
+        }
+
+        # Generic AATH parameter to AFGO commandline parameter
+        self.map_cmdline_params = {
+            "mime-type": "media-type-profiles"
         }
 
     def get_agent_args(self):
@@ -440,6 +447,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self, op, rec_id=None, data=None, text=False, params=None
     ) -> (int, str):
         if op["topic"] == "connection":
+            #TODO: legacy code from acapy backchannel
             operation = op["operation"]
             if operation == "create-invitation":
                 agent_operation = "/connections/" + operation
@@ -491,7 +499,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (200, json.dumps(resp_json))
 
         elif op["topic"] == "credential-definition":
-            # POST operation is to create a new cred def
+            # afgo doesn't support creating cred defs, stub
             agent_operation = "/credential-definitions"
             log_msg(agent_operation, data)
 
@@ -507,7 +515,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif op["topic"] == "revocation":
-            #set the acapyversion to master since work to set it is not complete. Remove when master report proper version
+            #TODO: legacy code from acapy backchannel
             operation = op["operation"]
             agent_operation, admin_data = await self.get_agent_operation_afgo_version_based(op["topic"], operation, rec_id, data)
 
@@ -537,7 +545,36 @@ class AfGoAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.handle_did_exchange_POST(op, rec_id=rec_id, data=data)
             return (resp_status, resp_text)
 
+        elif op["topic"] == "agent":
+            (resp_status, resp_text) = await self.handle_agent_POST(op, data=data)
+            return (resp_status, resp_text)
+
         return (501, '501: Not Implemented\n\n'.encode('utf8'))
+
+    async def handle_agent_POST(self, op, data=None):
+        if op["operation"] != "start":
+            return (404, "Unsupported operation")
+
+        input_params = data['parameters']
+        print(f"(re)start agent with params: {input_params}")
+
+        args = []
+        for k in input_params:
+            arg = k
+            if arg in self.map_cmdline_params:
+                arg = self.map_cmdline_params[arg]
+            arg = '--' + arg
+
+            args.append(arg)
+
+            v = input_params[k]
+            if v:
+                args.append(v)
+
+        await self.kill_agent()
+        await self.start_process_with_extra_args(args=args)
+
+        return (200, "{}")
 
     async def handle_out_of_band_POST(self, op, rec_id=None, data=None):
         #self.current_webhook_topic = op["topic"].replace('-', '_')
@@ -1806,18 +1843,19 @@ class AfGoAgentBackchannel(AgentBackchannel):
             env=env,
             encoding="utf-8",
         )
-        loop.run_in_executor(
+        stdout = loop.run_in_executor(
             None,
             output_reader,
             proc.stdout,
             functools.partial(self.handle_output, source="stdout"),
         )
-        loop.run_in_executor(
+        stderr = loop.run_in_executor(
             None,
             output_reader,
             proc.stderr,
             functools.partial(self.handle_output, source="stderr"),
         )
+        self.output_handler_futures = [stdout, stderr]
         return proc
 
     def get_process_args(self, bin_path: str = None):
@@ -1872,13 +1910,30 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 f"Unexpected response from agent process. Admin URL: {status_url}"
             )
 
-    async def start_process(
-        self, python_path: str = None, bin_path: str = None, wait: bool = True
+    async def start_process_with_extra_args(
+        self, *_, args: list = [], bin_path: str = None, wait: bool = True
     ):
         my_env = os.environ.copy()
-        python_path = DEFAULT_PYTHON_PATH if python_path is None else python_path
-        if python_path:
-            my_env["PYTHONPATH"] = python_path
+        agent_args = self.get_process_args(bin_path) + args
+
+        # start agent sub-process
+        self.log(f"Starting agent sub-process ...")
+        self.log(f"agent starting with params: ")
+        self.log(agent_args)
+        self.log("and environment:")
+        self.log(my_env)
+        loop = asyncio.get_event_loop()
+        self.proc = await loop.run_in_executor(
+            None, self._process, agent_args, my_env, loop
+        )
+        if wait:
+            await asyncio.sleep(1.0)
+            await self.detect_process()
+
+    async def start_process(
+        self, bin_path: str = None, wait: bool = True
+    ):
+        my_env = os.environ.copy()
 
         agent_args = self.get_process_args(bin_path)
 
@@ -1886,6 +1941,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self.log(f"Starting agent sub-process ...")
         self.log(f"agent starting with params: ")
         self.log(agent_args)
+        self.log("and environment:")
+        self.log(my_env)
         loop = asyncio.get_event_loop()
         self.proc = await loop.run_in_executor(
             None, self._process, agent_args, my_env, loop
@@ -1905,10 +1962,25 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 self.log(msg)
                 raise Exception(msg)
 
-    async def terminate(self):
-        loop = asyncio.get_event_loop()
+    async def kill_agent(self, loop=None):
+        if loop is None:
+            loop = asyncio.get_event_loop()
+
         if self.proc:
             await loop.run_in_executor(None, self._terminate)
+
+        for fut in self.output_handler_futures:
+            fut.cancel()
+
+        self.output_handler_futures = []
+
+        # delete all backchannel metadata relating to data saved to agent
+        self.loaded_jsonld_contexts = []
+
+
+    async def terminate(self):
+        self.kill_agent()
+
         await self.client_session.close()
         if self.webhook_site:
             await self.webhook_site.stop()

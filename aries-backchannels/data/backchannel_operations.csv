@@ -1,6 +1,7 @@
 rfc,command,response,topic,method,operation,id,data,description,id_details,data_details,result_details
 0000 General Backchannel Commands,X,,status,GET,,,,"Return agent status, 200 if active or 418 otherwise",,,status
 0000 General Backchannel Commands,X,,version,GET,,,,"Return agent version, 200 if exists or 404 otherwise",,,version
+0000 General Backchannel Commands,X,,agent,POST,start,,Y,,,parameters,
 0160 Connection Protocol,X,,connection,POST,create-invitation,,Y,Create a new invitation ,,invitation,"connection_id, state"
 0160 Connection Protocol,X,,connection,POST,receive-invitation,,Y,Receive an invitation,,invitation,"connection_id, state"
 0160 Connection Protocol,X,,connection,POST,accept-invitation,Y,Y,Accept an invitation,connection_id,request,"connection_id, state"
