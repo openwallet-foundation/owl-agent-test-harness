@@ -710,11 +710,14 @@ startHarness(){
 
   startServices auto
 
-  startCloudAgency
+  # Only start cloud agency if vcx is in the agent list to run.
+  if [[ "${ACME}" = "aries-vcx" ]] || [[ "${BOB}" = "aries-vcx" ]] || [[ "${MALLORY}" = "aries-vcx" ]] || [[ "${FABER}" = "aries-vcx" ]]; then
+    startCloudAgency
 
-  if ! waitForCloudAgency; then
-    echoRed "\nThe cloud agency not running.\n"
-    exit 1
+    if ! waitForCloudAgency; then
+      echoRed "\nThe cloud agency not running.\n"
+      exit 1
+    fi
   fi
 
   dockerhost_url_templates
@@ -740,7 +743,10 @@ startHarness(){
 
   echo
   # Allure Reports environment.properties file handling
-  writeEnvProperties
+  # Only do this if reporting parameter is passed. 
+  if [[ "${REPORT}" = "allure" ]]; then
+    writeEnvProperties
+  fi
 }
 
 deleteAgents() {
