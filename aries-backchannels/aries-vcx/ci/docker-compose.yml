@@ -17,7 +17,7 @@ services:
     environment:
       - LOG_JSON_TO_CONSOLE=false
       - LOG_LEVEL=info
-      - SERVER_PORT=8070
+      - SERVER_PORT=8000
       - SERVER_HOSTNAME=0.0.0.0
       - SERVER_MAX_REQUEST_SIZE_KB=300
 
@@ -47,7 +47,7 @@ services:
     networks:
       - aath_network
     ports:
-      - "8070:8070"
+      - "8000:8000"
 
   postgres:
     container_name: postgres
