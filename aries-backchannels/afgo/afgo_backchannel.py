@@ -72,6 +72,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         )
 
         self.output_handler_futures = []
+        self.agent_meta_parms = {}
 
         # Afgo : RFC
         self.connectionResponderStateTranslationDict = {
@@ -558,17 +559,29 @@ class AfGoAgentBackchannel(AgentBackchannel):
         input_params = data['parameters']
         print(f"(re)start agent with params: {input_params}")
 
+        self.agent_meta_parms = {}
+
         args = []
         for k in input_params:
+            v = input_params[k]
+
             arg = k
             if arg in self.map_cmdline_params:
                 arg = self.map_cmdline_params[arg]
+            else:
+                # parameters that aren't mapped to the agent will stay in the backchannel
+                self.agent_meta_parms[k] = v
+                continue
+
             arg = '--' + arg
 
             args.append(arg)
 
-            v = input_params[k]
             if v:
+                # if v is a list, make it a csv string
+                if isinstance(v, list):
+                    v = ",".join(v)
+
                 args.append(v)
 
         await self.kill_agent()
@@ -581,9 +594,27 @@ class AfGoAgentBackchannel(AgentBackchannel):
         operation = op["operation"]
         agent_operation = "outofband"
 
-        data = self.amend_oob_data_for_afgo(operation, data)
+        if operation == "send-invitation-message":
+            # This label is needed for the accept invitation.
+            new_data = {
+                "label": f"Invitation created by {self.admin_url}"
+            }
+            if "accept" in data:
+                new_data["accept"] = data["accept"]
+            elif "oob-accept" in self.agent_meta_parms:
+                new_data["accept"] = self.agent_meta_parms["oob-accept"]
+
+        elif operation == 'receive-invitation':
+            # Accept invitation requires my_label be part of the data.
+            # That is wy the create invitation above adds a label to have some consistency.
+            new_data = { "invitation": data }
+            new_data["my_label"] = data["label"]
+
+        data = new_data
 
         agent_operation = f"/{agent_operation}/{self.map_test_ops_to_bachchannel[operation]}"
+
+        print(f"admin_POST to {agent_operation} with data {data}")
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -591,7 +622,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if resp_status == 200:
             # call get connection to get the status based on the invitation id.
             resp_text = await self.amend_response_with_state("connection", resp_text)
-        if resp_status == 200: resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
+            resp_text = self.agent_state_translation(op["topic"], operation, resp_text)
         return (resp_status, resp_text)
 
     async def amend_response_with_state(self, topic, resp_text, operation=None):
@@ -645,18 +676,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     for connection in resp_json["results"]:
                         if connection["InvitationID"] == invitation_id:
                             self.agent_connection_id = connection["ConnectionID"]
-
-
-    def amend_oob_data_for_afgo(self, operation, data):
-        if operation == "send-invitation-message":
-            # This label is needed for the accept invitation.
-            data = { f"label": "Invitation created by {self.admin_url}" }
-        elif operation == 'receive-invitation':
-            # Accept invitation requires my_label be part of the data.
-            # That is wy the create invitation above adds a label to have some consistency.
-            data = { "invitation": data }
-            data["my_label"] = data["invitation"]["label"]
-        return data
 
     async def handle_did_exchange_POST(self, op, rec_id=None, data=None):
         operation = op["operation"]

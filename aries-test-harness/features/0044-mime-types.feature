@@ -39,3 +39,25 @@ Feature: RFC0044 didcomm mime types
          | acme-mime-type | bob-mime-type |
          | "didcomm/aip1" | "didcomm/v2"  |
          | "didcomm/v2"   | "didcomm/aip1"|
+
+   @T003-RFC0044
+   Scenario Outline: Perform DID Exchange between two agents that have different default envelope MIME types and mismatching OOB accepts
+      Given we have "2" agents
+         | name | role      |
+         | Acme | requester |
+         | Bob  | responder |
+      And "Acme" is running with parameters "{"mime-type":<acme-mime-type>,"oob-accept":<acme-mime-type>}"
+      And "Bob" is running with parameters "{"mime-type":<bob-mime-type>,"oob-accept":<bob-mime-type>}"
+      When "Bob" sends an explicit invitation
+      And "Acme" receives the invitation
+      And "Acme" sends the request to "Bob"
+      And "Bob" receives the request
+      And "Bob" sends a response to "Acme"
+      And "Acme" receives the response
+      And "Acme" sends complete to "Bob"
+      Then "Acme" and "Bob" have a connection
+
+      Examples:
+         | acme-mime-type | bob-mime-type |
+         | "didcomm/aip1" | "didcomm/v2"  |
+         | "didcomm/v2"   | "didcomm/aip1"|
