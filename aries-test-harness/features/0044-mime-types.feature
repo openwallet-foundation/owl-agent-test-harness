@@ -1,4 +1,4 @@
-@RFC0044 @AIP20
+@RFC0044 @AIP20 @UsesCustomParameters
 Feature: RFC0044 didcomm mime types
 
    @T001-RFC0044

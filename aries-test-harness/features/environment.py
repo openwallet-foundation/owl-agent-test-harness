@@ -72,7 +72,10 @@ def before_scenario(context, scenario):
                         print('FileNotFoundError: features/data/' + tag.lower + '.json')
                     
                     
-
-
+def after_feature(context, feature):
+    if "UsesCustomParameters" in feature.tags:
+        # after a feature that uses custom parameters, clear all custom parameters in each agent
+        for agent in ['Acme', 'Bob', 'Faber', 'Mallory']:
+            context.execute_steps("Given \"" + agent + "\" is running with parameters \"{}\"")
 
 
