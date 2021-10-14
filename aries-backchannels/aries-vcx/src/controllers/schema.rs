@@ -15,6 +15,12 @@ struct Schema {
     attributes: Vec<String>
 }
 
+#[derive(Serialize, Deserialize)]
+struct CachedSchema {
+    schema_id: String,
+    schema_json: String
+}
+
 fn create_and_publish_schema(source_id: &str,
                              issuer_did: String,
                              name: String,
@@ -31,6 +37,8 @@ fn create_and_publish_schema(source_id: &str,
         payment_txn,
         state: PublicEntityStateType::Built
     }.to_string()?;
+    let schema_json: serde_json::Value = serde_json::from_str(&schema_json).map_err(|err| HarnessError::from(err))?;
+    let schema_json = schema_json["data"].to_string();
     Ok((schema_id, schema_json))
 }
 
@@ -46,12 +54,12 @@ impl Agent {
             }
             Ok((schema_id, schema_json)) => (schema_id, schema_json)
         };
-        self.db.set(&schema_id, &schema_json).map_err(|err| HarnessError::from(err))?;
+        self.dbs.schema.set(&schema_id, &schema_json).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "schema_id": schema_id }).to_string())
     }
 
     pub fn get_schema(&mut self, id: &str) -> HarnessResult<String> {
-        let schema: String = self.db.get(id)
+        let schema: String = self.dbs.schema.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Schema with id {} not found", id)))?;
         let schema: serde_json::Value = serde_json::from_str(&schema).map_err(|err| HarnessError::from(err))?;
         Ok(schema.to_string())

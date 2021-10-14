@@ -78,12 +78,12 @@ impl Agent {
         let requested_attrs = req_data["requested_attributes"].to_string();
         let mut verifier = Verifier::create(id.to_string(), requested_attrs, "[]".to_string(), "{}".to_string(), id.to_string()).map_err(|err| HarnessError::from(err))?;
         verifier.send_presentation_request(connection.send_message_closure().map_err(|err| HarnessError::from(err))?, None).map_err(|err| HarnessError::from(err))?;
-        self.db.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
+        self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
         Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": id}).to_string())
     }
 
     pub fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
-        let mut prover: Prover = self.db.get(id)
+        let mut prover: Prover = self.dbs.prover.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Prover with id {} not found", id)))?;
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
@@ -91,17 +91,17 @@ impl Agent {
         let credentials = _select_credentials(&credentials)?;
         prover.generate_presentation(credentials, "{}".to_string()).map_err(|err| HarnessError::from(err))?;
         prover.send_presentation(&connection.send_message_closure().map_err(|err| HarnessError::from(err))?).map_err(|err| HarnessError::from(err))?;
-        self.db.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
+        self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
         Ok(json!({"state": _get_state_prover(&prover), "thread_id": id}).to_string())
     }
 
     pub fn verify_presentation(&mut self, id: &str) -> HarnessResult<String> {
-        let mut verifier: Verifier = self.db.get(id)
+        let mut verifier: Verifier = self.dbs.verifier.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Verifier with id {} not found", id)))?;
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
         verifier.update_state(connection).map_err(|err| HarnessError::from(err))?;
-        self.db.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
+        self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
         match Status::from_u32(verifier.presentation_status()) {
             Status::Success => Ok(json!({"state": State::Done}).to_string()), // TODO: Check we are in final state
             _ => Ok(json!({"state": State::Failure}).to_string())
@@ -111,14 +111,14 @@ impl Agent {
     pub fn get_proof(&mut self, id: &str) -> HarnessResult<String> {
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
-         match self.db.get::<Prover>(id) {
+         match self.dbs.prover.get::<Prover>(id) {
              Some(mut prover) => {
                  prover.update_state(connection).map_err(|err| HarnessError::from(err))?;
-                 self.db.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
+                 self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
                  let state = _get_state_prover(&prover);
                  Ok(json!({ "state": state }).to_string())
              }
-             None => match self.db.get::<Verifier>(id) {
+             None => match self.dbs.verifier.get::<Verifier>(id) {
                  None => {
                      let presentation_requests: Vec<VcxPresentationRequest> =
                          connection.get_messages()?
@@ -134,13 +134,13 @@ impl Agent {
                             HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
                         )?;
                      let prover = Prover::create(id, presentation_request.clone())?;
-                     self.db.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
+                     self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
                      let state = _get_state_prover(&prover);
                      Ok(json!({ "state": state }).to_string())
                 }
                 Some(mut verifier) => {
                      verifier.update_state(connection).map_err(|err| HarnessError::from(err))?;
-                     self.db.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
+                     self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
                      let state = _get_state_verifier(&verifier);
                      Ok(json!({ "state": state }).to_string())
                 }

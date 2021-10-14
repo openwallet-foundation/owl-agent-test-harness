@@ -44,6 +44,8 @@ enum State {
     Complete,
     Failure,
     Unknown,
+    ProposalSent,
+    ProposalReceived,
     OfferSent,
     RequestReceived,
     CredentialSent,
@@ -67,9 +69,33 @@ struct AgentConfig {
     did: String
 }
 
+struct Storage {
+    schema: PickleDb,
+    cred_def: PickleDb,
+    connection: PickleDb,
+    holder: PickleDb,
+    issuer: PickleDb,
+    verifier: PickleDb,
+    prover: PickleDb,
+}
+
+impl Storage {
+    pub fn new() -> Self {
+        Self {
+            schema: PickleDb::new("storage-schema.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+            cred_def: PickleDb::new("storage-cred-def.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+            connection: PickleDb::new("storage-connection.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+            holder: PickleDb::new("storage-holder.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+            issuer: PickleDb::new("storage-issuer.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+            verifier: PickleDb::new("storage-verifier.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+            prover: PickleDb::new("storage-prover.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+        }
+    }
+}
+
 struct Agent {
     id: String,
-    db: PickleDb,
+    dbs: Storage,
     state: State,
     status: Status,
     config: AgentConfig,
@@ -111,7 +137,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::NormalizePath::new(middleware::normalize::TrailingSlash::Trim))
             .data(Mutex::new(Agent {
                 id: String::from("aries-vcx"),
-                db: PickleDb::new("storage.db", PickleDbDumpPolicy::AutoDump, SerializationMethod::Json),
+                dbs: Storage::new(),
                 state: State::Initial,
                 status: Status::Active,
                 config: config.clone(),
