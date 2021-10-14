@@ -32,7 +32,7 @@ services:
       - AGENCY_TYPE=enterprise
 
       - PG_STORE_HOST=postgres.aath_network
-      - PG_STORE_PORT=5432
+      - PG_STORE_PORT=5433
       - PG_STORE_ACCOUNT=postgres
       - PG_STORE_PASSWORD_SECRET=mysecretpassword
       - PG_STORE_DATABASE=storage-ea
@@ -41,7 +41,7 @@ services:
       - PG_WALLET_PASSWORD_SECRET=mysecretpassword
       - PG_WALLET_ADMIN_ACCOUNT=postgres
       - PG_WALLET_ADMIN_PASSWORD_SECRET=mysecretpassword
-      - PG_WALLET_URL=postgres.aath_network:5432
+      - PG_WALLET_URL=postgres.aath_network:5433
 
       - SERVER_ENABLE_TLS=false
     networks:
@@ -61,7 +61,7 @@ services:
     networks:
       - aath_network
     ports:
-      - "5432:5432"
+      - "5433:5433"
     command: [ "-c", "config_file=/etc/postgresql.conf" ]
 
 networks:
