@@ -70,7 +70,7 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
 pub async fn initialize() -> std::io::Result<AgentConfig> {
     info!("Initializing vcx");
     let genesis_path = download_genesis_file().await.unwrap();
-    let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8080".to_string());
+    let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8000".to_string());
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION); // TODO: Remove payments
     // TODO: Builder methods for these configs
     let pool_config = PoolConfig {

@@ -1,17 +1,18 @@
 #! /bin/bash
 
 # Configuration Data -- order matters in these arrays. A new entry requires an entry in ALL "ta_" arrays
-ta_tlas=("acapy" "afgo" "javascript" "dotnet" "verity" "findy")
-ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET" "Evernym Verity" "Findy Agent")
-ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET" "Verity" "Findy")
-ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1" "AIP 1" "AIP 1")
-ta_exceptions=("None" "None" "Revocation" "Proof Proposal" "Credential Exchange" "Revocation")
+ta_tlas=("acapy" "afgo" "javascript" "dotnet" "verity" "findy" "aries-vcx")
+ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET" "Evernym Verity" "Findy Agent" "AriesVCX")
+ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET" "Verity" "Findy" "VCX")
+ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1" "AIP 1" "AIP 1" "AIP 1")
+ta_exceptions=("None" "None" "Revocation" "Proof Proposal" "Credential Exchange" "Revocation" "Proof Proposals, Public Dids, Revocations")
 ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
 https://github.com/hyperledger/aries-framework-go \
 https://github.com/hyperledger/aries-framework-javascript \
 https://github.com/hyperledger/aries-framework-dotnet \
 https://github.com/evernym/verity \
-https://github.com/findy-network/findy-agent)
+https://github.com/findy-network/findy-agent \
+https://github.com/hyperledger/aries-vcx)
 workflows=".github/workflows/test-harness-*"
 
 unameOut="$(uname -s)"
