@@ -1,0 +1,57 @@
+name: test-harness-findy-javascript-dotnet
+# RUNSET_NAME: "findy to AFJ to AF-.NET"
+# Scope: AIP 1.0
+# Exceptions: Revocation
+#
+# Summary
+#
+# This runset uses the current main branch of findy for the Acme agent. Bob (holder)
+# uses the master branch of Aries Framework Javascript, and Faber (verifier) uses the 
+# master branch of Aries Framework .NET. The runset covers all of the AIP 1.0 tests that 
+# are known to work with the Aries Framework Javascript as the holder and Aries Framework .NET as a verifier.
+# Revocation tests are not included.
+#
+# Current
+# 
+# All of the tests being executed in this runset are passing. 
+# 
+# *Status Note Updated: 2021.10.15*
+#
+# End
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 0 * * *"
+defaults:
+  run:
+    shell: bash
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    env:
+      LEDGER_URL_CONFIG: "http://localhost:9000"
+      TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
+    steps:
+      - name: checkout-test-harness
+        uses: actions/checkout@v2
+        with:
+          path: test-harness
+      - name: run-von-network
+        uses: ./test-harness/actions/run-von-network
+      - name: run-indy-tails-server
+        uses: ./test-harness/actions/run-indy-tails-server
+      - name: run-test-harness-wo-reports
+        uses: ./test-harness/actions/run-test-harness-wo-reports
+        with:
+          BUILD_AGENTS: "-a findy -a javascript -a dotnet-master"
+          TEST_AGENTS: "-d findy -b javascript -f dotnet-master"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation"
+          REPORT_PROJECT: findy-b-javascript-f-dotnet
+        continue-on-error: true
+      - name: run-send-gen-test-results-secure
+        uses: ./test-harness/actions/run-send-gen-test-results-secure
+        with:
+          REPORT_PROJECT: findy-b-javascript-f-dotnet 
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}
