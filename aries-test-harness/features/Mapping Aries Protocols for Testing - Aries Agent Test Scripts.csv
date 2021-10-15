@@ -1,6 +1,7 @@
 RFC,Role,Step #,Steps,State,Method,Command,Response,Topic,Operation,Id,Data Parameter,Result,Description,Notes
 0000 General Backchallel Commands,,,,,,,,,,,,,,
 ,Controller,0,Get agent/backchannel status,,GET,X,,status,,,,status,"Return agent status, 200 if active or 418 otherwise",Status returned as http status; response text is ignored
+,Controller,2,Start/restart agent with parameters,,POST,X,,agent,start,,parameters,,,
 ,,,,,,,,,,,,,,
 0160 Connection Protocol,,,,,,,,,,,,,,
 ,,0,No existing connection between Inviter and Invitee,,,,,,,,,,,

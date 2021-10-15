@@ -9,7 +9,7 @@ name: test-harness-afgo-afgo
 # that are expected to pass given the current state of Aries Framework Go support for 2 DID exchange.
 #
 # Current
-#
+# 
 # All of the tests being executed in this runset are passing.
 #
 # *Status Note Updated: 2021.09.27*
@@ -47,7 +47,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a afgo-master"
           TEST_AGENTS: "-d afgo-master"
-          TEST_SCOPE: "-t @RFC0023,@T001.1-RFC0036,@RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_Indy"
+          TEST_SCOPE: "-t @RFC0023,@RFC0044,@T001.1-RFC0036,@RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_Indy"
           REPORT_PROJECT: afgo 
         continue-on-error: true
       - name: run-send-gen-test-results-secure

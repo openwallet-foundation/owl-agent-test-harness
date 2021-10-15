@@ -49,7 +49,7 @@ jobs:
           BUILD_AGENTS: "-a afgo-interop -a acapy-main"
           TEST_AGENTS: "-d afgo-interop -b acapy-main"
           OTHER_PARAMS: "-v 20"
-          TEST_SCOPE: "-t @RFC0023,@RFC0453 -t ~@wip -t ~@CredFormat_Indy"
+          TEST_SCOPE: "-t @RFC0023,@RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_Indy"
           REPORT_PROJECT: afgo-b-acapy
         env:
           EMIT-NEW-DIDCOMM-PREFIX: true

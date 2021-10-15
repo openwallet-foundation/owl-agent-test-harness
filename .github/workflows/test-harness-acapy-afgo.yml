@@ -49,7 +49,7 @@ jobs:
           BUILD_AGENTS: "-a acapy-main -a afgo-interop"
           TEST_AGENTS: "-d acapy-main -b afgo-interop"
           OTHER_PARAMS: "-v 20"
-          TEST_SCOPE: "-t @RFC0023,@RFC0453 -t ~@wip -t ~@ProofType_BbsBlsSignature2020 -t ~@CredFormat_Indy"
+          TEST_SCOPE: "-t @RFC0023,@RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_Indy"
           REPORT_PROJECT: acapy-b-afgo
         env:
           EMIT_NEW_DIDCOMM_PREFIX: true

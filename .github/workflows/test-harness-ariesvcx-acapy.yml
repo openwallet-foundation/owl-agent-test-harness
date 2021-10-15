@@ -1,0 +1,55 @@
+name: test-harness-ariesvcx-acapy
+# RUNSET_NAME: "aries-vcx to acapy"
+# Scope: AIP 1.0
+# Exceptions: Proof Proposals, Public Dids, Revocations
+#
+# Credential exchange only supported when beginning with credential offer
+# Proof presentation supported only when beginning with presentation request (test cases use credex beginning with proposal, however)
+# 
+# Passing tests: @T003-RFC0036 @T001-RFC0160 @T002-RFC0160 @T003-RFC0160
+# 
+# End
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "40 1 * * *"
+defaults:
+  run:
+    shell: bash
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    steps:
+      - name: checkout-test-harness
+        uses: actions/checkout@v2
+        with:
+          path: test-harness
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: run-von-network
+        uses: ./test-harness/actions/run-von-network
+      - name: run-indy-tails-server
+        uses: ./test-harness/actions/run-indy-tails-server
+      - name: run-test-harness-wo-reports
+        uses: ./test-harness/actions/run-test-harness-wo-reports
+        with:
+          BUILD_AGENTS: "-a aries-vcx -a acapy-main"
+          TEST_AGENTS: "-d aries-vcx -b acapy-main"
+          TEST_SCOPE: "-t @T003-RFC0036,@T001-RFC0160,@T002-RFC0160,@T003-RFC0160"
+          REPORT_PROJECT: aries-vcx-b-acapy  
+        continue-on-error: true
+      - uses: actions/upload-artifact@v2
+        with:
+          name: agent-logs
+          path: ./test-harness/.logs/
+      - name: run-send-gen-test-results-secure
+        uses: ./test-harness/actions/run-send-gen-test-results-secure
+        with:
+          REPORT_PROJECT: aries-vcx-b-acapy 
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}

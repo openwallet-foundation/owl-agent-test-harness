@@ -120,7 +120,8 @@ def step_impl(context, invitee):
 
     if not hasattr(context, 'connection_id_dict'):
         context.connection_id_dict = {}
-        context.connection_id_dict[invitee] = {}
+    context.connection_id_dict.setdefault(invitee, {})
+
     
     context.connection_id_dict[invitee][context.inviter_name] = resp_json["connection_id"]
 

@@ -1,0 +1,70 @@
+version: '3.5'
+
+x-standard-logging:
+  &service-logging
+  options:
+    max-size: '500m'
+    max-file: '3'
+  driver: json-file
+
+services:
+  agency:
+    image: docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.3.0-featureconfigurable-hostname-506
+    container_name: agency
+    logging: *service-logging
+    depends_on:
+      - postgres
+    environment:
+      - LOG_JSON_TO_CONSOLE=false
+      - LOG_LEVEL=info
+      - SERVER_PORT=8000
+      - SERVER_HOSTNAME=0.0.0.0
+      - SERVER_MAX_REQUEST_SIZE_KB=300
+
+      - PG_WALLET_MAX_CONNECTIONS=90
+      - PG_WALLET_CONNECTION_TIMEOUT_MINS=30
+
+      - AGENCY_WALLET_NAME=vcxagency-node-ea
+      - AGENCY_DID=VsKV7grR1BUE29mG2Fm2kX
+      - AGENCY_SEED_SECRET=0000000000000000000000000Forward
+      - AGENCY_WALLET_KEY_SECRET=98765432109876543210
+
+      - AGENCY_TYPE=enterprise
+
+      - PG_STORE_HOST=postgres.aath_network
+      - PG_STORE_PORT=5433
+      - PG_STORE_ACCOUNT=postgres
+      - PG_STORE_PASSWORD_SECRET=mysecretpassword
+      - PG_STORE_DATABASE=storage-ea
+
+      - PG_WALLET_ACCOUNT=postgres
+      - PG_WALLET_PASSWORD_SECRET=mysecretpassword
+      - PG_WALLET_ADMIN_ACCOUNT=postgres
+      - PG_WALLET_ADMIN_PASSWORD_SECRET=mysecretpassword
+      - PG_WALLET_URL=postgres.aath_network:5433
+
+      - SERVER_ENABLE_TLS=false
+    networks:
+      - aath_network
+    ports:
+      - "8000:8000"
+
+  postgres:
+    container_name: postgres
+    image: postgres:12.1
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
+    volumes:
+      - ./postgresql.conf:/etc/postgresql.conf
+    networks:
+      - aath_network
+    ports:
+      - "5433:5433"
+    command: [ "-c", "config_file=/etc/postgresql.conf" ]
+
+networks:
+  aath_network:
+    name: aath_network
+    driver: bridge
