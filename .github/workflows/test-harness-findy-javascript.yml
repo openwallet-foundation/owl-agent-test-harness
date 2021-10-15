@@ -11,10 +11,9 @@ name: test-harness-findy-acapy
 #
 # Current
 # 
-# All of the tests being executed in this runset are failing. There is an issue with findy sending the final trust-ping 
-# to the holder with the error connection not found for connection id. 
+# All of the tests being executed in this runset are passing. 
 # 
-# *Status Note Updated: 2021.09.28*
+# *Status Note Updated: 2021.10.15*
 #
 # End
 on:

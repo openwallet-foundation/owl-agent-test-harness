@@ -11,10 +11,10 @@ name: test-harness-findy-acapy
 #
 # Current
 # 
-# All of the tests being executed in this runset are failing. There is an issue with dotnet sending the connection 
-# response, and throws an unhandled exception.
+# Two connection tests are passing out of Nineteen total. There are multiple issues in Issue Credential and Proof
+# with dotnet as the issuer and findy as the holder.
 # 
-# *Status Note Updated: 2021.09.28*
+# *Status Note Updated: 2021.10.15*
 #
 # End
 on:
