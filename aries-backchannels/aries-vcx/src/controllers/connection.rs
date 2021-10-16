@@ -51,7 +51,7 @@ impl Agent {
 
     pub fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).map_err(|err| HarnessError::from(err))?;
+        let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).map_err(|err| HarnessError::from(err))?;
         self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string())
     }

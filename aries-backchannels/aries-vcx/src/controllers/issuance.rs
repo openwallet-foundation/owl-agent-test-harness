@@ -153,7 +153,7 @@ impl Agent {
         Ok(json!({ "state": "offer-sent", "thread_id": id }).to_string())
     }
 
-    pub fn issue_credetial(&mut self, id: &str, credential: &Credential) -> HarnessResult<String> {
+    pub fn issue_credetial(&mut self, id: &str, _credential: &Credential) -> HarnessResult<String> {
         let mut issuer: Issuer = self.dbs.issuer.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Issuer with id {} not found", id)))?;
         let connection = self.last_connection.as_ref()
@@ -212,7 +212,7 @@ impl Agent {
     }
 
     pub fn get_credential(&mut self, id: &str) -> HarnessResult<String> {
-        let mut holder: Holder = self.dbs.holder.get(id)
+        let holder: Holder = self.dbs.holder.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
         let attach = holder.get_attachment().map_err(|err| HarnessError::from(err))?;
         let attach: serde_json::Value = serde_json::from_str(&attach).map_err(|err| HarnessError::from(err))?;

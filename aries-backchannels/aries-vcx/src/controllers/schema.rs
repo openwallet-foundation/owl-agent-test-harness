@@ -22,7 +22,7 @@ struct CachedSchema {
 }
 
 fn create_and_publish_schema(source_id: &str,
-                             issuer_did: String,
+                             _issuer_did: String,
                              name: String,
                              version: String,
                              data: String) -> HarnessResult<(String, String)> {

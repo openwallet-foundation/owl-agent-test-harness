@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx::handlers::issuance::credential_def::CredentialDef;
-use aries_vcx::libindy::utils::anoncreds;
+
 use uuid;
 use crate::Agent;
 use crate::controllers::Request;

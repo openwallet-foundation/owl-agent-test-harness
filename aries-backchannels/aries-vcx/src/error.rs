@@ -1,5 +1,5 @@
 use actix_web::{
-    dev::HttpResponseBuilder, error, get, http::header, http::StatusCode, App, HttpResponse,
+    dev::HttpResponseBuilder, error, http::header, http::StatusCode, HttpResponse,
 };
 use derive_more::{Display, Error};
 
