@@ -107,7 +107,6 @@ impl Agent {
         for attr in cred_proposal.credential_proposal.attributes.clone().into_iter() {
             let name = attr["name"].as_str().unwrap();
             let value = attr["value"].as_str().unwrap();
-            warn!("Setting name {}, value {}", name, value);
             proposal_data = proposal_data.add_credential_preview_data(&name, &value, MimeType::Plain).map_err(|err| HarnessError::from(err))?;
         }
         holder.send_proposal(proposal_data.clone(), connection.send_message_closure().map_err(|err| HarnessError::from(err))?).map_err(|err| HarnessError::from(err))?;
