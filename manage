@@ -854,6 +854,70 @@ isAgent() {
   echo $result
 }
 
+printLetsEncryptWarning() {
+  [ -n "${LetsEncryptWarningPrinted}" ] && return
+  cat << EOWARN
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+>> WARNING
+>> This applies to mobile testing using Android-Based digital wallet,
+>> as far as we know.
+
+If you are using a mobile/smartphone-based Wallet, the test harness is going to
+make use of the https://ngrok.com/ infrastructure, generating url like this one
+https://aabbccdd.ngrok.io
+
+The Ngrok infrastructure makes use of a wildcard TLS certificate *.ngrok.io,
+certified by Let's Encrypt (https://letsencrypt.org/).
+However, some OS and platform are still making use of an expired root
+certificate, namely "DST Root CA X3", which expired on September 30th 2021.
+Ref: https://letsencrypt.org/docs/dst-root-ca-x3-expiration-september-2021
+
+If:
+- The wallet your are testing somehow never manages to establish a
+  connection after scanning the first QR code.
+Then:
+- you might be facing this issue.
+
+The solution is to disable the expired certificate into your android device
+trusted certificate store.
+
+Here's how: Of course, your mileage might vary depending on brand and device:
+
+* The simplest way is to launch your setting application
+  a. Use the search bar to find "certificate"-related entries
+     (you can probably use a shorter substring)
+  b. This should display a few entries, including something like
+    Trusted Certificates (or the equivalent in your phone language)
+  c. Selecting this should display two list of trusted certificates:
+    the System ones and the ones input by the user
+  d. Go to the System list of trusted certificates, and simply find the
+    DST Root CA X3 in the sorted list
+  e. Click on the certificate and deactivate it.
+
+* If the search does not work for you, we are aware of two alternate ways
+  to access the trusted certificates store, but again we cannot document for
+  all brand/models
+
+  * Either:
+    Settings
+    => Biometrics & security
+    => Other security settings
+    => View security certificates
+  * Or:
+    Settings
+    => Security
+    => Advanced
+    => Encryption and Credentials
+    => Trusted Certificates
+  * Then go to step b. above to disable the faulty certificate.
+
+Now, if the faulty certificate is not is your trust store, then you have
+another issue, sorry.
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+EOWARN
+LetsEncryptWarningPrinted=1
+}
+
 # -----------------------------------------------------------------------------------------------------------------
 # Initialization:
 # -----------------------------------------------------------------------------------------------------------------
@@ -915,6 +979,9 @@ if [[ "${COMMAND}" == "run" || "${COMMAND}" == "start" || "${COMMAND}" == "test"
             echo Use \"${0} help\" to get more information.
             exit 1
         fi
+        if [ "$agent" == "mobile" ]; then
+          printLetsEncryptWarning
+        fi
     done
 
     if [ ! -f "${BEHAVE_INI}" ]; then
@@ -946,6 +1013,10 @@ if [[ "${COMMAND}" == "build" || "${COMMAND}" == "rebuild" ]]; then
 
   if [ "${BUILD_AGENTS}" == "" ]; then
      BUILD_AGENTS=${VALID_AGENTS}
+  fi
+
+  if [[ "${TAGS}" =~ "@Mobile" ]]; then
+    printLetsEncryptWarning
   fi
 fi
 
