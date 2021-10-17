@@ -20,7 +20,7 @@ LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
 LEDGER_URL_INTERNAL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
 TAILS_SERVER_URL_HOST="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
 TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
-CLOUD_AGENCY_URL="${CLOUD_AGENCY_URL:-http://localhost:8070}"
+CLOUD_AGENCY_URL="${CLOUD_AGENCY_URL:-http://localhost:8000}"
 # important: inside the internal URLs, we replace "://localhost:" with "://${DOCKERHOST}:"
 #   so it works inside docker.
 LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
@@ -710,11 +710,14 @@ startHarness(){
 
   startServices auto
 
-  startCloudAgency
+  # Only start cloud agency if vcx is in the agent list to run.
+  if [[ "${ACME}" = "aries-vcx" ]] || [[ "${BOB}" = "aries-vcx" ]] || [[ "${MALLORY}" = "aries-vcx" ]] || [[ "${FABER}" = "aries-vcx" ]]; then
+    startCloudAgency
 
-  if ! waitForCloudAgency; then
-    echoRed "\nThe cloud agency not running.\n"
-    exit 1
+    if ! waitForCloudAgency; then
+      echoRed "\nThe cloud agency not running.\n"
+      exit 1
+    fi
   fi
 
   dockerhost_url_templates
@@ -740,7 +743,10 @@ startHarness(){
 
   echo
   # Allure Reports environment.properties file handling
-  writeEnvProperties
+  # Only do this if reporting parameter is passed. 
+  if [[ "${REPORT}" = "allure" ]]; then
+    writeEnvProperties
+  fi
 }
 
 deleteAgents() {
