@@ -22,7 +22,6 @@ struct CachedSchema {
 }
 
 fn create_and_publish_schema(source_id: &str,
-                             _issuer_did: String,
                              name: String,
                              version: String,
                              data: String) -> HarnessResult<(String, String)> {
@@ -38,16 +37,16 @@ fn create_and_publish_schema(source_id: &str,
         state: PublicEntityStateType::Built
     }.to_string()?;
     let schema_json: serde_json::Value = serde_json::from_str(&schema_json).map_err(|err| HarnessError::from(err))?;
-    let schema_json = schema_json["data"].to_string();
-    Ok((schema_id, schema_json))
+    let mut schema_json = schema_json["data"].clone();
+    schema_json.as_object_mut().unwrap().insert("id".to_string(), serde_json::Value::String(source_id.to_string()));
+    Ok((schema_id, schema_json.to_string()))
 }
 
 impl Agent {
     pub fn create_schema(&mut self, schema: &Schema) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let did = self.config.did.to_string();
         let attrs = serde_json::to_string(&schema.attributes).map_err(|err| HarnessError::from(err))?;
-        let (schema_id, schema_json) = match create_and_publish_schema(&id, did, schema.schema_name.to_string(), schema.schema_version.to_string(), attrs.to_string()) {
+        let (schema_id, schema_json) = match create_and_publish_schema(&id, schema.schema_name.to_string(), schema.schema_version.to_string(), attrs.to_string()) {
             Err(err) => {
                 warn!("Error: {:?}, schema probably exists on ledger, skipping schema publish", err);
                 anoncreds::create_schema(&schema.schema_name.to_string(), &schema.schema_version.to_string(), &attrs).map_err(|err| HarnessError::from(err))?
