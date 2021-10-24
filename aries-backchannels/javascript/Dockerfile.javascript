@@ -46,7 +46,8 @@ RUN yarn install
 
 # Copy other depedencies
 COPY javascript/server .
+COPY javascript/ngrok-wait.sh ./ngrok-wait.sh
 
 # For now we use ts-node. Compiling with typescript
 # doesn't work because indy-sdk types are not exported
-ENTRYPOINT [ "yarn", "ts-node", "src/index.ts" ]
+ENTRYPOINT [ "bash", "ngrok-wait.sh"]

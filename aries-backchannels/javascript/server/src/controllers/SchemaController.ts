@@ -15,7 +15,9 @@ export class SchemaController {
   }
 
   @Get("/:schemaId")
-  async getSchemaById(@PathParams("schemaId") schemaId: string) {
+  async getSchemaById(
+    @PathParams("schemaId") schemaId: string
+  ): Promise<Schema> {
     try {
       const schema = await this.agent.ledger.getSchema(schemaId);
 

@@ -17,7 +17,7 @@ export class TsedLogger extends BaseLogger {
   } as const;
 
   public constructor(logger: Logger) {
-    super(LogLevel.test);
+    super(LogLevel.debug);
     this.logger = logger;
   }
 

@@ -27,9 +27,14 @@ async function bootstrap() {
   const dockerHost = process.env.DOCKERHOST ?? "host.docker.internal";
   const runMode = process.env.RUN_MODE;
   const externalHost = runMode === "docker" ? dockerHost : "localhost";
-  const agentName =  process.env.AGENT_NAME ? `AFJ ${process.env.AGENT_NAME}` : `AFJ Agent (${agentPort})`;
+  const agentName = process.env.AGENT_NAME
+    ? `AFJ ${process.env.AGENT_NAME}`
+    : `AFJ Agent (${agentPort})`;
 
-  const endpointUrl = `http://${externalHost}`;
+  let endpointUrl = process.env.AGENT_PUBLIC_ENDPOINT;
+  if (!endpointUrl) {
+    endpointUrl = `http://${externalHost}:${agentPort}`;
+  }
 
   // There are multiple ways to retrieve the genesis file
   // we account for all of them
@@ -50,9 +55,10 @@ async function bootstrap() {
   const agent = await createAgent({
     agentName,
     port: agentPort,
-    endpoint: `${endpointUrl}:${agentPort}`,
+    endpoint: endpointUrl,
     publicDidSeed,
     genesisPath,
+    useLegacyDidSovPrefix: true,
   });
 
   registerProvider({

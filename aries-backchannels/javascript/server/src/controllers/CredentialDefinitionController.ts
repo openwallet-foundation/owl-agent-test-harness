@@ -1,6 +1,7 @@
 import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
 import { InternalServerError, NotFound } from "@tsed/exceptions";
-import { Agent } from "@aries-framework/core";
+import { Agent, IndyAgentService } from "@aries-framework/core";
+import type * as Indy from "indy-sdk";
 
 @Controller("/agent/command/credential-definition")
 export class CredentialDefinitionController {
@@ -13,7 +14,7 @@ export class CredentialDefinitionController {
   @Get("/:credentialDefinitionId")
   async getCredentialDefinitionById(
     @PathParams("credentialDefinitionId") credentialDefinitionId: string
-  ) {
+  ): Promise<Indy.CredDef> {
     try {
       const credentialDefinition =
         await this.agent.ledger.getCredentialDefinition(credentialDefinitionId);
@@ -43,7 +44,10 @@ export class CredentialDefinitionController {
       support_revocation: boolean;
       schema_id: string;
     }
-  ) {
+  ): Promise<{
+    credential_definition_id: string;
+    credential_definition: Indy.CredDef;
+  }> {
     // TODO: handle schema not found exception
     try {
       const schema = await this.agent.ledger.getSchema(data.schema_id);
@@ -51,7 +55,6 @@ export class CredentialDefinitionController {
       const credentialDefinition =
         await this.agent.ledger.registerCredentialDefinition({
           schema,
-          signatureType: "CL",
           supportRevocation: data.support_revocation,
           tag: data.tag,
         });
@@ -61,7 +64,10 @@ export class CredentialDefinitionController {
         credential_definition: credentialDefinition,
       };
     } catch (error) {
-      throw new InternalServerError(`Error registering credential definition: ${error.message}`, error)
+      throw new InternalServerError(
+        `Error registering credential definition: ${error.message}`,
+        error
+      );
     }
   }
 }
