@@ -10,20 +10,30 @@ import {
   IndyCredentialInfo,
   AgentConfig,
   Logger,
+  ProofEventTypes,
+  ProofStateChangedEvent,
+  ProofState,
 } from "@aries-framework/core";
 import { CredentialUtils } from "../utils/CredentialUtils";
 import { ProofUtils } from "../utils/ProofUtils";
+import { filter, firstValueFrom, ReplaySubject, timeout } from "rxjs";
 
 @Controller("/agent/command/proof")
 export class PresentProofController {
   private agent: Agent;
   private logger: Logger;
   private proofUtils: ProofUtils;
+  private subject = new ReplaySubject<ProofStateChangedEvent>()
 
   public constructor(agent: Agent) {
     this.agent = agent;
     this.logger = agent.injectionContainer.resolve(AgentConfig).logger;
     this.proofUtils = new ProofUtils(agent);
+
+    // Catch all events in replay subject for later use
+    agent.events.observable<ProofStateChangedEvent>(
+      ProofEventTypes.ProofStateChanged
+    ).subscribe(this.subject)
   }
 
   @Get("/:threadId")
@@ -127,6 +137,7 @@ export class PresentProofController {
       comment: string;
     }
   ) {
+    await this.waitForState(threadId, ProofState.RequestReceived)
     let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
 
     const requestedCredentials = JsonTransformer.fromJSON(
@@ -185,13 +196,22 @@ export class PresentProofController {
 
   @Post("/verify-presentation")
   async verifyPresentation(@BodyParams("id") threadId: string) {
-    await new Promise(f => setTimeout(f, 20000));
+    await this.waitForState(threadId, ProofState.PresentationReceived)
+
     let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
     if (proofRecord) {
       return this.mapProofRecord(
         await this.agent.proofs.acceptPresentation(proofRecord.id)
       );
     }
+  }
+
+  private async waitForState(threadId: string, state: ProofState) {
+    return await firstValueFrom(this.subject.pipe(
+      filter(c => c.payload.proofRecord.threadId === threadId),
+      filter(c => c.payload.proofRecord.state === state),
+      timeout(20000)
+    ))
   }
 
   private mapProofRecord(proofRecord: ProofRecord) {

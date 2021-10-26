@@ -2,20 +2,30 @@ import { BodyParams, Controller, Get, PathParams, Post } from "@tsed/common";
 import { BadRequest, NotFound } from "@tsed/exceptions";
 import {
   Agent,
+  CredentialEventTypes,
   CredentialPreview,
   CredentialRecord,
+  CredentialState,
+  CredentialStateChangedEvent,
   JsonTransformer,
 } from "@aries-framework/core";
 import { CredentialUtils } from "../utils/CredentialUtils";
+import { filter, firstValueFrom, ReplaySubject, timeout } from "rxjs";
 
 @Controller("/agent/command/issue-credential")
 export class IssueCredentialController {
   private agent: Agent;
   private credentialUtils: CredentialUtils;
+  private subject = new ReplaySubject<CredentialStateChangedEvent>()
 
   public constructor(agent: Agent) {
     this.agent = agent;
     this.credentialUtils = new CredentialUtils(agent);
+
+    // Catch all events in replay subject for later use
+    agent.events.observable<CredentialStateChangedEvent>(
+      CredentialEventTypes.CredentialStateChanged
+    ).subscribe(this.subject)
   }
 
   @Get("/:threadId")
@@ -30,7 +40,7 @@ export class IssueCredentialController {
   }
 
   @Get("/")
-  async getAllConnections() {
+  async getAllCredentials() {
     const credentials = await this.agent.credentials.getAll();
 
     return credentials.map((cred) => this.mapCredential(cred));
@@ -80,8 +90,9 @@ export class IssueCredentialController {
     }
   ) {
     let credentialRecord: CredentialRecord;
-    await new Promise(f => setTimeout(f, 20000));
+
     if (threadId) {
+      await this.waitForState(threadId, CredentialState.ProposalReceived)
       const { id } = await this.credentialUtils.getCredentialByThreadId(
         threadId
       );
@@ -106,6 +117,7 @@ export class IssueCredentialController {
 
   @Post("/send-request")
   async sendRequest(@BodyParams("id") threadId: string) {
+    await this.waitForState(threadId, CredentialState.OfferReceived)
     let { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
 
     const credentialRecord = await this.agent.credentials.acceptOffer(id);
@@ -117,6 +129,7 @@ export class IssueCredentialController {
     @BodyParams("id") threadId: string,
     @BodyParams("data") data?: { comment?: string }
   ) {
+    await this.waitForState(threadId, CredentialState.RequestReceived)
     const { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
 
     const credentialRecord = await this.agent.credentials.acceptRequest(id, {
@@ -127,11 +140,21 @@ export class IssueCredentialController {
 
   @Post("/store")
   async storeCredential(@BodyParams("id") threadId: string) {
+    await this.waitForState(threadId, CredentialState.CredentialReceived)
     let { id } = await this.credentialUtils.getCredentialByThreadId(threadId);
     const credentialRecord = await this.agent.credentials.acceptCredential(id);
 
     return this.mapCredential(credentialRecord);
   }
+
+  private async waitForState(threadId: string, state: CredentialState) {
+    return await firstValueFrom(this.subject.pipe(
+      filter(c => c.payload.credentialRecord.threadId === threadId),
+      filter(c => c.payload.credentialRecord.state === state),
+      timeout(20000)
+    ))
+  }
+
 
   private mapCredential(credentialRecord: CredentialRecord) {
     return {

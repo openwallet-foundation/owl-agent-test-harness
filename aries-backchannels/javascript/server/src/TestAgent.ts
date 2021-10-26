@@ -1,9 +1,9 @@
 import { $log } from "@tsed/common";
 import {
   Agent,
-  HttpOutboundTransporter,
+  HttpOutboundTransport,
   InitConfig,
-  LogLevel,
+  WsOutboundTransport,
 } from "@aries-framework/core";
 import { agentDependencies, HttpInboundTransport } from "@aries-framework/node";
 
@@ -15,30 +15,43 @@ export async function createAgent({
   publicDidSeed,
   genesisPath,
   agentName,
+  useLegacyDidSovPrefix,
 }: {
   port: number;
   endpoint: string;
   publicDidSeed: string;
   genesisPath: string;
   agentName: string;
+  useLegacyDidSovPrefix: boolean;
 }) {
   // TODO: Public did does not seem to be registered
   // TODO: Schema is prob already registered
+  $log.level = "debug"
+
   const agentConfig: InitConfig = {
     label: agentName,
-    walletConfig: { id: `aath-javascript-${Date.now()}` },
-    walletCredentials: { key: "00000000000000000000000000000Test01" },
-    poolName: "aries-framework-javascript-pool",
-    endpoint,
+    walletConfig: {
+      id: `aath-javascript-${Date.now()}`,
+      key: "00000000000000000000000000000Test01",
+    },
+    indyLedgers: [
+      {
+        id: 'main-pool',
+        isProduction: false,
+        genesisPath
+      }
+    ],
+    endpoints: [endpoint],
     publicDidSeed,
-    genesisPath,
+    useLegacyDidSovPrefix,
     logger: new TsedLogger($log),
   };
 
   const agent = new Agent(agentConfig, agentDependencies);
 
-  agent.setInboundTransporter(new HttpInboundTransport({ port }));
-  agent.setOutboundTransporter(new HttpOutboundTransporter());
+  agent.registerInboundTransport(new HttpInboundTransport({ port }));
+  agent.registerOutboundTransport(new HttpOutboundTransport());
+  agent.registerOutboundTransport(new WsOutboundTransport());
 
   await agent.initialize();
 

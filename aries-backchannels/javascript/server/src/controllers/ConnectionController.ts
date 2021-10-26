@@ -5,14 +5,27 @@ import {
   ConnectionRecord,
   ConnectionInvitationMessage,
   JsonTransformer,
+  AgentConfig,
+  ConnectionEventTypes,
+  ConnectionStateChangedEvent,
+  ConnectionState,
 } from "@aries-framework/core";
+
+import { replaceNewDidCommPrefixWithLegacyDidSovOnMessage } from "@aries-framework/core/build/utils/messageType";
+import { filter, firstValueFrom, ReplaySubject, timeout } from "rxjs";
 
 @Controller("/agent/command/connection")
 export class ConnectionController {
   private agent: Agent;
+  private subject = new ReplaySubject<ConnectionStateChangedEvent>()
 
   public constructor(agent: Agent) {
     this.agent = agent;
+
+    // Catch all events in replay subject for later use
+    agent.events.observable<ConnectionStateChangedEvent>(
+      ConnectionEventTypes.ConnectionStateChanged
+    ).subscribe(this.subject)
   }
 
   @Get("/:connectionId")
@@ -39,10 +52,16 @@ export class ConnectionController {
   async createInvitation() {
     const { invitation, connectionRecord } =
       await this.agent.connections.createConnection();
+    const invitationJson = invitation.toJSON();
+
+    const config = this.agent.injectionContainer.resolve(AgentConfig);
+    if (config.useLegacyDidSovPrefix) {
+      replaceNewDidCommPrefixWithLegacyDidSovOnMessage(invitationJson);
+    }
 
     return {
       ...this.mapConnection(connectionRecord),
-      invitation: invitation.toJSON(),
+      invitation: invitationJson,
     };
   }
 
@@ -68,7 +87,8 @@ export class ConnectionController {
 
   @Post("/accept-request")
   async acceptRequest(@BodyParams("id") connectionId: string) {
-    await new Promise(f => setTimeout(f, 20000));
+    await this.waitForState(connectionId, ConnectionState.Requested)
+
     const connection = await this.agent.connections.acceptRequest(connectionId);
 
     return this.mapConnection(connection);
@@ -81,11 +101,22 @@ export class ConnectionController {
     // AFJ doesn't support passing it for now
     @BodyParams("data") data: any
   ) {
+    await this.waitForState(connectionId, ConnectionState.Responded)
     const connection = await this.agent.connections.acceptResponse(
       connectionId
     );
 
     return this.mapConnection(connection);
+  }
+
+  private async waitForState(connectionId: string, state: ConnectionState) {
+    // Wait for event that we have received the connection request
+    // max waiting 20 seconds.
+    return await firstValueFrom(this.subject.pipe(
+      filter(c => c.payload.connectionRecord.id === connectionId),
+      filter(c => c.payload.connectionRecord.state === ConnectionState.Requested),
+      timeout(20000)
+    ))
   }
 
   private mapConnection(connection: ConnectionRecord) {
