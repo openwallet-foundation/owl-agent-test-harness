@@ -10,12 +10,19 @@ use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::status::Status;
 use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
 use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
+use aries_vcx::messages::proof_presentation::presentation_proposal::{PresentationProposalData, Attribute, Predicate, PresentationProposal as VcxPresentationProposal};
 use aries_vcx::handlers::connection::connection::Connection;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 struct PresentationRequestWrapper {
     connection_id: String,
     presentation_request: PresentationRequest
+}
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+struct PresentationProposalWrapper {
+    connection_id: String,
+    presentation_proposal: PresentationProposal
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -25,6 +32,13 @@ pub struct PresentationRequest {
     pub proof_request: ProofRequestData,
 }
 
+#[derive(Serialize, Deserialize, Default, Debug)]
+struct PresentationProposal {
+    comment: String,
+    attributes: Vec<Attribute>,
+    predicates: Vec<Predicate>
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct ProofRequestData {
     pub data: serde_json::Value,
@@ -32,7 +46,9 @@ pub struct ProofRequestData {
 
 fn _get_state_prover(prover: &Prover) -> State {
     match prover.get_state() {
-        ProverState::Initial => State::RequestReceived,
+        ProverState::Initial => State::Initial,
+        ProverState::PresentationRequestReceived => State::RequestReceived,
+        ProverState::PresentationProposalSent => State::ProposalSent,
         ProverState::PresentationSent => State::PresentationSent,
         ProverState::Finished => State::Done,
         ProverState::PresentationPreparationFailed | ProverState::Failed => State::Failure,
@@ -43,6 +59,8 @@ fn _get_state_prover(prover: &Prover) -> State {
 fn _get_state_verifier(verifier: &Verifier) -> State {
     match verifier.get_state() {
         VerifierState::Initial => State::Initial,
+        VerifierState::PresentationRequestSet => State::RequestSet,
+        VerifierState::PresentationProposalReceived => State::ProposalReceived,
         VerifierState::PresentationRequestSent => State::OfferSent,
         VerifierState::Finished => State::PresentationReceived,
         _ => State::Unknown
@@ -71,26 +89,54 @@ fn _select_credentials(resolved_creds: &str) -> HarnessResult<String> {
 }
 
 impl Agent {
-    pub fn send_proof_request(&mut self, presentation_proposal: &PresentationRequestWrapper) -> HarnessResult<String> {
+    pub fn send_proof_request(&mut self, presentation_request: &PresentationRequestWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let connection: Connection = self.dbs.connection.get(&presentation_proposal.connection_id).unwrap();
-        let req_data = presentation_proposal.presentation_request.proof_request.data.clone();
+        let connection: Connection = self.dbs.connection.get(&presentation_request.connection_id).unwrap();
+        connection.get_messages()?
+            .into_iter()
+            .for_each(|(uid, message)| {
+                match message {
+                    A2AMessage::PresentationProposal(_) => {
+                        connection.update_message_status(uid).ok();
+                    }
+                    _ => {}
+                }
+            });
+        let req_data = presentation_request.presentation_request.proof_request.data.clone();
         let requested_attrs = req_data["requested_attributes"].to_string();
-        let mut verifier = Verifier::create(id.to_string(), requested_attrs, "[]".to_string(), "{}".to_string(), id.to_string()).map_err(|err| HarnessError::from(err))?;
+        let mut verifier = Verifier::create_from_request(id.to_string(), requested_attrs, "[]".to_string(), "{}".to_string(), id.to_string()).map_err(|err| HarnessError::from(err))?;
         verifier.send_presentation_request(connection.send_message_closure().map_err(|err| HarnessError::from(err))?, None).map_err(|err| HarnessError::from(err))?;
         self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
         self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": id}).to_string())
+    }
+
+    pub fn send_proof_proposal(&mut self, presentation_proposal: &PresentationProposalWrapper) -> HarnessResult<String> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let connection: Connection = self.dbs.connection.get(&presentation_proposal.connection_id).unwrap();
+        let mut proposal_data = PresentationProposalData::create();
+        for attr in presentation_proposal.presentation_proposal.attributes.clone().into_iter() {
+            proposal_data = proposal_data.add_attribute(attr.clone());
+        };
+        let mut prover = Prover::create(&id).map_err(|err| HarnessError::from(err))?;
+        prover.send_proposal(proposal_data, &connection.send_message_closure().map_err(|err| HarnessError::from(err))?).map_err(|err| HarnessError::from(err))?;
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
+        Ok(json!({ "state": _get_state_prover(&prover), "thread_id": id }).to_string())
     }
 
     pub fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
         let mut prover: Prover = self.dbs.prover.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Prover with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id).unwrap();
+        prover.update_state(&connection).map_err(|err| HarnessError::from(err))?;
+        assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let credentials = prover.retrieve_credentials().map_err(|err| HarnessError::from(err))?;
         let credentials = _select_credentials(&credentials)?;
         prover.generate_presentation(credentials, "{}".to_string()).map_err(|err| HarnessError::from(err))?;
         prover.send_presentation(&connection.send_message_closure().map_err(|err| HarnessError::from(err))?).map_err(|err| HarnessError::from(err))?;
+        assert_eq!(prover.get_state(), ProverState::PresentationSent);
         self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
         Ok(json!({"state": _get_state_prover(&prover), "thread_id": id}).to_string())
     }
@@ -100,71 +146,77 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Verifier with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+        assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         verifier.update_state(&connection).map_err(|err| HarnessError::from(err))?;
-        self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
         assert_eq!(verifier.get_state(), VerifierState::Finished);
+        self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
         match Status::from_u32(verifier.presentation_status()) {
-            Status::Success => Ok(json!({"state": State::Done}).to_string()), // TODO: Check we are in final state
+            Status::Success => Ok(json!({"state": State::Done}).to_string()),
             _ => Ok(json!({"state": State::Failure}).to_string())
         }
     }
 
     pub fn get_proof(&mut self, id: &str) -> HarnessResult<String> {
         let connection_ids = self.dbs.connection.get_all();
-         match self.dbs.prover.get::<Prover>(id) {
-             Some(mut prover) => {
-                let connection: Connection = self.dbs.connection.get(id)
-                    .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                 prover.update_state(&connection).map_err(|err| HarnessError::from(err))?;
-                 self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
-                 let state = _get_state_prover(&prover);
-                 Ok(json!({ "state": state }).to_string())
-             }
-             None => match self.dbs.verifier.get::<Verifier>(id) {
-                 None => {
-                     let mut presentation_requests: Vec<VcxPresentationRequest> = Vec::new();
-                     for cid in connection_ids.into_iter() {
-                         let connection = self.dbs.connection.get::<Connection>(&cid).unwrap();
-                         let mut _presentation_requests: Vec<VcxPresentationRequest> = connection.get_messages()?
-                             .into_iter()
-                             .filter_map(|(uid, message)| {
-                                 match message {
-                                     A2AMessage::PresentationRequest(presentation_request) => {
-                                         connection.update_message_status(uid).ok()?;
-                                         self.dbs.connection.set(&id, &connection).unwrap();
-                                         Some(presentation_request)
-                                     }
-                                     _ => None
-                                 }
-                             }).collect();
-                         presentation_requests.append(&mut _presentation_requests);
-                     }
-                     assert_eq!(presentation_requests.len(), 1);
-                     let presentation_request = presentation_requests.first()
-                        .ok_or(
-                            HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
-                        )?;
-                     let prover = Prover::create(id, presentation_request.clone())?;
-                     self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
-                     let state = _get_state_prover(&prover);
-                     Ok(json!({ "state": state }).to_string())
-                }
-                Some(mut verifier) => {
-                    let connection: Connection = self.dbs.connection.get(id)
-                        .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                     verifier.update_state(&connection).map_err(|err| HarnessError::from(err))?;
-                     self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
-                     let state = _get_state_verifier(&verifier);
-                     Ok(json!({ "state": state }).to_string())
-                }
-             }
-         }
+        match self.dbs.prover.get::<Prover>(id) {
+            Some(mut prover) => {
+               let connection: Connection = self.dbs.connection.get(id)
+                   .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+                prover.update_state(&connection).map_err(|err| HarnessError::from(err))?;
+                self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
+                let state = _get_state_prover(&prover);
+                Ok(json!({ "state": state }).to_string())
+            }
+            None => match self.dbs.verifier.get::<Verifier>(id) {
+                None => {
+                    let mut presentation_requests: Vec<VcxPresentationRequest> = Vec::new();
+                    for cid in connection_ids.into_iter() {
+                        let connection = self.dbs.connection.get::<Connection>(&cid).unwrap();
+                        let mut _presentation_requests: Vec<VcxPresentationRequest> = connection.get_messages()?
+                            .into_iter()
+                            .filter_map(|(uid, message)| {
+                                match message {
+                                    A2AMessage::PresentationRequest(presentation_request) => {
+                                        connection.update_message_status(uid).ok()?;
+                                        self.dbs.connection.set(&id, &connection).unwrap();
+                                        Some(presentation_request)
+                                    }
+                                    _ => None
+                                }
+                            }).collect();
+                        presentation_requests.append(&mut _presentation_requests);
+                    }
+                    assert_eq!(presentation_requests.len(), 1);
+                    let presentation_request = presentation_requests.first()
+                       .ok_or(
+                           HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
+                       )?;
+                    let prover = Prover::create_from_request(id, presentation_request.clone())?;
+                    self.dbs.prover.set(&id, &prover).map_err(|err| HarnessError::from(err))?;
+                    let state = _get_state_prover(&prover);
+                    Ok(json!({ "state": state }).to_string())
+               }
+               Some(mut verifier) => {
+                   let connection: Connection = self.dbs.connection.get(id)
+                       .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+                    verifier.update_state(&connection).map_err(|err| HarnessError::from(err))?;
+                    self.dbs.verifier.set(&id, &verifier).map_err(|err| HarnessError::from(err))?;
+                    let state = _get_state_verifier(&verifier);
+                    Ok(json!({ "state": state }).to_string())
+               }
+            }
+        }
     } 
 }
 
 #[post("/send-request")]
 pub async fn send_proof_request(req: web::Json<Request<PresentationRequestWrapper>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_proof_request(&req.data)
+}
+
+#[post("/send-proposal")]
+pub async fn send_proof_proposal(req: web::Json<Request<PresentationProposalWrapper>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
+    agent.lock().unwrap().send_proof_proposal(&req.data)
 }
 
 #[post("/send-presentation")]
@@ -187,6 +239,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(
             web::scope("/command/proof")
                 .service(send_proof_request)
+                .service(send_proof_proposal)
                 .service(send_presentation)
                 .service(verify_presentation)
                 .service(get_proof)

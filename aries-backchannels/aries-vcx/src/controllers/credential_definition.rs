@@ -2,19 +2,20 @@ use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+use pickledb::{PickleDb, PickleDbDumpPolicy};
 
 use uuid;
 use crate::Agent;
 use crate::controllers::Request;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 struct CredentialDefinition {
     support_revocation: bool,
     schema_id: String,
     tag: String
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct CachedCredDef {
     cred_def_id: String,
     cred_def_json: String

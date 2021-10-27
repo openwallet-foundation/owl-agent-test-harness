@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use actix_web::{App, HttpServer, web, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 use crate::controllers::{general, connection, credential_definition, issuance, schema, presentation};
+use clap::Parser;
 use aries_vcx::handlers::connection::connection::Connection;
  
 extern crate serde;
@@ -22,11 +23,9 @@ extern crate futures_util;
 extern crate clap;
 extern crate reqwest;
 
-use clap::{AppSettings, Clap};
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(version = "1.0")]
-#[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
     #[clap(short, long, default_value = "9020")]
     port: u32,
@@ -40,6 +39,7 @@ enum State {
     Initial,
     Invited,
     Requested,
+    RequestSet,
     Responded,
     Complete,
     Failure,

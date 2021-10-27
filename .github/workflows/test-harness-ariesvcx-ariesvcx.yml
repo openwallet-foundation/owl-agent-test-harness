@@ -6,7 +6,8 @@ name: test-harness-ariesvcx-ariesvcx
 # Credential exchange only supported when beginning with credential offer
 # Proof presentation supported only when beginning with presentation request (test cases use credex beginning with proposal, however)
 # 
-# Passing tests: @T001-RFC0036 @T002-RFC0036 @T003-RFC0036 @T001-RFC0037 @T001-RFC0160 @T002-RFC0160 @T003-RFC0160
+# Passing tests: @T001-RFC0036 @T002-RFC0036 @T003-RFC0036 @T001-RFC0037 @T001.2-RFC0037 @T001.3-RFC0037 @T001.4-RFC0037 @T001.5-RFC0037
+#   @T003-RFC0037 @T003.1-RFC0037 @T006-RFC0037 @T001-RFC0160 @T002-RFC0160 @T003-RFC0160
 # 
 # End
 on:
@@ -40,7 +41,8 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx"
           TEST_AGENTS: "-d aries-vcx"
-          TEST_SCOPE: "-t @T001-RFC0036,@T002-RFC0036,@T003-RFC0036,@T001-RFC0037,@T001-RFC0160,@T002-RFC0160,@T003-RFC0160"
+          TEST_SCOPE: "-t @T001-RFC0036,@T002-RFC0036,@T003-RFC0036,@T001-RFC0037,@T001.2-RFC0037,@T001.3-RFC0037,@T001.4-RFC0037,@T001.5-RFC0037,
+            @T003-RFC0037,@T003.1-RFC0037,@T001-RFC0160,@T002-RFC0160,@T003-RFC0160"
           REPORT_PROJECT: aries-vcx  
         continue-on-error: true
       - uses: actions/upload-artifact@v2
