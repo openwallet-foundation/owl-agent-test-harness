@@ -51,3 +51,6 @@ test/**/*.js.map
 # Project
 /public
 /dist
+
+# We want to fetch the latest aries framework on each run
+yarn.lock
