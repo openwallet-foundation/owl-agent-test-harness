@@ -1,5 +1,5 @@
 import { Controller, Get, Res } from "@tsed/common";
-import packageJson from "../../package.json";
+import packageJson from '@aries-framework/core/package.json'
 
 @Controller("/agent/command")
 export class AgentStatusController {
@@ -23,6 +23,7 @@ export class AgentStatusController {
 
   @Get("/version")
   getVersion(@Res() response: Res) {
-    return packageJson.dependencies["@aries-framework/core"].substring(1);
+    const [version] = packageJson.version.split("+");
+    return version
   }
 }
