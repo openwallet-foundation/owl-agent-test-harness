@@ -45,54 +45,54 @@ impl Agent {
         connection.connect().map_err(|err| HarnessError::from(err))?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
-        self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id, "invitation": invite }).to_string())
     }
 
     pub fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).map_err(|err| HarnessError::from(err))?;
-        self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
     pub fn send_request(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection = self.db.get(id)
+        let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         connection.connect().map_err(|err| HarnessError::from(err))?;
         connection.update_state().map_err(|err| HarnessError::from(err))?;
-        self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
     pub fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection = self.db.get(id)
+        let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         let curr_state = connection.get_state();
         if curr_state != ConnectionState::Inviter(InviterState::Invited) {
             return Err(HarnessError::from_msg(HarnessErrorType::RequestNotAcceptedError, &format!("Received state {:?}, expected requested state", curr_state)));
         }
         connection.update_state().map_err(|err| HarnessError::from(err))?;
-        self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
     pub fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection = self.db.get(id)
+        let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         connection.update_state().map_err(|err| HarnessError::from(err))?;
-        self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
     pub fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection = self.db.get(id)
+        let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         if connection.needs_message() {
             connection.update_state().map_err(|err| HarnessError::from(err))?;
         }
         let state = _get_state(&connection);
-        self.db.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
         self.last_connection = Some(connection);
         Ok(json!({ "state": state }).to_string())
     }

@@ -102,7 +102,7 @@ pub async fn initialize() -> std::io::Result<AgentConfig> {
     let enterprise_seed = get_trustee_seed().await.unwrap();
     let issuer_config = configure_issuer_wallet(&enterprise_seed).unwrap();
     init_issuer_config(&issuer_config).unwrap();
-    let agency_config = provision_cloud_agent(&agency_config).unwrap();
+    let _agency_config = provision_cloud_agent(&agency_config).unwrap();
 
     debug!("Initialization finished");
     Ok(AgentConfig { did: issuer_config.institution_did })
