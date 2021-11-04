@@ -1,2 +1,0 @@
-python3-wrapper-vcx
-#git+https://github.com/hyperledger/indy-sdk.git#egg=python3-wrapper-vcx&subdirectory=vcx/wrappers/python3
