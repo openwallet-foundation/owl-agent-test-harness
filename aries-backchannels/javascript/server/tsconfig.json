@@ -20,7 +20,7 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "lib": ["es7", "dom", "esnext.asynciterable"],
+    "lib": ["es7", "dom", "esnext.asynciterable", "ES2019.Object"],
     "typeRoots": ["./node_modules/@types"]
   },
   "include": ["./src/**/*.ts"],
