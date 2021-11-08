@@ -109,8 +109,8 @@ export class PresentProofController {
     const proofRecord = await this.agent.proofs.requestProof(
       data.connection_id,
       {
-        requestedAttributes: proofRequest.requestedAttributes,
-        requestedPredicates: proofRequest.requestedPredicates,
+        requestedAttributes: Object.fromEntries(proofRequest.requestedAttributes.entries()),
+        requestedPredicates: Object.fromEntries(proofRequest.requestedPredicates.entries()),
       },
       {
         comment: data.presentation_request.comment,
