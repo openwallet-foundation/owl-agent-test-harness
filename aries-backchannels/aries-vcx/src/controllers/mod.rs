@@ -6,9 +6,10 @@ pub mod credential_definition;
 pub mod schema;
 pub mod issuance;
 pub mod presentation;
+pub mod revocation;
 
 #[derive(Deserialize)]
-struct Request<T> {
+pub struct Request<T> {
     #[serde(default)]
     pub id: String, // TODO: Maybe Option<String> is better
     #[serde(default)]

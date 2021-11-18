@@ -9,14 +9,14 @@ use crate::Agent;
 use crate::controllers::Request;
 
 #[derive(Serialize, Deserialize, Default)]
-struct Schema {
+pub struct Schema {
     schema_name: String,
     schema_version: String,
     attributes: Vec<String>
 }
 
 #[derive(Serialize, Deserialize)]
-struct CachedSchema {
+pub struct CachedSchema {
     schema_id: String,
     schema_json: String
 }
@@ -49,11 +49,11 @@ impl Agent {
         let (schema_id, schema_json) = match create_and_publish_schema(&id, schema.schema_name.to_string(), schema.schema_version.to_string(), attrs.to_string()) {
             Err(err) => {
                 warn!("Error: {:?}, schema probably exists on ledger, skipping schema publish", err);
-                anoncreds::create_schema(&schema.schema_name.to_string(), &schema.schema_version.to_string(), &attrs).map_err(|err| HarnessError::from(err))?
+                anoncreds::create_schema(&schema.schema_name.to_string(), &schema.schema_version.to_string(), &attrs)?
             }
             Ok((schema_id, schema_json)) => (schema_id, schema_json)
         };
-        self.dbs.schema.set(&schema_id, &schema_json).map_err(|err| HarnessError::from(err))?;
+        self.dbs.schema.set(&schema_id, &schema_json)?;
         Ok(json!({ "schema_id": schema_id }).to_string())
     }
 
@@ -68,11 +68,13 @@ impl Agent {
 #[post("")]
 pub async fn create_schema(req: web::Json<Request<Schema>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().create_schema(&req.data)
+        .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
 
 #[get("/{schema_id}")]
 pub async fn get_schema(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_schema(&path.into_inner())
+        .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

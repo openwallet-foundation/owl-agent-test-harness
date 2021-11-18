@@ -13,6 +13,8 @@ pub enum HarnessErrorType {
     RequestNotAcceptedError,
     #[display(fmt = "Not found")]
     NotFoundError,
+    #[display(fmt = "Invalid JSON")]
+    InvalidJson,
 }
 
 #[derive(Debug, Display, Error)]
@@ -32,7 +34,8 @@ impl error::ResponseError for HarnessError {
     fn status_code(&self) -> StatusCode {
         match self.kind {
             HarnessErrorType::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-            HarnessErrorType::RequestNotAcceptedError => StatusCode::NOT_ACCEPTABLE,
+            HarnessErrorType::RequestNotAcceptedError |
+                HarnessErrorType::InvalidJson => StatusCode::NOT_ACCEPTABLE,
             HarnessErrorType::NotFoundError => StatusCode::NOT_FOUND,
         }
     }
