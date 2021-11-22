@@ -412,18 +412,19 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         push_resource(thread_id, "problem-report-msg", message)
         log_msg("Received Problem Report Webhook message: " + json.dumps(message))
 
-    async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt):
+    async def swap_thread_id_for_exchange_id(self, thread_id, data_type, id_txt, wait_time=20, sleep_time=1):
         timeout = 0
+        ex_id = None
         webcall_returned = None
-        while webcall_returned is None or timeout == 20:
+        while webcall_returned is None and timeout <= wait_time:
             msg = get_resource(thread_id, data_type)
             try:
                 ex_id = msg[0][id_txt]
                 webcall_returned = True
             except TypeError:
-                await asyncio.sleep(1)
-                timeout += 1
-        if timeout == 20:
+                await asyncio.sleep(sleep_time)
+                timeout += sleep_time
+        if timeout >= wait_time:
             raise TimeoutError(
                 "Timeout waiting for web callback to retrieve the thread id based on the exchange id"
             )
