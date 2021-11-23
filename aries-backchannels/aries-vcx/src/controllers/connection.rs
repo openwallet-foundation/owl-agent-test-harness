@@ -26,14 +26,14 @@ pub struct Comment {
 fn _get_state(connection: &Connection) -> State {
     match connection.get_state() {
         ConnectionState::Invitee(state) => match state {
-            InviteeState::Null => State::Initial,
+            InviteeState::Initial => State::Initial,
             InviteeState::Invited => State::Invited,
             InviteeState::Requested => State::Requested,
             InviteeState::Responded => State::Responded,
             InviteeState::Completed => State::Complete
         }
         ConnectionState::Inviter(state) => match state {
-            InviterState::Null => State::Initial,
+            InviterState::Initial => State::Initial,
             InviterState::Invited => State::Invited,
             InviterState::Requested => State::Requested,
             InviterState::Responded => State::Responded,

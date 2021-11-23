@@ -2,11 +2,11 @@ use std::sync::Mutex;
 use std::fs::File;
 use actix_web::{web, Responder, post, get};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
+use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
 use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
 use aries_vcx::handlers::connection::connection::Connection;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::issuance::credential_offer::CredentialOffer as VcxCredentialOffer;
+use aries_vcx::messages::issuance::credential_offer::{CredentialOffer as VcxCredentialOffer, OfferInfo};
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal as VcxCredentialProposal;
 use aries_vcx::messages::mime_type::MimeType;
@@ -144,8 +144,9 @@ impl Agent {
             proposal_data = proposal_data.add_credential_preview_data(&name, &value, MimeType::Plain)?;
         }
         holder.send_proposal(proposal_data.clone(), connection.send_message_closure()?)?;
-        self.dbs.holder.set(&id, &holder)?;
-        Ok(json!({ "state": _get_state_holder(&holder), "thread_id": id }).to_string())
+        let thread_id = holder.get_thread_id()?;
+        self.dbs.holder.set(&thread_id, &holder)?;
+        Ok(json!({ "state": _get_state_holder(&holder), "thread_id": thread_id }).to_string())
     }
 
     pub fn send_credential_request(&mut self, id: &str) -> HarnessResult<String> {
@@ -154,40 +155,48 @@ impl Agent {
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
         holder.send_request(connection.pairwise_info().pw_did.to_string(), connection.send_message_closure()?)?;
-        self.dbs.holder.set(&id, &holder)?;
-        Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
+        let thread_id = holder.get_thread_id()?;
+        self.dbs.holder.set(&thread_id, &holder)?;
+        Ok(json!({ "state": _get_state_holder(&holder), "thread_id": thread_id }).to_string())
     }
 
     pub fn send_credential_offer(&mut self, cred_offer: &CredentialOffer, id: &str) -> HarnessResult<String> {
         let connection = self.last_connection.as_ref()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
-        let (issuer, id) = match id.is_empty() {
+        let issuer = match id.is_empty() {
             true => {
                 let cred_def: CachedCredDef = self.dbs.cred_def.get(&cred_offer.cred_def_id)
                     .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Cred def with id {} not found", cred_offer.cred_def_id)))?;
-                let issuer_config = IssuerConfig {
+                let id = uuid::Uuid::new_v4().to_string();
+                let credential_preview = serde_json::to_string(&cred_offer.credential_preview.attributes)?;
+                let offer_info = OfferInfo {
+                    credential_json: credential_preview,
                     cred_def_id: cred_offer.cred_def_id.clone(),
                     rev_reg_id: cred_def.rev_reg_id.clone(),
                     tails_file: cred_def.tails_file.clone()
                 };
-                let id = uuid::Uuid::new_v4().to_string();
-                let credential_preview = serde_json::to_string(&cred_offer.credential_preview.attributes)?;
-                let mut issuer = Issuer::create(&id, &issuer_config, &credential_preview)?;
-                issuer.send_credential_offer(connection.send_message_closure()?, None)?;
-                (issuer, id)
+                let mut issuer = Issuer::create(&id)?;
+                issuer.send_credential_offer(offer_info, None, connection.send_message_closure()?)?;
+                issuer
             }
             false => {
                 let proposal = get_proposal(connection)?;
                 let cred_def: CachedCredDef = self.dbs.cred_def.get(&proposal.cred_def_id)
                     .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Cred def with id {} not found", cred_offer.cred_def_id)))?;
+                let offer_info = OfferInfo {
+                    credential_json: proposal.credential_proposal.to_string()?,
+                    cred_def_id: proposal.cred_def_id.clone(),
+                    rev_reg_id: cred_def.rev_reg_id.clone(),
+                    tails_file: cred_def.tails_file.clone()
+                };
                 let mut issuer = Issuer::create_from_proposal(&id, &proposal)?;
-                issuer.set_offer(&proposal.credential_proposal, &proposal.cred_def_id.clone(), cred_def.rev_reg_id, cred_def.tails_file)?;
-                issuer.send_credential_offer(connection.send_message_closure()?, None)?;
-                (issuer, id.to_string())
+                issuer.send_credential_offer(offer_info, None, connection.send_message_closure()?)?;
+                issuer
             }
         };
-        self.dbs.issuer.set(&id, &issuer)?;
-        Ok(json!({ "state": _get_state_issuer(&issuer), "thread_id": id }).to_string())
+        let thread_id = issuer.get_thread_id()?;
+        self.dbs.issuer.set(&thread_id, &issuer)?;
+        Ok(json!({ "state": _get_state_issuer(&issuer), "thread_id": thread_id }).to_string())
     }
 
     pub fn issue_credetial(&mut self, id: &str, _credential: &Credential) -> HarnessResult<String> {
