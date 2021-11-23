@@ -8,10 +8,6 @@ impl Agent {
         Ok(json!({ "status": self.status }).to_string())
     }
 
-    pub fn get_state_json(&self) -> HarnessResult<String> {
-        Ok(json!({ "state": self.state }).to_string())
-    }
-
     pub fn get_public_did(&self) -> HarnessResult<String> {
         Ok(json!({ "did": self.config.did.to_string() }).to_string())
     }

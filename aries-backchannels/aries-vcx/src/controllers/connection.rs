@@ -4,32 +4,36 @@ use uuid;
 use crate::{Agent, State};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::controllers::Request;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
+use aries_vcx::messages::connection::request::Request as VcxConnectionRequest;
 use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
 use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
 use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
 
+#[allow(dead_code)]
 #[derive(Deserialize, Default)]
-struct ConnectionRequest {
+pub struct ConnectionRequest {
     request: String
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Default)]
-struct Comment {
+pub struct Comment {
     comment: String
 }
 
 fn _get_state(connection: &Connection) -> State {
     match connection.get_state() {
         ConnectionState::Invitee(state) => match state {
-            InviteeState::Null => State::Initial,
+            InviteeState::Initial => State::Initial,
             InviteeState::Invited => State::Invited,
             InviteeState::Requested => State::Requested,
             InviteeState::Responded => State::Responded,
             InviteeState::Completed => State::Complete
         }
         ConnectionState::Inviter(state) => match state {
-            InviterState::Null => State::Initial,
+            InviterState::Initial => State::Initial,
             InviterState::Invited => State::Invited,
             InviterState::Requested => State::Requested,
             InviterState::Responded => State::Responded,
@@ -38,50 +42,62 @@ fn _get_state(connection: &Connection) -> State {
     }
 }
 
+fn get_requests(connection: &Connection) -> HarnessResult<Vec<VcxConnectionRequest>> {
+     Ok(connection.get_messages_noauth()?
+         .into_iter()
+         .filter_map(|(_, message)| {
+             match message {
+                 A2AMessage::ConnectionRequest(request) => Some(request),
+                 _ => None
+             }
+         }).collect())
+}
+
 impl Agent {
     pub fn create_invitation(&mut self) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create(&id, false).map_err(|err| HarnessError::from(err))?;
-        connection.connect().map_err(|err| HarnessError::from(err))?;
+        let mut connection = Connection::create(&id, false)?;
+        connection.connect()?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
-        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id, "invitation": invite }).to_string())
     }
 
     pub fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).map_err(|err| HarnessError::from(err))?;
-        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false)?;
+        self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
     pub fn send_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.connect().map_err(|err| HarnessError::from(err))?;
-        connection.update_state().map_err(|err| HarnessError::from(err))?;
-        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        connection.connect()?;
+        connection.update_state()?;
+        self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
     pub fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+        let requests = get_requests(&connection)?;
         let curr_state = connection.get_state();
-        if curr_state != ConnectionState::Inviter(InviterState::Invited) {
+        if curr_state != ConnectionState::Inviter(InviterState::Invited) || requests.len() > 1 {
             return Err(HarnessError::from_msg(HarnessErrorType::RequestNotAcceptedError, &format!("Received state {:?}, expected requested state", curr_state)));
         }
-        connection.update_state().map_err(|err| HarnessError::from(err))?;
-        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        connection.update_state()?;
+        self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
     pub fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.update_state().map_err(|err| HarnessError::from(err))?;
-        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        connection.update_state()?;
+        self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
@@ -89,10 +105,10 @@ impl Agent {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         if connection.needs_message() {
-            connection.update_state().map_err(|err| HarnessError::from(err))?;
+            connection.update_state()?;
         }
         let state = _get_state(&connection);
-        self.dbs.connection.set(&id, &connection).map_err(|err| HarnessError::from(err))?;
+        self.dbs.connection.set(&id, &connection)?;
         self.last_connection = Some(connection);
         Ok(json!({ "state": state }).to_string())
     }
@@ -101,21 +117,25 @@ impl Agent {
 #[post("/create-invitation")]
 pub async fn create_invitation(agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().create_invitation()
+        .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
 
 #[post("/receive-invitation")]
 pub async fn receive_invitation(req: web::Json<Request<PairwiseInvitation>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().receive_invitation(req.data.clone())
+        .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
 
 #[post("/accept-invitation")]
 pub async fn send_request(req: web::Json<Request<()>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_request(&req.id)
+        .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
 
 #[post("/accept-request")]
 pub async fn accept_request(req: web::Json<Request<()>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().accept_request(&req.id)
+        .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
 
 #[get("/{connection_id}")]
@@ -127,6 +147,7 @@ pub async fn get_connection_state(agent: web::Data<Mutex<Agent>>, path: web::Pat
 #[post("/send-ping")]
 pub async fn send_ping(req: web::Json<Request<Comment>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_ping(&req.id)
+        .with_header("Cache-Control", "private, no-store, must-revalidate")
 }
  
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -139,8 +160,5 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                 .service(accept_request)
                 .service(send_ping)
                 .service(get_connection_state)
-        )
-        .service(
-            web::scope("/response/connection")
         );
 }

@@ -188,8 +188,9 @@ def step_impl(context, invitee, inviter):
 @when('"{inviter}" receives the connection request')
 @given('"{inviter}" receives the connection request')
 def step_impl(context, inviter):
-    inviter_url = context.config.userdata.get(inviter)
-    inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
+    pass
+    # inviter_url = context.config.userdata.get(inviter)
+    # inviter_connection_id = context.connection_id_dict[inviter][context.invitee_name]
 
     # inviter already recieved the connection request in the accept-invitation call so get connection and verify status=requested.
     # Some agents (Aca-py) when auto respond is on, it won't send responded by the invitee on the accept-invitation,
