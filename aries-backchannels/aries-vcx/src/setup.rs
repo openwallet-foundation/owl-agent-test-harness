@@ -1,6 +1,6 @@
-use aries_vcx::init::{open_main_pool, PoolConfig, open_as_main_wallet, init_issuer_config}; // TODO: Should we move all Config arguments to a single module?
-use aries_vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfig};
-use aries_vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfig};
+use aries_vcx::init::{open_main_pool, PoolConfigBuilder, open_as_main_wallet, init_issuer_config};
+use aries_vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfigBuilder};
+use aries_vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfigBuilder};
 use aries_vcx::utils::plugins::init_plugin;
 use aries_vcx::libindy::utils::pool;
 use aries_vcx::settings;
@@ -71,36 +71,30 @@ pub async fn initialize() -> AgentConfig {
     let genesis_path = download_genesis_file().await.expect("Failed to download the genesis file");
     let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8000".to_string());
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-    let pool_config = PoolConfig {
-        genesis_path,
-        pool_config: None,
-        pool_name: None
-    };
-    let agency_config = AgentProvisionConfig {
-        agency_endpoint,
-        agency_did: "VsKV7grR1BUE29mG2Fm2kX".to_string(),
-        agency_verkey: "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR".to_string(),
-        agent_seed: None
-    };
-    let wallet_config = WalletConfig {
-        wallet_name: format!("rust_agent_{}", uuid::Uuid::new_v4().to_string()),
-        wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_string(),
-        wallet_key_derivation: "RAW".to_string(),
-        rekey: None,
-        storage_config: None,
-        rekey_derivation_method: None,
-        storage_credentials: None,
-        wallet_type: None
-    };
+    let pool_config = PoolConfigBuilder::default()
+        .genesis_path(genesis_path)
+        .build()
+        .expect("Failed to build pool config");
+    let agency_config = AgentProvisionConfigBuilder::default()
+        .agency_endpoint(agency_endpoint)
+        .agency_did("VsKV7grR1BUE29mG2Fm2kX")
+        .agency_verkey("Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR")
+        .build()
+        .expect("Failed to build agency config");
+    let wallet_config = WalletConfigBuilder::default()
+        .wallet_name(format!("rust_agent_{}", uuid::Uuid::new_v4()))
+        .wallet_key("8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY")
+        .wallet_key_derivation("RAW")
+        .build()
+        .expect("Failed to build wallet config");
     
     create_wallet(&wallet_config).expect("Failed to create wallet");
-    let _wh = open_as_main_wallet(&wallet_config).expect("Failed to open the main wallet");
-    let _ph = open_main_pool(&pool_config).expect("Failed to open the main pool");
+    open_as_main_wallet(&wallet_config).expect("Failed to open the main wallet");
+    open_main_pool(&pool_config).expect("Failed to open the main pool");
 
-    let enterprise_seed = get_trustee_seed().await;
-    let issuer_config = configure_issuer_wallet(&enterprise_seed).expect("Failed to configure the issuer wallet");
+    let issuer_config = configure_issuer_wallet(&get_trustee_seed().await).expect("Failed to configure the issuer wallet");
     init_issuer_config(&issuer_config).expect("Failed to init issuer config");
-    let _agency_config = provision_cloud_agent(&agency_config).expect("Failed to provision the cloud agent");
+    provision_cloud_agent(&agency_config).expect("Failed to provision the cloud agent");
 
     debug!("Initialization finished");
     AgentConfig { did: issuer_config.institution_did }
