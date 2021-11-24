@@ -14,6 +14,7 @@ use uuid;
 use crate::{Agent, State};
 use crate::controllers::Request;
 use crate::controllers::credential_definition::CachedCredDef;
+use crate::soft_assert_eq;
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct CredentialPreview {
@@ -87,7 +88,7 @@ fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str)
     std::fs::create_dir_all(&tails_folder_path).map_err(|_| HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to create tails folder"))?;
     let tails_file_path = tails_folder_path.join(tails_hash).to_str().unwrap().to_string();
     let mut res = client.get(&url).send().unwrap();
-    assert_eq!(res.status(), reqwest::StatusCode::OK);
+    soft_assert_eq!(res.status(), reqwest::StatusCode::OK);
     let mut out = File::create(tails_file_path).unwrap();
     std::io::copy(&mut res, &mut out).unwrap();
     Ok(())
@@ -106,7 +107,7 @@ fn get_proposal(connection: &Connection) -> HarnessResult<VcxCredentialProposal>
                      _ => None
                  }
              }).collect();
-     assert!(proposals.len() == 1);
+     soft_assert_eq!(proposals.len(), 1);
      proposals.pop()
         .ok_or(
             HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
@@ -126,7 +127,7 @@ fn get_offer(connection: &Connection) -> HarnessResult<VcxCredentialOffer> {
             }
         })
     .collect();
-    assert!(offers.len() == 1);
+    soft_assert_eq!(offers.len(), 1);
     offers.pop()
        .ok_or(
            HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))

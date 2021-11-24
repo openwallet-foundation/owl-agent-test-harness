@@ -7,6 +7,7 @@ use reqwest::multipart;
 use uuid;
 use crate::Agent;
 use crate::controllers::Request;
+use crate::soft_assert_eq;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CredentialDefinition {
@@ -38,7 +39,7 @@ fn upload_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_file: &str) -
         .file("genesis", &genesis_file).unwrap()
         .file("tails", &tails_file).unwrap();
     let res = client.put(&url).multipart(form).send().unwrap();
-    assert_eq!(res.status(), reqwest::StatusCode::OK);
+    soft_assert_eq!(res.status(), reqwest::StatusCode::OK);
     Ok(())
 }
 
