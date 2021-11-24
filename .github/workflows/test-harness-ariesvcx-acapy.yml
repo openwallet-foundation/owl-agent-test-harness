@@ -2,11 +2,8 @@ name: test-harness-ariesvcx-acapy
 # RUNSET_NAME: "aries-vcx to acapy"
 # Scope: AIP 1.0
 # Exceptions: Proof Proposals, Public Dids, Revocations
-#
-# Credential exchange only supported when beginning with credential offer
-# Proof presentation supported only when beginning with presentation request (test cases use credex beginning with proposal, however)
 # 
-# Passing tests: @T003-RFC0036 @T001-RFC0160 @T002-RFC0160 @T003-RFC0160
+# Passing tests: @RFC0036,@RFC0160
 # 
 # End
 on:
@@ -40,7 +37,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx -a acapy-main"
           TEST_AGENTS: "-d aries-vcx -b acapy-main"
-          TEST_SCOPE: "-t @T003-RFC0036,@T001-RFC0160,@T002-RFC0160,@T003-RFC0160"
+          TEST_SCOPE: "-t @RFC0036,@RFC0160 -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T003-RFC0160 -t ~@T004-RFC0160"
           REPORT_PROJECT: aries-vcx-b-acapy  
         continue-on-error: true
       - uses: actions/upload-artifact@v2
