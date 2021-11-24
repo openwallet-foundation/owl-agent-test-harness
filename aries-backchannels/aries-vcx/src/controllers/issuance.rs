@@ -77,7 +77,11 @@ fn _get_state_holder(holder: &Holder) -> State {
 }
 
 fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str) -> HarnessResult<()> {
-    let url = format!("{}/{}", tails_base_url, rev_reg_id);
+    let url = match tails_base_url.to_string().matches("/").count() {
+        0 => format!("{}/{}", tails_base_url, rev_reg_id),
+        1.. => tails_base_url.to_string(),
+        _ => { return Err(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Negative count"))}
+    };
     let client = reqwest::Client::new();
     let tails_folder_path = std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("tails");
     std::fs::create_dir_all(&tails_folder_path).map_err(|_| HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to create tails folder"))?;
