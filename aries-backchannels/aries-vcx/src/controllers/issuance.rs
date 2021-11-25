@@ -14,6 +14,7 @@ use uuid;
 use crate::{Agent, State};
 use crate::controllers::Request;
 use crate::controllers::credential_definition::CachedCredDef;
+use crate::soft_assert_eq;
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct CredentialPreview {
@@ -77,13 +78,17 @@ fn _get_state_holder(holder: &Holder) -> State {
 }
 
 fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str) -> HarnessResult<()> {
-    let url = format!("{}/{}", tails_base_url, rev_reg_id);
+    let url = match tails_base_url.to_string().matches("/").count() {
+        0 => format!("{}/{}", tails_base_url, rev_reg_id),
+        1.. => tails_base_url.to_string(),
+        _ => { return Err(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Negative count"))}
+    };
     let client = reqwest::Client::new();
     let tails_folder_path = std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("tails");
     std::fs::create_dir_all(&tails_folder_path).map_err(|_| HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to create tails folder"))?;
     let tails_file_path = tails_folder_path.join(tails_hash).to_str().unwrap().to_string();
     let mut res = client.get(&url).send().unwrap();
-    assert_eq!(res.status(), reqwest::StatusCode::OK);
+    soft_assert_eq!(res.status(), reqwest::StatusCode::OK);
     let mut out = File::create(tails_file_path).unwrap();
     std::io::copy(&mut res, &mut out).unwrap();
     Ok(())
@@ -102,7 +107,7 @@ fn get_proposal(connection: &Connection) -> HarnessResult<VcxCredentialProposal>
                      _ => None
                  }
              }).collect();
-     assert!(proposals.len() == 1);
+     soft_assert_eq!(proposals.len(), 1);
      proposals.pop()
         .ok_or(
             HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
@@ -122,7 +127,7 @@ fn get_offer(connection: &Connection) -> HarnessResult<VcxCredentialOffer> {
             }
         })
     .collect();
-    assert!(offers.len() == 1);
+    soft_assert_eq!(offers.len(), 1);
     offers.pop()
        .ok_or(
            HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))

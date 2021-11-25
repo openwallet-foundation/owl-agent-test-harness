@@ -97,6 +97,21 @@ pub struct Agent {
     last_connection: Option<Connection>
 }
 
+#[macro_export]
+macro_rules! soft_assert_eq {
+    ($left:expr, $right:expr) => ({
+        match (&$left, &$right) {
+            (left_val, right_val) => {
+                if !(*left_val == *right_val) {
+                    return Err(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!(r#"assertion failed: `(left == right)`
+  left: `{:?}`,
+ right: `{:?}`"#, left_val, right_val)));
+                }
+            }
+        }
+    });
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("trace"));
