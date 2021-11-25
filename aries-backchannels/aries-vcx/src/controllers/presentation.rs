@@ -127,9 +127,10 @@ impl Agent {
         let mut verifier = Verifier::create_from_request(id.to_string(), requested_attrs, "[]".to_string(), revoc_interval, id.to_string())?;
         verifier.send_presentation_request(connection.send_message_closure()?, None)?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
-        self.dbs.verifier.set(&id, &verifier)?;
-        self.dbs.connection.set(&id, &connection)?;
-        Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": id}).to_string())
+        let thread_id = verifier.get_thread_id()?;
+        self.dbs.verifier.set(&thread_id, &verifier)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
+        Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": thread_id}).to_string())
     }
 
     pub fn send_proof_proposal(&mut self, presentation_proposal: &PresentationProposalWrapper) -> HarnessResult<String> {
@@ -142,8 +143,9 @@ impl Agent {
         let mut prover = Prover::create(&id)?;
         prover.send_proposal(proposal_data, &connection.send_message_closure()?)?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        self.dbs.prover.set(&id, &prover)?;
-        Ok(json!({ "state": _get_state_prover(&prover), "thread_id": id }).to_string())
+        let thread_id = prover.get_thread_id()?;
+        self.dbs.prover.set(&thread_id, &prover)?;
+        Ok(json!({ "state": _get_state_prover(&prover), "thread_id": thread_id }).to_string())
     }
 
     pub fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
@@ -158,8 +160,9 @@ impl Agent {
         prover.generate_presentation(credentials, "{}".to_string())?;
         prover.send_presentation(&connection.send_message_closure()?)?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationSent);
-        self.dbs.prover.set(&id, &prover)?;
-        Ok(json!({"state": _get_state_prover(&prover), "thread_id": id}).to_string())
+        let thread_id = prover.get_thread_id()?;
+        self.dbs.prover.set(&thread_id, &prover)?;
+        Ok(json!({"state": _get_state_prover(&prover), "thread_id": thread_id}).to_string())
     }
 
     pub fn verify_presentation(&mut self, id: &str) -> HarnessResult<String> {
@@ -169,7 +172,7 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         verifier.update_state(&connection)?;
-        self.dbs.verifier.set(&id, &verifier)?;
+        self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
         let verified = match Status::from_u32(verifier.presentation_status()) {
             Status::Success => "true",
             _ => "false"
@@ -184,7 +187,7 @@ impl Agent {
                let connection: Connection = self.dbs.connection.get(id)
                    .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                 prover.update_state(&connection)?;
-                self.dbs.prover.set(&id, &prover)?;
+                self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;
                 let state = _get_state_prover(&prover);
                 Ok(json!({ "state": state }).to_string())
             }
@@ -213,7 +216,7 @@ impl Agent {
                            HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
                        )?;
                     let prover = Prover::create_from_request(id, presentation_request.clone())?;
-                    self.dbs.prover.set(&id, &prover)?;
+                    self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;
                     let state = _get_state_prover(&prover);
                     Ok(json!({ "state": state }).to_string())
                }
@@ -221,7 +224,7 @@ impl Agent {
                    let connection: Connection = self.dbs.connection.get(id)
                        .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                     verifier.update_state(&connection)?;
-                    self.dbs.verifier.set(&id, &verifier)?;
+                    self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
                     let state = _get_state_verifier(&verifier);
                     Ok(json!({ "state": state }).to_string())
                }

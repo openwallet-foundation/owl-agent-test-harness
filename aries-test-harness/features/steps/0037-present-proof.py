@@ -136,7 +136,11 @@ def step_impl(context, verifier, prover):
                             "restrictions": [
                                 {
                                     "schema_name": "test_schema." + context.issuer_name,
-                                    "schema_version": "1.0.0"
+                                    "schema_version": "1.0.0",
+                                    "cred_def_id": "",
+                                    "issuer_did": "",
+                                    "schema_id": "",
+                                    "schema_issuer_did": "",
                                 }
                             ]
                         }
