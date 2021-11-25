@@ -7,7 +7,8 @@
     "build": "yarn tsc",
     "tsc": "tsc --project tsconfig.compile.json",
     "start": "nodemon --watch \"src/**/*.ts\" --ignore \"node_modules/**/*\" --exec ts-node src/index.ts",
-    "start:prod": "cross-env NODE_ENV=production node dist/index.js"
+    "start:prod": "cross-env NODE_ENV=production node dist/index.js",
+    "format": "prettier --ignore-path .gitignore '**/*.+(js|json|ts|md|yml|yaml)' --write"
   },
   "dependencies": {
     "@aries-framework/core": "latest",
@@ -17,6 +18,7 @@
     "@tsed/di": "6.75.4",
     "@tsed/exceptions": "6.75.4",
     "@tsed/platform-express": "6.75.4",
+    "@tsed/swagger": "^6.88.0",
     "body-parser": "1.19.0",
     "cross-env": "7.0.3",
     "express": "^4.17.1",
@@ -30,6 +32,7 @@
     "@types/minimist": "^1.2.0",
     "@types/node": "14.14.28",
     "nodemon": "2.0.14",
+    "prettier": "^2.4.1",
     "ts-node": "10.3.0",
     "typescript": "~4.3.0"
   }
