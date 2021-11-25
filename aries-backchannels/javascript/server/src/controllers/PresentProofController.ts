@@ -23,7 +23,7 @@ export class PresentProofController {
   private agent: Agent;
   private logger: Logger;
   private proofUtils: ProofUtils;
-  private subject = new ReplaySubject<ProofStateChangedEvent>()
+  private subject = new ReplaySubject<ProofStateChangedEvent>();
 
   public constructor(agent: Agent) {
     this.agent = agent;
@@ -31,9 +31,9 @@ export class PresentProofController {
     this.proofUtils = new ProofUtils(agent);
 
     // Catch all events in replay subject for later use
-    agent.events.observable<ProofStateChangedEvent>(
-      ProofEventTypes.ProofStateChanged
-    ).subscribe(this.subject)
+    agent.events
+      .observable<ProofStateChangedEvent>(ProofEventTypes.ProofStateChanged)
+      .subscribe(this.subject);
   }
 
   @Get("/:threadId")
@@ -96,11 +96,16 @@ export class PresentProofController {
     @BodyParams("data")
     data: {
       connection_id: string;
-      presentation_request: any;
+      presentation_request: {
+        comment?: string;
+        proof_request: {
+          data: unknown;
+        };
+      };
     }
   ) {
     const proofRequest = JsonTransformer.fromJSON(
-      data.presentation_request["proof_request"].data,
+      data.presentation_request.proof_request.data,
       ProofRequest
     );
 
@@ -109,8 +114,8 @@ export class PresentProofController {
     const proofRecord = await this.agent.proofs.requestProof(
       data.connection_id,
       {
-        requestedAttributes: Object.fromEntries(proofRequest.requestedAttributes.entries()),
-        requestedPredicates: Object.fromEntries(proofRequest.requestedPredicates.entries()),
+        requestedAttributes: proofRequest.requestedAttributes,
+        requestedPredicates: proofRequest.requestedPredicates,
       },
       {
         comment: data.presentation_request.comment,
@@ -137,7 +142,7 @@ export class PresentProofController {
       comment: string;
     }
   ) {
-    await this.waitForState(threadId, ProofState.RequestReceived)
+    await this.waitForState(threadId, ProofState.RequestReceived);
     let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
 
     const requestedCredentials = JsonTransformer.fromJSON(
@@ -196,7 +201,7 @@ export class PresentProofController {
 
   @Post("/verify-presentation")
   async verifyPresentation(@BodyParams("id") threadId: string) {
-    await this.waitForState(threadId, ProofState.PresentationReceived)
+    await this.waitForState(threadId, ProofState.PresentationReceived);
 
     let proofRecord = await this.proofUtils.getProofByThreadId(threadId);
     if (proofRecord) {
@@ -207,11 +212,13 @@ export class PresentProofController {
   }
 
   private async waitForState(threadId: string, state: ProofState) {
-    return await firstValueFrom(this.subject.pipe(
-      filter(c => c.payload.proofRecord.threadId === threadId),
-      filter(c => c.payload.proofRecord.state === state),
-      timeout(20000)
-    ))
+    return await firstValueFrom(
+      this.subject.pipe(
+        filter((c) => c.payload.proofRecord.threadId === threadId),
+        filter((c) => c.payload.proofRecord.state === state),
+        timeout(20000)
+      )
+    );
   }
 
   private mapProofRecord(proofRecord: ProofRecord) {
