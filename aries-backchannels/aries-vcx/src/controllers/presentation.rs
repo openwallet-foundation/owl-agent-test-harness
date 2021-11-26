@@ -30,7 +30,7 @@ pub struct PresentationProposalWrapper {
 pub struct PresentationRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    pub proof_request: ProofRequestData
+    pub proof_request: ProofRequestDataWrapper
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -40,9 +40,27 @@ pub struct PresentationProposal {
     predicates: Vec<Predicate>
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct ProofRequestData {
-    pub data: serde_json::Value,
+    requested_attributes: std::collections::HashMap<String, RequestedAttrs>,
+    non_revoked: Option<serde_json::Value>
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+pub struct ProofRequestDataWrapper {
+    pub data: ProofRequestData
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+struct Restrictions {
+    schema_name: String,
+    schema_version: String
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+struct RequestedAttrs {
+    name: String,
+    restrictions: Vec<Restrictions>
 }
 
 fn _get_state_prover(prover: &Prover) -> State {
@@ -118,11 +136,11 @@ impl Agent {
                 }
             });
         let req_data = presentation_request.presentation_request.proof_request.data.clone();
-        let requested_attrs = req_data["requested_attributes"].to_string();
-        let revoc_interval = req_data["non_revoked"].clone(); 
-        let revoc_interval = match revoc_interval.is_null() {
-            true => "{}".to_string(),
-            false => revoc_interval.to_string()
+        let requested_attrs = serde_json::to_string(&req_data.requested_attributes).unwrap();
+        let revoc_interval = req_data.non_revoked;
+        let revoc_interval = match revoc_interval {
+            None => "{}".to_string(),
+            Some(revoc_interval) => revoc_interval.to_string()
         };
         let mut verifier = Verifier::create_from_request(id.to_string(), requested_attrs, "[]".to_string(), revoc_interval, id.to_string())?;
         verifier.send_presentation_request(connection.send_message_closure()?, None)?;
