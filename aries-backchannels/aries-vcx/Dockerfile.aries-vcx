@@ -2,21 +2,18 @@ FROM ghcr.io/hyperledger/aries-vcx/libvcx:0.23.0-main-2453
 
 USER root
 
-ARG UID=1001
-ARG GID=1001
-
-RUN addgroup -g $GID agent && adduser -u $UID -D -G agent agent
-
-USER agent
 ENV X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR true
 RUN rustup default stable
 
-USER root
-WORKDIR home/agent/aries-vcx-backchannel/aries-vcx
-COPY --chown=agent:agent aries-vcx .
-RUN chown -R agent:agent .
-
-USER agent
+WORKDIR /
+RUN cargo new --bin aries-vcx-backchannel
+WORKDIR ./aries-vcx-backchannel
+COPY ./aries-vcx/Cargo.lock ./aries-vcx/Cargo.toml ./
+RUN cargo build
+RUN rm src/*.rs
+RUN rm ./target/debug/deps/aries_vcx_backchannel*
+COPY ./aries-vcx/src ./src
+COPY ./aries-vcx/resource ./resource
 RUN cargo build
 
 ENTRYPOINT ["./target/debug/aries-vcx-backchannel"]
