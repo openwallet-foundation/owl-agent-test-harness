@@ -281,7 +281,7 @@ checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 [[package]]
 name = "agency_client"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx?rev=a4fe9fb#a4fe9fb9217b99339d087aede22de1d26fcc0d85"
+source = "git+https://github.com/hyperledger/aries-vcx?rev=0e47a081f#0e47a081fce04e8ad364c1a29a1ebe04af5c9839"
 dependencies = [
  "android_logger",
  "env_logger 0.5.13",
@@ -328,8 +328,8 @@ dependencies = [
 
 [[package]]
 name = "aries-vcx"
-version = "0.23.0"
-source = "git+https://github.com/hyperledger/aries-vcx?rev=a4fe9fb#a4fe9fb9217b99339d087aede22de1d26fcc0d85"
+version = "0.24.1"
+source = "git+https://github.com/hyperledger/aries-vcx?rev=0e47a081f#0e47a081fce04e8ad364c1a29a1ebe04af5c9839"
 dependencies = [
  "agency_client",
  "android_logger",

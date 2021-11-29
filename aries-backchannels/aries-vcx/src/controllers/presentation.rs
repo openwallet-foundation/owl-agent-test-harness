@@ -8,10 +8,13 @@ use crate::controllers::Request;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest as VcxPresentationRequest;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::status::Status;
+use aries_vcx::messages::proof_presentation::presentation_proposal::{PresentationProposalData, Attribute, Predicate};
 use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
 use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
-use aries_vcx::messages::proof_presentation::presentation_proposal::{PresentationProposalData, Attribute, Predicate};
 use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, PredicateInfo, NonRevokedInterval};
+use aries_vcx::libindy::proofs::proof_request::ProofRequestDataBuilder;
+use aries_vcx::libindy::utils::anoncreds;
 use crate::soft_assert_eq;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -40,27 +43,17 @@ pub struct PresentationProposal {
     predicates: Vec<Predicate>
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Default, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct ProofRequestData {
-    requested_attributes: std::collections::HashMap<String, RequestedAttrs>,
-    non_revoked: Option<serde_json::Value>
+    pub requested_attributes: Option<HashMap<String, AttrInfo>>,
+    pub requested_predicates: Option<HashMap<String, PredicateInfo>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub non_revoked: Option<NonRevokedInterval>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct ProofRequestDataWrapper {
     pub data: ProofRequestData
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
-struct Restrictions {
-    schema_name: String,
-    schema_version: String
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
-struct RequestedAttrs {
-    name: String,
-    restrictions: Vec<Restrictions>
 }
 
 fn _get_state_prover(prover: &Prover) -> State {
@@ -136,13 +129,14 @@ impl Agent {
                 }
             });
         let req_data = presentation_request.presentation_request.proof_request.data.clone();
-        let requested_attrs = serde_json::to_string(&req_data.requested_attributes).unwrap();
-        let revoc_interval = req_data.non_revoked;
-        let revoc_interval = match revoc_interval {
-            None => "{}".to_string(),
-            Some(revoc_interval) => revoc_interval.to_string()
-        };
-        let mut verifier = Verifier::create_from_request(id.to_string(), requested_attrs, "[]".to_string(), revoc_interval, id.to_string())?;
+        let presentation_request = ProofRequestDataBuilder::default()
+            .name("test proof")
+            .requested_attributes(req_data.requested_attributes.unwrap_or_default())
+            .requested_predicates(req_data.requested_predicates.unwrap_or_default())
+            .non_revoked(req_data.non_revoked)
+            .nonce(anoncreds::generate_nonce()?)
+            .build().unwrap();
+        let mut verifier = Verifier::create_from_request(id.to_string(), &presentation_request)?;
         verifier.send_presentation_request(connection.send_message_closure()?, None)?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         let thread_id = verifier.get_thread_id()?;
@@ -192,8 +186,15 @@ impl Agent {
         verifier.update_state(&connection)?;
         self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
         let verified = match Status::from_u32(verifier.presentation_status()) {
-            Status::Success => "true",
-            _ => "false"
+            Status::Success => {
+                soft_assert_eq!(verifier.get_state(), VerifierState::Finished);
+                verifier.send_ack(&connection.send_message_closure()?)?;
+                "true"
+            },
+            _ => {
+                soft_assert_eq!(verifier.get_state(), VerifierState::Failed);
+                "false"
+            }
         };
         Ok(json!({ "state": State::Done, "verified": verified }).to_string())
     }
