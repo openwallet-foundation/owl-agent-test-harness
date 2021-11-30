@@ -191,10 +191,7 @@ impl Agent {
                 verifier.send_ack(&connection.send_message_closure()?)?;
                 "true"
             },
-            _ => {
-                soft_assert_eq!(verifier.get_state(), VerifierState::Failed);
-                "false"
-            }
+            _ => "false"
         };
         Ok(json!({ "state": State::Done, "verified": verified }).to_string())
     }
