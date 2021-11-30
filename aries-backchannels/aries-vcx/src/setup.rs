@@ -43,13 +43,14 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
         }
         None => match std::env::var("LEDGER_URL").ok() {
             Some(ledger_url) => {
-                info!("Downloading genesis file");
+                info!("Downloading genesis file from {}", ledger_url);
                 let genesis_url = format!("{}/genesis", ledger_url);
                 let body = reqwest::get(&genesis_url)
                     .expect("Failed to get genesis file from ledger")
                     .text()
                     .expect("Failed to get the response text");
                 let path = std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn");
+                info!("Storing genesis file to {:?}", path);
                 let mut f = std::fs::OpenOptions::new()
                     .write(true)
                     .create(true)

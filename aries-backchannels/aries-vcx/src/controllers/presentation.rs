@@ -8,10 +8,13 @@ use crate::controllers::Request;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest as VcxPresentationRequest;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::status::Status;
+use aries_vcx::messages::proof_presentation::presentation_proposal::{PresentationProposalData, Attribute, Predicate};
 use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
 use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
-use aries_vcx::messages::proof_presentation::presentation_proposal::{PresentationProposalData, Attribute, Predicate};
 use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, PredicateInfo, NonRevokedInterval};
+use aries_vcx::libindy::proofs::proof_request::ProofRequestDataBuilder;
+use aries_vcx::libindy::utils::anoncreds;
 use crate::soft_assert_eq;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -30,7 +33,7 @@ pub struct PresentationProposalWrapper {
 pub struct PresentationRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    pub proof_request: ProofRequestData
+    pub proof_request: ProofRequestDataWrapper
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -42,7 +45,15 @@ pub struct PresentationProposal {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct ProofRequestData {
-    pub data: serde_json::Value,
+    pub requested_attributes: Option<HashMap<String, AttrInfo>>,
+    pub requested_predicates: Option<HashMap<String, PredicateInfo>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub non_revoked: Option<NonRevokedInterval>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+pub struct ProofRequestDataWrapper {
+    pub data: ProofRequestData
 }
 
 fn _get_state_prover(prover: &Prover) -> State {
@@ -118,18 +129,20 @@ impl Agent {
                 }
             });
         let req_data = presentation_request.presentation_request.proof_request.data.clone();
-        let requested_attrs = req_data["requested_attributes"].to_string();
-        let revoc_interval = req_data["non_revoked"].clone(); 
-        let revoc_interval = match revoc_interval.is_null() {
-            true => "{}".to_string(),
-            false => revoc_interval.to_string()
-        };
-        let mut verifier = Verifier::create_from_request(id.to_string(), requested_attrs, "[]".to_string(), revoc_interval, id.to_string())?;
+        let presentation_request = ProofRequestDataBuilder::default()
+            .name("test proof")
+            .requested_attributes(req_data.requested_attributes.unwrap_or_default())
+            .requested_predicates(req_data.requested_predicates.unwrap_or_default())
+            .non_revoked(req_data.non_revoked)
+            .nonce(anoncreds::generate_nonce()?)
+            .build().unwrap();
+        let mut verifier = Verifier::create_from_request(id.to_string(), &presentation_request)?;
         verifier.send_presentation_request(connection.send_message_closure()?, None)?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
-        self.dbs.verifier.set(&id, &verifier)?;
-        self.dbs.connection.set(&id, &connection)?;
-        Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": id}).to_string())
+        let thread_id = verifier.get_thread_id()?;
+        self.dbs.verifier.set(&thread_id, &verifier)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
+        Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": thread_id}).to_string())
     }
 
     pub fn send_proof_proposal(&mut self, presentation_proposal: &PresentationProposalWrapper) -> HarnessResult<String> {
@@ -142,8 +155,9 @@ impl Agent {
         let mut prover = Prover::create(&id)?;
         prover.send_proposal(proposal_data, &connection.send_message_closure()?)?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        self.dbs.prover.set(&id, &prover)?;
-        Ok(json!({ "state": _get_state_prover(&prover), "thread_id": id }).to_string())
+        let thread_id = prover.get_thread_id()?;
+        self.dbs.prover.set(&thread_id, &prover)?;
+        Ok(json!({ "state": _get_state_prover(&prover), "thread_id": thread_id }).to_string())
     }
 
     pub fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
@@ -158,8 +172,9 @@ impl Agent {
         prover.generate_presentation(credentials, "{}".to_string())?;
         prover.send_presentation(&connection.send_message_closure()?)?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationSent);
-        self.dbs.prover.set(&id, &prover)?;
-        Ok(json!({"state": _get_state_prover(&prover), "thread_id": id}).to_string())
+        let thread_id = prover.get_thread_id()?;
+        self.dbs.prover.set(&thread_id, &prover)?;
+        Ok(json!({"state": _get_state_prover(&prover), "thread_id": thread_id}).to_string())
     }
 
     pub fn verify_presentation(&mut self, id: &str) -> HarnessResult<String> {
@@ -169,9 +184,13 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         verifier.update_state(&connection)?;
-        self.dbs.verifier.set(&id, &verifier)?;
+        self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
         let verified = match Status::from_u32(verifier.presentation_status()) {
-            Status::Success => "true",
+            Status::Success => {
+                soft_assert_eq!(verifier.get_state(), VerifierState::Finished);
+                verifier.send_ack(&connection.send_message_closure()?)?;
+                "true"
+            },
             _ => "false"
         };
         Ok(json!({ "state": State::Done, "verified": verified }).to_string())
@@ -184,7 +203,7 @@ impl Agent {
                let connection: Connection = self.dbs.connection.get(id)
                    .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                 prover.update_state(&connection)?;
-                self.dbs.prover.set(&id, &prover)?;
+                self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;
                 let state = _get_state_prover(&prover);
                 Ok(json!({ "state": state }).to_string())
             }
@@ -213,7 +232,7 @@ impl Agent {
                            HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
                        )?;
                     let prover = Prover::create_from_request(id, presentation_request.clone())?;
-                    self.dbs.prover.set(&id, &prover)?;
+                    self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;
                     let state = _get_state_prover(&prover);
                     Ok(json!({ "state": state }).to_string())
                }
@@ -221,7 +240,7 @@ impl Agent {
                    let connection: Connection = self.dbs.connection.get(id)
                        .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                     verifier.update_state(&connection)?;
-                    self.dbs.verifier.set(&id, &verifier)?;
+                    self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
                     let state = _get_state_verifier(&verifier);
                     Ok(json!({ "state": state }).to_string())
                }
