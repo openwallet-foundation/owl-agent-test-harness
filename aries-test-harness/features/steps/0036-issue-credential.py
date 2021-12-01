@@ -252,6 +252,7 @@ def step_impl(context, issuer):
 
     # Check the state of the holder after issuers call of send-offer
     # TODO Removing this line causes too many failures in Acapy-Dotnet Acapy-Afgo. 
+    sleep(3)
     assert expected_agent_state(context.holder_url, "issue-credential", context.cred_thread_id, "offer-received")
 
     
@@ -318,7 +319,7 @@ def step_impl(context, holder):
     }
 
     # (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "credential", operation="store", id=context.holder_cred_ex_id)
-    #sleep(1)
+    sleep(3)
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential", operation="store", id=context.cred_thread_id, data=credential_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)

@@ -146,7 +146,8 @@ async fn main() -> std::io::Result<()> {
                     .configure(general::config)
             )
     })
-        .client_timeout(10000)
+        .keep_alive(30)
+        .client_timeout(30000)
         .workers(1)
         .bind(format!("{}:{}", host, opts.port))?
         .run()

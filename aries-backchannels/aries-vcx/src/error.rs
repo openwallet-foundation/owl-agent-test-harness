@@ -15,6 +15,8 @@ pub enum HarnessErrorType {
     NotFoundError,
     #[display(fmt = "Invalid JSON")]
     InvalidJson,
+    #[display(fmt = "Protocol error")]
+    ProtocolError,
 }
 
 #[derive(Debug, Display, Error)]
@@ -37,6 +39,7 @@ impl error::ResponseError for HarnessError {
             HarnessErrorType::RequestNotAcceptedError |
                 HarnessErrorType::InvalidJson => StatusCode::NOT_ACCEPTABLE,
             HarnessErrorType::NotFoundError => StatusCode::NOT_FOUND,
+            HarnessErrorType::ProtocolError => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

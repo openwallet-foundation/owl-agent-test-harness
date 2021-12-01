@@ -184,6 +184,9 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         verifier.update_state(&connection)?;
+        if !vec![VerifierState::Finished, VerifierState::Failed].contains(&verifier.get_state()) {
+            return Err(HarnessError::from_msg(HarnessErrorType::ProtocolError, "Presentation not received"));
+        }
         self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
         let verified = match Status::from_u32(verifier.presentation_status()) {
             Status::Success => {
