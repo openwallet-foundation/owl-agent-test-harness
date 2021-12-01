@@ -114,12 +114,12 @@ fn get_proposal(connection: &Connection) -> HarnessResult<VcxCredentialProposal>
         )
 }
 
-fn get_offer(connection: &Connection) -> HarnessResult<VcxCredentialOffer> {
+fn get_offer(connection: &Connection, thread_id: &str) -> HarnessResult<VcxCredentialOffer> {
     let mut offers: Vec<VcxCredentialOffer> = connection.get_messages()?
         .into_iter()
         .filter_map(|(uid, a2a_message)| {
             match a2a_message {
-                A2AMessage::CredentialOffer(offer) => {
+                A2AMessage::CredentialOffer(offer) if offer.get_thread_id() == thread_id.to_string() => {
                     connection.update_message_status(uid).ok()?;
                     Some(offer)
                 }
@@ -138,7 +138,7 @@ impl Agent {
     pub fn send_credential_proposal(&mut self, cred_proposal: &CredentialProposal) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&cred_proposal.connection_id)
-            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", cred_proposal.connection_id)))?;
         let mut holder = Holder::create(&id)?;
         let mut proposal_data = CredentialProposalData::create()
             .set_schema_id(cred_proposal.schema_id.clone())
@@ -151,14 +151,15 @@ impl Agent {
         holder.send_proposal(proposal_data.clone(), connection.send_message_closure()?)?;
         let thread_id = holder.get_thread_id()?;
         self.dbs.holder.set(&thread_id, &holder)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "state": _get_state_holder(&holder), "thread_id": thread_id }).to_string())
     }
 
     pub fn send_credential_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut holder: Holder = self.dbs.holder.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
-        let connection = self.last_connection.as_ref()
-            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
+        let connection: Connection = self.dbs.connection.get(id)
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         holder.send_request(connection.pairwise_info().pw_did.to_string(), connection.send_message_closure()?)?;
         let thread_id = holder.get_thread_id()?;
         self.dbs.holder.set(&thread_id, &holder)?;
@@ -166,8 +167,12 @@ impl Agent {
     }
 
     pub fn send_credential_offer(&mut self, cred_offer: &CredentialOffer, id: &str) -> HarnessResult<String> {
-        let connection = self.last_connection.as_ref()
-            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
+        let connection: Connection = match cred_offer.connection_id.is_empty() {
+            false => self.dbs.connection.get(&cred_offer.connection_id)
+                        .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", cred_offer.connection_id)))?,
+            true => self.last_connection.clone()
+                        .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?
+        };
         let issuer = match id.is_empty() {
             true => {
                 let cred_def: CachedCredDef = self.dbs.cred_def.get(&cred_offer.cred_def_id)
@@ -185,7 +190,7 @@ impl Agent {
                 issuer
             }
             false => {
-                let proposal = get_proposal(connection)?;
+                let proposal = get_proposal(&connection)?;
                 let cred_def: CachedCredDef = self.dbs.cred_def.get(&proposal.cred_def_id)
                     .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Cred def with id {} not found", cred_offer.cred_def_id)))?;
                 let offer_info = OfferInfo {
@@ -201,15 +206,16 @@ impl Agent {
         };
         let thread_id = issuer.get_thread_id()?;
         self.dbs.issuer.set(&thread_id, &issuer)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "state": _get_state_issuer(&issuer), "thread_id": thread_id }).to_string())
     }
 
     pub fn issue_credetial(&mut self, id: &str, _credential: &Credential) -> HarnessResult<String> {
         let mut issuer: Issuer = self.dbs.issuer.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Issuer with id {} not found", id)))?;
-        let connection = self.last_connection.as_ref()
-            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
-        issuer.update_state(connection)?;
+        let connection: Connection = self.dbs.connection.get(id)
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+        issuer.update_state(&connection)?;
         issuer.send_credential(connection.send_message_closure()?)?;
         self.dbs.issuer.set(&id, &issuer)?;
         Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
@@ -218,9 +224,9 @@ impl Agent {
     pub fn send_ack(&mut self, id: &str) -> HarnessResult<String> {
         let mut holder: Holder = self.dbs.holder.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
-        let connection = self.last_connection.as_ref()
-            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
-        holder.update_state(connection)?;
+        let connection: Connection = self.dbs.connection.get(id)
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+        holder.update_state(&connection)?;
         if holder.is_revokable()? {
             let rev_reg_id = holder.get_rev_reg_id()?;
             let tails_hash = holder.get_tails_hash()?;
@@ -232,23 +238,25 @@ impl Agent {
     }
 
     pub fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
-        let connection = self.last_connection.as_ref()
-            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
+        let connection: Connection = self.dbs.connection.get(id)
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         match self.dbs.issuer.get::<Issuer>(id) {
             Some(mut issuer) => {
-                issuer.update_state(connection)?;
+                issuer.update_state(&connection)?;
                 self.dbs.issuer.set(&id, &issuer)?;
                 Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
             }
             None => {
                 match self.dbs.holder.get::<Holder>(id) {
                     Some(mut holder) => {
-                        holder.update_state(connection)?;
+                        let connection: Connection = self.dbs.connection.get(id)
+                            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+                        holder.update_state(&connection)?;
                         self.dbs.holder.set(&id, &holder)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
                     }
                     None => {
-                        let offer = get_offer(connection)?;
+                        let offer = get_offer(&connection, id)?;
                         let holder = Holder::create_from_offer(id, offer)?;
                         self.dbs.holder.set(&id, &holder)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
@@ -261,9 +269,9 @@ impl Agent {
     pub fn get_credential(&mut self, id: &str) -> HarnessResult<String> {
         let mut holder: Holder = self.dbs.holder.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
-        let connection = self.last_connection.as_ref()
-            .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?;
-        holder.update_state(connection)?;
+        let connection: Connection = self.dbs.connection.get(id)
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+        holder.update_state(&connection)?;
         let attach = holder.get_attachment()?;
         let attach: serde_json::Value = serde_json::from_str(&attach)?;
         let mut attach = attach.as_object().unwrap().clone();

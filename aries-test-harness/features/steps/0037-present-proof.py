@@ -273,6 +273,7 @@ def step_impl(context, prover, presentation):
 def step_impl(context, verifier):
     verifier_url = context.verifier_url
 
+    sleep(3)
     (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.presentation_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
@@ -289,7 +290,7 @@ def step_impl(context, verifier):
 @then('"{prover}" has the proof verified')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
-    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
+    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done", wait_time=10.0)
 
     # Check the status of the verification in the verify-presentation call. Should be True
     if 'credential_verification_dict' in context:
