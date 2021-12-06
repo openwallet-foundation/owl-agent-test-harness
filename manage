@@ -5,7 +5,22 @@
 export VALID_AGENTS=$(ls aries-backchannels/*/Dockerfile.* | sed "s/^.*file.//" |  tr "\n" " " | sort -u)
 
 export MSYS_NO_PATHCONV=1
-export DOCKERHOST=${APPLICATION_URL-$(docker run --rm --net=host eclipse/che-ip)}
+# ====================================================================
+# Set the DOCKERHOST address depending on host system
+# --------------------------------------------------------------------
+function getDockerHost() {
+  (
+    unset dockerHostAddress
+    if [[ $(uname) == "Linux" ]] ; then
+      dockerHostAddress=$(docker run --rm --net=host eclipse/che-ip)
+    else
+      dockerHostAddress=host.docker.internal
+    fi
+    echo ${DOCKERHOST:-${APPLICATION_URL:-${dockerHostAddress}}}
+  )
+}
+export DOCKERHOST=$(getDockerHost)
+# ====================================================================
 
 SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
