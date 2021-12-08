@@ -40,22 +40,9 @@ setupFollowers() {
 	($SCRIPT_HOME/cli-scripts/setup_followers.sh)
 }
 
-# ====================================================================
-# Set the DOCKERHOST address depending on host system
-# --------------------------------------------------------------------
-function getDockerHost() {
-  (
-    unset dockerHostAddress
-    if [[ $(uname) == "Linux" ]] ; then
-      dockerHostAddress=$(docker run --rm --net=host eclipse/che-ip)
-    else
-      dockerHostAddress=host.docker.internal
-    fi
-    echo ${DOCKERHOST:-${APPLICATION_URL:-${dockerHostAddress}}}
-  )
-}
+# getDockerHost; for details refer to https://github.com/bcgov/DITP-DevOps/tree/main/code/snippets#getdockerhost
+. /dev/stdin <<<"$(cat <(curl -s --raw https://raw.githubusercontent.com/bcgov/DITP-DevOps/main/code/snippets/getDockerHost))" 
 export DOCKERHOST=$(getDockerHost)
-# ====================================================================
 
 generateAgentServices() {
 	pushd ${SCRIPT_HOME} > /dev/null
