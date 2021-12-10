@@ -1,9 +1,9 @@
 name: test-harness-ariesvcx-acapy
 # RUNSET_NAME: "aries-vcx to acapy"
 # Scope: AIP 1.0
-# Exceptions: Public Dids, Revocations
+# Exceptions: Public Dids
 # 
-# Passing tests: @RFC0036,@RFC0037,@RFC0160
+# Passing tests: @RFC0036,@RFC0037,@RFC0160,@revocation
 # 
 # End
 on:
@@ -37,7 +37,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx -a acapy-main"
           TEST_AGENTS: "-d aries-vcx -b acapy-main"
-          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160 -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T003-RFC0160 -t ~@T004-RFC0160"
+          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T003-RFC0160 -t ~@T004-RFC0160 -t ~@T014-HIPE0011"
           REPORT_PROJECT: aries-vcx-b-acapy  
         continue-on-error: true
       - uses: actions/upload-artifact@v2

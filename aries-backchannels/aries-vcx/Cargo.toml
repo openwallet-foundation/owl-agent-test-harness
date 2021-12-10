@@ -11,7 +11,7 @@ ctrlc = "3.1.6"
 derive_more = "0.99.14"
 clap = "3.0.0-beta.5"
 reqwest = { version = "0.9" }
-rand = "0.8.4"
+rand = "0.6.5"
 serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
@@ -22,4 +22,4 @@ pickledb = "0.4.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 futures-util = "0.3.15"
 futures = "0.3.15"
-aries-vcx = { git = "https://github.com/hyperledger/aries-vcx", rev = "2225c71" }
+aries-vcx = { git = "https://github.com/hyperledger/aries-vcx", rev = "259f6e09711c995cb360003a771f8fa50e5ecd7f" }

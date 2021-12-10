@@ -5,7 +5,7 @@ use derive_more::{Display, Error};
 
 pub type HarnessResult<T> = Result<T, HarnessError>;
 
-#[derive(Debug, Display, Error)]
+#[derive(Debug, Display, Error, Clone)]
 pub enum HarnessErrorType {
     #[display(fmt = "Internal server error")]
     InternalServerError,
@@ -19,7 +19,7 @@ pub enum HarnessErrorType {
     ProtocolError,
 }
 
-#[derive(Debug, Display, Error)]
+#[derive(Debug, Display, Error, Clone)]
 #[display(fmt = "Error: {}", message)]
 pub struct HarnessError {
     pub message: String,

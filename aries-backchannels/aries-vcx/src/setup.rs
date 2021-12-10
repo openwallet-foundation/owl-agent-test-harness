@@ -1,9 +1,7 @@
 use aries_vcx::init::{open_main_pool, PoolConfigBuilder, open_as_main_wallet, init_issuer_config};
 use aries_vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfigBuilder};
 use aries_vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfigBuilder};
-use aries_vcx::utils::plugins::init_plugin;
 use aries_vcx::libindy::utils::pool;
-use aries_vcx::settings;
 use std::io::prelude::*;
 use crate::AgentConfig;
 use rand::{thread_rng, Rng};
@@ -23,7 +21,7 @@ async fn get_trustee_seed() -> String {
         let client = reqwest::Client::new();
         let body = json!({
             "role": "TRUST_ANCHOR",
-            "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
+            "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000, 1000000))
         }).to_string();
         client.post(&url).body(body).send().expect("Failed to send message").json::<SeedResponse>().expect("Failed to deserializ response").seed
     } else {
@@ -71,7 +69,6 @@ pub async fn initialize() -> AgentConfig {
     info!("Initializing vcx");
     let genesis_path = download_genesis_file().await.expect("Failed to download the genesis file");
     let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8000".to_string());
-    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
     let pool_config = PoolConfigBuilder::default()
         .genesis_path(genesis_path)
         .build()
