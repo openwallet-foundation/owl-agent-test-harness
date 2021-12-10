@@ -239,26 +239,27 @@ impl Agent {
 
     pub fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
         let connection: Connection = self.dbs.connection.get(id)
-            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
         match self.dbs.issuer.get::<Issuer>(id) {
             Some(mut issuer) => {
                 issuer.update_state(&connection)?;
                 self.dbs.issuer.set(&id, &issuer)?;
+                self.dbs.connection.set(&id, &issuer)?;
                 Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
             }
             None => {
                 match self.dbs.holder.get::<Holder>(id) {
                     Some(mut holder) => {
-                        let connection: Connection = self.dbs.connection.get(id)
-                            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                         holder.update_state(&connection)?;
                         self.dbs.holder.set(&id, &holder)?;
+                        self.dbs.connection.set(&id, &connection)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
                     }
                     None => {
                         let offer = get_offer(&connection, id)?;
                         let holder = Holder::create_from_offer(id, offer)?;
                         self.dbs.holder.set(&id, &holder)?;
+                        self.dbs.connection.set(&id, &connection)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
                     }
                 }

@@ -1,8 +1,9 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
 use reqwest::multipart;
+use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use uuid;
 use crate::Agent;
@@ -25,20 +26,20 @@ pub struct CachedCredDef {
 }
 
 fn get_tails_hash(cred_def: &CredentialDef) -> HarnessResult<String> {
-    let rev_reg_def: String = cred_def.get_rev_reg_def().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to retrieve credential definition from credential definition"))?;
-    let rev_reg_def: aries_vcx::handlers::issuance::credential_def::RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)?;
+    let err = HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to retrieve credential definition from credential definition");
+    let rev_reg_def: String = cred_def.get_rev_reg_def().map_err(|_| err.clone())?.ok_or(err)?;
+    let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)?;
     Ok(rev_reg_def.value.tails_hash)
 }
 
-fn upload_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_file: &str) -> HarnessResult<()> {
-    let url = format!("{}/{}", tails_base_url, rev_reg_id);
+fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<()> {
     let client = reqwest::Client::new();
     let genesis_file = std::env::var("GENESIS_FILE").unwrap_or(
         std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn").to_str().unwrap().to_string());
     let form = multipart::Form::new()
         .file("genesis", &genesis_file).unwrap()
         .file("tails", &tails_file).unwrap();
-    let res = client.put(&url).multipart(form).send().unwrap();
+    let res = client.put(tails_url).multipart(form).send().unwrap();
     soft_assert_eq!(res.status(), reqwest::StatusCode::OK);
     Ok(())
 }
@@ -48,28 +49,50 @@ impl Agent {
         let id = uuid::Uuid::new_v4().to_string();
         let did = self.config.did.to_string();
         let tails_base_url = std::env::var("TAILS_SERVER_URL").unwrap_or("https://tails-server-test.pathfinder.gov.bc.ca".to_string());
-        let tails_base_path = "/tmp";
-        let revocation_details = match cred_def.support_revocation {
-            true => json!({ "support_revocation": cred_def.support_revocation, "tails_file": tails_base_path, "tails_url": tails_base_url, "max_creds": 50 }).to_string(),
-            false => json!({ "support_revocation": cred_def.support_revocation }).to_string()
-        };
+        let tails_base_path = "/tmp".to_string();
         let cred_def_id  = match self.dbs.cred_def.get::<CachedCredDef>(&cred_def.schema_id) {
             None => {
-                let cd = CredentialDef::create(id.to_string(), id.to_string(), did.to_string(), cred_def.schema_id.to_string(), cred_def.tag.to_string(), revocation_details)?;
-                let cred_def_id = cd.get_cred_def_id();
-                let cred_def_json: serde_json::Value = serde_json::from_str(&cd.to_string()?)?;
-                let cred_def_json = cred_def_json["data"].to_string();
-                let (tails_file, rev_reg_id) = match cred_def.support_revocation {
+                let config = CredentialDefConfigBuilder::default()
+                    .issuer_did(did)
+                    .schema_id(&cred_def.schema_id)
+                    .tag(&id)
+                    .build()
+                    .unwrap();
+                let revocation_details = if cred_def.support_revocation {
+                    RevocationDetailsBuilder::default()
+                        .support_revocation(cred_def.support_revocation)
+                        .tails_file(&tails_base_path)
+                        .max_creds(50 as u32)
+                        .build()
+                        .unwrap()
+                } else {
+                    RevocationDetailsBuilder::default()
+                        .support_revocation(cred_def.support_revocation)
+                        .build()
+                        .unwrap()
+                };
+                let cd = CredentialDef::create_and_store(id.to_string(), config, revocation_details)?;
+                let (rev_reg_id, tails_url) = match cred_def.support_revocation {
                     true => {
                         let rev_reg_id = cd.get_rev_reg_id().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to retrieve revocation registry id from credential definition"))?;
-                        let tails_hash = get_tails_hash(&cd)?;
-                        let tails_file = format!("{}/{}", tails_base_path, tails_hash);
-                        upload_tails_file(&tails_base_url, &rev_reg_id, &tails_file)?;
-                        self.dbs.cred_def.set(&rev_reg_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file: Some(tails_file.clone()), rev_reg_id: Some(rev_reg_id.clone()) })?;
-                        (Some("/tmp".to_string()), Some(rev_reg_id))
+                        let tails_url = format!("{}/{}", tails_base_url, rev_reg_id);
+                        (Some(rev_reg_id), Some(tails_url))
                     }
                     false => (None, None)
                 };
+                let cd = cd.publish(tails_url.as_deref())?;
+                let tails_file = match tails_url {
+                    Some(tails_url) => {
+                        let tails_hash = get_tails_hash(&cd)?;
+                        let tails_file = format!("{}/{}", tails_base_path, tails_hash);
+                        upload_tails_file(&tails_url, &tails_file)?;
+                        Some(tails_base_path)
+                    }
+                    None => None
+                };
+                let cred_def_id = cd.get_cred_def_id();
+                let cred_def_json: serde_json::Value = serde_json::from_str(&cd.to_string()?)?;
+                let cred_def_json = cred_def_json["data"]["cred_def_json"].as_str().unwrap();
                 self.dbs.cred_def.set(&cred_def.schema_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file: tails_file.clone(), rev_reg_id: rev_reg_id.clone() })?;
                 self.dbs.cred_def.set(&cred_def_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file: tails_file.clone(), rev_reg_id: rev_reg_id.clone() })?;
                 cred_def_id
@@ -84,7 +107,7 @@ impl Agent {
     pub fn get_credential_definition(&self, id: &str) -> HarnessResult<String> {
         let cred_def: CachedCredDef = self.dbs.cred_def.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Credential definition with id {} not found", id)))?;
-        Ok(cred_def.cred_def_json.to_string())
+        Ok(cred_def.cred_def_json)
     }
 }
 

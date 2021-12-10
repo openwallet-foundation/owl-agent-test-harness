@@ -9,60 +9,51 @@ x-standard-logging:
 
 services:
   agency:
-    image: docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.3.0-featureconfigurable-hostname-506
+    image: ghcr.io/absaoss/vcxagencynode/vcxagency-node:1.0.1-release102-675
     container_name: agency
     logging: *service-logging
     depends_on:
-      - postgres
+      - mysql
     environment:
       - LOG_JSON_TO_CONSOLE=false
       - LOG_LEVEL=info
       - SERVER_PORT=8000
-      - SERVER_HOSTNAME=0.0.0.0
       - SERVER_MAX_REQUEST_SIZE_KB=300
 
       - PG_WALLET_MAX_CONNECTIONS=90
       - PG_WALLET_CONNECTION_TIMEOUT_MINS=30
 
-      - AGENCY_WALLET_NAME=vcxagency-node-ea
+      - AGENCY_WALLET_NAME=vcxagency-node
       - AGENCY_DID=VsKV7grR1BUE29mG2Fm2kX
       - AGENCY_SEED_SECRET=0000000000000000000000000Forward
       - AGENCY_WALLET_KEY_SECRET=98765432109876543210
 
       - AGENCY_TYPE=enterprise
 
-      - PG_STORE_HOST=postgres.aath_network
-      - PG_STORE_PORT=5433
-      - PG_STORE_ACCOUNT=postgres
-      - PG_STORE_PASSWORD_SECRET=mysecretpassword
-      - PG_STORE_DATABASE=storage-ea
-
-      - PG_WALLET_ACCOUNT=postgres
-      - PG_WALLET_PASSWORD_SECRET=mysecretpassword
-      - PG_WALLET_ADMIN_ACCOUNT=postgres
-      - PG_WALLET_ADMIN_PASSWORD_SECRET=mysecretpassword
-      - PG_WALLET_URL=postgres.aath_network:5433
+      - MYSQL_HOST=mysql.aath_network
+      - MYSQL_PORT=3306
+      - MYSQL_ACCOUNT=root
+      - MYSQL_PASSWORD_SECRET=mysecretpassword
+      - MYSQL_DATABASE_APPLICATION=agency_application
+      - MYSQL_DATABASE_WALLET=agency_wallets
+      - MYSQL_DATABASE_WALLET_CONNECTION_LIMIT=50
 
       - SERVER_ENABLE_TLS=false
     networks:
       - aath_network
     ports:
       - "8000:8000"
+    command: ["sh", "-c", "sleep 10 && npm run dev:schema:migrate:all && npm run serve"]
 
-  postgres:
-    container_name: postgres
-    image: postgres:12.1
+  mysql:
+    container_name: mysql
+    image: mysql:5.7.35
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
-    volumes:
-      - ./postgresql.conf:/etc/postgresql.conf
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-mysecretpassword}
     networks:
       - aath_network
     ports:
-      - "5433:5433"
-    command: [ "-c", "config_file=/etc/postgresql.conf" ]
+      - "3306:3306"
 
 networks:
   aath_network:

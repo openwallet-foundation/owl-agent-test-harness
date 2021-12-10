@@ -26,14 +26,13 @@ fn create_and_publish_schema(source_id: &str,
                              version: String,
                              data: String) -> HarnessResult<(String, String)> {
     let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data)?;
-    let payment_txn = anoncreds::publish_schema(&schema)?;
+    anoncreds::publish_schema(&schema)?;
     let schema_json = VcxSchema {
         source_id: source_id.to_string(),
         name,
         data: serde_json::from_str(&data).unwrap_or_default(),
         version,
         schema_id: schema_id.to_string(),
-        payment_txn,
         state: PublicEntityStateType::Built
     }.to_string()?;
     let schema_json: serde_json::Value = serde_json::from_str(&schema_json).map_err(|err| HarnessError::from(err))?;
