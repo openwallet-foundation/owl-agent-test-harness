@@ -43,7 +43,7 @@ services:
       - aath_network
     ports:
       - "8000:8000"
-    command: ["sh", "-c", "npm run dev:schema:migrate:all && npm run serve"]
+    command: ["sh", "-c", "sleep 10 && npm run dev:schema:migrate:all && npm run serve"]
 
   mysql:
     container_name: mysql
