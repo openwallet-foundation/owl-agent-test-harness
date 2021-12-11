@@ -4,15 +4,15 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.2 | javascript<br>0.1.0-alpha.317 | dotnet-master<br> | acapy-main<br>0.7.2 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.2 | javascript<br>0.1.0-alpha.323 | dotnet-master<br> | acapy-main<br>0.7.2 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-dotnet](#runset-acapy-dotnet) | acapy-main<br>0.7.2 | dotnet-master<br> | acapy-main<br>0.7.2 | acapy-main<br>0.7.2 | AIP 1.0 | [**26 / 27<br>96%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-dotnet](#runset-afj-dotnet) | javascript<br>0.1.0-alpha.317 | dotnet-master<br> | javascript<br>0.1.0-alpha.317 | javascript<br>0.1.0-alpha.317 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-dotnet](#runset-afj-dotnet) | javascript<br>0.1.0-alpha.323 | dotnet-master<br> | javascript<br>0.1.0-alpha.323 | javascript<br>0.1.0-alpha.323 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-acapy](#runset-dotnet-acapy) | dotnet-master<br> | acapy-main<br>0.7.2 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**5 / 12<br>41%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-findy](#runset-dotnet-findy) | dotnet-master<br> | findy<br>0.25.23 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**2 / 17<br>11%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [dotnet-javascript](#runset-dotnet-javascript) | dotnet-master<br> | javascript<br>0.1.0-alpha.317 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-javascript](#runset-dotnet-javascript) | dotnet-master<br> | javascript<br>0.1.0-alpha.323 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**11 / 12<br>91%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet](#runset-dotnet) | dotnet-master<br> | dotnet-master<br> | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [findy-dotnet](#runset-findy-dotnet) | findy<br>0.25.23 | dotnet-master<br> | findy<br>0.25.23 | findy<br>0.25.23 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | findy<br>0.25.22 | javascript<br>0.1.0-alpha.317 | dotnet-master<br> | findy<br>0.25.22 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | findy<br>0.25.23 | javascript<br>0.1.0-alpha.323 | dotnet-master<br> | findy<br>0.25.23 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -24,7 +24,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Wed Dec  1 01:49:09 UTC 2021*
+*Last run: Sat Dec 11 01:45:26 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -49,7 +49,7 @@ Runset Name: ACA-PY to AF-.NET
 **Latest results: 26 out of 27 (96%)**
 
 
-*Last run: Wed Dec  1 02:00:03 UTC 2021*
+*Last run: Sat Dec 11 02:01:28 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -74,7 +74,7 @@ Runset Name: AFJ to AF-.NET
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Wed Dec  1 02:02:01 UTC 2021*
+*Last run: Sat Dec 11 01:59:43 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -97,7 +97,7 @@ Runset Name: AF-.NET to ACA-PY
 **Latest results: 5 out of 12 (41%)**
 
 
-*Last run: Wed Dec  1 02:23:20 UTC 2021*
+*Last run: Sat Dec 11 02:19:58 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -120,7 +120,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 2 out of 17 (11%)**
 
 
-*Last run: Wed Dec  1 02:43:18 UTC 2021*
+*Last run: Sat Dec 11 02:43:20 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -141,10 +141,10 @@ with dotnet as the issuer and findy as the holder.
 Runset Name: AF-.NET to AFJ
 
 ```tip
-**Latest results: 12 out of 12 (100%)**
+**Latest results: 11 out of 12 (91%)**
 
 
-*Last run: Wed Dec  1 02:27:38 UTC 2021*
+*Last run: Sat Dec 11 02:23:50 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -167,7 +167,7 @@ Runset Name: AF-.NET to AF-.NET
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Wed Dec  1 02:25:32 UTC 2021*
+*Last run: Sat Dec 11 02:24:43 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -190,7 +190,7 @@ Runset Name: findy to dotnet
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Wed Dec  1 02:28:28 UTC 2021*
+*Last run: Sat Dec 11 02:29:53 UTC 2021*
 ```
 
 #### Current Runset Status
@@ -213,7 +213,7 @@ Runset Name: findy to AFJ to AF-.NET
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Dec  1 01:52:29 UTC 2021*
+*Last run: Sat Dec 11 01:51:08 UTC 2021*
 ```
 
 #### Current Runset Status
