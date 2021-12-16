@@ -4,7 +4,7 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-verity](#runset-acapy-verity) | verity<br>1.0 | acapy-main<br>0.7.2 | acapy-main<br>0.7.2 | acapy-main<br>0.7.2 | AIP 1.0 | [**2 / 2<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-verity/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-verity](#runset-acapy-verity) | verity<br>1.0 | acapy-main<br>0.7.3-rc0 | acapy-main<br>0.7.3-rc0 | acapy-main<br>0.7.3-rc0 | AIP 1.0 | [**2 / 2<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-verity/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -16,7 +16,7 @@ Runset Name: ACA-PY to Verity
 **Latest results: 2 out of 2 (100%)**
 
 
-*Last run: Sat Dec 11 02:14:02 UTC 2021*
+*Last run: Thu Dec 16 02:15:25 UTC 2021*
 ```
 
 #### Current Runset Status
