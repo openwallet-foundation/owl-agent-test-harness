@@ -20,7 +20,7 @@ name: test-harness-findy-acapy
 on:
   workflow_dispatch:
   schedule:
-    - cron: "40 1 * * *"
+    - cron: "5 2 * * *"
 defaults:
   run:
     shell: bash

@@ -19,7 +19,7 @@ name: test-harness-acapy-verity
 on:
   workflow_dispatch:
   schedule:
-    - cron: "20 1 * * *"
+    - cron: "55 1 * * *"
 defaults:
   run:
     shell: bash
