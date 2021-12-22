@@ -18,7 +18,7 @@ name: test-harness-acapy-aip20
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 0 * * *"
+    - cron: "30 0 * * *"
 defaults:
   run:
     shell: bash
