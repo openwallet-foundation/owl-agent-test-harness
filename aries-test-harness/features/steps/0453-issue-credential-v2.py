@@ -29,10 +29,7 @@ def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
         resp_json = json.loads(resp_text)
 
         # TODO: it would be nice to not depend on the schema name for the issuer did dict
-        if 'issuer_did_dict' in context:
-            context.issuer_did_dict[context.schema['schema_name']] = resp_json["did"]
-        else:
-            context.issuer_did_dict = {context.schema['schema_name']: resp_json["did"]}
+        context.issuer_did_dict[context.schema['schema_name']] = resp_json["did"]
     else:
         raise Exception(f"Unknown credential format {cred_format}")
 
@@ -40,37 +37,22 @@ def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
 @when('"{holder}" proposes a "{cred_format}" credential to "{issuer}" with {credential_data}')
 def step_impl(context, holder, cred_format, issuer, credential_data):
 
-    if "schema_dict" in context:
-        for schema in context.schema_dict:
-            try:
-                credential_data_json_file = open('features/data/cred_data_' + schema.lower() + '.json')
-                credential_data_json = json.load(credential_data_json_file)
-            except FileNotFoundError:
-                print(FileNotFoundError + ': features/data/cred_data_' + schema.lower() + '.json')
-
-            if 'credential_data_dict' in context:
-                context.credential_data_dict[schema] = credential_data_json[credential_data]['attributes']
-            else:
-                context.credential_data_dict = {schema: credential_data_json[credential_data]['attributes']}
-
-            if "AIP20" in context.tags:
-                if 'filters_dict' in context:
-                    context.filters_dict[schema] = credential_data_json[credential_data]['filters']
-                else:
-                    context.filters_dict = {schema: credential_data_json[credential_data]['filters']}
-
     for schema in context.schema_dict:
-        context.credential_data = context.credential_data_dict[schema]
-        context.schema = context.schema_dict[schema]
+        try:
+            credential_data_json_file = open('features/data/cred_data_' + schema.lower() + '.json')
+            credential_data_json = json.load(credential_data_json_file)
+            context.credential_data_dict[schema] = credential_data_json[credential_data]['attributes']
+
+            context.credential_data = context.credential_data_dict[schema]
+            context.schema = context.schema_dict[schema]
+        except FileNotFoundError:
+            print(FileNotFoundError + ': features/data/cred_data_' + schema.lower() + '.json')
+
         if "AIP20" in context.tags:
+            context.filters_dict[schema] = credential_data_json[credential_data]['filters']
             context.filters = context.filters_dict[schema]
 
-
     holder_url = context.config.userdata.get(holder)
-
-    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
-    if "credential_data" in context:
-        cred_data = context.credential_data
 
     if "AIP20" in context.tags:
         # We only want to send data for the cred format being used
@@ -81,7 +63,8 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
 
          # This call may need to be formated by cred_format instead of version. Reassess when more types are used.
         credential_offer = format_cred_proposal_by_aip_version(
-            context, "AIP20", cred_data, context.connection_id_dict[holder][issuer], filters)
+            context, "AIP20", context.credential_data, context.connection_id_dict[holder][issuer], filters
+        )
 
 
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential-v2", operation="send-proposal", data=credential_offer)
@@ -97,11 +80,14 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
 def step_impl(context, issuer, cred_format):
     issuer_url = context.config.userdata.get(issuer)
 
+    if context.cred_thread_id:
+        # If context has the credential thread id then the proposal was done. 
+        (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential-v2", operation="send-offer", id=context.cred_thread_id)
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+        resp_json = json.loads(resp_text)
     # if context does not have the credential thread id then the proposal was not the starting point for the protocol. 
-    if not "cred_thread_id" in context:
-
-        if "credential_data" in context:
-            cred_data = context.credential_data
+    else:
+        cred_data = context.credential_data
 
         # We only want to send data for the cred format being used
         assert cred_format in context.filters, f"credential data has no filter for cred format {cred_format}"
@@ -116,12 +102,7 @@ def step_impl(context, issuer, cred_format):
         resp_json = json.loads(resp_text)
         context.cred_thread_id = resp_json["thread_id"]
 
-    else:
 
-        # If context has the credential thread id then the proposal was done. 
-        (resp_status, resp_text) = agent_backchannel_POST(issuer_url + "/agent/command/", "issue-credential-v2", operation="send-offer", id=context.cred_thread_id)
-        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-        resp_json = json.loads(resp_text)
 
 
 @when('"{holder}" requests the "{cred_format}" credential')
@@ -156,31 +137,17 @@ def step_impl(context, issuer, cred_format):
 @when('"{holder}" acknowledges the "{cred_format}" credential issue')
 def step_impl(context, holder, cred_format):
     holder_url = context.config.userdata.get(holder)
-    
-    # a credential id shouldn't be needed with a cred_ex_id being passed
-    # credential_id = {
-    #     "credential_id": context.cred_thread_id,
-    # }
-    credential_id = {
-        "comment": "storing credential"
-    }
 
     sleep(1)
-    (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential-v2", operation="store", id=context.cred_thread_id, data=credential_id)
+    (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential-v2", operation="store", id=context.cred_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "done"
+    state = resp_json["state"]
+    assert state == "done", f"state is '{state}', expected 'done'"
 
+    # FIXME: the return value of this is very ACA-Py specific, should just be credential_id
     credential_id = resp_json[cred_format]["credential_id"]
-    #credential_id = resp_json["cred_ex_record"]["cred_id_stored"]
-
-    if 'credential_id_dict' in context:
-        try:
-            context.credential_id_dict[context.schema['schema_name']].append(credential_id)
-        except KeyError:
-            context.credential_id_dict[context.schema['schema_name']] = [credential_id]
-    else:
-        context.credential_id_dict = {context.schema['schema_name']: [credential_id]}
+    context.credential_id_dict[context.schema['schema_name']].append(credential_id)
 
     # Verify issuer status
     # TODO This is returning none instead of Done. Should this be the case. Needs investigation.
@@ -188,13 +155,12 @@ def step_impl(context, holder, cred_format):
 
     # if the credential supports revocation, get the Issuers webhook callback JSON from the store command
     # From that JSON save off the credential revocation identifier, and the revocation registry identifier.
-    if "support_revocation" in context:
-        if context.support_revocation:
-            (resp_status, resp_text) = agent_backchannel_GET(context.config.userdata.get(context.issuer_name) + "/agent/response/", "revocation-registry", id=context.cred_thread_id)
-            assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-            resp_json = json.loads(resp_text)
-            context.cred_rev_id = resp_json["revocation_id"]
-            context.rev_reg_id = resp_json["revoc_reg_id"]
+    if context.support_revocation:
+        (resp_status, resp_text) = agent_backchannel_GET(context.config.userdata.get(context.issuer_name) + "/agent/response/", "revocation-registry", id=context.cred_thread_id)
+        assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
+        resp_json = json.loads(resp_text)
+        context.cred_rev_id = resp_json["revocation_id"]
+        context.rev_reg_id = resp_json["revoc_reg_id"]
 
 
 @then('"{holder}" has the "{cred_format}" credential issued')
@@ -216,6 +182,6 @@ def step_impl(context, holder, cred_format):
 
 @when('"{holder}" negotiates the offer with another proposal of the "{cred_format}" credential to "{issuer}"')
 def step_impl(context, holder, cred_format, issuer):
-    context.execute_steps('''
-        When "''' + holder + '''" proposes a "''' + cred_format + '''" credential to "''' + issuer + '''"
+    context.execute_steps(f'''
+        When "{holder}" proposes a "{cred_format}" credential to "{issuer}"
     ''')

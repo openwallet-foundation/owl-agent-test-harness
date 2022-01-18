@@ -38,7 +38,7 @@ elif RUN_MODE == "pwd":
 
 
 def get_ledger_url(ledger_url: str = None):
-    return ledger_url or LEDGER_URL
+    return ledger_url or LEDGER_URL or f"http://{DEFAULT_EXTERNAL_HOST}:9000"
 
 
 async def default_genesis_txns():

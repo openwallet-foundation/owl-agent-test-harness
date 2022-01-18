@@ -103,7 +103,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "request_sent": "request-sent",
             "request_received": "request-received",
             "credential-issued": "credential-issued",
-            "credential_received": "credential-received",
+            "credential-received": "credential-received",
             "done": "done"
         }
 
