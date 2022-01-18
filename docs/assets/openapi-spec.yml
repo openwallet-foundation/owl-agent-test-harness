@@ -83,7 +83,7 @@ paths:
   /agent/command/version:
     get:
       summary: Get agent/backchannel version
-      operationId: StatusGet
+      operationId: VersionGet
       tags:
         - Status
       responses:
@@ -95,6 +95,32 @@ paths:
                 type: string
                 example: 0.6.0
 
+  /agent/command/agent/start:
+    post:
+      summary: (re)start the agent
+      operationId: AgentStart
+      tags:
+        - Status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - parameters
+              properties:
+                parameters:
+                  type: object
+                  example:
+                    {
+                      "mime-type": "didcomm/v2"
+                    }
+      responses:
+        200:
+          description: OK
+        500:
+          description: Failed
   /agent/command/connection:
     get:
       tags:
@@ -859,11 +885,11 @@ paths:
                   type: object
                   required:
                     - connection_id
-                    - presentation_proposal
+                    - presentation_request
                   properties:
                     connection_id:
                       $ref: "#/components/schemas/ConnectionId"
-                    presentation_proposal:
+                    presentation_request:
                       $ref: "#/components/schemas/PresentationRequestMessage"
       responses:
         200:
@@ -1278,7 +1304,6 @@ components:
                 type: string
       example:
         {
-          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
           "attributes":
             [
               {
@@ -1305,12 +1330,9 @@ components:
       type: object
       example:
         {
-          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
           "comment": "This is a comment for the request for presentation.",
-          "request_presentations~attach":
+          "proof_request":
             {
-              "@id": "libindy-request-presentation-0",
-              "mime-type": "application/json",
               "data":
                 {
                   "requested_attributes":

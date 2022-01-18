@@ -1,58 +1,54 @@
-import indy from "indy-sdk";
-import { InitConfig, Agent } from "aries-framework-javascript";
-import express from "express";
-import { $log } from "@tsed/common";
+import { $log } from '@tsed/common'
+import { Agent, HttpOutboundTransport, InitConfig, WsOutboundTransport } from '@aries-framework/core'
+import { agentDependencies, HttpInboundTransport } from '@aries-framework/node'
 
-import {
-  HttpInboundTransporter,
-  HttpOutboundTransporter,
-} from "./Transporters";
+import { TsedLogger } from './TsedLogger'
 
 export async function createAgent({
   port,
-  url,
+  endpoint,
   publicDidSeed,
   genesisPath,
+  agentName,
+  useLegacyDidSovPrefix,
 }: {
-  port: number;
-  url: string;
-  publicDidSeed: string;
-  genesisPath: string;
+  port: number
+  endpoint: string
+  publicDidSeed: string
+  genesisPath: string
+  agentName: string
+  useLegacyDidSovPrefix: boolean
 }) {
+  // TODO: Public did does not seem to be registered
+  // TODO: Schema is prob already registered
+  $log.level = 'debug'
+
   const agentConfig: InitConfig = {
-    label: "javascript",
-    walletConfig: { id: `aath-javascript-${Date.now()}` },
-    walletCredentials: { key: "00000000000000000000000000000Test01" },
+    label: agentName,
+    walletConfig: {
+      id: `aath-javascript-${Date.now()}`,
+      key: '00000000000000000000000000000Test01',
+    },
+    indyLedgers: [
+      {
+        id: 'main-pool',
+        isProduction: false,
+        genesisPath,
+      },
+    ],
+    endpoints: [endpoint],
     publicDidSeed,
-    host: url,
-    port,
-    poolName: "aries-framework-javascript-pool",
-    genesisPath,
-  };
+    useLegacyDidSovPrefix,
+    logger: new TsedLogger($log),
+  }
 
-  const app = express();
-  app.use(
-    express.json({
-      type: "application/ssi-agent-wire",
-    })
-  );
+  const agent = new Agent(agentConfig, agentDependencies)
 
-  const inboundTransporter = new HttpInboundTransporter(app);
-  const outboundTransporter = new HttpOutboundTransporter();
+  agent.registerInboundTransport(new HttpInboundTransport({ port }))
+  agent.registerOutboundTransport(new HttpOutboundTransport())
+  agent.registerOutboundTransport(new WsOutboundTransport())
 
-  const agent = new Agent(
-    agentConfig,
-    inboundTransporter,
-    outboundTransporter,
-    indy
-  );
+  await agent.initialize()
 
-  await agent.init();
-
-  app.listen(port, async () => {
-    inboundTransporter.start(agent);
-    $log.info(`Agent listening on port ${url}:${port}`);
-  });
-
-  return agent;
+  return agent
 }

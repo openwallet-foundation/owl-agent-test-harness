@@ -120,40 +120,28 @@ def step_impl(context, verifier, prover):
                     }
                 }
 
+    presentation_request = {
+        "presentation_request": {
+            "comment": "This is a comment for the request for presentation.",
+            "proof_request": {
+                "data":  data
+            }
+        }
+    }
+
+
     if context.connectionless:
-        presentation_proposal = {
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
-            }
-        }
-        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="create-send-connectionless-request", data=presentation_proposal)
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="create-send-connectionless-request", data=presentation_request)       
     else:
-        presentation_proposal = {
-            "connection_id": context.connection_id_dict[verifier][prover],
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
-            }
-        }
+        presentation_request["connection_id"] = context.connection_id_dict[verifier][prover]
 
         # send presentation request
-        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_proposal)
+        (resp_status, resp_text) = agent_backchannel_POST(context.verifier_url + "/agent/command/", "proof", operation="send-request", data=presentation_request)
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
     # check the state of the presentation from the verifiers perspective
-    assert resp_json["state"] == "request-sent"
+    #assert resp_json["state"] == "request-sent"
 
     # save off anything that is returned in the response to use later?
     context.presentation_thread_id = resp_json["thread_id"]
@@ -163,8 +151,7 @@ def step_impl(context, verifier, prover):
         # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
         context.presentation_exchange_id = resp_json["presentation_exchange_id"]
     else:
-        # check the state of the presentation from the provers perspective
-        # if the protocol is connectionless then don't do this, the prover has not received anything yet.
+        # TODO Removing this line causes too many failures in Acapy-Dotnet Acapy-Afgo. 
         assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
 
 @when('"{verifier}" agrees with the proposal so sends a {request_for_proof} presentation to "{prover}"')
@@ -173,7 +160,7 @@ def step_impl(context, verifier, request_for_proof, prover):
     try:
         request_for_proof_json_file = open('features/data/' + request_for_proof + '.json')
         request_for_proof_json = json.load(request_for_proof_json_file)
-        context.request_for_proof = request_for_proof_json["presentation_proposal"]
+        context.request_for_proof = request_for_proof_json["presentation_request"]
 
     except FileNotFoundError:
         print(FileNotFoundError + ': features/data/' + request_for_proof + '.json')
@@ -246,11 +233,7 @@ def step_impl(context, prover):
 
     (resp_status, resp_text) = agent_backchannel_POST(prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
-    resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "presentation-sent"
 
-    # check the state of the presentation from the verifier's perspective
-    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "presentation-received", wait_time=60.0)
 
 @when('"{prover}" makes the {presentation} of the proof')
 def step_impl(context, prover, presentation):
@@ -271,6 +254,7 @@ def step_impl(context, prover, presentation):
 def step_impl(context, verifier):
     verifier_url = context.verifier_url
 
+    sleep(3)
     (resp_status, resp_text) = agent_backchannel_POST(verifier_url + "/agent/command/", "proof", operation="verify-presentation", id=context.presentation_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
@@ -284,7 +268,7 @@ def step_impl(context, verifier):
 @then('"{prover}" has the proof verified')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
-    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
+    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done", wait_time=10.0)
 
     if context.presentation_thread_id in context.credential_verification_dict:
         # Check the status of the verification in the verify-presentation call. Should be True
@@ -302,7 +286,7 @@ def step_impl(context, prover):
         data = context.presentation_proposal
     else:   
         data = {
-            "requested_attributes": [
+            "attributes": [
                 {
                     "name": "attr_2",
                     "cred_def_id": context.credential_definition_id_dict[context.schema["schema_name"]],
@@ -310,15 +294,14 @@ def step_impl(context, prover):
             ]
         }
 
-    requested_attributes = data.get("requested_attributes") or []
-    requested_predicates = data.get("requested_predicates") or []
+    attributes = data.get("attributes") or []
+    predicates = data.get("predicates") or []
 
     presentation_proposal = {
         "presentation_proposal": {
-            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
             "comment": "This is a comment for the presentation proposal.",
-            "requested_attributes": requested_attributes,
-            "requested_predicates": requested_predicates
+            "attributes": attributes,
+            "predicates": predicates
         }
     }
 
@@ -329,14 +312,9 @@ def step_impl(context, prover):
     (resp_status, resp_text) = agent_backchannel_POST(context.prover_url + "/agent/command/", "proof", operation="send-proposal", data=presentation_proposal)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    # check the state of the presentation from the verifiers perspective
-    assert resp_json["state"] == "proposal-sent"
 
     # save off anything that is returned in the response to use later?
     context.presentation_thread_id = resp_json["thread_id"]
-
-    # check the state of the presentation from the provers perspective
-    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "proposal-received")
 
 
 @when(u'"{verifier}" agrees to continue so sends a request for proof presentation')
@@ -356,18 +334,14 @@ def step_impl(context, verifier):
             }
         }
     }
-
     presentation_request = {
-            "presentation_proposal": {
-                "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-                "comment": "This is a comment for the request for presentation.",
-                "request_presentations~attach": {
-                    "@id": "libindy-request-presentation-0",
-                    "mime-type": "application/json",
-                    "data":  data
-                }
+        "presentation_request": {
+            "comment": "This is a comment for the request for presentation.",
+            "proof_request": {
+                "data":  data
             }
         }
+    }
     
     if not context.connectionloess:
         presentation_request["connection_id"] = context.connection_id_dict[verifier][context.prover_name]
@@ -377,14 +351,7 @@ def step_impl(context, verifier):
     
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    # check the state of the presentation from the verifiers perspective
-    assert resp_json["state"] == "request-sent"
 
-    # save off anything that is returned in the response to use later?
-    #context.presentation_thread_id = resp_json["thread_id"]
-
-    # check the state of the presentation from the provers perspective
-    assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "request-received")
 
 @when('"{prover}" doesn’t want to reveal what was requested so makes a {proposal}')
 @when('"{prover}" makes a {proposal} to "{verifier}"')
@@ -396,7 +363,7 @@ def step_impl(context, prover, proposal, verifier=None):
 
         # replace the cred_def_id with the actual id based on the cred type name
         try:
-            for requested_attribute in context.presentation_proposal["requested_attributes"]:
+            for requested_attribute in context.presentation_proposal["attributes"]:
                 # Get the cred type name from the loaded presentation for each requested attributes
                 cred_type_name = requested_attribute["cred_type_name"]
                 requested_attribute["cred_def_id"] = context.credential_definition_id_dict[cred_type_name]
@@ -407,7 +374,7 @@ def step_impl(context, prover, proposal, verifier=None):
             pass
         
         try:
-            for requested_predicate in context.presentation_proposal["requested_predicates"]:
+            for requested_predicate in context.presentation_proposal["predicates"]:
                  # Get the schema name from the loaded presentation for each requested predicates
                 cred_type_name = requested_predicate["cred_type_name"]
                 requested_predicate["cred_def_id"] = context.credential_definition_id_dict[cred_type_name] 
@@ -470,12 +437,7 @@ def step_impl(context, prover, presentation, verifier):
     (resp_status, resp_text) = agent_backchannel_POST(context.prover_url + "/agent/command/", "proof", operation="send-presentation", id=context.presentation_thread_id, data=presentation)
     assert resp_status == 400, f'resp_status {resp_status} is not 400; {resp_text}'
 
-    # check the state of the presentation from the verifier's perspective
-    assert expected_agent_state(context.verifier_url, "proof", context.presentation_thread_id, "presentation-received")
 
-    # context.execute_steps('''
-    #     When "''' + prover + '''" makes the ''' + presentation + ''' of the proof
-    # ''')
 
 # FIXME: why is this commented?
 # @when(u'"{verifier}" rejects the proof so sends a presentation rejection')
@@ -490,6 +452,6 @@ def step_impl(context, prover):
     # like having the verified: false in the response. Change this if agents start to report the verified state. 
     assert expected_agent_state(context.prover_url, "proof", context.presentation_thread_id, "done")
 
-    if context.presentation_thread_id in context.credential_verification_dict:
+    if context.credential_verification_dict:
         # Check the status of the verification in the verify-presentation call. Should be False
         assert not context.credential_verification_dict[context.presentation_thread_id]

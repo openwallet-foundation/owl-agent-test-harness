@@ -1,23 +1,18 @@
-FROM python:3.7-buster
+FROM python:3.7-slim
+
+RUN apt-get update \
+   && apt-get install -y git gnupg2 software-properties-common curl \
+   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
+   && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' \
+   && apt-get update \
+   && apt-get install -y libindy libnullpay
+
 RUN mkdir -p /aries-backchannels
 WORKDIR /aries-backchannels
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
-   && apt-get update \
-   && apt-get install -y software-properties-common \
-   && apt-get update \
-   && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' \
-   && apt-get update \
-   && apt-get install -y libindy \
-   && apt-get install -y libnullpay
-
-ENV RUNMODE=docker
-
-
 COPY python/requirements.txt python/
-RUN pip install -r python/requirements.txt
 COPY acapy/requirements-latest.txt acapy/
-RUN pip install -r acapy/requirements-latest.txt
+RUN pip install -r python/requirements.txt -r acapy/requirements-latest.txt
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 COPY python python
@@ -27,7 +22,9 @@ COPY data ./
 # aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
 RUN mkdir -p ./bin
 RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
+
 ENV PYTHONPATH=/aries-backchannels
+ENV RUNMODE=docker
 
 RUN ./bin/aca-py --version > ./acapy-version.txt
 

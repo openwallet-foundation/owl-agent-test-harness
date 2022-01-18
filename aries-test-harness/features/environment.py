@@ -3,74 +3,78 @@
 # Setup and Tear Downs at different levels
 # For more info see:
 # https://behave.readthedocs.io/en/latest/tutorial.html#environmental-controls
-#  
+#
 # -----------------------------------------------------------
 import json
 from collections import defaultdict
+from behave.runner import Context
+from behave.model import Scenario, Feature
 
-def before_scenario(context, scenario):
+def before_scenario(context: Context, scenario: Scenario):
     setup_scenario_context(context, scenario)
-    
+
     # Check if the scenario has an issue associated
     for tag in context.tags:
         if '.issue:' in tag:
-            
+
             # Parse out the URL in the issue tag.
             l_issue_info = tag.split(":")
             s_issue_url = 'https:' + l_issue_info[2]
 
-            #get the test id for this scenario
+            # get the test id for this scenario
             for tag in context.tags:
                 if tag.startswith("T"):
                     test_id = tag
                     break
 
             # Tell the user the scenario will fail and the URL to the issue
-            print ('NOTE: Test ' + test_id + ':' + scenario.name + ', WILL FAIL due to an outstanding issue not yet resolved.')
-            print ('For more information see issue details at ' + s_issue_url)
+            print(f'NOTE: Test {test_id}:{scenario.name}, WILL FAIL due to an outstanding issue not yet resolved.')
+            print(f'For more information see issue details at {s_issue_url}')
             break
 
     # Check if the @MultiUseInvite tag exists
-    if 'MultiUseInvite' in context.tags :
-        
-        print ('NOTE: Test \"' + scenario.name + '\" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
+    if 'MultiUseInvite' in context.tags:
+        print(f'NOTE: Test "{scenario.name}" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
 
     # Check for Present Proof Feature to be able to handle the loading of schemas and credential definitions before the scenarios.
     if 'present proof' in context.feature.name or 'revocation' in context.feature.name or 'Issue Credential' in context.feature.name:
-            # get the tag with "Schema_".
-            for tag in context.tags:
-                if 'ProofType_' in tag:
-                    # Get and assign the proof type to the context
-                    # tag is in format "ProofType_PROOFTYPESTRING"
-                    context.proof_type = tag.split("ProofType_")[1]
-                if 'DidMethod_' in tag:
-                    # Get and assign the did method to the context
-                    # tag is in format "@DidMethod_DIDMETHOD"
-                    context.did_method = tag.split("DidMethod_")[1]
-                if 'Schema_' in tag:
-                    # Get and assign the schema to the context
-                    try:
-                        schema_json_file = open('features/data/' + tag.lower() + '.json')
-                        schema_json = json.load(schema_json_file)
+        # get the tag with "Schema_".
+        for tag in context.tags:
+            if 'ProofType_' in tag:
+                # Get and assign the proof type to the context
+                # tag is in format "ProofType_PROOFTYPESTRING"
+                context.proof_type = tag.split("ProofType_")[1]
+            if 'DidMethod_' in tag:
+                # Get and assign the did method to the context
+                # tag is in format "@DidMethod_DIDMETHOD"
+                context.did_method = tag.split("DidMethod_")[1]
+            if 'Schema_' in tag:
+                # Get and assign the schema to the context
+                try:
+                    schema_json_file = open(
+                        'features/data/' + tag.lower() + '.json')
+                    schema_json = json.load(schema_json_file)
 
-                        # If this is issue credential then you can't created multiple credential defs at the same time, like Proof uses
-                        # multiple credential types in the proof. So just set the context.schema here to be used in the issue cred test.
-                        # This makes the rule that you can only have one @Schema_ tag in an issue credential test scenario. 
-                        if 'Issue Credential' in context.feature.name:
-                            context.schema = schema_json["schema"]
-                            # Get and assign the credential definition info to the context
-                            context.support_revocation = schema_json["cred_def_support_revocation"]
+                    # If this is issue credential then you can't created multiple credential defs at the same time, like Proof uses
+                    # multiple credential types in the proof. So just set the context.schema here to be used in the issue cred test.
+                    # This makes the rule that you can only have one @Schema_ tag in an issue credential test scenario.
+                    if 'Issue Credential' in context.feature.name:
+                        context.schema = schema_json["schema"]
+                        # Get and assign the credential definition info to the context
+                        context.support_revocation = schema_json["cred_def_support_revocation"]
 
-                        # Support multiple schemas for multiple creds in a proof request.
-                        # for each schema in tags add the schema and revocation support to a dict keyed by schema name.
+                    # Support multiple schemas for multiple creds in a proof request.
+                    # for each schema in tags add the schema and revocation support to a dict keyed by schema name.
 
-                        context.schema_dict[tag] = schema_json["schema"]
-                        context.support_revocation_dict[tag] = schema_json["cred_def_support_revocation"]
+                    context.schema_dict[tag] = schema_json["schema"]
+                    context.support_revocation_dict[tag] = schema_json["cred_def_support_revocation"]
 
-                    except FileNotFoundError:
-                        print('FileNotFoundError: features/data/' + tag.lower() + '.json')
+                except FileNotFoundError:
+                    print('FileNotFoundError: features/data/' +
+                          tag.lower() + '.json')
 
-def setup_scenario_context(context, scenario):
+
+def setup_scenario_context(context: Context, scenario: Scenario):
     """Prepare scenario context for test run"""
 
     # Agent urls and names
@@ -120,11 +124,14 @@ def setup_scenario_context(context, scenario):
     # context.temp_connection_id_dict["Alice"] = "07da4b41-40e9-4f8e-8e7b-603430f5aac3"
     context.temp_connection_id_dict = {}
 
+    context.use_existing_connection = False
+    context.use_existing_connection_successful = False
+
     # Schema name to credentail ids mapping
     # {
     #   "<schema_name>": ["<cred_id_stored>"]
-    # } 
-    # 
+    # }
+    #
     # defaultdict allows to instantly append without creating list first
     # context.credential_id_dict["Schema_DriversLicense_v2"].append("799519c6-c635-46e4-a14d-9af52e79e894")
     context.credential_id_dict = defaultdict(list)
@@ -136,17 +143,17 @@ def setup_scenario_context(context, scenario):
     # {
     #   "<schema_name>": <supports_revocation_boolean>
     # }
-    # 
+    #
     # context.support_revocation_dict["Schema_DriversLicense_v2"] = True
     context.support_revocation_dict = {}
 
     # Linked Data Proof credentials specific proof type indiciator
-    # 
+    #
     # context.proof_type = "Ed25519Signature2018"
     context.proof_type = None
 
     # Indy loaded schema data
-    # 
+    #
     # context.schema = {
     #   "schema_name":"Schema_DriversLicense_v2",
     #   "schema_version":"1.1.0",
@@ -161,9 +168,9 @@ def setup_scenario_context(context, scenario):
 
     # Credential data dict
     # {
-    #   "<schema_name>": attributes_array 
+    #   "<schema_name>": attributes_array
     # }
-    # 
+    #
     # context.credential_data_dict["Schema_Health_ID"] = [
     #    {
     #       "name":"address",
@@ -173,7 +180,7 @@ def setup_scenario_context(context, scenario):
     context.credential_data_dict = {}
 
     # Credential data
-    # 
+    #
     # context.credential_data = [
     #    {
     #       "name":"address",
@@ -183,7 +190,7 @@ def setup_scenario_context(context, scenario):
     context.credential_data = None
 
     # Store cred revocation creation time?
-    # 
+    #
     # context.cred_rev_creation_time = time.time()
     context.cred_rev_creation_time = None
 
@@ -191,15 +198,15 @@ def setup_scenario_context(context, scenario):
     # {
     #   "<schema_name>": schema_response_json
     # }
-    # 
-    # context.issuer_schema_dict["Schema_DriversLicense_v2"] = 
+    #
+    # context.issuer_schema_dict["Schema_DriversLicense_v2"] =
     # {
-    #   "schema_id": "FSQvDrNnARp3StGUUYYm54:2:test_schema:1.0.0", 
+    #   "schema_id": "FSQvDrNnARp3StGUUYYm54:2:test_schema:1.0.0",
     #   "schema": {
-    #       "ver": "1.0", 
-    #       "id": "FSQvDrNnARp3StGUUYYm54:2:test_schema:1.0.0", 
-    #       "name": "test_schema", 
-    #       "version": "1.0.0", 
+    #       "ver": "1.0",
+    #       "id": "FSQvDrNnARp3StGUUYYm54:2:test_schema:1.0.0",
+    #       "name": "test_schema",
+    #       "version": "1.0.0",
     #       "attrNames": ["attr_2", "attr_3", "attr_1"],
     #       "seqNo": 10
     #   }
@@ -210,14 +217,14 @@ def setup_scenario_context(context, scenario):
     # {
     #   "<schema_name>": credential_definition_response_json
     # }
-    # 
-    # context.issuer_credential_definition_dict["Schema_DriversLicense_v2"] = 
+    #
+    # context.issuer_credential_definition_dict["Schema_DriversLicense_v2"] =
     # {
-    #   "ver": "1.0", 
-    #   "id": "FSQvDrNnARp3StGUUYYm54:3:CL:10:default", 
-    #   "schemaId": "10", 
-    #   "type": "CL", 
-    #   "tag": "default", 
+    #   "ver": "1.0",
+    #   "id": "FSQvDrNnARp3StGUUYYm54:3:CL:10:default",
+    #   "schemaId": "10",
+    #   "type": "CL",
+    #   "tag": "default",
     #   "value": { ... crypto stuff ... }
     # }
     context.issuer_credential_definition_dict = {}
@@ -229,7 +236,7 @@ def setup_scenario_context(context, scenario):
     #      "to": <int>
     #   }
     # }
-    # 
+    #
     # context.non_revoked = create_non_revoke_interval("-86400:+86400")
     context.non_revoked_timeframe = None
 
@@ -249,7 +256,7 @@ def setup_scenario_context(context, scenario):
     context.responder_invitation = None
 
     # Get public did response
-    # 
+    #
     # context.requester_public_did = {
     #   "did": "FSQvDrNnARp3StGUUYYm54"
     #   "verkey": "verkey"
@@ -257,7 +264,7 @@ def setup_scenario_context(context, scenario):
     context.requester_public_did = None
 
     # Requester public did
-    # 
+    #
     # context.requester_did = "FSQvDrNnARp3StGUUYYm54"
     context.requester_did = None
 
@@ -276,7 +283,7 @@ def setup_scenario_context(context, scenario):
     context.presentation_exchange_id = None
 
     # Loaded presentation data
-    # 
+    #
     # context.presentation = {
     #   "comment": "This is a comment for the send presentation.",
     #   "requested_attributes": {
@@ -290,12 +297,12 @@ def setup_scenario_context(context, scenario):
     context.presentation = None
 
     # Presentation exchange thread id
-    # 
+    #
     # context.presentation_thread_id = "59e17d38-0e90-42bf-93bb-44a42cc716c9"
     context.presentation_thread_id = None
 
     # Presentation proposal
-    # 
+    #
     # context.presentation_proposal = {
     #   "requested_attributes": [
     #      {
@@ -308,7 +315,7 @@ def setup_scenario_context(context, scenario):
     context.presentation_proposal = None
 
     # Agent name (e.g. Alice, Bob, ...) to connection id mapping (two levels)
-    # { 
+    # {
     #   "<agent_name>": {
     #       "<agent_name>": "<connection_id>"
     #   }
@@ -323,7 +330,7 @@ def setup_scenario_context(context, scenario):
     # {
     #   "<schema_name>": "<issuer_did>"
     # }
-    # 
+    #
     # context.issuer_did_dict["Schema_DriversLicense_v2"] = "FSQvDrNnARp3StGUUYYm54"
     context.issuer_did_dict = {}
 
@@ -336,14 +343,14 @@ def setup_scenario_context(context, scenario):
     # Indy specifc schema name to credential definition id mapping
     # {
     #   "<schema_name>": "<credential_definition_id>"
-    # } 
+    # }
     context.credential_definition_id_dict = {}
 
     # Indy schema name to schema json mapping
     # {
     #   "<schema_name>": <schema_json>
     # }
-    # 
+    #
     # context.schema_dict["Schema_DriversLicense_v2"] = {
     #   "schema_name":"Schema_DriversLicense_v2",
     #   "schema_version":"1.1.0",
@@ -360,16 +367,56 @@ def setup_scenario_context(context, scenario):
     # {
     #   "<presentation_exchange_thread_id>": <verified_boolean>
     # }
-    # 
+    #
     # context.credential_verification_dict["515b5850-8d98-4d0b-a1ca-ddd21038db96"] = True
     context.credential_verification_dict = {}
 
     # Signature suite used for json-ld credentials
-    # 
+    #
     # context.proof_type = "Ed25519Signature2018"
     context.proof_type = None
 
     # Did method used for json-ld credentials
-    # 
+    #
     # context.did_method = "key"
     context.did_method = None
+
+    # Present proof filters dict
+    # {
+    #   "<schema_name>": {
+    #        "<cred_format>": ?
+    #   }
+    # }
+    # 
+    # context.filters_dict = {
+    #   "Schema_DriversLicense_v2": {
+    #      "indy": {},
+    #      "json-ld": {}
+    #   }
+    # }
+    context.filters_dict = {}
+    
+    # Current present proof filter (taken from filters dict)
+    # {
+    #   "<cred_format>": ?
+    # }
+    # 
+    # context.filters = {
+    #   "indy": {},
+    #   "json-ld": {}
+    # }
+    context.filters = None
+
+    # Current cred format used
+    # 
+    # context.current_cred_format = "json-ld"
+    context.current_cred_format = None
+
+
+def after_feature(context: Context, feature: Feature):
+    if "UsesCustomParameters" in feature.tags:
+        # after a feature that uses custom parameters, clear all custom parameters in each agent
+        for agent in ['Acme', 'Bob', 'Faber', 'Mallory']:
+            context.execute_steps(
+                f'Given "{agent}" is running with parameters ' + '"{}"'
+            )

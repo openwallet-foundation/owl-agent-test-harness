@@ -1,61 +1,72 @@
-import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
-import { InternalServerError, NotFound } from "@tsed/exceptions";
-import { Agent } from "aries-framework-javascript";
+import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
+import { InternalServerError, NotFound } from '@tsed/exceptions'
+import { Agent, IndySdkError } from '@aries-framework/core'
+import { LedgerNotFoundError } from '@aries-framework/core/build/modules/ledger/error/LedgerNotFoundError'
+import type * as Indy from 'indy-sdk'
+import { isIndyError } from '@aries-framework/core/build/utils/indyError'
 
-@Controller("/agent/command/credential-definition")
+@Controller('/agent/command/credential-definition')
 export class CredentialDefinitionController {
-  private agent: Agent;
+  private agent: Agent
 
   public constructor(agent: Agent) {
-    this.agent = agent;
+    this.agent = agent
   }
 
-  @Get("/:credentialDefinitionId")
+  @Get('/:credentialDefinitionId')
   async getCredentialDefinitionById(
-    @PathParams("credentialDefinitionId") credentialDefinitionId: string
-  ) {
+    @PathParams('credentialDefinitionId') credentialDefinitionId: string
+  ): Promise<Indy.CredDef> {
     try {
-      const credentialDefinition = await this.agent.ledger.getCredentialDefinition(
-        credentialDefinitionId
-      );
+      const credentialDefinition = await this.agent.ledger.getCredentialDefinition(credentialDefinitionId)
 
-      return credentialDefinition;
+      return credentialDefinition
     } catch (error) {
       // Credential definition does not exist on ledger
-      if (error.message === "LedgerNotFound") {
-        throw new NotFound(
-          `credential definition with credentialDefinitionId "${credentialDefinitionId}" not found.`
-        );
-      }
+      if (
+        error instanceof LedgerNotFoundError ||
+        (error instanceof IndySdkError && isIndyError(error.cause, 'LedgerNotFound'))
+      )
+        if (error.message === 'LedgerNotFound') {
+          throw new NotFound(`credential definition with credentialDefinitionId "${credentialDefinitionId}" not found.`)
+        }
 
       // All other errors
       throw new InternalServerError(
         `Error while retrieving credential definition with id ${credentialDefinitionId}`,
         error
-      );
+      )
     }
   }
 
   @Post()
-  async createCredentialDefinition(@BodyParams("data") data: any) {
+  async createCredentialDefinition(
+    @BodyParams('data')
+    data: {
+      tag: string
+      support_revocation: boolean
+      schema_id: string
+    }
+  ): Promise<{
+    credential_definition_id: string
+    credential_definition: Indy.CredDef
+  }> {
     // TODO: handle schema not found exception
-    const schema = await this.agent.ledger.getSchema(data.schema_id);
+    try {
+      const schema = await this.agent.ledger.getSchema(data.schema_id)
 
-    const [
-      credentialDefinitionId,
-      credentialDefinition,
-    ] = await this.agent.ledger.registerCredentialDefinition({
-      tag: data.tag,
-      config: {
-        support_revocation: data.support_revocation,
-      },
-      schema,
-      signatureType: "CL",
-    });
+      const credentialDefinition = await this.agent.ledger.registerCredentialDefinition({
+        schema,
+        supportRevocation: data.support_revocation,
+        tag: data.tag,
+      })
 
-    return {
-      credential_definition_id: credentialDefinitionId,
-      credential_definition: credentialDefinition,
-    };
+      return {
+        credential_definition_id: credentialDefinition.id,
+        credential_definition: credentialDefinition,
+      }
+    } catch (error) {
+      throw new InternalServerError(`Error registering credential definition: ${error.message}`, error)
+    }
   }
 }

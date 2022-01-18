@@ -1,0 +1,38 @@
+{
+   "presentation_request": {
+      "options": {
+         "challenge": "bf4dbe18-7e88-4963-a7d3-b46d80dbcc4d",
+         "domain": "4a39dc9992a"
+       },
+       "presentation_definition": {
+         "id": "5ab84299-c066-4b34-bcc6-d356aa44c826",
+         "format": {
+           "ldp_vp": {
+             "proof_type": ["replace_me"]
+           }
+         },
+         "input_descriptors": [
+           {
+             "id": "drivers_license_input_1",
+             "name": "American Driver's License",
+             "schema": [
+               {
+                 "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+               },
+               {
+                 "uri": "http://example.com/drivers-license#AATHDriversLicense"
+               }
+             ],
+             "constraints": {
+               "fields": [
+                 {
+                   "path": ["$.credentialSubject.address"],
+                   "purpose": "Please share your address"
+                 }
+               ]
+             }
+           }
+         ]
+       }
+   }
+}

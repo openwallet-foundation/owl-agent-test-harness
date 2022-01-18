@@ -1,0 +1,52 @@
+name: test-harness-acapy-ariesvcx
+# RUNSET_NAME: "acapy to aries-vcx"
+# Scope: AIP 1.0
+# Exceptions: Public Dids
+# 
+# Passing tests: @RFC0036,@RFC0037,@RFC0160,@revocation
+# 
+# End
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "50 1 * * *"
+defaults:
+  run:
+    shell: bash
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    steps:
+      - name: checkout-test-harness
+        uses: actions/checkout@v2
+        with:
+          path: test-harness
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: run-von-network
+        uses: ./test-harness/actions/run-von-network
+      - name: run-indy-tails-server
+        uses: ./test-harness/actions/run-indy-tails-server
+      - name: run-test-harness-wo-reports
+        uses: ./test-harness/actions/run-test-harness-wo-reports
+        with:
+          BUILD_AGENTS: "-a aries-vcx -a acapy-main"
+          TEST_AGENTS: "-d acapy-main -b aries-vcx"
+          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T003-RFC0160 -t ~@T004-RFC0160 -t ~@T014-HIPE0011"
+          REPORT_PROJECT: acapy-b-aries-vcx  
+        continue-on-error: true
+      - uses: actions/upload-artifact@v2
+        with:
+          name: agent-logs
+          path: ./test-harness/.logs/
+      - name: run-send-gen-test-results-secure
+        uses: ./test-harness/actions/run-send-gen-test-results-secure
+        with:
+          REPORT_PROJECT: acapy-b-aries-vcx 
+          ADMIN_USER: ${{ secrets.AllureAdminUser }}
+          ADMIN_PW: ${{ secrets.AllureAdminPW }}

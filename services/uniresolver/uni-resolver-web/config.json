@@ -1,0 +1,16 @@
+{
+	"drivers": [
+		{
+			"pattern": "^(did:sov:(?:(?:\\w[-\\w]*(?::\\w[-\\w]*)*):)?(?:[1-9A-HJ-NP-Za-km-z]{21,22}))$",
+			"url": "http://driver-did-sov.local:8080/1.0/identifiers/",
+			"propertiesEndpoint": "true",
+			"testIdentifiers": [ "did:sov:WRfXPg8dantKVubE3HX8pw" ]
+		},
+		{
+			"pattern": "^(did:orb:.+)$",
+			"url": "http://orb.driver:8070/resolveDID?did=$1",
+			"propertiesEndpoint": "false",
+			"testIdentifiers": []
+		}
+	]
+}

@@ -1,73 +1,71 @@
-import { $log } from "@tsed/common";
-import { PlatformExpress } from "@tsed/platform-express";
-import { registerProvider } from "@tsed/di";
-import { createAgent } from "./TestAgent";
-import { Server } from "./Server";
-import { Agent } from "aries-framework-javascript";
-import minimist from "minimist";
-import {
-  getGenesisPath,
-  getRandomSeed,
-  registerPublicDid,
-} from "./utils/ledgerUtils";
+import { $log } from '@tsed/common'
+import { PlatformExpress } from '@tsed/platform-express'
+import { registerProvider } from '@tsed/di'
+import { Agent } from '@aries-framework/core'
+import minimist from 'minimist'
+
+import { createAgent } from './TestAgent'
+import { Server } from './Server'
+import { getGenesisPath, getRandomSeed, registerPublicDid } from './utils/ledgerUtils'
 
 async function bootstrap() {
   const cliArguments = minimist(process.argv.slice(2), {
     alias: {
-      port: "p",
+      port: 'p',
     },
     default: {
       port: 9020,
     },
-  });
+  })
 
-  const backchannelPort = Number(cliArguments.port);
-  const agentPort = backchannelPort + 1;
-  const dockerHost = process.env.DOCKERHOST ?? "host.docker.internal";
-  const runMode = process.env.RUN_MODE;
-  const externalHost = runMode === "docker" ? dockerHost : "localhost";
+  const backchannelPort = Number(cliArguments.port)
+  const agentPort = backchannelPort + 1
+  const dockerHost = process.env.DOCKERHOST ?? 'host.docker.internal'
+  const runMode = process.env.RUN_MODE
+  const externalHost = runMode === 'docker' ? dockerHost : 'localhost'
+  const agentName = process.env.AGENT_NAME ? `AFJ ${process.env.AGENT_NAME}` : `AFJ Agent (${agentPort})`
 
-  const endpointUrl = `http://${externalHost}`;
+  let endpointUrl = process.env.AGENT_PUBLIC_ENDPOINT
+  if (!endpointUrl) {
+    endpointUrl = `http://${externalHost}:${agentPort}`
+  }
 
   // There are multiple ways to retrieve the genesis file
   // we account for all of them
-  const genesisFile = process.env.GENESIS_FILE;
-  const genesisUrl = process.env.GENESIS_URL;
-  const ledgerUrl = process.env.LEDGER_URL ?? `http://${externalHost}:9000`;
-  const genesisPath = await getGenesisPath(
-    genesisFile,
-    genesisUrl,
-    ledgerUrl,
-    dockerHost
-  );
+  const genesisFile = process.env.GENESIS_FILE
+  const genesisUrl = process.env.GENESIS_URL
+  const ledgerUrl = process.env.LEDGER_URL ?? `http://${externalHost}:9000`
+  const genesisPath = await getGenesisPath(genesisFile, genesisUrl, ledgerUrl, dockerHost)
 
   // Register public did
-  const publicDidSeed = getRandomSeed();
-  await registerPublicDid(ledgerUrl, publicDidSeed);
+  const publicDidSeed = getRandomSeed()
+  await registerPublicDid(ledgerUrl, publicDidSeed)
 
   const agent = await createAgent({
-    url: endpointUrl,
+    agentName,
     port: agentPort,
+    endpoint: endpointUrl,
     publicDidSeed,
     genesisPath,
-  });
+    useLegacyDidSovPrefix: true,
+  })
 
   registerProvider({
     provide: Agent,
     useValue: agent,
-  });
+  })
 
   try {
-    $log.debug("Start server...");
-    const platform = await PlatformExpress.bootstrap(Server);
+    $log.debug('Start server...')
+    const platform = await PlatformExpress.bootstrap(Server)
 
-    platform.settings.port = cliArguments.port;
+    platform.settings.port = cliArguments.port
 
-    await platform.listen();
-    $log.debug("Server initialized");
+    await platform.listen()
+    $log.debug('Server initialized')
   } catch (er) {
-    $log.error(er);
+    $log.error(er)
   }
 }
 
-bootstrap();
+bootstrap()

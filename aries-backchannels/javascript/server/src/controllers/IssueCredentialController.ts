@@ -1,152 +1,148 @@
-import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
-import { BadRequest, NotFound } from "@tsed/exceptions";
+import { BodyParams, Controller, Get, PathParams, Post } from '@tsed/common'
+import { BadRequest, NotFound } from '@tsed/exceptions'
 import {
   Agent,
-  JsonTransformer,
-  CredentialRecord,
+  CredentialEventTypes,
   CredentialPreview,
-} from "aries-framework-javascript";
+  CredentialRecord,
+  CredentialState,
+  CredentialStateChangedEvent,
+  JsonTransformer,
+} from '@aries-framework/core'
+import { CredentialUtils } from '../utils/CredentialUtils'
+import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
 
-@Controller("/agent/command/issue-credential")
+@Controller('/agent/command/issue-credential')
 export class IssueCredentialController {
-  private agent: Agent;
+  private agent: Agent
+  private credentialUtils: CredentialUtils
+  private subject = new ReplaySubject<CredentialStateChangedEvent>()
 
   public constructor(agent: Agent) {
-    this.agent = agent;
+    this.agent = agent
+    this.credentialUtils = new CredentialUtils(agent)
+
+    // Catch all events in replay subject for later use
+    agent.events
+      .observable<CredentialStateChangedEvent>(CredentialEventTypes.CredentialStateChanged)
+      .subscribe(this.subject)
   }
 
-  @Get("/:threadId")
-  async getCredentialByThreadId(@PathParams("threadId") threadId: string) {
-    const credential = await this.agent.credentials.getByThreadId(threadId);
-
+  @Get('/:threadId')
+  async getCredentialByThreadId(@PathParams('threadId') threadId: string) {
+    const credential = await this.credentialUtils.getCredentialByThreadId(threadId)
     if (!credential) {
-      throw new NotFound(`credential for thead id "${threadId}" not found.`);
+      throw new NotFound(`credential for thead id "${threadId}" not found.`)
     }
-
-    return this.mapCredential(credential);
+    return this.mapCredential(credential)
   }
 
-  @Get("/")
-  async getAllConnections() {
-    const credentials = await this.agent.credentials.getAll();
+  @Get('/')
+  async getAllCredentials() {
+    const credentials = await this.agent.credentials.getAll()
 
-    return credentials.map((cred) => this.mapCredential(cred));
+    return credentials.map((cred) => this.mapCredential(cred))
   }
 
-  @Post("/send-proposal")
+  @Post('/send-proposal')
   async sendProposal(
-    @BodyParams("data")
+    @BodyParams('data')
     data: {
-      connection_id: string;
-      schema_issuer_did?: string;
-      issuer_did?: string;
-      schema_name?: string;
-      cred_def_id?: string;
-      schema_version?: string;
-      schema_id?: string;
-      credential_proposal: any;
+      connection_id: string
+      schema_issuer_did?: string
+      issuer_did?: string
+      schema_name?: string
+      cred_def_id?: string
+      schema_version?: string
+      schema_id?: string
+      credential_proposal: any
     }
   ) {
-    const credentialRecord = await this.agent.credentials.proposeCredential(
-      data.connection_id,
-      {
-        schemaIssuerDid: data.schema_issuer_did,
-        issuerDid: data.issuer_did,
-        schemaName: data.schema_name,
-        credentialDefinitionId: data.cred_def_id,
-        schemaVersion: data.schema_version,
-        schemaId: data.schema_id,
-        credentialProposal: JsonTransformer.fromJSON(
-          data.credential_proposal,
-          CredentialPreview
-        ),
-      }
-    );
+    const credentialRecord = await this.agent.credentials.proposeCredential(data.connection_id, {
+      schemaIssuerDid: data.schema_issuer_did,
+      issuerDid: data.issuer_did,
+      schemaName: data.schema_name,
+      credentialDefinitionId: data.cred_def_id,
+      schemaVersion: data.schema_version,
+      schemaId: data.schema_id,
+      credentialProposal: JsonTransformer.fromJSON(data.credential_proposal, CredentialPreview),
+    })
 
-    return this.mapCredential(credentialRecord);
+    return this.mapCredential(credentialRecord)
   }
 
-  @Post("/send-offer")
+  @Post('/send-offer')
   async sendOffer(
-    @BodyParams("id") threadId?: string,
-    @BodyParams("data")
+    @BodyParams('id') threadId?: string,
+    @BodyParams('data')
     data?: {
-      connection_id: string;
-      cred_def_id: string;
-      credential_preview: any;
+      connection_id: string
+      cred_def_id: string
+      credential_preview: any
     }
   ) {
-    let credentialRecord: CredentialRecord;
+    let credentialRecord: CredentialRecord
 
     if (threadId) {
-      const credential = await this.agent.credentials.getByThreadId(threadId);
-
-      credentialRecord = await this.agent.credentials.acceptProposal(
-        credential.id
-      );
+      await this.waitForState(threadId, CredentialState.ProposalReceived)
+      const { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
+      credentialRecord = await this.agent.credentials.acceptProposal(id)
+      return this.mapCredential(credentialRecord)
     } else if (data) {
-      credentialRecord = await this.agent.credentials.offerCredential(
-        data.connection_id,
-        {
-          credentialDefinitionId: data.cred_def_id,
-          preview: JsonTransformer.fromJSON(
-            data.credential_preview,
-            CredentialPreview
-          ),
-        }
-      );
+      credentialRecord = await this.agent.credentials.offerCredential(data.connection_id, {
+        credentialDefinitionId: data.cred_def_id,
+        preview: JsonTransformer.fromJSON(data.credential_preview, CredentialPreview),
+      })
+      return this.mapCredential(credentialRecord)
     } else {
-      throw new BadRequest(`Missing both id and data properties`);
+      throw new BadRequest(`Missing both id and data properties`)
     }
-
-    return this.mapCredential(credentialRecord);
   }
 
-  @Post("/send-request")
-  async sendRequest(@BodyParams("id") threadId: string) {
-    let credentialRecord = await this.agent.credentials.getByThreadId(threadId);
+  @Post('/send-request')
+  async sendRequest(@BodyParams('id') threadId: string) {
+    await this.waitForState(threadId, CredentialState.OfferReceived)
+    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
 
-    credentialRecord = await this.agent.credentials.acceptOffer(
-      credentialRecord.id
-    );
-
-    return this.mapCredential(credentialRecord);
+    const credentialRecord = await this.agent.credentials.acceptOffer(id)
+    return this.mapCredential(credentialRecord)
   }
 
-  @Post("/issue")
-  async acceptRequest(
-    @BodyParams("id") threadId: string,
-    // TODO: add credential_preview
-    @BodyParams("data") data?: { comment?: string }
-  ) {
-    let credentialRecord = await this.agent.credentials.getByThreadId(threadId);
+  @Post('/issue')
+  async acceptRequest(@BodyParams('id') threadId: string, @BodyParams('data') data?: { comment?: string }) {
+    await this.waitForState(threadId, CredentialState.RequestReceived)
+    const { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
 
-    credentialRecord = await this.agent.credentials.acceptRequest(
-      credentialRecord.id
-    );
-
-    return this.mapCredential(credentialRecord);
+    const credentialRecord = await this.agent.credentials.acceptRequest(id, {
+      comment: data?.comment,
+    })
+    return this.mapCredential(credentialRecord)
   }
 
-  @Post("/store")
-  async storeCredential(
-    @BodyParams("id") threadId: string,
-    @BodyParams("data") data: any
-  ) {
-    let credentialRecord = await this.agent.credentials.getByThreadId(threadId);
+  @Post('/store')
+  async storeCredential(@BodyParams('id') threadId: string) {
+    await this.waitForState(threadId, CredentialState.CredentialReceived)
+    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
+    const credentialRecord = await this.agent.credentials.acceptCredential(id)
 
-    credentialRecord = await this.agent.credentials.acceptCredential(
-      credentialRecord.id
-    );
-
-    return this.mapCredential(credentialRecord);
+    return this.mapCredential(credentialRecord)
   }
 
-  private mapCredential(credential: CredentialRecord) {
+  private async waitForState(threadId: string, state: CredentialState) {
+    return await firstValueFrom(
+      this.subject.pipe(
+        filter((c) => c.payload.credentialRecord.threadId === threadId),
+        filter((c) => c.payload.credentialRecord.state === state),
+        timeout(20000)
+      )
+    )
+  }
+
+  private mapCredential(credentialRecord: CredentialRecord) {
     return {
-      state: credential.state.toLowerCase().replace("_", "-"),
-      credential_id: credential.credentialId,
-      thread_id: credential.tags.threadId,
-    };
+      state: credentialRecord.state,
+      credential_id: credentialRecord.credentialId,
+      thread_id: credentialRecord.threadId,
+    }
   }
 }

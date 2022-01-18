@@ -1,4 +1,4 @@
-name: test-harness-acapy-dotnet
+name: test-harness-acapy-afgo
 # RUNSET_NAME: "ACA-PY to AF-Go"
 # Scope: pre-AIP 2.0
 # Exceptions: None
@@ -11,10 +11,9 @@ name: test-harness-acapy-dotnet
 #
 # Current
 # 
-# None of the tests are currently working and issues have been created to try to determine three identified issues.
-# One might be in the test suite, while two others appear to be in the Aries Framework Go.
-# 
-# *Status Note Updated: 2021.03.05*
+# All of the tests being executed in this runset are passing.
+#
+# *Status Note Updated: 2021.09.27*
 #
 # End
 on:
@@ -28,6 +27,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    env:
+      LEDGER_URL_CONFIG: "http://localhost:9000"
+      TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2
@@ -37,16 +39,21 @@ jobs:
         uses: ./test-harness/actions/run-von-network
       - name: run-indy-tails-server
         uses: ./test-harness/actions/run-indy-tails-server
+      - name: run-orb
+        uses: ./test-harness/actions/service-command
+        with:
+          SERVICE_COMMAND: "start orb"
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a acapy-main -a afgo-master"
-          TEST_AGENTS: "-d acapy-main -b afgo-main"
-          TEST_SCOPE: "-t @RFC0023 -t ~@wip -t ~@T003-RFC0023 -t ~@T004-RFC0023"
+          BUILD_AGENTS: "-a acapy-main -a afgo-interop"
+          TEST_AGENTS: "-d acapy-main -b afgo-interop"
+          OTHER_PARAMS: "-v 20"
+          TEST_SCOPE: "-t @RFC0023,@RFC0453,@RFC0454 -t ~@wip -t ~@CredFormat_Indy"
           REPORT_PROJECT: acapy-b-afgo
         env:
-          EMIT-NEW-DIDCOMM-PREFIX: true
-          EMIT-NEW-DIDCOMM-MIME-TYPE: true
+          EMIT_NEW_DIDCOMM_PREFIX: true
+          EMIT_NEW_DIDCOMM_MIME_TYPE: true
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure

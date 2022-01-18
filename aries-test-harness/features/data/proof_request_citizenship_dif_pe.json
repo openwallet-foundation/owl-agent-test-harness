@@ -1,0 +1,46 @@
+{
+  "presentation_request": {
+    "options": {
+      "challenge": "9a7e9aa6-9e8f-4b6b-9911-bfec18cfa208",
+      "domain": "dajj33j3aj3j"
+    },
+    "presentation_definition": {
+      "id": "5ab84299-c066-4b34-bcc6-d356aa44c826",
+      "format": {
+        "ldp_vp": {
+          "proof_type": ["replace_me"]
+        }
+      },
+      "input_descriptors": [
+        {
+          "id": "citizenship_input_1",
+          "name": "EU Driver's License",
+          "schema": [
+            {
+              "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+            },
+            {
+              "uri": "https://w3id.org/citizenship#PermanentResident"
+            }
+          ],
+          "constraints": {
+            "fields": [
+              {
+                "path": ["$.credentialSubject.familyName"],
+                "purpose": "Just making sure your family name is Smith",
+                "filter": {
+                  "type": "string",
+                  "const": "SMITH"
+                }
+              },
+              {
+                "path": ["$.credentialSubject.givenName"],
+                "purpose": "We also want to know your first name"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

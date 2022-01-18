@@ -7,7 +7,7 @@ same tests.
 
 The latest interoperability test results are below. Each row is a test agent, its columns
 the results of tests executed in combination with other test agents.
-The bolded cell per row shows the results of all tests run for the given test agent. The link on each test
+The last column ("All Tests") shows the results of all tests run for the given test agent in any role. The link on each test
 agent name provides more details about results for all test combinations for that test agent. On
 that page are links to a full history of the test runs and full details on every executed test. 
 
@@ -17,23 +17,30 @@ The following test agents are currently supported:
 - [Aries Framework Go](https://github.com/hyperledger/aries-framework-go) (AF-Go)
 - [Aries Framework JavaScript](https://github.com/hyperledger/aries-framework-javascript) (AFJ)
 - [Aries Framework .NET](https://github.com/hyperledger/aries-framework-dotnet) (AF-.NET)
+- [Evernym Verity](https://github.com/evernym/verity) (Verity)
+- [Findy Agent](https://github.com/findy-network/findy-agent) (Findy)
+- [AriesVCX](https://github.com/hyperledger/aries-vcx) (VCX)
 
 Want to add your Aries component to this page? You need to add a runset to the
 [Aries Agent Test Harness](https://github.com/hyperledger/aries-agent-test-harness).
 
 ## Latest Interoperability Results
 
-| Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET |
-| ----- | ----- | ----- | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | **124 / 152<br>81%** | 0 / 10<br>0% | 53 / 62<br>85% | 39 / 51<br>76% |
-| [AF-Go](afgo.md)| AIP 2 | None | 0 / 10<br>0% | **3 / 15<br>20%** | 0 / 0<br>0% | 0 / 0<br>0% |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 53 / 62<br>85% | 0 / 0<br>0% | **70 / 88<br>79%** | 27 / 39<br>69% |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 39 / 51<br>76% | 0 / 0<br>0% | 27 / 39<br>69% | **69 / 90<br>76%** |
+| Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | Verity | Findy | VCX | **All Tests** |
+| ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 49 / 49<br>100% | 20 / 20<br>100% | 46 / 46<br>100% | 43 / 51<br>84% | 2 / 2<br>100% | 34 / 34<br>100% | 51 / 62<br>82% | **233 / 252<br>92%** |
+| [AF-Go](afgo.md)| AIP 2 | None | 20 / 20<br>100% | 23 / 23<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **43 / 43<br>100%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 46 / 46<br>100% | 0 / 0<br>0% | 17 / 17<br>100% | 53 / 53<br>100% | 0 / 0<br>0% | 34 / 51<br>66% | 0 / 0<br>0% | **121 / 138<br>87%** |
+| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 43 / 51<br>84% | 0 / 0<br>0% | 53 / 53<br>100% | 12 / 12<br>100% | 0 / 0<br>0% | 31 / 46<br>67% | 0 / 0<br>0% | **110 / 133<br>82%** |
+| [Verity](verity.md)| AIP 1 | Credential Exchange | 2 / 2<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **2 / 2<br>100%** |
+| [Findy](findy.md)| AIP 1 | Revocation | 34 / 34<br>100% | 0 / 0<br>0% | 34 / 51<br>66% | 31 / 46<br>67% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | **99 / 131<br>75%** |
+| [VCX](aries-vcx.md)| AIP 1 | Proof Proposals, Public Dids, Revocations | 51 / 62<br>82% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 33 / 34<br>97% | **84 / 96<br>87%** |
 
-- The **bolded results** show all tests involving the "Test Agent", including tests involving only that Test Agent.
+- Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
+- The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
 - Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
-- Select the "Test Agent" links to drill down into the tests being run.
+- Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Thu Mar 18 15:45:22 PDT 2021*
+*Results last updated: Tue Jan 4 03:52:30 UTC 2022*
 

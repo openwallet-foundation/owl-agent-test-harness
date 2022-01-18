@@ -7,14 +7,12 @@ name: test-harness-javascript-acapy
 #
 # This runset uses the current master branch of Aries Framework JavaScript for all of the agents except Bob (holder),
 # which uses the main branch of ACA-Py. The runset covers all of the AIP 1.0 tests
-# except those that are known **not** to work with the Aries Framework JavaScript,
-# notably those that involve proof proposals.
+# except those that are known **not** to work with the Aries Framework JavaScript
 #
 # Current
-# 
-# All AIP10 tests are currently running, except for the tests with the holder proposing a proof, 
-# as that feature is not supported in AFJ.
-# 
+#
+# All AIP10 tests are currently running.
+#
 # *Status Note Updated: 2021.03.17*
 #
 # End
@@ -29,6 +27,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    env:
+      LEDGER_URL_CONFIG: "http://localhost:9000"
+      TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2
@@ -43,7 +44,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript -a acapy-main"
           TEST_AGENTS: "-d javascript -b acapy-main"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@ProofProposal"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10"
           REPORT_PROJECT: javascript-b-acapy
         continue-on-error: true
       - name: run-send-gen-test-results-secure

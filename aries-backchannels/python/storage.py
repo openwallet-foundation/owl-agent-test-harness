@@ -8,7 +8,7 @@ storage_lock = threading.Lock()
 def store_resource(data_id, data_type, data):
     storage_lock.acquire()
     try:
-        if not data_id in storage:
+        if data_id not in storage:
             storage[data_id] = {}
         storage[data_id][data_type] = data
         return data
@@ -23,6 +23,19 @@ def get_resource(data_id, data_type):
             if data_type in storage[data_id]:
                 return storage[data_id][data_type]
         return None
+    finally:
+        storage_lock.release()
+
+
+def get_resource_latest(data_type):
+    storage_lock.acquire()
+    try:
+        data_ids = list(storage.keys())
+        data_id = data_ids[-1]
+        # data_type_keys = list(storage[data_id].keys())
+        # data_type = data_type_keys[-1]
+        data = storage[data_id][data_type][-1]
+        return data
     finally:
         storage_lock.release()
 
@@ -55,9 +68,9 @@ def delete_resource(data_id, data_type):
 def push_resource(data_id, data_type, data):
     storage_lock.acquire()
     try:
-        if not data_id in storage:
+        if data_id not in storage:
             storage[data_id] = {}
-        if not data_type in storage[data_id]:
+        if data_type not in storage[data_id]:
             storage[data_id][data_type] = []
         storage[data_id][data_type].append(data)
         return data
@@ -78,6 +91,7 @@ def pop_resource(data_id, data_type):
     finally:
         storage_lock.release()
 
+
 def pop_resource_latest(data_type):
     storage_lock.acquire()
     try:
@@ -85,8 +99,12 @@ def pop_resource_latest(data_type):
         data_id = data_ids[len(data_ids) - 1]
         if data_type in storage[data_id]:
             if 0 < len(storage[data_id][data_type]):
-                data = storage[data_id][data_type][0]
-                del storage[data_id][data_type][0]
+                if len(storage[data_id][data_type]) > 1:
+                    data = storage[data_id][data_type][-1]
+                    del storage[data_id][data_type][-1]
+                else:
+                    data = storage[data_id][data_type][0]
+                    del storage[data_id][data_type][0]
                 return data
         return None
     finally:

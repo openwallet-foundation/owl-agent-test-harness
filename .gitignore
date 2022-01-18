@@ -15,9 +15,15 @@ Thumbs.db
 
 # Agent log files
 .logs
+.log
+*.log
 
 # Env file used for debugging
 .env
+
+# build folders and files
+.build
+.srl
 
 # Reports
 reports/

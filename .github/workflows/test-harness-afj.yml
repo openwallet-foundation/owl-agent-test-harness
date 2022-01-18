@@ -9,16 +9,16 @@ name: test-harness-javascript-javascript
 # that are expected to pass given the current state of the framework's support for AIP 1. Tests related to revocation (Indy HIPE 0011) are not included.
 #
 # Current
-# 
+#
 # All of the tests being executed in this runset are passing.
-# 
+#
 # *Status Note Updated: 2021.03.05*
 #
 # End
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 1 * * *"
+    - cron: "0 2 * * *"
 defaults:
   run:
     shell: bash
@@ -26,6 +26,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    env:
+      LEDGER_URL_CONFIG: "http://localhost:9000"
+      TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2
@@ -40,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript"
           TEST_AGENTS: "-d javascript"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@RFC0023 -t ~@DIDExchangeConnection"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10"
           REPORT_PROJECT: javascript
         continue-on-error: true
       - name: run-send-gen-test-results-secure

@@ -1,0 +1,61 @@
+version: '3.5'
+
+x-standard-logging:
+  &service-logging
+  options:
+    max-size: '500m'
+    max-file: '3'
+  driver: json-file
+
+services:
+  agency:
+    image: ghcr.io/absaoss/vcxagencynode/vcxagency-node:1.0.1-release102-675
+    container_name: agency
+    logging: *service-logging
+    depends_on:
+      - mysql
+    environment:
+      - LOG_JSON_TO_CONSOLE=false
+      - LOG_LEVEL=info
+      - SERVER_PORT=8000
+      - SERVER_MAX_REQUEST_SIZE_KB=300
+
+      - PG_WALLET_MAX_CONNECTIONS=90
+      - PG_WALLET_CONNECTION_TIMEOUT_MINS=30
+
+      - AGENCY_WALLET_NAME=vcxagency-node
+      - AGENCY_DID=VsKV7grR1BUE29mG2Fm2kX
+      - AGENCY_SEED_SECRET=0000000000000000000000000Forward
+      - AGENCY_WALLET_KEY_SECRET=98765432109876543210
+
+      - AGENCY_TYPE=enterprise
+
+      - MYSQL_HOST=mysql.aath_network
+      - MYSQL_PORT=3306
+      - MYSQL_ACCOUNT=root
+      - MYSQL_PASSWORD_SECRET=mysecretpassword
+      - MYSQL_DATABASE_APPLICATION=agency_application
+      - MYSQL_DATABASE_WALLET=agency_wallets
+      - MYSQL_DATABASE_WALLET_CONNECTION_LIMIT=50
+
+      - SERVER_ENABLE_TLS=false
+    networks:
+      - aath_network
+    ports:
+      - "8000:8000"
+    command: ["sh", "-c", "sleep 10 && npm run dev:schema:migrate:all && npm run serve"]
+
+  mysql:
+    container_name: mysql
+    image: mysql:5.7.35
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-mysecretpassword}
+    networks:
+      - aath_network
+    ports:
+      - "3306:3306"
+
+networks:
+  aath_network:
+    name: aath_network
+    driver: bridge

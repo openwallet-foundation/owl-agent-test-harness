@@ -1,16 +1,28 @@
 #! /bin/bash
 
-# Configuration Data -- order matters in these arrays. A new entry requires an entry in all "ta_" arrays
-ta_tlas=("acapy" "afgo" "javascript" "dotnet")
-ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET")
-ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET")
-ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1")
-ta_exceptions=("None" "None" "Revocation" "Proof Proposal")
+# Configuration Data -- order matters in these arrays. A new entry requires an entry in ALL "ta_" arrays
+ta_tlas=("acapy" "afgo" "javascript" "dotnet" "verity" "findy" "aries-vcx")
+ta_names=("Aries Cloud Agent Python" "Aries Framework Go" "Aries Framework JavaScript" "Aries Framework .NET" "Evernym Verity" "Findy Agent" "AriesVCX")
+ta_shortnames=("ACA-Py" "AF-Go" "AFJ" "AF-.NET" "Verity" "Findy" "VCX")
+ta_scopes=("AIP 1, 2" "AIP 2" "AIP 1" "AIP 1" "AIP 1" "AIP 1" "AIP 1")
+ta_exceptions=("None" "None" "Revocation" "Proof Proposal" "Credential Exchange" "Revocation" "Proof Proposals, Public Dids, Revocations")
 ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
 https://github.com/hyperledger/aries-framework-go \
 https://github.com/hyperledger/aries-framework-javascript \
-https://github.com/hyperledger/aries-framework-dotnet)
+https://github.com/hyperledger/aries-framework-dotnet \
+https://github.com/evernym/verity \
+https://github.com/findy-network/findy-agent \
+https://github.com/hyperledger/aries-vcx)
 workflows=".github/workflows/test-harness-*"
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
 
 usage () {
 
@@ -54,7 +66,7 @@ if [ "$1" == "--help" ]; then
 fi
 
 default_value () {
-# Helper function set a value to a default if no value is provided
+    # Helper function set a value to a default if no value is provided
     if [ "$2" == "" ]; then
         echo $1
     else
@@ -63,7 +75,7 @@ default_value () {
 }
 
 list_agents () {
-# Helper function -- list the agents with links -- used in the header function
+    # Helper function -- list the agents with links -- used in the header function
     count=0
     for agent in "${ta_shortnames[@]}"; do
         echo "- [${ta_names[$count]}](${ta_urls[$count]}) ($agent)"
@@ -72,7 +84,7 @@ list_agents () {
 }
 
 aries_interop_header () {
-# The summary page header -- markdown format
+    # The summary page header -- markdown format
 
     cat << EOF
 
@@ -82,7 +94,7 @@ same tests.
 
 The latest interoperability test results are below. Each row is a test agent, its columns
 the results of tests executed in combination with other test agents.
-The bolded cell per row shows the results of all tests run for the given test agent. The link on each test
+The last column ("All Tests") shows the results of all tests run for the given test agent in any role. The link on each test
 agent name provides more details about results for all test combinations for that test agent. On
 that page are links to a full history of the test runs and full details on every executed test. 
 
@@ -99,44 +111,53 @@ EOF
 }
 
 aries_interop_footer () {
-# The summary page footer -- markdown format
+    # The summary page footer -- markdown format
 
     cat << EOF
 
-- The **bolded results** show all tests involving the "Test Agent", including tests involving only that Test Agent.
+- Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
+- The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
 - Wondering what the results mean? Please read the brief [introduction to Aries interoperability](aries-interop-intro.md) for some background.
-- Select the "Test Agent" links to drill down into the tests being run.
+- Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 EOF
 }
 
 aries_interop_summary_table_header () {
-# The header for the table on the summary page -- static columns, plus one per test agent
+    # The header for the table on the summary page -- static columns, plus one per test agent
     printf "| Test Agent | Scope | Exceptions "
     for agent in "${ta_shortnames[@]}"; do
         printf "| $agent "
     done
-    printf "|\\n"
+    printf "| **All Tests** |\\n"
 
     printf "| ----- | ----- | ----- "
     for agent in "${ta_shortnames[@]}"; do
         printf "| :----: "
     done
-    printf "|\\n"
+    printf "| :----: |\\n"
 }
 
 sum_print_tests () {
-# Inserts the value of a cell by summing the number of tests involving the two agents
-# passed in as args 1 and 2. Doesn't include skipped runsets. Prints the result at the end.
-# Special handling of arg values are the same -- puts markdown bold around the results.
+    # Inserts the value of a cell by summing the number of tests involving the two agents
+    # passed in as args 1 and 2. Prints the result at the end.
+    # Special handling if just arg 1 -- only include runsets where ALL the agents are of type arg 1
+    # In all cases SKIP-ped runsets are NOT included in the results.
     passed=0
     total=0
     file_num=0
     for file in ${workflows}; do
-        agents=${ACME[$file_num]}${BOB[$file_num]}${FABER[$file_num]}${MALLORY[$file_num]}
-        if [[ $agents =~ $1 && $agents =~ $2 && "${SKIP[$file_num]}" == "" ]]; then
-            passed=$(expr $passed + ${PASSED[$file_num]} ) 
-            total=$(expr $total + ${TOTAL_CASES[$file_num]} )
+        if [[ -z "$2" ]]; then
+           if [[ ${ACME[$file_num]} =~ $1 && ${BOB[$file_num]} =~ $1 && ${FABER[$file_num]} =~ $1 && ${MALLORY[$file_num]} =~ $1 && "${SKIP[$file_num]}" == "" ]]; then
+               passed=$(expr $passed + ${PASSED[$file_num]} ) 
+               total=$(expr $total + ${TOTAL_CASES[$file_num]} )
+           fi
+        else
+           agents=${ACME[$file_num]}${BOB[$file_num]}${FABER[$file_num]}${MALLORY[$file_num]}
+           if [[ $agents =~ $1 && $agents =~ $2 && "${SKIP[$file_num]}" == "" ]]; then
+               passed=$(expr $passed + ${PASSED[$file_num]} ) 
+               total=$(expr $total + ${TOTAL_CASES[$file_num]} )
+           fi
         fi
         file_num=$(expr ${file_num} + 1 )
     done
@@ -153,8 +174,10 @@ sum_print_tests () {
 }
 
 aries_interop_summary_table () {
-# Prints the data rows of the summary page table -- iterating over the list of agents
-# Calls the "sum_print_tests" function to sum across runsets for a test agent.
+    # Prints the data rows of the summary page table -- iterating over the list of agents
+    # Calls the "sum_print_tests" function to sum across runsets for a test agent.
+    # Special handling when the agent and other_agent are the same -- call "sum_print_tests" with just one arg
+    # After, call "sum_print_tests" a last time with agent for both args to get total across all tests.
     count=0
     for agent in "${ta_tlas[@]}"; do
         printf "| [${ta_shortnames[$count]}](${agent}.md)"
@@ -162,8 +185,13 @@ aries_interop_summary_table () {
         printf "| ${ta_exceptions[$count]} "
         count=$(expr $count + 1)
         for other_agent in "${ta_tlas[@]}"; do
-            sum_print_tests $agent $other_agent
+            if [[ "$agent" == "$other_agent" ]]; then
+               sum_print_tests $agent
+            else
+               sum_print_tests $agent $other_agent
+            fi
         done
+        sum_print_tests $agent $agent
         printf "|\\n"
     done
 }
@@ -191,10 +219,10 @@ for file in ${workflows}; do
     BOB[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*acme.agent/acme.agent/' | sed 's/bob.agent.*/bob.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
     FABER[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*bob.agent/bob.agent/' | sed 's/faber.agent.*/faber.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
     MALLORY[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*faber.agent/faber.agent/' | sed 's/mallory.agent.*/mallory.agent/' |sed 's/-agent-backchannel.*//' | sed 's/.*\[ "//' )
-    ACME_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.acme//' | sed 's/acme.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
-    BOB_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.bob//' | sed 's/bob.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
-    FABER_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.faber//' | sed 's/faber.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
-    MALLORY_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.mallory//' | sed 's/mallory.agent.*//' | sed 's/.* \[ "//' | sed 's/".*//' )
+    ACME_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.acme//' | sed 's/acme.agent.*//' | sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
+    BOB_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.bob//' | sed 's/bob.agent.*//'| sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
+    FABER_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.faber//' | sed 's/faber.agent.*//' | sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
+    MALLORY_VERSION[$count]=$(echo ${ALLURE_ENVIRONMENT[$count]} | sed 's/.*role.mallory//' | sed 's/mallory.agent.*//' | sed 's/\\"//g' | sed 's/.* \[ "//' | sed 's/".*//' )
     TOTAL_CASES[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"total" : \([0-9]*\).*/\1/' )
     PASSED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
     FAILED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
@@ -203,8 +231,13 @@ for file in ${workflows}; do
     else
         PERCENT[$count]=$((PASSED[$count]*100/TOTAL_CASES[$count]))
     fi
-    ALLURE_DATE[$count]=$( date -d@$( echo ${ALLURE_SUMMARY[$count]} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' ) )
-  
+    epoch_seconds=$(echo ${ALLURE_SUMMARY[$count]} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' )
+    if [ ${machine} == 'Mac' ]; then
+        ALLURE_DATE[$count]=$( date -j -f %s ${epoch_seconds} )
+    else
+        ALLURE_DATE[$count]=$( date -d@${epoch_seconds} )
+    fi
+
     count=$(expr ${count} + 1)
 done
 
@@ -247,7 +280,7 @@ for agent in "${ta_tlas[@]}"; do
     echo -e "## Runsets with ${ta_shortnames[$ta_num]}\\n" >>$outfile
     
     # Print a table of details
-    echo "| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verfier) | Mallory<br>(Holder) | Scope | Results | " >>$outfile
+    echo "| Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | " >>$outfile
     echo "| ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | " >>$outfile
     runset_num=0
     # Iterate through the workflows and find the ones involving this test agent -- ignoring skipped files
@@ -279,8 +312,8 @@ for agent in "${ta_tlas[@]}"; do
             fi
             # Links to the allure results
             echo -e "#### Runset Details\\n" >>$outfile
-            echo -e "- Results grouped by [executed Aries RFCs executed](${ALLURE_BEHAVIORS_LINK[$runset_num]})" >>$outfile
-            echo -e "- Results by [history](${ALLURE_LINK[$runset_num]})\\n" >>$outfile
+            echo -e "- [Results by executed Aries RFCs](${ALLURE_BEHAVIORS_LINK[$runset_num]})" >>$outfile
+            echo -e "- [Test execution history](${ALLURE_LINK[$runset_num]})\\n" >>$outfile
         fi
         runset_num=$( expr ${runset_num} + 1)
     done

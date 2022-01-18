@@ -9,6 +9,8 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "noEmit": false,
-    "inlineSources": true
+    "inlineSources": true,
+    "skipLibCheck": true,
+    "strict": true
   }
 }

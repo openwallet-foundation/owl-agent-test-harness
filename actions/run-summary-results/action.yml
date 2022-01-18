@@ -1,0 +1,13 @@
+name: "Run Aries ATH Summary Results"
+description: "Run the Aries Agent Test Harness Summary Results"
+author: "iancostanzo@gmail.com"
+runs:
+  using: "composite"
+  steps:
+    - name: generate-summary-results
+      run: ./gen-interop.sh
+      shell: bash
+      working-directory: test-harness
+branding:
+  icon: "mic"
+  color: "purple"

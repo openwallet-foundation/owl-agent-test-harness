@@ -19,7 +19,7 @@ The first step in developing a suite of tests for an Aries RFC is to write plain
 
 The priority is to do "happy path" type tests first, leaving the exception & negative testing until there are multiple suites across protocols of happy path acceptance tests. Write one main scenario then get peers and others familiar with the RFC to review the test. This is important because the structure and language of this initial test may guide the rest of the tests in the suite.
 
-Initial writing of the Gherkin tests themselves are done in a [.feature file](https://behave.readthedocs.io/en/stable/tutorial.html?highlight=feature%20file#features) or in a [GitHub issue](https://github.com/bcgov/aries-agent-test-harness/issues) detailing the test development work to be accomplished. If no GitHub issue exists for the test development work, create one.
+Initial writing of the Gherkin tests themselves are done in a [.feature file](https://behave.readthedocs.io/en/stable/tutorial.html?highlight=feature%20file#features) or in a [GitHub issue](https://github.com/hyperledger/aries-agent-test-harness/issues) detailing the test development work to be accomplished. If no GitHub issue exists for the test development work, create one.
 
 To keep test definitions immune to code changes or nomenclatures in code, it is best to express the RFC in high level terms from the user level based on predefined persona, currently `Acme`, `Bob` and `Mallory`, that can be interpreted at the business level without revealing implementation details. For example, `When Acme requests a connection with Bob` instead of `When Acme sends a connection-request to Bob`.  Sometimes this may be cumbersome, so just make it as high level as makes sense.  A full example from the connection protocol might look something like this;
 
@@ -135,9 +135,9 @@ This comparison is done using a "Known Good Results" ("KGR") file that is checke
 
 When adding a new test, or if a different set of tests is expected to pass or fail, this KGR file must be updated.
 
-The KGR files are checked into [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/master/aries-test-harness/allure).
+The KGR files are checked into [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/main/aries-test-harness/allure).
 
-To update the file, run the test suite locally (as in the above command) - it will create a "NEW-*" KGR file in [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/master/aries-test-harness/allure/allure-results) - just copy this file to replace the existing "The-KGR-File-*" for the `PROJECT_ID` under test, and check into GitHub.
+To update the file, run the test suite locally (as in the above command) - it will create a "NEW-*" KGR file in [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/main/aries-test-harness/allure/allure-results) - just copy this file to replace the existing "The-KGR-File-*" for the `PROJECT_ID` under test, and check into GitHub.
 
 ## Implementing the Backchannel
 
@@ -146,4 +146,5 @@ See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in th
 ## Diving Deeper
 - [Accessing Connection ID in Test Code](ACCESS-CONNECTION-IDS.md)
 - [Configuring Tests with Credential Types and Proofs](CONFIGURE-CRED-TYPES.md)
-- [Debugging a Backchannel Running Inside a Docker Contaiener](DEBUGGING.md)
+- [Debugging a Backchannel Running Inside a Docker Container](DEBUGGING.md)
+- [Taking Advantage of Connection Reuse in AATH](CONNECTION-REUSE.md)

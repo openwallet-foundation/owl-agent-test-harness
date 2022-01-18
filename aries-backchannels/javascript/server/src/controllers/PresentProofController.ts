@@ -1,134 +1,193 @@
-import { Controller, Get, PathParams, Post, BodyParams } from "@tsed/common";
-import { NotFound } from "@tsed/exceptions";
+import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
+import { NotFound } from '@tsed/exceptions'
 import {
   Agent,
   JsonTransformer,
   PresentationPreview,
   ProofRequest,
   RequestedCredentials,
-} from "aries-framework-javascript";
-import { ProofRecord } from "aries-framework-javascript/build/lib/storage/ProofRecord";
-import { Body } from "node-fetch";
+  ProofRecord,
+  IndyCredentialInfo,
+  AgentConfig,
+  Logger,
+  ProofEventTypes,
+  ProofStateChangedEvent,
+  ProofState,
+} from '@aries-framework/core'
+import { CredentialUtils } from '../utils/CredentialUtils'
+import { ProofUtils } from '../utils/ProofUtils'
+import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
 
-@Controller("/agent/command/proof")
+@Controller('/agent/command/proof')
 export class PresentProofController {
-  private agent: Agent;
+  private agent: Agent
+  private logger: Logger
+  private proofUtils: ProofUtils
+  private subject = new ReplaySubject<ProofStateChangedEvent>()
 
   public constructor(agent: Agent) {
-    this.agent = agent;
+    this.agent = agent
+    this.logger = agent.injectionContainer.resolve(AgentConfig).logger
+    this.proofUtils = new ProofUtils(agent)
+
+    // Catch all events in replay subject for later use
+    agent.events.observable<ProofStateChangedEvent>(ProofEventTypes.ProofStateChanged).subscribe(this.subject)
   }
 
-  @Get("/:threadId")
-  async getProofByThreadId(@PathParams("threadId") threadId: string) {
-    const proofRecord = await this.agent.proof.getByThreadId(threadId);
+  @Get('/:threadId')
+  async getProofByThreadId(@PathParams('threadId') threadId: string) {
+    const proofRecord = await this.proofUtils.getProofByThreadId(threadId)
 
     if (!proofRecord) {
-      throw new NotFound(`proof record for thead id "${threadId}" not found.`);
+      throw new NotFound(`proof record for thead id "${threadId}" not found.`)
     }
 
-    return this.mapProofRecord(proofRecord);
+    return this.mapProofRecord(proofRecord)
   }
 
-  @Get("/")
+  @Get('/')
   async getAllProofs() {
-    const proofs = await this.agent.proof.getAll();
+    const proofs = await this.agent.proofs.getAll()
 
-    return proofs.map((proof) => this.mapProofRecord(proof));
+    return proofs.map((proof) => this.mapProofRecord(proof))
   }
 
-  @Post("/send-proposal")
+  @Post('/send-proposal')
   async sendProposal(
-    @BodyParams("data")
+    @BodyParams('data')
     data: {
-      connection_id: string;
-      presentation_proposal: any;
+      connection_id: string
+      presentation_proposal: {
+        comment?: string
+        attributes: any
+        predicates: any
+      }
     }
   ) {
-    const presentationProposal = JsonTransformer.fromJSON(
-      data.presentation_proposal,
-      PresentationPreview
-    );
+    const { attributes, predicates, ...restProposal } = data.presentation_proposal
 
-    const proofRecord = await this.agent.proof.proposeProof(
-      data.connection_id,
-      presentationProposal,
-      {
-        comment: data.presentation_proposal.comment,
-      }
-    );
+    const newPresentationProposal = {
+      ...restProposal,
+      attributes: attributes,
+      predicates: predicates,
+    }
+    const presentationProposal = JsonTransformer.fromJSON(newPresentationProposal, PresentationPreview)
 
-    return this.mapProofRecord(proofRecord);
+    const proofRecord = await this.agent.proofs.proposeProof(data.connection_id, presentationProposal, {
+      comment: data.presentation_proposal.comment,
+    })
+
+    return this.mapProofRecord(proofRecord)
   }
 
-  @Post("/send-request")
+  @Post('/send-request')
   async sendRequest(
-    @BodyParams("id") threadId: string,
-    @BodyParams("data")
+    @BodyParams('id') threadId: string,
+    @BodyParams('data')
     data: {
-      connection_id: string;
-      presentation_proposal: any;
+      connection_id: string
+      presentation_request: {
+        comment?: string
+        proof_request: {
+          data: unknown
+        }
+      }
     }
   ) {
-    const proofRequest = JsonTransformer.fromJSON(
-      data.presentation_proposal["request_presentations~attach"].data,
-      ProofRequest
-    );
+    const proofRequest = JsonTransformer.fromJSON(data.presentation_request.proof_request.data, ProofRequest)
 
     // TODO: AFJ doesn't support to negotiate proposal yet
     // if thread id is present
-    const proofRecord = await this.agent.proof.requestProof(
+    const proofRecord = await this.agent.proofs.requestProof(
       data.connection_id,
       {
         requestedAttributes: proofRequest.requestedAttributes,
         requestedPredicates: proofRequest.requestedPredicates,
       },
       {
-        comment: data.presentation_proposal.comment,
+        comment: data.presentation_request.comment,
       }
-    );
+    )
 
-    return this.mapProofRecord(proofRecord);
+    return this.mapProofRecord(proofRecord)
   }
 
-  @Post("/send-presentation")
+  @Post('/send-presentation')
   async sendPresentation(
-    @BodyParams("id") threadId: string,
-    @BodyParams("data") data: any
+    @BodyParams('id') threadId: string,
+    @BodyParams('data')
+    data: {
+      self_attested_attributes: Record<string, string>
+      requested_attributes: Record<string, { cred_id: string; timestamp?: number; revealed: boolean }>
+      requested_predicates: Record<string, { cred_id: string; revealed: boolean }>
+      comment: string
+    }
   ) {
-    let proofRecord = await this.agent.proof.getByThreadId(threadId);
+    await this.waitForState(threadId, ProofState.RequestReceived)
+    let proofRecord = await this.proofUtils.getProofByThreadId(threadId)
 
     const requestedCredentials = JsonTransformer.fromJSON(
       {
-        requested_attributes: data.requested_attributes ?? new Map(),
-        requested_predicates: data.requested_predicates ?? new Map(),
-        self_attested_attributes: data.self_attested_attributes ?? new Map(),
+        requested_attributes: data.requested_attributes ?? {},
+        requested_predicates: data.requested_predicates ?? {},
+        self_attested_attributes: data.self_attested_attributes ?? {},
       },
       RequestedCredentials
-    );
+    )
 
-    console.log(requestedCredentials);
+    this.logger.info('Created requested credentials ', {
+      requestedCredentials: JSON.stringify(requestedCredentials.toJSON(), null, 2),
+    })
 
-    proofRecord = await this.agent.proof.acceptRequest(
-      proofRecord.id,
-      requestedCredentials
-    );
+    const credentialUtils = new CredentialUtils(this.agent)
+    Object.values(requestedCredentials.requestedAttributes).forEach(async (requestedAttribute) => {
+      const credentialInfo = JsonTransformer.fromJSON(
+        await credentialUtils.getIndyCredentialById(requestedAttribute.credentialId),
+        IndyCredentialInfo
+      )
+      requestedAttribute.credentialInfo = credentialInfo
+    })
+    Object.values(requestedCredentials.requestedPredicates).forEach(async (requestedPredicate) => {
+      const credentialInfo = JsonTransformer.fromJSON(
+        await credentialUtils.getIndyCredentialById(requestedPredicate.credentialId),
+        IndyCredentialInfo
+      )
+      requestedPredicate.credentialInfo = credentialInfo
+    })
 
-    return this.mapProofRecord(proofRecord);
+    this.logger.info('Created proof request ', {
+      requestedCredentials: requestedCredentials.toJSON(),
+    })
+
+    proofRecord = await this.agent.proofs.acceptRequest(proofRecord.id, requestedCredentials, { comment: data.comment })
+
+    return this.mapProofRecord(proofRecord)
   }
 
-  @Post("/verify-presentation")
-  async verifyPresentation(@BodyParams("id") threadId: string) {
-    let proofRecord = await this.agent.proof.getByThreadId(threadId);
+  @Post('/verify-presentation')
+  async verifyPresentation(@BodyParams('id') threadId: string) {
+    await this.waitForState(threadId, ProofState.PresentationReceived)
 
-    proofRecord = await this.agent.proof.acceptPresentation(proofRecord.id);
+    let proofRecord = await this.proofUtils.getProofByThreadId(threadId)
+    if (proofRecord) {
+      return this.mapProofRecord(await this.agent.proofs.acceptPresentation(proofRecord.id))
+    }
+  }
 
-    return this.mapProofRecord(proofRecord);
+  private async waitForState(threadId: string, state: ProofState) {
+    return await firstValueFrom(
+      this.subject.pipe(
+        filter((c) => c.payload.proofRecord.threadId === threadId),
+        filter((c) => c.payload.proofRecord.state === state),
+        timeout(20000)
+      )
+    )
   }
 
   private mapProofRecord(proofRecord: ProofRecord) {
     return {
-      state: proofRecord.state.toLowerCase().replace("_", "-"),
-      thread_id: proofRecord.tags.threadId,
-    };
+      state: proofRecord.state,
+      thread_id: proofRecord.threadId,
+    }
   }
 }

@@ -1,4 +1,5 @@
 import time
+import datetime
 
 def create_non_revoke_interval(timeframe):
     # timeframe containes two variables, the To and from of the non-revoked to and from parameters in the send presentation request message
@@ -105,6 +106,25 @@ def amend_filters_with_runtime_data(context, filters):
                 credential["issuer"]["id"] = issuer
         if options.get("proofType") == "replace_me":
             options["proofType"] = context.proof_type
+        if "issuanceDate" in credential:
+            created_datetime = str(datetime.datetime.now().replace(microsecond=0).isoformat(timespec='seconds'))  + "Z"
+            credential["issuanceDate"] = created_datetime
 
 
     return filters
+
+def amend_presentation_definition_with_runtime_data(context, presentation_definition):
+    # presentation definition is outer object with presentation definition and options
+    pd = presentation_definition.get("presentation_definition", {})
+    format = pd.get("format", {})
+    ldp_vp_proof_type = format.get("ldp_vp", {}).get("proof_type", [])
+
+    # Only ldp_vp with a single proof type replaced is supported ATM
+    if "replace_me" in ldp_vp_proof_type:
+        index = ldp_vp_proof_type.index("replace_me")
+        ldp_vp_proof_type[index] = context.proof_type
+
+        presentation_definition["presentation_definition"]["format"]["ldp_vp"]["proof_type"] = ldp_vp_proof_type
+
+    return presentation_definition
+

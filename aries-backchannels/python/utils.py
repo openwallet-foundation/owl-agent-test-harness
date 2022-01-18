@@ -115,11 +115,11 @@ def print_ext(
 
 
 def output_reader(handle, callback, *args, **kwargs):
-    if handle == None:
+    if handle is None:
         return
-        
+
     for line in iter(handle.readline, b""):
-        if not line:
+        if not line and line != "":
             break
         run_in_terminal(functools.partial(callback, line, *args))
 
@@ -242,29 +242,20 @@ def progress(*args, **kwargs):
     return ProgressBar(*args, **kwargs)
 
 
-def require_indy():
-    try:
-        from indy.libindy import _cdll
-
-        _cdll()
-    except ImportError:
-        print("python3-indy module not installed")
-        sys.exit(1)
-    except OSError:
-        print("libindy shared library could not be loaded")
-        sys.exit(1)
-
-
 def pipe_parser(str_data):
     data = io.StringIO(str_data)
-    csv.register_dialect('piper', delimiter='|', quoting=csv.QUOTE_NONE, skipinitialspace=True)
-    reader = csv.reader(data, dialect='piper')
+    csv.register_dialect(
+        "piper", delimiter="|", quoting=csv.QUOTE_NONE, skipinitialspace=True
+    )
+    reader = csv.reader(data, dialect="piper")
     return [[x.strip() for x in row] for row in reader]
+
 
 def csv_parser(str_data):
     data = io.StringIO(str_data)
     reader = csv.reader(data)
     return [[x.strip() for x in row] for row in reader]
+
 
 def read_operations(str_data=None, file_name=None, parser=None):
     # either str_data or an input file must be provided
@@ -293,12 +284,13 @@ def read_operations(str_data=None, file_name=None, parser=None):
     return operations
 
 
-EXTENSION = {"darwin": ".dylib", "linux": ".so", "win32": ".dll", 'windows': '.dll'}
+EXTENSION = {"darwin": ".dylib", "linux": ".so", "win32": ".dll", "windows": ".dll"}
 
 
 def file_ext():
     your_platform = platform.system().lower()
-    return EXTENSION[your_platform] if (your_platform in EXTENSION) else '.so'
+    return EXTENSION[your_platform] if (your_platform in EXTENSION) else ".so"
+
 
 def create_uuid():
     return str(uuid.uuid4())
