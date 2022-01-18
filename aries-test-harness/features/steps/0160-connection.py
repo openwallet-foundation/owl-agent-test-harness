@@ -271,7 +271,7 @@ def step_impl(context, sender, receiver):
         ''')
         if not context.use_existing_connection_successful:
             context.execute_steps(f'''
-                And "{receiver}" sends the request to "{sender}"
+                When "{receiver}" sends the request to "{sender}"
                 And "{sender}" receives the request
                 And "{sender}" sends a response to "{receiver}"
                 And "{receiver}" receives the response

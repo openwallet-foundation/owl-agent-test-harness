@@ -54,10 +54,6 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
 
     holder_url = context.config.userdata.get(holder)
 
-    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
-    if context.credential_data:
-        cred_data = context.credential_data
-
     if "AIP20" in context.tags:
         # We only want to send data for the cred format being used
         assert cred_format in context.filters, f"credential data has no filter for cred format {cred_format}"
@@ -67,7 +63,8 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
 
          # This call may need to be formated by cred_format instead of version. Reassess when more types are used.
         credential_offer = format_cred_proposal_by_aip_version(
-            context, "AIP20", cred_data, context.connection_id_dict[holder][issuer], filters)
+            context, "AIP20", context.credential_data, context.connection_id_dict[holder][issuer], filters
+        )
 
 
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential-v2", operation="send-proposal", data=credential_offer)
@@ -145,7 +142,8 @@ def step_impl(context, holder, cred_format):
     (resp_status, resp_text) = agent_backchannel_POST(holder_url + "/agent/command/", "issue-credential-v2", operation="store", id=context.cred_thread_id)
     assert resp_status == 200, f'resp_status {resp_status} is not 200; {resp_text}'
     resp_json = json.loads(resp_text)
-    assert resp_json["state"] == "done"
+    state = resp_json["state"]
+    assert state == "done", f"state is '{state}', expected 'done'"
 
     # FIXME: the return value of this is very ACA-Py specific, should just be credential_id
     credential_id = resp_json[cred_format]["credential_id"]
