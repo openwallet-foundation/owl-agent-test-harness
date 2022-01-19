@@ -18,6 +18,7 @@ namespace DotNet.Backchannel
             AddTrustPingHandler();
             AddBasicMessageHandler();
             AddProofHandler();
+            AddCredentialHandler();
             AddForwardHandler();
             // Framework doesn't send ack after verifying presentation
             AddHandler<PresentationAckHandler>();
