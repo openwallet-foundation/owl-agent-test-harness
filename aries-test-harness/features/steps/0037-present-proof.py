@@ -2,6 +2,7 @@ from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_POST, expected_agent_state
 from agent_test_utils import get_relative_timestamp_to_epoch
+from time import sleep
 
 @when('{issuer} issues a new credential to "{prover}" with {credential_data}')
 @given('"{prover}" has an issued credential from {issuer} with {credential_data}')
