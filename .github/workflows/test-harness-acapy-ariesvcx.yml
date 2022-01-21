@@ -9,7 +9,7 @@ name: test-harness-acapy-ariesvcx
 on:
   workflow_dispatch:
   schedule:
-    - cron: "50 2 * * *"
+    - cron: "50 1 * * *"
 defaults:
   run:
     shell: bash
