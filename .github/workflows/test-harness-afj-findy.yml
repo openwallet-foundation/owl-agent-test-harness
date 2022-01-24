@@ -1,5 +1,5 @@
-name: test-harness-findy-acapy
-# RUNSET_NAME: "findy to ACA-PY"
+name: test-harness-javascript-findy
+# RUNSET_NAME: "AFJ to findy"
 # Scope: AIP 1.0
 # Exceptions: Revocation
 #
