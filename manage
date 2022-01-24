@@ -787,17 +787,21 @@ runTests() {
   rm ${BEHAVE_INI_TMP}
 
   # Export agent logs
-  mkdir -p .logs
-  docker logs acme_agent > .logs/acme_agent.log
-  docker logs bob_agent > .logs/bob_agent.log
-  docker logs faber_agent > .logs/faber_agent.log
-  docker logs mallory_agent > .logs/mallory_agent.log
+  if [[ "${GITHUB_ACTIONS}" = "true" ]]; then
+    echo "Exporting Agent logs."
+    mkdir -p .logs
+    docker logs acme_agent > .logs/acme_agent.log
+    docker logs bob_agent > .logs/bob_agent.log
+    docker logs faber_agent > .logs/faber_agent.log
+    docker logs mallory_agent > .logs/mallory_agent.log
 
-  if [[ "${USE_NGROK}" = "true" ]]; then
-    docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
-    docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
-    docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
-    docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+    if [[ "${USE_NGROK}" = "true" ]]; then
+      echo "Exporting ngrok Agent logs."
+      docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
+      docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
+      docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
+      docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+    fi
   fi
 }
 
