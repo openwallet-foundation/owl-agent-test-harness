@@ -92,7 +92,14 @@ Defining specific tags should be discussed with the Aries Protocol test communit
 
 ## Defining Backchannel Operations
 
-Defining test steps require using and extending the commands and operations to be implemented by the backchannels. The commands and operations are documented in an OpenAPI specification located [here](./docs/assets/openapi-spec.yml). The OpenAPI spec can be viewed on the Aries Interop page [here](http://aries-interop.info/api). As test developers add new steps to test cases, document the new operations on which they depend in the OpenAPI spec.
+Defining test steps require using and extending the commands and operations to be implemented by the backchannels. The commands and operations are documented in an OpenAPI specification located [here](./docs/assets/openapi-spec.yml). A rendered version of the OpenApi spec (from the main branch) can be viewed on the Aries Interop page [here](http://aries-interop.info/api). As test developers add new steps to test cases, document the new operations on which they depend in the OpenAPI spec.
+
+During development (and if using VSCode) there are some tools that can make it easier to work with the OpenAPI spec:
+
+- [OpenAPI (Swagger) Editor](https://marketplace.visualstudio.com/items?itemName=42Crunch.vscode-openapi) - Adds a sidebar that helps with navigating through the open file.
+- [Swagger Viewer](https://marketplace.visualstudio.com/items?itemName=Arjun.swagger-viewer) - Swagger Viewer lets you preview OpenAPI files as you type in Visual Studio Code.
+
+Defining a new operation is as simple as adding a new path to the OpenAPI spec file. If you're adding a new topic, make sure to add a new entry to the `tags` at the top of the OpenAPI file. When adding a new endpoint try to group it with the existing commands, so proof commands should be grouped with other proof commands. When adding a new path, it is easiest to copy an already existing path.
 
 ## Implementing Test Steps
 
@@ -104,7 +111,7 @@ Follow standard best practices for implementing test steps in Behave, writing th
   - Add new persona only if really, really needed
 - Execute the new tests, grabbing the skeleton code for the new, unimplemented steps from the behave output, and adding them to the `steps` Python code
 - Implement the steps code, defining as needed commands and operations to be added to the backchannel interface
-- Update the Google Sheet and OpenAPI spec to add the new commands and operations and regenerate the backchannel operations data file (see [subsection](#defining-backchannel-operations) above)
+- Update the OpenAPI spec to add the new commands and operations
 - If you are also responsible for implementing one or more backchannels, extend the backchannel(s) to support the new commands and operations
 - Notify the community of backchannel maintainers of the new tests, commands and operations
 
