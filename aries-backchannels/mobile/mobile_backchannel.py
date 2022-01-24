@@ -88,7 +88,9 @@ class MobileAgentBackchannel(AgentBackchannel):
 
                 return (
                     200,
-                    f'{"result": "ok", "connection_id": "1", "state": "{self.connection_state}"}',
+                    '{"result": "ok", "connection_id": "1", "state": "{connection_state}"}'.format(
+                        connection_state=self.connection_state
+                    )
                 )
 
             elif (
@@ -101,7 +103,9 @@ class MobileAgentBackchannel(AgentBackchannel):
                 self.connection_state = "requested"
                 return (
                     200,
-                    f'{"result": "ok", "connection_id": "1", "state": "{self.connection_state}"}',
+                    '{"result": "ok", "connection_id": "1", "state": "{connection_state}"}'.format(
+                        connection_state=self.connection_state
+                    )
                 )
 
         elif command.topic == "issue-credential":
@@ -120,7 +124,9 @@ class MobileAgentBackchannel(AgentBackchannel):
             elif operation == "store":
                 return (
                     200,
-                    f'{"result": "ok", "thread_id": "1", "credential_id": "{record_id}", "state": "done"}',
+                    '{"result": "ok", "thread_id": "1", "credential_id": "{record_id}", "state": "done"}'.format(
+                        record_id=record_id
+                    ),
                 )
             else:
                 return (200, '{"result": "ok", "thread_id": "1", "state": "N/A"}')
@@ -161,19 +167,25 @@ class MobileAgentBackchannel(AgentBackchannel):
         elif command.topic == "issue-credential":
             return (
                 200,
-                f'{"result": "ok", "credential_id": "{record_id}", "state": "N/A"}',
+                '{"result": "ok", "credential_id": "{record_id}", "state": "N/A"}'.format(
+                    record_id=record_id
+                )
             )
 
         elif command.topic == "credential":
             return (
                 200,
-                f'{"result": "ok", "credential_id": "{record_id}", "state": "N/A"}',
+                '{"result": "ok", "credential_id": "{record_id}", "state": "N/A"}'.format(
+                    record_id=record_id
+                )
             )
 
         elif command.topic == "proof":
             return (
                 200,
-                f'{"result": "ok", "thread_id": "{record_id}", "state": "N/A"}',
+                '{"result": "ok", "thread_id": "{record_id}", "state": "N/A"}'.format(
+                    record_id=record_id
+                )
             )
 
         if command.topic == "version":
