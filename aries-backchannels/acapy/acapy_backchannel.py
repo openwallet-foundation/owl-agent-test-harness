@@ -209,13 +209,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--label", self.label),
             # "--auto-ping-connection",
             # "--auto-accept-invites",
-            #"--auto-accept-requests",
-            #"--auto-respond-messages",
-            #"--auto-respond-credential-proposal",
-            #"--auto-respond-credential-offer",
-            #"--auto-respond-credential-request",
-            #"--auto-respond-presentation-proposal",
-            #"--auto-respond-presentation-request",
+            # "--auto-accept-requests",
+            # "--auto-respond-messages",
+            # "--auto-respond-credential-proposal",
+            # "--auto-respond-credential-offer",
+            # "--auto-respond-credential-request",
+            # "--auto-respond-presentation-proposal",
+            # "--auto-respond-presentation-request",
             ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
             ("--outbound-transport", "http"),
             ("--admin", "0.0.0.0", str(self.admin_port)),
@@ -413,7 +413,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         push_resource(thread_id, "problem-report-msg", message)
         log_msg("Received Problem Report Webhook message: " + json.dumps(message))
 
-    async def swap_thread_id_for_exchange_id(self, thread_id: str, data_type: str, id_txt: str, wait_time: Optional[int] = 20, sleep_time: Optional[int] = 1) -> str:
+    async def swap_thread_id_for_exchange_id(
+        self,
+        thread_id: str,
+        data_type: str,
+        id_txt: str,
+        wait_time: Optional[int] = 20,
+        sleep_time: Optional[int] = 1,
+    ) -> str:
         timeout = 0
         ex_id = None
         webcall_returned = None
@@ -431,12 +438,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
         return ex_id
 
-    async def expected_agent_state(self, path: str, status_txt: Union[str, List[str]], wait_time: float = 2.0, sleep_time: float = 0.5):
+    async def expected_agent_state(
+        self,
+        path: str,
+        status_txt: Union[str, List[str]],
+        wait_time: float = 2.0,
+        sleep_time: float = 0.5,
+    ):
         await asyncio.sleep(sleep_time)
         state = "None"
         if type(status_txt) != list:
             status_txt = [status_txt]
-        for i in range(int(wait_time/sleep_time)):
+        for i in range(int(wait_time / sleep_time)):
             (resp_status, resp_text) = await self.make_admin_request("GET", path)
             if resp_status == 200:
                 resp_json = json.loads(resp_text)
@@ -444,11 +457,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 if state in status_txt:
                     return True
             await asyncio.sleep(sleep_time)
-        print("Expected state", status_txt, "but received", state, ", with a response status of", resp_status)
+        print(
+            "Expected state",
+            status_txt,
+            "but received",
+            state,
+            ", with a response status of",
+            resp_status,
+        )
         return False
 
     async def make_admin_request(
-        self, method: str, path: str, data: Optional[Any] = None, params: Optional[Mapping[str, Any]] = None
+        self,
+        method: str,
+        path: str,
+        data: Optional[Any] = None,
+        params: Optional[Mapping[str, Any]] = None,
     ) -> Tuple[int, str]:
         params = {k: v for (k, v) in (params or {}).items() if v is not None}
         async with self.client_session.request(
@@ -458,14 +482,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = await resp.text()
             return (resp_status, resp_text)
 
-    async def admin_GET(self, path: str, params: Optional[Mapping[str, Any]] = None) -> Tuple[int, str]:
+    async def admin_GET(
+        self, path: str, params: Optional[Mapping[str, Any]] = None
+    ) -> Tuple[int, str]:
         try:
             return await self.make_admin_request("GET", path, None, params)
         except ClientError as e:
             self.log(f"Error during GET {path}: {str(e)}")
             raise
 
-    async def admin_DELETE(self, path: str, params: Optional[Mapping[str, Any]] = None) -> Tuple[int, str]:
+    async def admin_DELETE(
+        self, path: str, params: Optional[Mapping[str, Any]] = None
+    ) -> Tuple[int, str]:
         try:
             return await self.make_admin_request("DELETE", path, None, params)
         except ClientError as e:
@@ -473,7 +501,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             raise
 
     async def admin_POST(
-        self, path: str, data: Optional[Any] = None, params: Optional[Mapping[str, Any]] = None
+        self,
+        path: str,
+        data: Optional[Any] = None,
+        params: Optional[Mapping[str, Any]] = None,
     ) -> Tuple[int, str]:
         try:
             return await self.make_admin_request("POST", path, data, params)
@@ -484,8 +515,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_POST_request(
         self, command: BackchannelCommand
     ) -> Tuple[int, str]:
-        if command["topic"] == "connection":
-            operation = command["operation"]
+        if command.topic == "connection":
+            operation = command.operation
             if operation == "create-invitation":
                 agent_operation = f"/connections/{operation}"
 
@@ -496,21 +527,17 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 resp_text = json.dumps(invitation_resp)
 
                 if resp_status == 200:
-                    resp_text = self.agent_state_translation(
-                        command["topic"], resp_text
-                    )
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
             elif operation == "receive-invitation":
                 agent_operation = "/connections/" + operation
 
                 (resp_status, resp_text) = await self.admin_POST(
-                    agent_operation, data=command["data"]
+                    agent_operation, data=command.data
                 )
                 if resp_status == 200:
-                    resp_text = self.agent_state_translation(
-                        command["topic"], resp_text
-                    )
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
             elif (
@@ -520,47 +547,58 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 or operation == "start-introduction"
                 or operation == "send-ping"
             ):
-                connection_id = command["record_id"]
+                connection_id = command.record_id
 
                 # wait for the connection to be in "requested" status
                 if operation == "accept-request":
                     if not self.auto_accept_requests:
-                        if not await self.expected_agent_state(f"/connections/{connection_id}", "request", wait_time=60.0):
+                        if not await self.expected_agent_state(
+                            f"/connections/{connection_id}", "request", wait_time=60.0
+                        ):
                             raise Exception(f"Expected state request but not received")
 
                 agent_operation = f"/connections/{connection_id}/{operation}"
-                log_msg("POST Request: ", agent_operation, command["data"])
+                log_msg("POST Request: ", agent_operation, command.data)
 
                 if self.auto_accept_requests and operation == "accept-request":
                     resp_status = 200
-                    resp_text = 'Aca-py agent in auto accept request mode. accept-request operation not called.'
+                    resp_text = "Aca-py agent in auto accept request mode. accept-request operation not called."
                 else:
                     # As of adding the Auto Accept and Auto Respond support, it seems a sleep is required here,
                     # or sometimes the agent isn't in the correct state to accept the operation. Not sure why...
                     await asyncio.sleep(1)
-                    (resp_status, resp_text) = await self.admin_POST(agent_operation, command["data"])
-                    if resp_status == 200: resp_text = self.agent_state_translation(command["topic"], resp_text)
-                
+                    (resp_status, resp_text) = await self.admin_POST(
+                        agent_operation, command.data
+                    )
+                    if resp_status == 200:
+                        resp_text = self.agent_state_translation(
+                            command.topic, resp_text
+                        )
+
                 log_msg(resp_status, resp_text)
                 return (resp_status, resp_text)
 
-        elif command["topic"] == "schema":
+        elif command.topic == "schema":
             # POST operation is to create a new schema
             agent_operation = "/schemas"
-            log_msg(agent_operation, command["data"])
+            log_msg(agent_operation, command.data)
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, command["data"])
+            (resp_status, resp_text) = await self.admin_POST(
+                agent_operation, command.data
+            )
 
             log_msg(resp_status, resp_text)
             resp_text = self.move_field_to_top_level(resp_text, "schema_id")
             return (resp_status, resp_text)
 
-        elif command["topic"] == "credential-definition":
+        elif command.topic == "credential-definition":
             # POST operation is to create a new cred def
             agent_operation = "/credential-definitions"
-            log_msg(agent_operation, command['data'])
+            log_msg(agent_operation, command.data)
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, command['data'])
+            (resp_status, resp_text) = await self.admin_POST(
+                agent_operation, command.data
+            )
 
             log_msg(resp_status, resp_text)
             resp_text = self.move_field_to_top_level(
@@ -568,13 +606,17 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
             return (resp_status, resp_text)
 
-        elif command["topic"] == "issue-credential":
-            operation = command["operation"]
-            data = command["data"]
+        elif command.topic == "issue-credential":
+            operation = command.operation
+            data = command.data
 
             acapy_topic = "/issue-credential/"
 
-            if self.auto_respond_credential_proposal and operation == "send-offer" and command["record_id"]:
+            if (
+                self.auto_respond_credential_proposal
+                and operation == "send-offer"
+                and command.record_id
+            ):
                 resp_status = 200
                 resp_text = '{"message": "Aca-py agent in auto respond mode for proposal. send-offer operation not called."}'
                 return (resp_status, resp_text)
@@ -587,7 +629,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 resp_text = '{"message": "Aca-py agent in auto respond mode for request. issue operation not called."}'
                 return (resp_status, resp_text)
             else:
-                if command["record_id"] is None:
+                if command.record_id is None:
                     agent_operation = acapy_topic + operation
                 else:
                     if (
@@ -596,21 +638,34 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         or operation == "issue"
                         or operation == "store"
                     ):
-                    
+
                         # swap thread id for cred ex id from the webhook
                         cred_ex_id = await self.swap_thread_id_for_exchange_id(
-                            command["record_id"], "credential-msg", "credential_exchange_id"
+                            command.record_id,
+                            "credential-msg",
+                            "credential_exchange_id",
                         )
-                        agent_operation = f"{acapy_topic}records/{cred_ex_id}/{operation}"
+                        agent_operation = (
+                            f"{acapy_topic}records/{cred_ex_id}/{operation}"
+                        )
 
                         # wait for the issue cred to be in "request-received" status
-                        if operation == "issue" and not self.auto_respond_credential_request:
-                                if not await self.expected_agent_state(f"{acapy_topic}records/{cred_ex_id}", "request_received", wait_time=60.0):
-                                    raise Exception(f"Expected state request-received but not received")
+                        if (
+                            operation == "issue"
+                            and not self.auto_respond_credential_request
+                        ):
+                            if not await self.expected_agent_state(
+                                f"{acapy_topic}records/{cred_ex_id}",
+                                "request_received",
+                                wait_time=60.0,
+                            ):
+                                raise Exception(
+                                    f"Expected state request-received but not received"
+                                )
 
                     # Make Special provisions for revoke since it is passing multiple query params not just one id.
                     elif operation == "revoke":
-                        cred_rev_id = command["record_id"]
+                        cred_rev_id = command.record_id
                         rev_reg_id = data["rev_registry_id"]
                         publish = data["publish_immediately"]
                         agent_operation = (
@@ -633,33 +688,29 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 log_msg(resp_status, resp_text)
                 if resp_status == 200 and self.aip_version != "AIP20":
-                    resp_text = self.agent_state_translation(command["topic"], resp_text)
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
         # Handle issue credential v2 POST operations
-        elif command["topic"] == "issue-credential-v2":
+        elif command.topic == "issue-credential-v2":
             (resp_status, resp_text) = await self.handle_issue_credential_v2_POST(
                 command
             )
             return (resp_status, resp_text)
 
         # Handle proof v2 POST operations
-        elif command["topic"] == "proof-v2":
-            (resp_status, resp_text) = await self.handle_proof_v2_POST(
-                command
-            )
+        elif command.topic == "proof-v2":
+            (resp_status, resp_text) = await self.handle_proof_v2_POST(command)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "revocation":
+        elif command.topic == "revocation":
             # set the acapyversion to master since work to set it is not complete. Remove when master report proper version
             # self.acapy_version = "0.5.5-RC"
-            operation = command["operation"]
+            operation = command.operation
             (
                 agent_operation,
                 admin_data,
-            ) = await self.get_agent_operation_acapy_version_based(
-                command
-            )
+            ) = await self.get_agent_operation_acapy_version_based(command)
 
             log_msg(agent_operation, admin_data)
 
@@ -672,26 +723,37 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             log_msg(resp_status, resp_text)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(command["topic"], resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "proof":
-            operation = command["operation"]
-            record_id = command["record_id"]
-            data = command["data"]
+        elif command.topic == "proof":
+            operation = command.operation
+            record_id = command.record_id
+            data = command.data
 
             if operation == "create-send-connectionless-request":
                 operation = "create-request"
 
-            if self.auto_respond_presentation_proposal and operation == "send-request" and record_id:
+            if (
+                self.auto_respond_presentation_proposal
+                and operation == "send-request"
+                and record_id
+            ):
                 resp_status = 200
                 resp_text = '{"message": "Aca-py agent in auto respond mode for presentation proposal. send-request operation not called."}'
-                log_msg("Aca-py agent in auto respond mode for presentation proposal. send-request operation not called.")
+                log_msg(
+                    "Aca-py agent in auto respond mode for presentation proposal. send-request operation not called."
+                )
                 return (resp_status, resp_text)
-            elif self.auto_respond_presentation_request and operation == "send-presentation":
+            elif (
+                self.auto_respond_presentation_request
+                and operation == "send-presentation"
+            ):
                 resp_status = 200
                 resp_text = '{"message": "Aca-py agent in auto respond mode for presentation request. send-presentation operation not called."}'
-                log_msg("Aca-py agent in auto respond mode for presentation request. send-presentation operation not called.")
+                log_msg(
+                    "Aca-py agent in auto respond mode for presentation request. send-presentation operation not called."
+                )
                 return (resp_status, resp_text)
             else:
                 if record_id is None:
@@ -710,17 +772,30 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         ) and (data is None or "~service" not in data):
                             # swap thread id for pres ex id from the webhook
                             pres_ex_id = await self.swap_thread_id_for_exchange_id(
-                                record_id, "presentation-msg", "presentation_exchange_id"
+                                record_id,
+                                "presentation-msg",
+                                "presentation_exchange_id",
                             )
                         else:
                             # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
                             pres_ex_id = data["~service"]["recipientKeys"][0]
-                        agent_operation = f"/present-proof/records/{pres_ex_id}/{operation}"
+                        agent_operation = (
+                            f"/present-proof/records/{pres_ex_id}/{operation}"
+                        )
 
-                         # wait for the proof to be in "presentation-received" status
-                        if operation == "verify-presentation" and not self.auto_respond_presentation_request:
-                            if not await self.expected_agent_state(f"/present-proof/records/{pres_ex_id}", "presentation_received", wait_time=60.0):
-                                raise Exception(f"Expected state presentation-received but not received")
+                        # wait for the proof to be in "presentation-received" status
+                        if (
+                            operation == "verify-presentation"
+                            and not self.auto_respond_presentation_request
+                        ):
+                            if not await self.expected_agent_state(
+                                f"/present-proof/records/{pres_ex_id}",
+                                "presentation_received",
+                                wait_time=60.0,
+                            ):
+                                raise Exception(
+                                    f"Expected state presentation-received but not received"
+                                )
 
                     else:
                         agent_operation = f"/present-proof/{operation}"
@@ -730,7 +805,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 if data is not None:
                     # Format the message data that came from the test, to what the Aca-py admin api expects.
                     data = self.map_test_json_to_admin_api_json(
-                        command["topic"], operation, data
+                        command.topic, operation, data
                     )
 
                 # As of adding the Auto Accept and Auto Respond support and not taking time to check interim states
@@ -741,26 +816,24 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 log_msg(resp_status, resp_text)
                 if resp_status == 200:
-                    resp_text = self.agent_state_translation(command["topic"], resp_text)
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
         # Handle out of band POST operations
-        elif command["topic"] == "out-of-band":
+        elif command.topic == "out-of-band":
             (resp_status, resp_text) = await self.handle_out_of_band_POST(command)
             return (resp_status, resp_text)
 
         # Handle did exchange POST operations
-        elif command["topic"] == "did-exchange":
-            (resp_status, resp_text) = await self.handle_did_exchange_POST(
-                command
-            )
+        elif command.topic == "did-exchange":
+            (resp_status, resp_text) = await self.handle_did_exchange_POST(command)
             return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
 
     async def handle_out_of_band_POST(self, command: BackchannelCommand):
-        operation = command["operation"]
-        data = command["data"]
+        operation = command.operation
+        data = command.data
 
         agent_operation = "/out-of-band/"
         log_msg(
@@ -772,10 +845,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             auto_accept = "false"
             multi_use = "false"
             agent_operation = (
-                agent_operation
-                + "create-invitation"
-                + "?multi_use="
-                + multi_use
+                agent_operation + "create-invitation" + "?multi_use=" + multi_use
             )
 
             # Add handshake protocols to message body
@@ -809,13 +879,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         log_msg(resp_status, resp_text)
         if resp_status == 200:
-            resp_text = self.agent_state_translation(command["topic"], resp_text)
+            resp_text = self.agent_state_translation(command.topic, resp_text)
         return (resp_status, resp_text)
 
     async def handle_did_exchange_POST(self, command: BackchannelCommand):
-        operation = command["operation"]
-        data = command["data"]
-        record_id = command["record_id"]
+        operation = command.operation
+        data = command.data
+        record_id = command.record_id
 
         agent_operation = "/didexchange/"
         if operation == "send-request":
@@ -827,7 +897,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         elif operation == "send-response":
             if self.auto_accept_requests:
                 resp_status = 200
-                resp_text = 'Aca-py agent in auto accept request mode. accept-request operation not called.'
+                resp_text = "Aca-py agent in auto accept request mode. accept-request operation not called."
                 return (resp_status, resp_text)
             else:
                 agent_operation = f"{agent_operation}{record_id}/accept-request"
@@ -853,16 +923,20 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200:
-            resp_text = self.agent_state_translation(command["topic"], resp_text)
+            resp_text = self.agent_state_translation(command.topic, resp_text)
         return (resp_status, resp_text)
 
     async def handle_issue_credential_v2_POST(self, command: BackchannelCommand):
-        operation = command["operation"]
-        topic = command["topic"]
-        record_id = command["record_id"]
-        data = command["data"]
+        operation = command.operation
+        topic = command.topic
+        record_id = command.record_id
+        data = command.data
 
-        if self.auto_respond_credential_proposal and operation == "send-offer" and record_id:
+        if (
+            self.auto_respond_credential_proposal
+            and operation == "send-offer"
+            and record_id
+        ):
             resp_status = 200
             resp_text = '{"message": "Aca-py agent in auto respond mode for proposal. send-offer operation not called."}'
             return (resp_status, resp_text)
@@ -897,7 +971,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 if not did:
                     (resp_status, resp_text) = await self.admin_POST(
                         "/wallet/did/create",
-                        {"method": data["did_method"], "options": {"key_type": key_type}},
+                        {
+                            "method": data["did_method"],
+                            "options": {"key_type": key_type},
+                        },
                     )
                     if resp_status == 200:
                         resp_json = json.loads(resp_text)
@@ -919,9 +996,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 cred_ex_id = await self.swap_thread_id_for_exchange_id(
                     record_id, "credential-msg", "cred_ex_id"
                 )
-                agent_operation = (
-                    f"{self.TopicTranslationDict[topic]}records/{cred_ex_id}/{self.issueCredentialv2OperationTranslationDict[operation]}"
-                )
+                agent_operation = f"{self.TopicTranslationDict[topic]}records/{cred_ex_id}/{self.issueCredentialv2OperationTranslationDict[operation]}"
 
             # Map AATH filter keys to ACA-Py filter keys
             # e.g. data.filters.json-ld becomes data.filters.ld_proof
@@ -955,20 +1030,30 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
     async def handle_proof_v2_POST(self, command: BackchannelCommand):
-        operation = command["operation"]
-        topic = command["topic"]
-        record_id = command["record_id"]
-        data = command["data"]
+        operation = command.operation
+        topic = command.topic
+        record_id = command.record_id
+        data = command.data
 
-        if self.auto_respond_presentation_proposal and operation == "send-request" and record_id:
+        if (
+            self.auto_respond_presentation_proposal
+            and operation == "send-request"
+            and record_id
+        ):
             resp_status = 200
             resp_text = '{"message": "Aca-py agent in auto respond mode for presentation proposal. send-request operation not called."}'
-            log_msg("Aca-py agent in auto respond mode for presentation proposal. send-request operation not called.")
+            log_msg(
+                "Aca-py agent in auto respond mode for presentation proposal. send-request operation not called."
+            )
             return (resp_status, resp_text)
-        elif self.auto_respond_presentation_request and operation == "send-presentation":
+        elif (
+            self.auto_respond_presentation_request and operation == "send-presentation"
+        ):
             resp_status = 200
             resp_text = '{"message": "Aca-py agent in auto respond mode for presentation request. send-presentation operation not called."}'
-            log_msg("Aca-py agent in auto respond mode for presentation request. send-presentation operation not called.")
+            log_msg(
+                "Aca-py agent in auto respond mode for presentation request. send-presentation operation not called."
+            )
             return (resp_status, resp_text)
         else:
             if record_id is None:
@@ -990,7 +1075,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 )
 
             log_msg(
-                f"Data passed to backchannel by test for operation: {agent_operation}", data
+                f"Data passed to backchannel by test for operation: {agent_operation}",
+                data,
             )
             if data is not None:
                 # Format the message data that came from the test, to what the Aca-py admin api expects.
@@ -1027,14 +1113,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_GET_request(
         self, command: BackchannelCommand
     ) -> Tuple[int, str]:
-        record_id = command["record_id"]
+        record_id = command.record_id
 
-        if command["topic"] == "status":
+        if command.topic == "status":
             status = 200 if self.ACTIVE else 418
             status_msg = "Active" if self.ACTIVE else "Inactive"
             return (status, json.dumps({"status": status_msg}))
 
-        if command["topic"] == "version":
+        if command.topic == "version":
             if self.acapy_version is not None:
                 status = 200
                 status_msg = self.acapy_version
@@ -1043,7 +1129,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 status_msg = "not found"
             return (status, status_msg)
 
-        elif command["topic"] == "connection":
+        elif command.topic == "connection":
             if record_id:
                 connection_id = record_id
                 agent_operation = f"/connections/{connection_id}"
@@ -1078,10 +1164,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     connection_infos.append(connection_info)
                 resp_text = json.dumps(connection_infos)
             # translate the state from that the agent gave to what the tests expect
-            resp_text = self.agent_state_translation(command["topic"], resp_text)
+            resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "did":
+        elif command.topic == "did":
             agent_operation = "/wallet/did/public"
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
@@ -1094,14 +1180,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = json.dumps(did)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "active-connection" and record_id:
+        elif command.topic == "active-connection" and record_id:
             agent_operation = f"/connections?their_did={record_id}"
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:
                 return (resp_status, resp_text)
 
-            # find the first active connection 
+            # find the first active connection
             resp_json = json.loads(resp_text)
             for connection in resp_json["results"]:
                 if connection["state"] == "active":
@@ -1110,7 +1196,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             return (400, f"Active connection not found for their_did {record_id}")
 
-        elif command["topic"] == "schema":
+        elif command.topic == "schema":
             schema_id = record_id
             agent_operation = f"/schemas/{schema_id}"
 
@@ -1124,7 +1210,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = json.dumps(schema)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "credential-definition":
+        elif command.topic == "credential-definition":
             cred_def_id = record_id
             agent_operation = f"/credential-definitions/{cred_def_id}"
 
@@ -1138,7 +1224,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = json.dumps(credential_definition)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "issue-credential":
+        elif command.topic == "issue-credential":
             # swap thread id for cred ex id from the webhook
             cred_ex_id = await self.swap_thread_id_for_exchange_id(
                 record_id, "credential-msg", "credential_exchange_id"
@@ -1149,10 +1235,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(command["topic"], resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "issue-credential-v2":
+        elif command.topic == "issue-credential-v2":
             # swap thread id for cred ex id from the webhook
             cred_ex_id = await self.swap_thread_id_for_exchange_id(
                 record_id, "credential-msg", "cred_ex_id"
@@ -1165,8 +1251,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_text = self.move_field_to_top_level(resp_text, "state")
             return (resp_status, resp_text)
 
-        elif command["topic"] == "credential":
-            operation = command["operation"]
+        elif command.topic == "credential":
+            operation = command.operation
             if operation == "revoked":
                 agent_operation = f"/credential/{operation}/{record_id}"
                 (resp_status, resp_text) = await self.admin_GET(agent_operation)
@@ -1198,7 +1284,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 return (resp_status, resp_text)
 
-        elif command["topic"] == "proof":
+        elif command.topic == "proof":
             # swap thread id for pres ex id from the webhook
             pres_ex_id = await self.swap_thread_id_for_exchange_id(
                 record_id, "presentation-msg", "presentation_exchange_id"
@@ -1207,10 +1293,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(command["topic"], resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "proof-v2":
+        elif command.topic == "proof-v2":
             # swap thread id for pres ex id from the webhook
             pres_ex_id = await self.swap_thread_id_for_exchange_id(
                 record_id, "presentation-msg", "pres_ex_id"
@@ -1222,26 +1308,24 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "revocation":
-            operation = command["operation"]
+        elif command.topic == "revocation":
+            operation = command.operation
             (
                 agent_operation,
                 admin_data,
-            ) = await self.get_agent_operation_acapy_version_based(
-                command
-            )
+            ) = await self.get_agent_operation_acapy_version_based(command)
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             return (resp_status, resp_text)
 
-        elif command["topic"] == "did-exchange":
+        elif command.topic == "did-exchange":
 
             connection_id = record_id
             agent_operation = f"/connections/{connection_id}"
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(command["topic"], resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
@@ -1249,15 +1333,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_DELETE_request(
         self, command: BackchannelCommand
     ) -> Tuple[int, str]:
-        record_id = command["record_id"]
+        record_id = command.record_id
 
-        if command["topic"] == "credential" and record_id:
+        if command.topic == "credential" and record_id:
             agent_operation = f"/credential/{record_id}"
             log_msg(agent_operation)
 
             (resp_status, resp_text) = await self.admin_DELETE(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(command["topic"], resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
@@ -1265,8 +1349,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_GET_request_response(
         self, command: BackchannelCommand, message_name: Optional[str] = None
     ) -> Tuple[int, str]:
-        topic = command["topic"]
-        record_id = command["record_id"]
+        topic = command.topic
+        record_id = command.record_id
 
         if topic == "connection" and record_id:
             connection_msg = pop_resource(record_id, "connection-msg")
@@ -1510,7 +1594,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if self.webhook_site:
             await self.webhook_site.stop()
 
-    def map_test_json_to_admin_api_json(self, topic: str, operation: str, data: Mapping):
+    def map_test_json_to_admin_api_json(
+        self, topic: str, operation: str, data: Mapping
+    ):
         # If the translation of the json get complicated in the future we might want to consider a switch to JsonMapper or equivalent.
         # json_mapper = JsonMapper()
         # map_specification = {
@@ -1524,8 +1610,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 request_type = "proof_request"
 
                 request_data = (
-                    data
-                    .get("presentation_request", {})
+                    data.get("presentation_request", {})
                     .get(request_type, {})
                     .get("data", {})
                 )
@@ -1646,7 +1731,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 }
 
                 if "connection_id" in presentation_request_orig:
-                    admin_data["connection_id"] = presentation_request_orig["connection_id"]
+                    admin_data["connection_id"] = presentation_request_orig[
+                        "connection_id"
+                    ]
 
             elif operation == "send-presentation":
 
@@ -1716,10 +1803,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # Tests/RFC         |   Aca-py
 
         def replace_state_values(data: str, *, old_state: str, new_state: str):
-            return data.replace(
-                f'"state": "{old_state}"',
-                f'"state": "{new_state}"'
-            )
+            return data.replace(f'"state": "{old_state}"', f'"state": "{new_state}"')
 
         resp_json = json.loads(data)
         # Check to see if state is in the json
@@ -1744,9 +1828,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 # if the response contains didexchange/1.0, swap out the connection states for the did exchange states
                 # if "didexchange/1.0" in resp_json["connection_protocol"]:
                 if "didexchange/1.0" in data:
-                    data = replace_state_values(data, 
+                    data = replace_state_values(
+                        data,
                         old_state=agent_state,
-                        new_state=de_state_trans_method[agent_state]
+                        new_state=de_state_trans_method[agent_state],
                     )
                 else:
                     data = data.replace(
@@ -1757,14 +1842,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_state, self.issueCredentialStateTranslationDict[agent_state]
                 )
             elif topic == "proof":
-                data = replace_state_values(data, 
+                data = replace_state_values(
+                    data,
                     old_state=agent_state,
-                    new_state=self.presentProofStateTranslationDict[agent_state]
+                    new_state=self.presentProofStateTranslationDict[agent_state],
                 )
             elif topic == "out-of-band" or topic == "did-exchange":
-                data = replace_state_values(data, 
+                data = replace_state_values(
+                    data,
                     old_state=agent_state,
-                    new_state=de_state_trans_method[agent_state]
+                    new_state=de_state_trans_method[agent_state],
                 )
         return data
 
@@ -1778,9 +1865,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # construct some number to compare to with > or < instead of listing out the version number
         comparibleVersion = self.get_acapy_version_as_float()
 
-        topic = command["topic"]
-        operation = command["operation"]
-        data = command["data"]
+        topic = command.topic
+        operation = command.operation
+        data = command.data
 
         if topic == "revocation":
             if operation == "revoke":

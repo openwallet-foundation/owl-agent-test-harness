@@ -4,12 +4,10 @@ import os
 import traceback
 import random
 
-from typing import Any, Optional, Tuple, TypedDict
+from typing import Any, Optional, Tuple
+from dataclasses import dataclass
 
-from aiohttp import (
-    web,
-    ClientSession
-)
+from aiohttp import web, ClientSession
 import ptvsd
 
 from .utils import log_msg
@@ -40,9 +38,10 @@ def get_ledger_url(ledger_url: str = None):
     return ledger_url or LEDGER_URL or f"http://{DEFAULT_EXTERNAL_HOST}:9000"
 
 
-class BackchannelCommand(TypedDict):
+@dataclass
+class BackchannelCommand:
     """Parsed backchannel command
-    
+
     {method} https://<url>/agent/command/{topic}/{operation|record_id}
     body: {data}
     """
@@ -249,11 +248,11 @@ class AgentBackchannel:
         topic = request.match_info.get("topic", None)
         method = request.method
 
-        if not topic: 
+        if not topic:
             raise Exception("Topic must be provided")
 
         data = None
-        if method == "POST"  and request.has_body: 
+        if method == "POST" and request.has_body:
             payload = await request.json()
 
             if "data" in payload:
@@ -269,7 +268,7 @@ class AgentBackchannel:
             operation=operation,
             topic=topic,
             method=method,
-            data=data
+            data=data,
         )
 
     def not_found_response(self, data: Any):
@@ -338,9 +337,7 @@ class AgentBackchannel:
         try:
             command = await self.parse_request(request)
 
-            (resp_status, resp_text) = await self.make_agent_DELETE_request(
-                command
-            )
+            (resp_status, resp_text) = await self.make_agent_DELETE_request(command)
 
             if resp_status == 200:
                 return web.Response(text=resp_text, status=resp_status)
@@ -364,7 +361,9 @@ class AgentBackchannel:
         command = None
         try:
             command = await self.parse_request(request)
-            (resp_status, resp_text) = await self.make_agent_GET_request_response(command)
+            (resp_status, resp_text) = await self.make_agent_GET_request_response(
+                command
+            )
 
             if resp_status == 200:
                 return web.Response(text=resp_text, status=resp_status)

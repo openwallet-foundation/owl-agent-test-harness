@@ -3,6 +3,7 @@ import threading, asyncio
 message_queues = {}
 mq_lock = threading.Lock()
 
+
 def _get_queue(message_type):
     if message_type in message_queues:
         return message_queues[message_type]
@@ -18,6 +19,7 @@ def _get_queue(message_type):
         finally:
             mq_lock.release()
 
+
 async def pop_message_queue(message_type, timeout=0):
     print(f"calling message_queue.pop_message_queue({message_type}, {timeout})")
     if timeout <= 0:
@@ -25,19 +27,29 @@ async def pop_message_queue(message_type, timeout=0):
 
     selected_queue = _get_queue(message_type)
 
-    res = await asyncio.wait_for(asyncio.shield(message_queues[message_type].get()), timeout)
-    print(f"finished message_queue.pop_message_queue({message_type}, {timeout}) -> {res}")
+    res = await asyncio.wait_for(
+        asyncio.shield(message_queues[message_type].get()), timeout
+    )
+    print(
+        f"finished message_queue.pop_message_queue({message_type}, {timeout}) -> {res}"
+    )
     return res
 
+
 async def push_message_queue(message_type, value, timeout=0):
-    print(f"calling message_queue.push_message_queue({message_type}, {value}, {timeout})")
+    print(
+        f"calling message_queue.push_message_queue({message_type}, {value}, {timeout})"
+    )
     if timeout <= 0:
         timeout = None
 
     selected_queue = _get_queue(message_type)
 
     await asyncio.wait_for(asyncio.shield(selected_queue.put(value)), timeout)
-    print(f"finished message_queue.push_message_queue({message_type}, {value}, {timeout})")
+    print(
+        f"finished message_queue.push_message_queue({message_type}, {value}, {timeout})"
+    )
+
 
 async def clear_all():
     try:
@@ -47,9 +59,9 @@ async def clear_all():
         mq_lock.release()
 
 
-
 message_stacks = {}
 ms_lock = threading.Lock()
+
 
 def _get_stack(message_type):
     if message_type in message_stacks:
@@ -66,6 +78,7 @@ def _get_stack(message_type):
         finally:
             ms_lock.release()
 
+
 async def pop_message_stack(message_type, timeout=0):
     print(f"calling message_stack.pop_message({message_type}, {timeout})")
     if timeout <= 0:
@@ -73,9 +86,12 @@ async def pop_message_stack(message_type, timeout=0):
 
     selected_stack = _get_stack(message_type)
 
-    res = await asyncio.wait_for(asyncio.shield(message_stacks[message_type].get()), timeout)
+    res = await asyncio.wait_for(
+        asyncio.shield(message_stacks[message_type].get()), timeout
+    )
     print(f"finished message_stack.pop_message({message_type}, {timeout}) -> {res}")
     return res
+
 
 async def push_message_stack(message_type, value, timeout=0):
     print(f"calling message_stack.push_message({message_type}, {value}, {timeout})")
@@ -87,11 +103,10 @@ async def push_message_stack(message_type, value, timeout=0):
     await asyncio.wait_for(asyncio.shield(selected_stack.put(value)), timeout)
     print(f"finished message_stack.push_message({message_type}, {value}, {timeout})")
 
+
 async def clear_all_stacks():
     try:
         ms_lock.acquire()
         message_stacks = {}
     finally:
         ms_lock.release()
-
-

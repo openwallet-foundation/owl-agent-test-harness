@@ -232,5 +232,6 @@ def log_timer(label: str, show: bool = True, logger=None, **kwargs):
     )
     return DurationTimer(label, cb)
 
+
 def create_uuid():
     return str(uuid.uuid4())
