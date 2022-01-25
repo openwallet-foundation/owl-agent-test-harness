@@ -4,7 +4,7 @@ This folder contains the Aries backchannels that have been added to the Aries Ag
 
 ## Writing a new Backchannel
 
-If you are writing a backchannel using Python, you're in luck!  Just use either the `ACA-Py` or `VCX` backchannels as a model. They sub-class from a common base class (in the `python` folder), which implements the common backchannel features. The Python implementation is data driven, using the txt file in the `data` folder.
+If you are writing a backchannel using Python, you're in luck! Just use either the `ACA-Py` or `VCX` backchannels as a model. They sub-class from a common base class (in the `python` folder), which implements the common backchannel features. The Python implementation is data driven, using the txt file in the `data` folder.
 
 ### What's Needed
 
@@ -28,25 +28,21 @@ That's all of the endpoints your agent has to handle. Of course, your backchanne
 with the CUT (the agent or agent framework being tested). Likely that means being able to generate requests to the
 CUT (mostly based on requests from the endpoints above) and monitor events from the CUT.
 
-See the OpenAPI definition located [here](../openapi-spec.yml) for an overview of all current topics and operations.
+See the OpenAPI definition located [here](../docs/assets/openapi-spec.yml) for an overview of all current topics and operations.
 
 ### Standard Backchannel Topics and Operations
 
-Although the number of endpoints is small, the number of topic and operation parameters is much larger. That list of operations drives the effort in building and maintaining the backchannel. The list of operations to be supported can be found in this [Google Sheet](https://bit.ly/AriesTestHarnessScenarios). It lists all of the possible `topic` values, the related `operations` and information about each one, including such things as:
+Although the number of endpoints is small, the number of topic and operation parameters is much larger. That list of operations drives the effort in building and maintaining the backchannel. The list of operations to be supported can be found in this [OpenAPI spec](../docs/assets/openapi-spec.yml). It lists all of the possible `topic` values, the related `operations` and information about each one, including such things as:
 
 - related RFC and protocol
 - a description
-- the role of the operation in the protocol
-- the test case steps using the operation
 - the HTTP method
-- whether the operation is a command or a response
 - data associated with the operation
 
-The Google Sheet data can help guide the implementation of the backchannel, providing a to do list of operations to handle. As well, a code-friendly version of the data from the spreadsheet is made available in the docker image of the Test Agent as the file `backchannel_operations.csv`. We recommend that in writing a backchannel, any `Not Implemented` commands and operations return an HTTP `501` result code ("Not Implemented")and dump the data related to the operation from the `backchannel_operations.csv` to the console to help guide the work to be done in implementing the operation in the backchannel.
+A rendered version of the OpenAPI spec can be found
+We recommend that in writing a backchannel, any `Not Implemented` commands and operations return an HTTP `501` result code ("Not Implemented").
 
-Support for testing new protocols will extend the data file with additional `topics` and related `operations`, adding to the workload of the backchannel maintainer.
-
-As mentioned above there is also an OpenAPI definition [available](../openapi-spec.yml) that contains all current topics and operations. When setting up the API of your backchannel this can be helpful to know what parameters the ATTH client will send with each operation, and what parameters it expects in return.
+Support for testing new protocols will extend the OpenAPI spec with additional `topics` and related `operations`, adding to the workload of the backchannel maintainer.
 
 ### Backchannel/Agent Interaction
 
@@ -76,7 +72,7 @@ Examples are provided for aca-py [(`Dockerfile.acapy`)](acapy/Dockerfile.acapy),
 
 ### `./manage` Script Integration
 
-The `./manage` script builds images and runs those images as containers in test runs. This integration applies some constraints on the docker images used. Most of those constraints are documented in the previous section, but the following provides some additional context. 
+The `./manage` script builds images and runs those images as containers in test runs. This integration applies some constraints on the docker images used. Most of those constraints are documented in the previous section, but the following provides some additional context.
 
 An image for each backchannel using the following command:
 
@@ -100,7 +96,7 @@ Once built, the selected TAs for the run are started for the test roles (current
 
 ```bash
   echo "Starting Acme Agent ..."
-  docker run -d --rm --name acme_agent --expose 9020-9029 -p 9020-9029:9020-9029 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null  
+  docker run -d --rm --name acme_agent --expose 9020-9029 -p 9020-9029:9020-9029 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${ACME_AGENT} -p 9020 -i false >/dev/null
   echo "Starting Bob Agent ..."
   docker run -d --rm --name bob_agent --expose 9030-9039 -p 9030-9039:9030-9039 -e "DOCKERHOST=${DOCKERHOST}" -e "LEDGER_URL=http://${DOCKERHOST}:9000" ${BOB_AGENT} -p 9030 -i false >/dev/null
   echo "Starting Mallory Agent ..."
@@ -113,7 +109,7 @@ Important things to note from the script snippet:
   - the backchannel must allocate the ports at runtime based on the `-p` parameter, and not hard code them in the container.
 - the binding of the TA (e.g. `acapy` or `vcx`, etc.) is done earlier in the script by setting the `${ACME_AGENT}` etc. environment variables
 - environment variables provide the Docker host IP (`DOCKERHOST`) and a url to the ledger genesis transactions (`LEDGER_URL`)
-  - the variables are defaulted if not already set, with the `LEDGER_URL` assumed to be for a locally running instance of  `von-network`
+  - the variables are defaulted if not already set, with the `LEDGER_URL` assumed to be for a locally running instance of `von-network`
 - parameters passed to the backchannel specify the base port number (`-p port`) and to use non-interactive mode (`-i false`)
 
 ## The ACA-Py and Indy Influence

@@ -1,10 +1,6 @@
 import functools
 import json
 import os
-import sys
-import io
-import csv
-import platform
 import uuid
 
 from timeit import default_timer
@@ -13,7 +9,6 @@ import prompt_toolkit
 from prompt_toolkit.application import run_in_terminal
 from prompt_toolkit.eventloop.defaults import use_asyncio_event_loop
 from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit.shortcuts import ProgressBar
 
 import pygments
 from pygments.filter import Filter
@@ -236,60 +231,6 @@ def log_timer(label: str, show: bool = True, logger=None, **kwargs):
         else None
     )
     return DurationTimer(label, cb)
-
-
-def progress(*args, **kwargs):
-    return ProgressBar(*args, **kwargs)
-
-
-def pipe_parser(str_data):
-    data = io.StringIO(str_data)
-    csv.register_dialect(
-        "piper", delimiter="|", quoting=csv.QUOTE_NONE, skipinitialspace=True
-    )
-    reader = csv.reader(data, dialect="piper")
-    return [[x.strip() for x in row] for row in reader]
-
-
-def csv_parser(str_data):
-    data = io.StringIO(str_data)
-    reader = csv.reader(data)
-    return [[x.strip() for x in row] for row in reader]
-
-
-def read_operations(str_data=None, file_name=None, parser=None):
-    # either str_data or an input file must be provided
-    if not str_data:
-        # read data from input file
-        with open(file_name, "r") as in_file:
-            str_data = in_file.read()
-    if str_data is None:
-        raise Exception("Error backchannel api data is not provided")
-    # use pipe parser if requested else default to csv
-    if parser and parser == "pipe":
-        operations_list = pipe_parser(str_data)
-    else:
-        operations_list = csv_parser(str_data)
-    operations = []
-    headers = None
-    for row in operations_list:
-        if 0 < len(row):
-            if not headers:
-                headers = row
-            elif len(row) == len(headers):
-                op = {}
-                for i in range(len(headers)):
-                    op[headers[i]] = row[i]
-                operations.append(op)
-    return operations
-
-
-EXTENSION = {"darwin": ".dylib", "linux": ".so", "win32": ".dll", "windows": ".dll"}
-
-
-def file_ext():
-    your_platform = platform.system().lower()
-    return EXTENSION[your_platform] if (your_platform in EXTENSION) else ".so"
 
 
 def create_uuid():

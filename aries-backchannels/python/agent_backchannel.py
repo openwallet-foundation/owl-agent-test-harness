@@ -4,16 +4,13 @@ import os
 import traceback
 import random
 
-from typing import Tuple
+from typing import Any, Optional, Tuple
+from dataclasses import dataclass
 
-from aiohttp import (
-    web,
-    ClientSession,
-    ClientRequest,
-)
+from aiohttp import web, ClientSession
 import ptvsd
 
-from .utils import log_msg, read_operations
+from .utils import log_msg
 
 ptvsd.enable_attach()
 
@@ -39,6 +36,21 @@ elif RUN_MODE == "pwd":
 
 def get_ledger_url(ledger_url: str = None):
     return ledger_url or LEDGER_URL or f"http://{DEFAULT_EXTERNAL_HOST}:9000"
+
+
+@dataclass
+class BackchannelCommand:
+    """Parsed backchannel command
+
+    {method} https://<url>/agent/command/{topic}/{operation|record_id}
+    body: {data}
+    """
+
+    topic: str
+    method: str
+    operation: Optional[str]
+    record_id: Optional[str]
+    data: Optional[Any]
 
 
 async def default_genesis_txns():
@@ -123,7 +135,7 @@ class AgentBackchannel:
     def activate(self, active: bool = True):
         self.ACTIVE = active
 
-    async def listen_backchannel(self, backchannel_port):
+    async def listen_backchannel(self, backchannel_port: int):
         """
         Setup the routes to allow the test harness to send commands to and get replies
         from the Agent under test.
@@ -144,16 +156,9 @@ class AgentBackchannel:
         POST operations on existing records must contain an "id" element
         POST operations will contain a "data" element which is the payload to pass through to the agent
 
-        E.g.:  POST to /agent/command/issue_credential { "operation":"send-proposal", "data":"{...}"}
-        E.g.:  POST to /agent/command/issue_credential { "operation":"issue", "id":"<cred exch id>", "data":"{...}"}
-
-        Operations for each topic are in the backchannel_operations.csv file, generated from
-        the Google sheet at https://bit.ly/AriesTestHarnessScenarios
+        E.g.:  POST to /agent/command/issue_credential/send-proposal { "data": {...} }
+        E.g.:  POST to /agent/command/issue_credential/issue         { "id": "<cred exch id>", "data": {...} }
         """
-        # operations_file = "../backchannel_operations.txt"
-        # self.operations = read_operations(file_name=operations_file, parser="pipe")
-        operations_file = "./backchannel_operations.csv"
-        self.operations = read_operations(file_name=operations_file)
 
         app = web.Application()
         app.add_routes(
@@ -237,220 +242,154 @@ class AgentBackchannel:
         await self.backchannel_site.start()
         print("Listening to backchannel on port", backchannel_port)
 
-    def match_operation(self, topic, method, payload=None, operation=None, rec_id=None):
-        """
-        Determine which agent operation we are trying to invoke
-        """
+    async def parse_request(self, request: web.Request):
+        record_id = request.match_info.get("id", None)
+        operation = request.match_info.get("operation", None)
+        topic = request.match_info.get("topic", None)
+        method = request.method
+
+        if not topic:
+            raise Exception("Topic must be provided")
+
         data = None
-        if payload:
-            if "id" in payload:
-                rec_id = payload["id"]
-            if "cred_ex_id" in payload:
-                rec_id = payload["cred_ex_id"]
+        if method == "POST" and request.has_body:
+            payload = await request.json()
+
             if "data" in payload:
                 data = payload["data"]
-        for op in self.operations:
-            if operation is not None:
-                if (
-                    op["topic"] == topic
-                    and op["method"] == method
-                    and ((rec_id and op["id"] == "Y") or (rec_id is None))
-                    and ((operation and op["operation"] == operation))
-                    and ((data and op["data"] == "Y") or (data is None))
-                ):
-                    print("Matched operation:", op)
-                    return op
-            else:
-                if (
-                    op["topic"] == topic
-                    and op["method"] == method
-                    and ((rec_id and op["id"] == "Y") or (rec_id is None))
-                    and (
-                        (method == "GET")
-                        or (operation and op["operation"] == operation)
-                        or (operation is None)
-                    )
-                    and ((data and op["data"] == "Y") or (data is None))
-                ):
-                    print("Matched operation:", op)
-                    return op
 
-        return None
+            if "id" in payload:
+                record_id = payload["id"]
+            elif "cred_ex_id" in payload:
+                record_id = payload["cred_ex_id"]
 
-    def not_found_response(self, request):
-        resp_text = "404 not found: " + str(request)
+        return BackchannelCommand(
+            record_id=record_id,
+            operation=operation,
+            topic=topic,
+            method=method,
+            data=data,
+        )
+
+    def not_found_response(self, data: Any):
+        resp_text = "404 not found: " + str(data)
         return web.Response(body=resp_text.encode("utf8"), status=404)
 
-    def not_implemented_response(self, operation):
-        resp_text = "501 not implemented: " + str(operation)
+    def not_implemented_response(self, data: Any):
+        resp_text = "501 not implemented: " + str(data)
         return web.Response(body=resp_text.encode("utf8"), status=501)
 
-    async def _post_command_backchannel(self, request: ClientRequest):
+    async def _post_command_backchannel(self, request: web.Request):
         """
         Post a POST command to the agent.
         """
-        topic = request.match_info["topic"]
-        topic_operation = (
-            request.match_info["operation"]
-            if "operation" in request.match_info
-            else None
-        )
-        payload = await request.json()
-
+        command = None
         try:
-            operation = self.match_operation(
-                topic, "POST", payload=payload, operation=topic_operation
-            )
-            if operation:
-                try:
-                    if "data" in payload:
-                        data = payload["data"]
-                    else:
-                        data = None
+            command = await self.parse_request(request)
 
-                    if "id" in payload:
-                        rec_id = payload["id"]
-                    elif "cred_ex_id" in payload:
-                        rec_id = payload["cred_ex_id"]
-                    else:
-                        rec_id = None
+            (resp_status, resp_text) = await self.make_agent_POST_request(command)
 
-                    (resp_status, resp_text) = await self.make_agent_POST_request(
-                        operation, rec_id=rec_id, data=data
-                    )
-
-                    if resp_status == 200:
-                        return web.Response(text=resp_text, status=resp_status)
-                    elif resp_status == 404:
-                        return self.not_found_response(json.dumps(operation))
-                    elif resp_status == 501:
-                        return self.not_implemented_response(json.dumps(operation))
-                    else:
-                        return web.Response(body=resp_text, status=resp_status)
-                except NotImplementedError:
-                    return self.not_implemented_response(json.dumps(operation))
-
-            return self.not_found_response(topic + " " + topic_operation)
-
+            if resp_status == 200:
+                return web.Response(text=resp_text, status=resp_status)
+            elif resp_status == 404:
+                return self.not_found_response(json.dumps(command))
+            elif resp_status == 501:
+                return self.not_implemented_response(json.dumps(command))
+            else:
+                return web.Response(body=resp_text, status=resp_status)
+        except NotImplementedError:
+            return self.not_implemented_response(json.dumps(command))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()
             return web.Response(body=str(e), status=500)
 
-    async def _get_command_backchannel(self, request: ClientRequest):
+    async def _get_command_backchannel(self, request: web.Request):
         """
         Post a GET command to the agent.
         """
-        topic = request.match_info["topic"]
-        topic_operation = (
-            request.match_info["operation"]
-            if "operation" in request.match_info
-            else None
-        )
-
-        if "id" in request.match_info:
-            rec_id = request.match_info["id"]
-        else:
-            rec_id = None
-
+        command = None
         try:
-            operation = self.match_operation(
-                topic, "GET", operation=topic_operation, rec_id=rec_id
-            )
-            if operation:
-                try:
-                    (resp_status, resp_text) = await self.make_agent_GET_request(
-                        operation, rec_id=rec_id
-                    )
+            command = await self.parse_request(request)
 
-                    if resp_status == 200:
-                        return web.Response(text=resp_text, status=resp_status)
-                    elif resp_status == 404:
-                        return self.not_found_response(json.dumps(operation))
-                    elif resp_status == 501:
-                        return self.not_implemented_response(json.dumps(operation))
-                    else:
-                        return web.Response(body=resp_text, status=resp_status)
-                except NotImplementedError:
-                    return self.not_implemented_response(json.dumps(operation))
+            (resp_status, resp_text) = await self.make_agent_GET_request(command)
 
-            return self.not_found_response(topic)
-
+            if resp_status == 200:
+                return web.Response(text=resp_text, status=resp_status)
+            elif resp_status == 404:
+                return self.not_found_response(json.dumps(command))
+            elif resp_status == 501:
+                return self.not_implemented_response(json.dumps(command))
+            else:
+                return web.Response(body=resp_text, status=resp_status)
+        except NotImplementedError:
+            return self.not_implemented_response(json.dumps(command))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()
             return web.Response(body=str(e), status=500)
 
-    async def _delete_command_backchannel(self, request: ClientRequest):
+    async def _delete_command_backchannel(self, request: web.Request):
         """
         Post a DELETE command to the agent.
         """
-        topic = request.match_info["topic"]
-
-        if "id" in request.match_info:
-            rec_id = request.match_info["id"]
-        else:
-            rec_id = None
-
+        command = None
         try:
-            operation = self.match_operation(topic, "DELETE", rec_id=rec_id)
-            if operation:
-                try:
-                    (resp_status, resp_text) = await self.make_agent_DELETE_request(
-                        operation, rec_id=rec_id
-                    )
+            command = await self.parse_request(request)
 
-                    if resp_status == 200:
-                        return web.Response(text=resp_text, status=resp_status)
-                    elif resp_status == 404:
-                        return self.not_found_response(json.dumps(operation))
-                    elif resp_status == 501:
-                        return self.not_implemented_response(json.dumps(operation))
-                    else:
-                        return web.Response(body=resp_text, status=resp_status)
-                except NotImplementedError:
-                    return self.not_implemented_response(json.dumps(operation))
+            (resp_status, resp_text) = await self.make_agent_DELETE_request(command)
 
-            return self.not_found_response(topic)
-
+            if resp_status == 200:
+                return web.Response(text=resp_text, status=resp_status)
+            elif resp_status == 404:
+                return self.not_found_response(json.dumps(command))
+            elif resp_status == 501:
+                return self.not_implemented_response(json.dumps(command))
+            else:
+                return web.Response(body=resp_text, status=resp_status)
+        except NotImplementedError:
+            return self.not_implemented_response(json.dumps(command))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()
             return web.Response(body=str(e), status=500)
 
-    async def _get_response_backchannel(self, request: ClientRequest):
+    async def _get_response_backchannel(self, request: web.Request):
         """
         Get a response from the (remote) agent.
         """
-        topic = request.match_info["topic"]
-        if "id" in request.match_info:
-            rec_id = request.match_info["id"]
-        else:
-            rec_id = None
-
+        command = None
         try:
+            command = await self.parse_request(request)
             (resp_status, resp_text) = await self.make_agent_GET_request_response(
-                topic, rec_id=rec_id
+                command
             )
 
             if resp_status == 200:
                 return web.Response(text=resp_text, status=resp_status)
             elif resp_status == 404:
-                return self.not_found_response(topic)
+                return self.not_found_response(json.dumps(command))
             elif resp_status == 501:
-                return self.not_implemented_response(topic)
+                return self.not_implemented_response(json.dumps(command))
             else:
                 return web.Response(body=resp_text, status=resp_status)
-
         except NotImplementedError:
-            return self.not_implemented_response(topic)
+            return self.not_implemented_response(json.dumps(command))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()
             return web.Response(body=str(e), status=500)
 
     async def make_agent_POST_request(
-        self, op, rec_id=None, data=None, text=False, params=None
+        self, command: BackchannelCommand
+    ) -> Tuple[int, str]:
+        """
+        Override with agent-specific behaviour
+        """
+        raise NotImplementedError
+
+    async def make_agent_DELETE_request(
+        self, command: BackchannelCommand
     ) -> Tuple[int, str]:
         """
         Override with agent-specific behaviour
@@ -458,7 +397,7 @@ class AgentBackchannel:
         raise NotImplementedError
 
     async def make_agent_GET_request(
-        self, op, rec_id=None, text=False, params=None
+        self, command: BackchannelCommand
     ) -> Tuple[int, str]:
         """
         Override with agent-specific behaviour
@@ -466,14 +405,14 @@ class AgentBackchannel:
         raise NotImplementedError
 
     async def make_agent_GET_request_response(
-        self, topic, rec_id=None, text=False, params=None
+        self, command: BackchannelCommand
     ) -> Tuple[int, str]:
         """
         Override with agent-specific behaviour
         """
         raise NotImplementedError
 
-    def log(self, msg):
+    def log(self, msg: str):
         print(msg)
 
     def handle_output(self, *output, source: str = None, **kwargs):

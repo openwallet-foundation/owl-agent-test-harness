@@ -21,7 +21,7 @@ The priority is to do "happy path" type tests first, leaving the exception & neg
 
 Initial writing of the Gherkin tests themselves are done in a [.feature file](https://behave.readthedocs.io/en/stable/tutorial.html?highlight=feature%20file#features) or in a [GitHub issue](https://github.com/hyperledger/aries-agent-test-harness/issues) detailing the test development work to be accomplished. If no GitHub issue exists for the test development work, create one.
 
-To keep test definitions immune to code changes or nomenclatures in code, it is best to express the RFC in high level terms from the user level based on predefined persona, currently `Acme`, `Bob` and `Mallory`, that can be interpreted at the business level without revealing implementation details. For example, `When Acme requests a connection with Bob` instead of `When Acme sends a connection-request to Bob`.  Sometimes this may be cumbersome, so just make it as high level as makes sense.  A full example from the connection protocol might look something like this;
+To keep test definitions immune to code changes or nomenclatures in code, it is best to express the RFC in high level terms from the user level based on predefined persona, currently `Acme`, `Bob` and `Mallory`, that can be interpreted at the business level without revealing implementation details. For example, `When Acme requests a connection with Bob` instead of `When Acme sends a connection-request to Bob`. Sometimes this may be cumbersome, so just make it as high level as makes sense. A full example from the connection protocol might look something like this;
 
 ```gherkin
 Scenario Outline: establish a connection between two agents
@@ -74,8 +74,8 @@ The test harness run script supports the use of [tags](https://behave.readthedoc
 - @wip - Tests that are a work in progress and incomplete
 - @Done - Finished tests that are expected to Pass if executed against an Agent.
 - @AIP10 - Aries Interop Profile version the tests are written for
-- @T01-AIP10-RFC0160 - Test Unique Identifier - Please use T for the test cases number, the API version number the test is written for, and the RFC number for the Protocol under test. 
-- @WillFail - Tests completed but because of an outstanding bug, they are expected to fail. The test harness looks for this to report on the next tag  
+- @T01-AIP10-RFC0160 - Test Unique Identifier - Please use T for the test cases number, the API version number the test is written for, and the RFC number for the Protocol under test.
+- @WillFail - Tests completed but because of an outstanding bug, they are expected to fail. The test harness looks for this to report on the next tag
 - @OutstandingBug..###..url - When using @WillFail, this tag much also be used. It is comprised of 3 components, OutstandingBug, the bug number, and the bug url. These must be separated by double periods.
 
 ### Defining Protocol Suite Specific Tags
@@ -92,16 +92,14 @@ Defining specific tags should be discussed with the Aries Protocol test communit
 
 ## Defining Backchannel Operations
 
-Defining test steps require using and extending the commands and operations to be implemented by the backchannels. The commands and operations are documented in a Google Sheet, located [here](https://bit.ly/AriesTestHarnessScenarios). All operations are also documented in an OpenAPI Spec located [here](./docs/assets/openapi-spec.yml). The OpenAPI spec can be viewed on the Aries Interop page [here](http://aries-interop.info/api). As test developers add new steps to test cases, document the new operations on which they depend in the spreadsheet and the OpenAPI spec. The data from the Google Sheet is available to the backchannels and are used by some to implement the backchannel capabilities. Making the data available is currently a manual process that is done using the following process:
+Defining test steps require using and extending the commands and operations to be implemented by the backchannels. The commands and operations are documented in an OpenAPI specification located [here](./docs/assets/openapi-spec.yml). A rendered version of the OpenApi spec (from the main branch) can be viewed on the Aries Interop page [here](http://aries-interop.info/api). As test developers add new steps to test cases, document the new operations on which they depend in the OpenAPI spec.
 
-- prepare a branch in your fork of the repo that will be a PR
-  - [optional] export the Google Sheet, saving it into this file in the repo: [steps/Mapping Aries Protocols for Testing - Aries Agent Test Scripts.csv](./aries-test-harness/features/Mapping%20Aries%20Protocols%20for%20Testing%20-%20Aries%20Agent%20Test%20Scripts.csv)
-- run the command in the `aries-test-harness/features` folder:
-  - If you used the public Google sheet, you can skip the previous [optional] step and run: `python genBCData.py`. This wil download the latest version automatically
-  - Otherwise run: `python genBCData.py Mapping\ Aries\ Protocols\ for\ Testing\ -\ Aries\ Agent\ Test\ Scripts.csv` to replace the current data file in the `aries-backchannels/data` folder
-- submit a PR to update the file
+During development (and if using VSCode) there are some tools that can make it easier to work with the OpenAPI spec:
 
-> To Do: This should be changed to a github action that is run on each commit to the repo
+- [OpenAPI (Swagger) Editor](https://marketplace.visualstudio.com/items?itemName=42Crunch.vscode-openapi) - Adds a sidebar that helps with navigating through the open file.
+- [Swagger Viewer](https://marketplace.visualstudio.com/items?itemName=Arjun.swagger-viewer) - Swagger Viewer lets you preview OpenAPI files as you type in Visual Studio Code.
+
+Defining a new operation is as simple as adding a new path to the OpenAPI spec file. If you're adding a new topic, make sure to add a new entry to the `tags` at the top of the OpenAPI file. When adding a new endpoint try to group it with the existing commands, so proof commands should be grouped with other proof commands. When adding a new path, it is easiest to copy an already existing path.
 
 ## Implementing Test Steps
 
@@ -113,7 +111,7 @@ Follow standard best practices for implementing test steps in Behave, writing th
   - Add new persona only if really, really needed
 - Execute the new tests, grabbing the skeleton code for the new, unimplemented steps from the behave output, and adding them to the `steps` Python code
 - Implement the steps code, defining as needed commands and operations to be added to the backchannel interface
-- Update the Google Sheet and OpenAPI spec to add the new commands and operations and regenerate the backchannel operations data file (see [subsection](#defining-backchannel-operations) above)
+- Update the OpenAPI spec to add the new commands and operations
 - If you are also responsible for implementing one or more backchannels, extend the backchannel(s) to support the new commands and operations
 - Notify the community of backchannel maintainers of the new tests, commands and operations
 
@@ -121,7 +119,7 @@ Existing backchannels will throw a "NotImplementedException" for any steps that 
 
 ### Github Actions and Comparing Test Results Day-To-Day
 
-AATH has the capability of checking whether the test results change from day-to-day (in addition to checking that *all* tests have passed).
+AATH has the capability of checking whether the test results change from day-to-day (in addition to checking that _all_ tests have passed).
 
 To enable this checking run AATH as follows:
 
@@ -137,13 +135,14 @@ When adding a new test, or if a different set of tests is expected to pass or fa
 
 The KGR files are checked into [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/main/aries-test-harness/allure).
 
-To update the file, run the test suite locally (as in the above command) - it will create a "NEW-*" KGR file in [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/main/aries-test-harness/allure/allure-results) - just copy this file to replace the existing "The-KGR-File-*" for the `PROJECT_ID` under test, and check into GitHub.
+To update the file, run the test suite locally (as in the above command) - it will create a "NEW-_" KGR file in [this folder](https://github.com/hyperledger/aries-agent-test-harness/tree/main/aries-test-harness/allure/allure-results) - just copy this file to replace the existing "The-KGR-File-_" for the `PROJECT_ID` under test, and check into GitHub.
 
 ## Implementing the Backchannel
 
 See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in the [aries-backchannels](../aries-agent-test-harness/aries-backchannels) folder for details on writing backchannels.
 
 ## Diving Deeper
+
 - [Accessing Connection ID in Test Code](ACCESS-CONNECTION-IDS.md)
 - [Configuring Tests with Credential Types and Proofs](CONFIGURE-CRED-TYPES.md)
 - [Debugging a Backchannel Running Inside a Docker Container](DEBUGGING.md)
