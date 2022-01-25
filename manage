@@ -787,7 +787,8 @@ runTests() {
   rm ${BEHAVE_INI_TMP}
 
   # Export agent logs
-  if [[ "${GITHUB_ACTIONS}" = "true" ]]; then
+  if [[ "${GITHUB_ACTIONS}" != "true" ]]; then
+    echo ""
     echo "Exporting Agent logs."
     mkdir -p .logs
     docker logs acme_agent > .logs/acme_agent.log
