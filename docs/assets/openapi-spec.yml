@@ -37,21 +37,29 @@ tags:
   - name: Status
     description: Agent commands to get agent status
   - name: Connection
-    description: Agent commands related to connection topic
+    description: Agent commands related to `connection` topic
   - name: DID
-    description: Agent commands related to did topic
+    description: Agent commands related to `did` topic
   - name: Schema
-    description: Agent commands related to schema topic
+    description: Agent commands related to `schema` topic
   - name: Credential Definition
-    description: Agent commands related to credential-definition topic
+    description: Agent commands related to `credential-definition` topic
   - name: Issue Credential
-    description: Agent commands related to issue-credential topic
+    description: Agent commands related to `issue-credential` topic
   - name: Issue Credential V2
-    description: Agent commands related to issue-credential-v2 topic
+    description: Agent commands related to `issue-credential-v2` topic
   - name: Credential
-    description: Agent commands related to credential topic
+    description: Agent commands related to `credential` topic
   - name: Present Proof
-    description: Agent commands related to present-proof topic
+    description: Agent commands related to `proof` topic
+  - name: Present Proof V2
+    description: Agent commands related to `proof-v2` topic
+  - name: Revocation
+    description: Agent commands related to `revocation` topic
+  - name: DID Exchange
+    description: Agent commands related to `did-exchange` topic
+  - name: Out of Band
+    description: Agent commands related to `out-of-band` topic
 paths:
   /agent/command/status:
     get:
@@ -112,10 +120,7 @@ paths:
               properties:
                 parameters:
                   type: object
-                  example:
-                    {
-                      "mime-type": "didcomm/v2"
-                    }
+                  example: { "mime-type": "didcomm/v2" }
       responses:
         200:
           description: OK
@@ -570,30 +575,6 @@ paths:
                   properties:
                     id:
                       $ref: "#/components/schemas/ThreadId"
-            examples:
-              new:
-                summary: Send Offer to start credential issuance flow
-                description: >
-                  When sending an offer to start the credential issuance flow, the data
-                  of the credential that is going to be issued must be passed as value to the data key.
-                value:
-                  data:
-                    comment:
-                      $ref: "#/components/schemas/Comment/example"
-                    credential_preview:
-                      $ref: "#/components/schemas/CredentialPreview/example"
-                    cred_def_id:
-                      $ref: "#/components/schemas/CredentialDefinitionId/example"
-                    connection_id:
-                      $ref: "#/components/schemas/ConnectionId/example"
-              response:
-                summary: Send Offer in response to Proposal
-                description: >
-                  When sending an offer in response to a received proposal only the
-                  thread id should be passed
-                value:
-                  id:
-                    $ref: "#/components/schemas/ThreadId/example"
       responses:
         200:
           description: Credential offer sent
@@ -631,22 +612,6 @@ paths:
                   properties:
                     id:
                       $ref: "#/components/schemas/ThreadId"
-            examples:
-              response:
-                summary: Send Request in response to Offer
-                description: >
-                  When sending a Request in response to a received offer only the
-                  thread id should be passed
-                value:
-                  id:
-                    $ref: "#/components/schemas/ThreadId/example"
-              new:
-                summary: Send Request to start credential issuance flow
-                description: >
-                  This is not possible with Indy based credentials.
-                value:
-                  id:
-                    $ref: "#/components/schemas/ConnectionId/example"
       responses:
         200:
           description: Credential request sent
@@ -752,6 +717,215 @@ paths:
                 properties:
                   did:
                     $ref: "#/components/schemas/FullDid"
+  /agent/command/issue-credential-v2/send-proposal:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#propose-credential
+      operationId: IssueCredentialV2SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - filter
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    credential_preview:
+                      allOf:
+                        - $ref: "#/components/schemas/CredentialPreview"
+                        - properties:
+                            "@type":
+                              example: "issue-credential/2.0/credential-preview"
+                    filter:
+                      $ref: "#/components/schemas/IssueCredentialV2CredentialProposalFilter"
+
+      responses:
+        200:
+          description: Credential proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential-v2/send-offer:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#offer-credential
+      operationId: IssueCredentialV2SendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Offer to start credential issuance flow
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - filter
+                      properties:
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                        credential_preview:
+                          allOf:
+                            - $ref: "#/components/schemas/CredentialPreview"
+                            - properties:
+                                "@type":
+                                  example: "issue-credential/2.0/credential-preview"
+                        filter:
+                          $ref: "#/components/schemas/IssueCredentialV2CredentialProposalFilter"
+                - title: Send Offer in response to Proposal
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential offer sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential-v2/send-request:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#request-credential
+      operationId: IssueCredentialV2SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - title: Send Request in response to Offer
+                  description: It is currently not possible yet to start from a credential request, even though supported for some credential types (e.g. JSON-LD)
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential-v2/issue:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Issue Credential
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#issue-credential
+      operationId: IssueCredentialV2Issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  properties:
+                    comment:
+                      $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential-v2/store:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Store Credential
+      operationId: IssueCredentialV2Store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - required:
+                      - indy
+                      - json-ld
+                    properties:
+                      state:
+                        example: done
+                      indy:
+                        required:
+                          - credential_id
+                        properties:
+                          credential_id:
+                            $ref: "#/components/schemas/CredentialId"
+                      json-ld:
+                        required:
+                          - credential_id
+                        properties:
+                          credential_id:
+                            $ref: "#/components/schemas/CredentialId"
 
   /agent/command/credential/{credentialId}:
     get:
@@ -974,6 +1148,150 @@ paths:
                       state:
                         example: done
 
+  /agent/command/proof-v2/send-request:
+    post:
+      tags:
+        - Present Proof V2
+      summary: Send presentation request
+      description: >
+        Send a `request-presentation` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0454-present-proof-v2/README.md#request-presentation
+      operationId: PresentProofV2SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Indy Proof Request
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - presentation_request
+                      properties:
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                        presentation_request:
+                          allOf:
+                            - $ref: "#/components/schemas/PresentProofV2SendRequestIndy"
+                            - properties:
+                                connection_id:
+                                  $ref: "#/components/schemas/ConnectionId"
+                              required:
+                                - connection_id
+                - title: Send DIF Proof Request
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - presentation_request
+                      properties:
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                        presentation_request:
+                          allOf:
+                            - $ref: "#/components/schemas/PresentProofV2SendRequestDIF"
+                            - properties:
+                                connection_id:
+                                  $ref: "#/components/schemas/ConnectionId"
+                              required:
+                                - connection_id
+
+      responses:
+        200:
+          description: Presentation request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/proof-v2/send-presentation:
+    post:
+      tags:
+        - Present Proof V2
+      summary: Send presentation
+      description: >
+        Send a `presentation` message in response to presentation request with specified thread id.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0454-present-proof-v2/README.md#presentation
+      operationId: PresentProofV2SendPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  title: TODO
+      responses:
+        200:
+          description: Presentation sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: presentation-sent
+  /agent/command/proof-v2/verify-presentation:
+    post:
+      tags:
+        - Present Proof V2
+      summary: Verify presentation
+      description: >
+        Verify the received presentation with specified thread id.
+      operationId: PresentProofV2VerifyPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation verified
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: done
+                      verified:
+                        type: boolean
+                        example: true
+                    required:
+                      - state
+                      - verified
+
 components:
   schemas:
     ConnectionInvitation:
@@ -1162,7 +1480,13 @@ components:
               { "name": "attr_3", "value": "10" },
             ],
         }
-
+    AttachmentFormat:
+      title: Attachment Format
+      type: string
+      example: indy
+      enum:
+        - indy
+        - json-ld
     IssueCredentialState:
       title: Issue Credential State
       description: All possible issue credential state values
@@ -1386,3 +1710,182 @@ components:
           "requested_predicates":
             { "attr_3": { "cred_id": "828761d2-65e9-44a5-852e-1f60b943ab65" } },
         }
+
+    PresentProofV2SendRequestIndy:
+      required:
+        - format
+        - data
+      properties:
+        format:
+          enum: [indy]
+          type: string
+        comment:
+          $ref: "#/components/schemas/Comment"
+        data:
+          type: object
+          title: Indy Proof Request
+          example:
+            {
+              "name": "Biological Indicator A Proof",
+              "requested_attributes":
+                {
+                  "bioindicators_attrs":
+                    {
+                      "names": ["name"],
+                      "restrictions":
+                        [
+                          {
+                            "schema_name": "Schema_Biological_Indicators",
+                            "schema_version": "0.2.0",
+                          },
+                        ],
+                    },
+                },
+              "requested_predicates":
+                {
+                  "concentration":
+                    {
+                      "name": "concentration",
+                      "p_type": ">",
+                      "p_value": 1,
+                      "restrictions":
+                        [
+                          {
+                            "schema_name": "Schema_Biological_Indicators",
+                            "schema_version": "0.2.0",
+                          },
+                        ],
+                    },
+                },
+              "version": "0.2.0",
+            }
+    PresentProofV2SendRequestDIF:
+      required:
+        - format
+        - data
+      properties:
+        format:
+          enum: [json-ld]
+          type: string
+        comment:
+          $ref: "#/components/schemas/Comment"
+        data:
+          type: object
+          title: DIF Presentation Definition
+          example:
+            {
+              "options":
+                {
+                  "challenge": "9a7e9aa6-9e8f-4b6b-9911-bfec18cfa208",
+                  "domain": "dajj33j3aj3j",
+                },
+              "presentation_definition":
+                {
+                  "id": "5ab84299-c066-4b34-bcc6-d356aa44c826",
+                  "format":
+                    { "ldp_vp": { "proof_type": ["Ed25519Signature2018"] } },
+                  "input_descriptors":
+                    [
+                      {
+                        "id": "citizenship_input_1",
+                        "name": "EU Driver's License",
+                        "schema":
+                          [
+                            {
+                              "uri": "https://www.w3.org/2018/credentials#VerifiableCredential",
+                            },
+                            {
+                              "uri": "https://w3id.org/citizenship#PermanentResident",
+                            },
+                          ],
+                        "constraints":
+                          {
+                            "fields":
+                              [
+                                {
+                                  "path": ["$.credentialSubject.familyName"],
+                                  "purpose": "Just making sure your family name is Smith",
+                                  "filter":
+                                    { "type": "string", "const": "SMITH" },
+                                },
+                                {
+                                  "path": ["$.credentialSubject.givenName"],
+                                  "purpose": "We also want to know your first name",
+                                },
+                              ],
+                          },
+                      },
+                    ],
+                },
+            }
+    IssueCredentialV2AttachFormatLdProofDetail:
+      type: object
+      example:
+        {
+          "credential":
+            {
+              "@context":
+                [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/security/bbs/v1",
+                  {
+                    "dl": "http://example.com/drivers-license#",
+                    "AATHDriversLicense": "dl:AATHDriversLicense",
+                    "address": "dl:address",
+                    "DL_number": "dl:DL_number",
+                    "expiry": "dl:expiry",
+                    "age": "dl:age",
+                  },
+                ],
+              "type": ["VerifiableCredential", "AATHDriversLicense"],
+              "issuer": "did:key:z6MkfZfsiVsAy6CgQht7vQVk1dWBnztivjbhxRiKTtTi62PB",
+              "issuanceDate": "2010-01-01T19:73:24Z",
+              "credentialSubject":
+                {
+                  "address": "947 this street, Kingston Ontario Canada, K9O 3R5",
+                  "DL_number": "09385029529385",
+                  "expiry": "10/12/2022",
+                  "age": "30",
+                },
+            },
+          "options": { "proofType": "Ed25519Signature2018" },
+        }
+    IssueCredentialV2AttachFormatIndyCredFilter:
+      type: object
+      example:
+        {
+          "credential":
+            {
+              "@context":
+                [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/security/bbs/v1",
+                  {
+                    "dl": "http://example.com/drivers-license#",
+                    "AATHDriversLicense": "dl:AATHDriversLicense",
+                    "address": "dl:address",
+                    "DL_number": "dl:DL_number",
+                    "expiry": "dl:expiry",
+                    "age": "dl:age",
+                  },
+                ],
+              "type": ["VerifiableCredential", "AATHDriversLicense"],
+              "issuer": "did:key:z6MkfZfsiVsAy6CgQht7vQVk1dWBnztivjbhxRiKTtTi62PB",
+              "issuanceDate": "2010-01-01T19:73:24Z",
+              "credentialSubject":
+                {
+                  "address": "947 this street, Kingston Ontario Canada, K9O 3R5",
+                  "DL_number": "09385029529385",
+                  "expiry": "10/12/2022",
+                  "age": "30",
+                },
+            },
+          "options": { "proofType": "Ed25519Signature2018" },
+        }
+    IssueCredentialV2CredentialProposalFilter:
+      title: Issue Credential V2 Credential Proposal Filter
+      properties:
+        indy:
+          $ref: "#/components/schemas/IssueCredentialV2AttachFormatIndyCredFilter"
+        json-ld:
+          $ref: "#/components/schemas/IssueCredentialV2AttachFormatLdProofDetail"
