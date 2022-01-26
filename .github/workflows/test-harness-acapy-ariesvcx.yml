@@ -15,7 +15,7 @@ defaults:
     shell: bash
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: macos-arm
     if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     steps:
       - name: checkout-test-harness
