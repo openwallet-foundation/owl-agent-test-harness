@@ -783,7 +783,14 @@ runTests() {
   else
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
+
   local docker_result=$?
+  if [ ${docker_result} -eq 0 ]; then
+    logInfo "Test run completed without error ..."
+  else
+    logError "Test run completed with exit code ${?}."
+  fi
+  
   rm ${BEHAVE_INI_TMP}
 
   # Export agent logs
