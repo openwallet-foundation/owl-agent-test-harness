@@ -128,7 +128,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
-            .wrap(middleware::NormalizePath::new(middleware::normalize::TrailingSlash::Trim))
+            .wrap(middleware::NormalizePath::new(middleware::TrailingSlash::Trim))
             .data(Mutex::new(Agent {
                 dbs: Storage::new(),
                 status: Status::Active,

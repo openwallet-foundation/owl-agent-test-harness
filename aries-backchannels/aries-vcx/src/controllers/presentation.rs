@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 use std::collections::HashMap;
 use actix_web::{web, Responder, post, get};
+use actix_web::http::header::{CacheControl, CacheDirective};
 use uuid;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::{Agent, State};
@@ -115,19 +116,17 @@ fn _secondary_proof_required(prover: &Prover) -> HarnessResult<bool> {
 }
 
 impl Agent {
-    pub fn send_proof_request(&mut self, presentation_request: &PresentationRequestWrapper) -> HarnessResult<String> {
+    pub async fn send_proof_request(&mut self, presentation_request: &PresentationRequestWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&presentation_request.connection_id).unwrap();
-        connection.get_messages()?
-            .into_iter()
-            .for_each(|(uid, message)| {
-                match message {
-                    A2AMessage::PresentationProposal(_) => {
-                        connection.update_message_status(uid).ok();
-                    }
-                    _ => {}
+        for (uid, message) in connection.get_messages().await?.into_iter() {
+            match message {
+                A2AMessage::PresentationProposal(_) => {
+                    connection.update_message_status(&uid).await.ok();
                 }
-            });
+                _ => {}
+            }
+        };
         let req_data = presentation_request.presentation_request.proof_request.data.clone();
         let presentation_request = ProofRequestDataBuilder::default()
             .name("test proof")
@@ -137,7 +136,7 @@ impl Agent {
             .nonce(anoncreds::generate_nonce()?)
             .build().unwrap();
         let mut verifier = Verifier::create_from_request(id.to_string(), &presentation_request)?;
-        verifier.send_presentation_request(connection.send_message_closure()?, None)?;
+        verifier.send_presentation_request(connection.send_message_closure()?).await?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         let thread_id = verifier.get_thread_id()?;
         self.dbs.verifier.set(&thread_id, &verifier)?;
@@ -145,7 +144,7 @@ impl Agent {
         Ok(json!({"state": _get_state_verifier(&verifier), "thread_id": thread_id}).to_string())
     }
 
-    pub fn send_proof_proposal(&mut self, presentation_proposal: &PresentationProposalWrapper) -> HarnessResult<String> {
+    pub async fn send_proof_proposal(&mut self, presentation_proposal: &PresentationProposalWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&presentation_proposal.connection_id).unwrap();
         let mut proposal_data = PresentationProposalData::create();
@@ -153,45 +152,45 @@ impl Agent {
             proposal_data = proposal_data.add_attribute(attr.clone());
         };
         let mut prover = Prover::create(&id)?;
-        prover.send_proposal(proposal_data, &connection.send_message_closure()?)?;
+        prover.send_proposal(proposal_data, connection.send_message_closure()?).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         let thread_id = prover.get_thread_id()?;
         self.dbs.prover.set(&thread_id, &prover)?;
         Ok(json!({ "state": _get_state_prover(&prover), "thread_id": thread_id }).to_string())
     }
 
-    pub fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
         let mut prover: Prover = self.dbs.prover.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Prover with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id).unwrap();
-        prover.update_state(&connection)?;
+        prover.update_state(&connection).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let credentials = prover.retrieve_credentials()?;
         let secondary_required = _secondary_proof_required(&prover)?;
         let credentials = _select_credentials(&credentials, secondary_required)?;
-        prover.generate_presentation(credentials, "{}".to_string())?;
-        prover.send_presentation(&connection.send_message_closure()?)?;
+        prover.generate_presentation(credentials, "{}".to_string()).await?;
+        prover.send_presentation(connection.send_message_closure()?).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationSent);
         let thread_id = prover.get_thread_id()?;
         self.dbs.prover.set(&thread_id, &prover)?;
         Ok(json!({"state": _get_state_prover(&prover), "thread_id": thread_id}).to_string())
     }
 
-    pub fn verify_presentation(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn verify_presentation(&mut self, id: &str) -> HarnessResult<String> {
         let mut verifier: Verifier = self.dbs.verifier.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Verifier with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
-        verifier.update_state(&connection)?;
+        verifier.update_state(&connection).await?;
         if !vec![VerifierState::Finished, VerifierState::Failed].contains(&verifier.get_state()) {
             return Err(HarnessError::from_msg(HarnessErrorType::ProtocolError, "Presentation not received"));
         }
         self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
-        let verified = match Status::from_u32(verifier.presentation_status()) {
+        let verified = match Status::from_u32(verifier.get_presentation_status()) {
             Status::Success => {
                 soft_assert_eq!(verifier.get_state(), VerifierState::Finished);
-                verifier.send_ack(&connection.send_message_closure()?)?;
+                verifier.send_ack(connection.send_message_closure()?).await?;
                 "true"
             },
             _ => "false"
@@ -199,13 +198,13 @@ impl Agent {
         Ok(json!({ "state": State::Done, "verified": verified }).to_string())
     }
 
-    pub fn get_proof(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_proof(&mut self, id: &str) -> HarnessResult<String> {
         let connection_ids = self.dbs.connection.get_all();
         match self.dbs.prover.get::<Prover>(id) {
             Some(mut prover) => {
                let connection: Connection = self.dbs.connection.get(id)
                    .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                prover.update_state(&connection)?;
+                prover.update_state(&connection).await?;
                 self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;
                 let state = _get_state_prover(&prover);
                 Ok(json!({ "state": state }).to_string())
@@ -215,18 +214,17 @@ impl Agent {
                     let mut presentation_requests: Vec<VcxPresentationRequest> = Vec::new();
                     for cid in connection_ids.into_iter() {
                         let connection = self.dbs.connection.get::<Connection>(&cid).unwrap();
-                        let mut _presentation_requests: Vec<VcxPresentationRequest> = connection.get_messages_noauth()?
-                            .into_iter()
-                            .filter_map(|(uid, message)| {
-                                match message {
-                                    A2AMessage::PresentationRequest(presentation_request) => {
-                                        connection.update_message_status(uid).ok()?;
-                                        self.dbs.connection.set(&id, &connection).unwrap();
-                                        Some(presentation_request)
-                                    }
-                                    _ => None
+                        let mut _presentation_requests = Vec::<VcxPresentationRequest>::new();
+                        for (uid, message) in connection.get_messages_noauth().await?.into_iter() {
+                            match message {
+                                A2AMessage::PresentationRequest(presentation_request) => {
+                                    connection.update_message_status(&uid).await.ok();
+                                    self.dbs.connection.set(&id, &connection).unwrap();
+                                    _presentation_requests.push(presentation_request);
                                 }
-                            }).collect();
+                                _ => {}
+                            }
+                        }
                         presentation_requests.append(&mut _presentation_requests);
                     }
                     soft_assert_eq!(presentation_requests.len(), 1);
@@ -242,7 +240,7 @@ impl Agent {
                Some(mut verifier) => {
                    let connection: Connection = self.dbs.connection.get(id)
                        .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                    verifier.update_state(&connection)?;
+                    verifier.update_state(&connection).await?;
                     self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
                     let state = _get_state_verifier(&verifier);
                     Ok(json!({ "state": state }).to_string())
@@ -255,31 +253,41 @@ impl Agent {
 #[post("/send-request")]
 pub async fn send_proof_request(req: web::Json<Request<PresentationRequestWrapper>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_proof_request(&req.data)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/send-proposal")]
 pub async fn send_proof_proposal(req: web::Json<Request<PresentationProposalWrapper>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_proof_proposal(&req.data)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/send-presentation")]
 pub async fn send_presentation(req: web::Json<Request<serde_json::Value>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_presentation(&req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/verify-presentation")]
 pub async fn verify_presentation(req: web::Json<Request<serde_json::Value>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().verify_presentation(&req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[get("/{proof_id}")]
 pub async fn get_proof(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_proof(&path.into_inner())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg

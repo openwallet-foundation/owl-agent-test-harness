@@ -1,8 +1,9 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
+use actix_web::http::header::{CacheControl, CacheDirective};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
-use reqwest::multipart;
+use reqwest::blocking::multipart;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use uuid;
@@ -33,9 +34,10 @@ fn get_tails_hash(cred_def: &CredentialDef) -> HarnessResult<String> {
 }
 
 fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<()> {
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let genesis_file = std::env::var("GENESIS_FILE").unwrap_or(
         std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn").to_str().unwrap().to_string());
+    // let file = File::open(genesis_file).unwrap();
     let form = multipart::Form::new()
         .file("genesis", &genesis_file).unwrap()
         .file("tails", &tails_file).unwrap();
@@ -114,13 +116,15 @@ impl Agent {
 #[post("")]
 pub async fn create_credential_definition(req: web::Json<Request<CredentialDefinition>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().create_credential_definition(&req.data).await
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[get("/{cred_def_id}")]
 pub async fn get_credential_definition(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_credential_definition(&path.into_inner())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
