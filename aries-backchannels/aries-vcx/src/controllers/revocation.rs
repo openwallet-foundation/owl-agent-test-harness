@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
+use actix_web::http::header::{CacheControl, CacheDirective};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::Agent;
 use crate::controllers::Request;
@@ -33,13 +34,15 @@ impl Agent {
 #[post("/revoke")]
 pub async fn revoke_credential(agent: web::Data<Mutex<Agent>>, req: web::Json<Request<CredentialRevocationData>>) -> impl Responder {
     agent.lock().unwrap().revoke_credential(&req.data)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[get("/{cred_id}")]
 pub async fn get_revocation_registry(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_revocation_registry(&path.into_inner())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

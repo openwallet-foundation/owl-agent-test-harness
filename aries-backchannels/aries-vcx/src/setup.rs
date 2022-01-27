@@ -23,7 +23,7 @@ async fn get_trustee_seed() -> String {
             "role": "TRUST_ANCHOR",
             "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000, 1000000))
         }).to_string();
-        client.post(&url).body(body).send().expect("Failed to send message").json::<SeedResponse>().expect("Failed to deserializ response").seed
+        client.post(&url).body(body).send().await.expect("Failed to send message").json::<SeedResponse>().await.expect("Failed to deserialize response").seed
     } else {
         "000000000000000000000000Trustee1".to_string()
     }
@@ -44,8 +44,10 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
                 info!("Downloading genesis file from {}", ledger_url);
                 let genesis_url = format!("{}/genesis", ledger_url);
                 let body = reqwest::get(&genesis_url)
+                    .await
                     .expect("Failed to get genesis file from ledger")
                     .text()
+                    .await
                     .expect("Failed to get the response text");
                 let path = std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn");
                 info!("Storing genesis file to {:?}", path);
@@ -92,7 +94,7 @@ pub async fn initialize() -> AgentConfig {
 
     let issuer_config = configure_issuer_wallet(&get_trustee_seed().await).expect("Failed to configure the issuer wallet");
     init_issuer_config(&issuer_config).expect("Failed to init issuer config");
-    provision_cloud_agent(&agency_config).expect("Failed to provision the cloud agent");
+    provision_cloud_agent(&agency_config).await.expect("Failed to provision the cloud agent");
 
     debug!("Initialization finished");
     AgentConfig { did: issuer_config.institution_did }

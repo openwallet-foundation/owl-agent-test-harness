@@ -1,6 +1,6 @@
 use std::sync::Mutex;
-use std::fs::File;
 use actix_web::{web, Responder, post, get};
+use actix_web::http::header::{CacheControl, CacheDirective};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
 use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
@@ -57,7 +57,7 @@ pub struct CredentialId {
 fn _get_state_issuer(issuer: &Issuer) -> State {
     match issuer.get_state() {
         IssuerState::Initial => State::Initial,
-        IssuerState::ProposalReceived => State::ProposalReceived,
+        IssuerState::ProposalReceived | IssuerState::OfferSet => State::ProposalReceived,
         IssuerState::OfferSent => State::OfferSent,
         IssuerState::RequestReceived => State::RequestReceived,
         IssuerState::CredentialSent => State::CredentialSent,
@@ -77,7 +77,7 @@ fn _get_state_holder(holder: &Holder) -> State {
     }
 }
 
-fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str) -> HarnessResult<()> {
+async fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str) -> HarnessResult<()> {
     let url = match tails_base_url.to_string().matches("/").count() {
         0 => format!("{}/{}", tails_base_url, rev_reg_id),
         1.. => tails_base_url.to_string(),
@@ -87,46 +87,41 @@ fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str)
     let tails_folder_path = std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("tails");
     std::fs::create_dir_all(&tails_folder_path).map_err(|_| HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to create tails folder"))?;
     let tails_file_path = tails_folder_path.join(tails_hash).to_str().unwrap().to_string();
-    let mut res = client.get(&url).send().unwrap();
+    let res = client.get(&url).send().await.unwrap();
     soft_assert_eq!(res.status(), reqwest::StatusCode::OK);
-    let mut out = File::create(tails_file_path).unwrap();
-    std::io::copy(&mut res, &mut out).unwrap();
+    std::fs::write(tails_file_path, res.bytes().await.unwrap()).unwrap();
     Ok(())
 }
 
-fn get_proposal(connection: &Connection) -> HarnessResult<VcxCredentialProposal> {
-     let mut proposals: Vec<VcxCredentialProposal> =
-         connection.get_messages()?
-             .into_iter()
-             .filter_map(|(uid, message)| {
-                 match message {
-                     A2AMessage::CredentialProposal(proposal) => {
-                        connection.update_message_status(uid).ok()?;
-                        Some(proposal)
-                     }
-                     _ => None
-                 }
-             }).collect();
-     soft_assert_eq!(proposals.len(), 1);
-     proposals.pop()
-        .ok_or(
-            HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
-        )
+async fn get_proposal(connection: &Connection) -> HarnessResult<VcxCredentialProposal> {
+    let mut proposals = Vec::<VcxCredentialProposal>::new();
+    for (uid, message) in connection.get_messages().await?.into_iter() {
+         match message {
+             A2AMessage::CredentialProposal(proposal) => {
+                connection.update_message_status(&uid).await.ok();
+                proposals.push(proposal);
+             }
+             _ => {}
+         }
+    }
+    soft_assert_eq!(proposals.len(), 1);
+    proposals.pop()
+       .ok_or(
+           HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
+       )
 }
 
-fn get_offer(connection: &Connection, thread_id: &str) -> HarnessResult<VcxCredentialOffer> {
-    let mut offers: Vec<VcxCredentialOffer> = connection.get_messages()?
-        .into_iter()
-        .filter_map(|(uid, a2a_message)| {
-            match a2a_message {
-                A2AMessage::CredentialOffer(offer) if offer.get_thread_id() == thread_id.to_string() => {
-                    connection.update_message_status(uid).ok()?;
-                    Some(offer)
-                }
-                _ => None
-            }
-        })
-    .collect();
+async fn get_offer(connection: &Connection, thread_id: &str) -> HarnessResult<VcxCredentialOffer> {
+    let mut offers = Vec::<VcxCredentialOffer>::new();
+    for (uid, message) in connection.get_messages().await?.into_iter() {
+         match message {
+             A2AMessage::CredentialOffer(offer) if offer.get_thread_id() == thread_id.to_string() => {
+                connection.update_message_status(&uid).await.ok();
+                offers.push(offer);
+             }
+             _ => {}
+         }
+    }
     soft_assert_eq!(offers.len(), 1);
     offers.pop()
        .ok_or(
@@ -135,7 +130,7 @@ fn get_offer(connection: &Connection, thread_id: &str) -> HarnessResult<VcxCrede
 }
 
 impl Agent {
-    pub fn send_credential_proposal(&mut self, cred_proposal: &CredentialProposal) -> HarnessResult<String> {
+    pub async fn send_credential_proposal(&mut self, cred_proposal: &CredentialProposal) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&cred_proposal.connection_id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", cred_proposal.connection_id)))?;
@@ -146,27 +141,27 @@ impl Agent {
         for attr in cred_proposal.credential_proposal.attributes.clone().into_iter() {
             let name = attr["name"].as_str().ok_or(HarnessError::from_msg(HarnessErrorType::InvalidJson, "No 'name' field in attributes"))?;
             let value = attr["value"].as_str().ok_or(HarnessError::from_msg(HarnessErrorType::InvalidJson, "No 'value' field in attributes"))?;
-            proposal_data = proposal_data.add_credential_preview_data(&name, &value, MimeType::Plain)?;
+            proposal_data = proposal_data.add_credential_preview_data(&name, &value, MimeType::Plain);
         }
-        holder.send_proposal(proposal_data.clone(), connection.send_message_closure()?)?;
+        holder.send_proposal(proposal_data.clone(), connection.send_message_closure()?).await?;
         let thread_id = holder.get_thread_id()?;
         self.dbs.holder.set(&thread_id, &holder)?;
         self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "state": _get_state_holder(&holder), "thread_id": thread_id }).to_string())
     }
 
-    pub fn send_credential_request(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn send_credential_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut holder: Holder = self.dbs.holder.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        holder.send_request(connection.pairwise_info().pw_did.to_string(), connection.send_message_closure()?)?;
+        holder.send_request(connection.pairwise_info().pw_did.to_string(), connection.send_message_closure()?).await?;
         let thread_id = holder.get_thread_id()?;
         self.dbs.holder.set(&thread_id, &holder)?;
         Ok(json!({ "state": _get_state_holder(&holder), "thread_id": thread_id }).to_string())
     }
 
-    pub fn send_credential_offer(&mut self, cred_offer: &CredentialOffer, id: &str) -> HarnessResult<String> {
+    pub async fn send_credential_offer(&mut self, cred_offer: &CredentialOffer, id: &str) -> HarnessResult<String> {
         let connection: Connection = match cred_offer.connection_id.is_empty() {
             false => self.dbs.connection.get(&cred_offer.connection_id)
                         .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", cred_offer.connection_id)))?,
@@ -186,11 +181,12 @@ impl Agent {
                     tails_file: cred_def.tails_file.clone()
                 };
                 let mut issuer = Issuer::create(&id)?;
-                issuer.send_credential_offer(offer_info, None, connection.send_message_closure()?)?;
+                issuer.build_credential_offer_msg(offer_info, None)?;
+                issuer.send_credential_offer(connection.send_message_closure()?).await?;
                 issuer
             }
             false => {
-                let proposal = get_proposal(&connection)?;
+                let proposal = get_proposal(&connection).await?;
                 let cred_def: CachedCredDef = self.dbs.cred_def.get(&proposal.cred_def_id)
                     .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Cred def with id {} not found", cred_offer.cred_def_id)))?;
                 let offer_info = OfferInfo {
@@ -200,7 +196,8 @@ impl Agent {
                     tails_file: cred_def.tails_file.clone()
                 };
                 let mut issuer = Issuer::create_from_proposal(&id, &proposal)?;
-                issuer.send_credential_offer(offer_info, None, connection.send_message_closure()?)?;
+                issuer.build_credential_offer_msg(offer_info, None)?;
+                issuer.send_credential_offer(connection.send_message_closure()?).await?;
                 issuer
             }
         };
@@ -210,39 +207,39 @@ impl Agent {
         Ok(json!({ "state": _get_state_issuer(&issuer), "thread_id": thread_id }).to_string())
     }
 
-    pub fn issue_credetial(&mut self, id: &str, _credential: &Credential) -> HarnessResult<String> {
+    pub async fn issue_credetial(&mut self, id: &str, _credential: &Credential) -> HarnessResult<String> {
         let mut issuer: Issuer = self.dbs.issuer.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Issuer with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        issuer.update_state(&connection)?;
-        issuer.send_credential(connection.send_message_closure()?)?;
+        issuer.update_state(&connection).await?;
+        issuer.send_credential(connection.send_message_closure()?).await?;
         self.dbs.issuer.set(&id, &issuer)?;
         Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
     }
 
-    pub fn send_ack(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn send_ack(&mut self, id: &str) -> HarnessResult<String> {
         let mut holder: Holder = self.dbs.holder.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        holder.update_state(&connection)?;
+        holder.update_state(&connection).await?;
         if holder.is_revokable()? {
             let rev_reg_id = holder.get_rev_reg_id()?;
             let tails_hash = holder.get_tails_hash()?;
             let tails_location = holder.get_tails_location()?;
-            download_tails_file(&tails_location, &rev_reg_id, &tails_hash)?;
+            download_tails_file(&tails_location, &rev_reg_id, &tails_hash).await?;
         };
         self.dbs.holder.set(&id, &holder)?;
         Ok(json!({ "state": _get_state_holder(&holder), "credential_id": id }).to_string())
     }
 
-    pub fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
         let connection: Connection = self.dbs.connection.get(id)
             .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
         match self.dbs.issuer.get::<Issuer>(id) {
             Some(mut issuer) => {
-                issuer.update_state(&connection)?;
+                issuer.update_state(&connection).await?;
                 self.dbs.issuer.set(&id, &issuer)?;
                 self.dbs.connection.set(&id, &issuer)?;
                 Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
@@ -250,13 +247,13 @@ impl Agent {
             None => {
                 match self.dbs.holder.get::<Holder>(id) {
                     Some(mut holder) => {
-                        holder.update_state(&connection)?;
+                        holder.update_state(&connection).await?;
                         self.dbs.holder.set(&id, &holder)?;
                         self.dbs.connection.set(&id, &connection)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
                     }
                     None => {
-                        let offer = get_offer(&connection, id)?;
+                        let offer = get_offer(&connection, id).await?;
                         let holder = Holder::create_from_offer(id, offer)?;
                         self.dbs.holder.set(&id, &holder)?;
                         self.dbs.connection.set(&id, &connection)?;
@@ -267,12 +264,12 @@ impl Agent {
         }
     }
 
-    pub fn get_credential(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_credential(&mut self, id: &str) -> HarnessResult<String> {
         let mut holder: Holder = self.dbs.holder.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        holder.update_state(&connection)?;
+        holder.update_state(&connection).await?;
         let attach = holder.get_attachment()?;
         let attach: serde_json::Value = serde_json::from_str(&attach)?;
         let mut attach = attach.as_object().unwrap().clone();
@@ -284,43 +281,57 @@ impl Agent {
 #[post("/send-proposal")]
 pub async fn send_credential_proposal(req: web::Json<Request<CredentialProposal>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_credential_proposal(&req.data)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/send-offer")]
 pub async fn send_credential_offer(req: web::Json<Request<CredentialOffer>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_credential_offer(&req.data, &req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/send-request")]
 pub async fn send_credential_request(req: web::Json<Request<String>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_credential_request(&req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[get("/{issuer_id}")]
 pub async fn get_issuer_state(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_issuer_state(&path.into_inner())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/issue")]
 pub async fn issue_credential(req: web::Json<Request<Credential>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().issue_credetial(&req.id, &req.data)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/store")]
 pub async fn send_ack(req: web::Json<Request<CredentialId>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_ack(&req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[get("/{cred_id}")]
 pub async fn get_credential(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_credential(&path.into_inner())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

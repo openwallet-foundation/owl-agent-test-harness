@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
+use actix_web::http::header::{CacheControl, CacheDirective};
 use uuid;
 use crate::{Agent, State};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
@@ -42,70 +43,71 @@ fn _get_state(connection: &Connection) -> State {
     }
 }
 
-fn get_requests(connection: &Connection) -> HarnessResult<Vec<VcxConnectionRequest>> {
-     Ok(connection.get_messages_noauth()?
-         .into_iter()
-         .filter_map(|(_, message)| {
-             match message {
-                 A2AMessage::ConnectionRequest(request) => Some(request),
-                 _ => None
-             }
-         }).collect())
+async fn get_requests(connection: &Connection) -> HarnessResult<Vec<VcxConnectionRequest>> {
+     Ok(connection.get_messages_noauth()
+        .await?
+        .into_iter()
+        .filter_map(|(_, message)| {
+            match message {
+                A2AMessage::ConnectionRequest(request) => Some(request),
+                _ => None
+            }
+        }).collect())
 }
 
 impl Agent {
-    pub fn create_invitation(&mut self) -> HarnessResult<String> {
+    pub async fn create_invitation(&mut self) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create(&id, false)?;
-        connection.connect()?;
+        let mut connection = Connection::create(&id, false).await?;
+        connection.connect().await?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
         self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id, "invitation": invite }).to_string())
     }
 
-    pub fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
+    pub async fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false)?;
+        let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).await?;
         self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub fn send_request(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn send_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.connect()?;
-        connection.update_state()?;
+        connection.connect().await?;
+        connection.update_state().await?;
         self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        let requests = get_requests(&connection)?;
+        let requests = get_requests(&connection).await?;
         let curr_state = connection.get_state();
         if curr_state != ConnectionState::Inviter(InviterState::Invited) || requests.len() > 1 {
             return Err(HarnessError::from_msg(HarnessErrorType::RequestNotAcceptedError, &format!("Received state {:?}, expected requested state", curr_state)));
         }
-        connection.update_state()?;
+        connection.update_state().await?;
         self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
-    pub fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.update_state()?;
+        connection.update_state().await?;
         self.dbs.connection.set(&id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
-    pub fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         if connection.needs_message() {
-            connection.update_state()?;
+            connection.update_state().await?;
         }
         let state = _get_state(&connection);
         self.dbs.connection.set(&id, &connection)?;
@@ -117,37 +119,49 @@ impl Agent {
 #[post("/create-invitation")]
 pub async fn create_invitation(agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().create_invitation()
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/receive-invitation")]
 pub async fn receive_invitation(req: web::Json<Request<PairwiseInvitation>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().receive_invitation(req.data.clone())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/accept-invitation")]
 pub async fn send_request(req: web::Json<Request<()>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_request(&req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/accept-request")]
 pub async fn accept_request(req: web::Json<Request<()>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().accept_request(&req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[get("/{connection_id}")]
 pub async fn get_connection_state(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_connection_state(&path.into_inner())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[post("/send-ping")]
 pub async fn send_ping(req: web::Json<Request<Comment>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_ping(&req.id)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
  
 pub fn config(cfg: &mut web::ServiceConfig) {

@@ -6,11 +6,11 @@ authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-ind
 description = "Backchannel for aries-vcx"
 
 [dependencies]
-actix-web = "3.3.2"
+actix-web = "4.0.0-beta.21"
 ctrlc = "3.1.6"
 derive_more = "0.99.14"
 clap = "3.0.0-beta.5"
-reqwest = { version = "0.9" }
+reqwest = { version = "0.11.9", features = ["json", "multipart", "blocking"] }
 rand = "0.6.5"
 serde = "1.0.97"
 serde_json = "1.0.40"
@@ -22,4 +22,4 @@ pickledb = "0.4.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 futures-util = "0.3.15"
 futures = "0.3.15"
-aries-vcx = { git = "https://github.com/hyperledger/aries-vcx", rev = "b6687e87d6159132dcf44902292c80fb2753ecc6" }
+aries-vcx = { git = "https://github.com/hyperledger/aries-vcx", rev = "a28feb504aac324fc9c9d4b7df52a285648cbfda" }

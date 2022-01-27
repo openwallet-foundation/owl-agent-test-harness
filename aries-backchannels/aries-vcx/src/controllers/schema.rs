@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
+use actix_web::http::header::{CacheControl, CacheDirective};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::handlers::issuance::schema::schema::Schema as VcxSchema;
@@ -67,13 +68,15 @@ impl Agent {
 #[post("")]
 pub async fn create_schema(req: web::Json<Request<Schema>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().create_schema(&req.data)
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 #[get("/{schema_id}")]
 pub async fn get_schema(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
     agent.lock().unwrap().get_schema(&path.into_inner())
-        .with_header("Cache-Control", "private, no-store, must-revalidate")
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
