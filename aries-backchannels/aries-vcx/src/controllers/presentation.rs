@@ -190,10 +190,10 @@ impl Agent {
             return Err(HarnessError::from_msg(HarnessErrorType::ProtocolError, "Presentation not received"));
         }
         self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
+        verifier.send_ack(connection.send_message_closure()?).await?;
         let verified = match Status::from_u32(verifier.get_presentation_status()) {
             Status::Success => {
                 soft_assert_eq!(verifier.get_state(), VerifierState::Finished);
-                verifier.send_ack(connection.send_message_closure()?).await?;
                 "true"
             },
             _ => "false"
