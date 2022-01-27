@@ -25,7 +25,7 @@ impl Agent {
     pub fn get_revocation_registry(&mut self, id: &str) -> HarnessResult<String> {
         let issuer: Issuer = self.dbs.issuer.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Credential definition with id {} not found", id)))?;
-        let rev_reg_id = issuer.get_rev_reg_id().unwrap();
+        let rev_reg_id = issuer.get_rev_reg_id()?;
         self.dbs.issuer.set(&rev_reg_id, &issuer)?;
         Ok(json!({ "revocation_id": rev_reg_id, "revoc_reg_id": rev_reg_id }).to_string())
     }

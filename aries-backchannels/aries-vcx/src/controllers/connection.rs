@@ -62,14 +62,18 @@ impl Agent {
         connection.connect().await?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
+        let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id, "invitation": invite }).to_string())
     }
 
     pub async fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).await?;
+        let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
@@ -78,7 +82,9 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         connection.connect().await?;
         connection.update_state().await?;
+        let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
@@ -91,7 +97,9 @@ impl Agent {
             return Err(HarnessError::from_msg(HarnessErrorType::RequestNotAcceptedError, &format!("Received state {:?}, expected requested state", curr_state)));
         }
         connection.update_state().await?;
+        let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
@@ -99,7 +107,9 @@ impl Agent {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         connection.update_state().await?;
+        let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
 
@@ -110,9 +120,18 @@ impl Agent {
             connection.update_state().await?;
         }
         let state = _get_state(&connection);
+        let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(&thread_id, &connection)?;
         self.last_connection = Some(connection);
         Ok(json!({ "state": state }).to_string())
+    }
+
+    pub async fn get_connection(&mut self, thread_id: &str) -> HarnessResult<String> {
+        let connection: Connection = self.dbs.connection.get(thread_id)
+            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with thread id {} not found", thread_id)))?;
+        let connection_id = connection.get_source_id();
+        Ok(json!({ "connection_id": connection_id }).to_string())
     }
 }
 
@@ -156,6 +175,14 @@ pub async fn get_connection_state(agent: web::Data<Mutex<Agent>>, path: web::Pat
         .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }
 
+#[get("/{thread_id}")]
+pub async fn get_connection(agent: web::Data<Mutex<Agent>>, path: web::Path<String>) -> impl Responder {
+    agent.lock().unwrap().get_connection(&path.into_inner())
+        .await
+        .customize()
+        .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
+}
+
 #[post("/send-ping")]
 pub async fn send_ping(req: web::Json<Request<Comment>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().send_ping(&req.id)
@@ -174,5 +201,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                 .service(accept_request)
                 .service(send_ping)
                 .service(get_connection_state)
+        )
+        .service(
+            web::scope("/response/connection")
+                .service(get_connection)
         );
 }

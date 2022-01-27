@@ -1,7 +1,9 @@
 use actix_web::{
-    HttpResponseBuilder, error, http::header, http::StatusCode, HttpResponse,
+    HttpResponseBuilder, error, http::StatusCode, HttpResponse,
 };
 use derive_more::{Display, Error};
+use aries_vcx::handlers::issuance::credential_def::{RevocationDetailsBuilderError, CredentialDefConfigBuilderError};
+use aries_vcx::libindy::proofs::proof_request::ProofRequestDataBuilderError;
 
 pub type HarnessResult<T> = Result<T, HarnessError>;
 
@@ -29,7 +31,6 @@ pub struct HarnessError {
 impl error::ResponseError for HarnessError {
     fn error_response(&self) -> HttpResponse {
         HttpResponseBuilder::new(self.status_code())
-            .set_header(header::CONTENT_TYPE, "text/html; charset=utf-8")
             .body(self.to_string())
     }
 
@@ -79,5 +80,55 @@ impl std::convert::From<serde_json::Error> for HarnessError {
             "(De)serialization failed; err: {:?}", serde_err.to_string()
         );
         HarnessError { message: message.to_string(), kind }
+    }
+}
+
+impl std::convert::From<std::io::Error> for HarnessError {
+    fn from(io_err: std::io::Error) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        let message = format!(
+            "I/O error: {:?}", io_err.to_string()
+        );
+        HarnessError { message, kind }
+    }
+}
+
+impl std::convert::From<reqwest::Error> for HarnessError {
+    fn from(rw_err: reqwest::Error) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        let message = format!(
+            "Reqwest error: {:?}", rw_err.to_string()
+        );
+        HarnessError { message, kind }
+    }
+}
+
+impl std::convert::From<RevocationDetailsBuilderError> for HarnessError {
+    fn from(err: RevocationDetailsBuilderError) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        let message = format!(
+            "RevocationDetailsBuilderError: {:?}", err.to_string()
+        );
+        HarnessError { message, kind }
+    }
+}
+
+impl std::convert::From<CredentialDefConfigBuilderError> for HarnessError {
+    fn from(err: CredentialDefConfigBuilderError) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        let message = format!(
+            "CredentialDefConfigBuilderError: {:?}", err.to_string()
+        );
+        HarnessError { message, kind }
+    }
+}
+
+impl std::convert::From<ProofRequestDataBuilderError> for HarnessError {
+    fn from(err: ProofRequestDataBuilderError) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        let message = format!(
+            "ProofRequestDataBuilderError: {:?}", err.to_string()
+        );
+        HarnessError { message, kind }
     }
 }

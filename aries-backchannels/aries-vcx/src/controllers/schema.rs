@@ -38,7 +38,7 @@ fn create_and_publish_schema(source_id: &str,
     }.to_string()?;
     let schema_json: serde_json::Value = serde_json::from_str(&schema_json).map_err(|err| HarnessError::from(err))?;
     let mut schema_json = schema_json["data"].clone();
-    schema_json.as_object_mut().unwrap().insert("id".to_string(), serde_json::Value::String(schema_id.to_string()));
+    schema_json.as_object_mut().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to convert schema json Value to Map"))?.insert("id".to_string(), serde_json::Value::String(schema_id.to_string()));
     Ok((schema_id, schema_json.to_string()))
 }
 
