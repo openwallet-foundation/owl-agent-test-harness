@@ -46,7 +46,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a dotnet-master -a findy"
           TEST_AGENTS: "-d dotnet-master -b findy"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0037"
           REPORT_PROJECT: dotnet-b-findy
         continue-on-error: true
       - name: run-send-gen-test-results-secure
