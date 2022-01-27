@@ -3,7 +3,7 @@ use actix_web::{web, Responder, post, get};
 use actix_web::http::header::{CacheControl, CacheDirective};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
-use reqwest::blocking::multipart;
+use reqwest::multipart;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use uuid;
@@ -33,15 +33,19 @@ fn get_tails_hash(cred_def: &CredentialDef) -> HarnessResult<String> {
     Ok(rev_reg_def.value.tails_hash)
 }
 
-fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<()> {
-    let client = reqwest::blocking::Client::new();
+async fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<()> {
+    info!("Going to upload tails file");
+    let client = reqwest::Client::new();
     let genesis_file = std::env::var("GENESIS_FILE").unwrap_or(
-        std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn").to_str().unwrap().to_string());
-    // let file = File::open(genesis_file).unwrap();
+        std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn").to_str()
+        .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to convert path to str"))?.to_string());
+    let genesis_file_data = std::fs::read(genesis_file)?;
+    let tails_file_data = std::fs::read(tails_file)?;
+    let genesis_part = multipart::Part::bytes(genesis_file_data);
+    let tails_part = multipart::Part::bytes(tails_file_data);
     let form = multipart::Form::new()
-        .file("genesis", &genesis_file).unwrap()
-        .file("tails", &tails_file).unwrap();
-    let res = client.put(tails_url).multipart(form).send().unwrap();
+        .part("genesis", genesis_part).part("tails", tails_part);
+    let res = client.put(tails_url).multipart(form).send().await?;
     soft_assert_eq!(res.status(), reqwest::StatusCode::OK);
     Ok(())
 }
@@ -58,20 +62,17 @@ impl Agent {
                     .issuer_did(did)
                     .schema_id(&cred_def.schema_id)
                     .tag(&id)
-                    .build()
-                    .unwrap();
+                    .build()?;
                 let revocation_details = if cred_def.support_revocation {
                     RevocationDetailsBuilder::default()
                         .support_revocation(cred_def.support_revocation)
                         .tails_file(&tails_base_path)
                         .max_creds(50 as u32)
-                        .build()
-                        .unwrap()
+                        .build()?
                 } else {
                     RevocationDetailsBuilder::default()
                         .support_revocation(cred_def.support_revocation)
-                        .build()
-                        .unwrap()
+                        .build()?
                 };
                 let cd = CredentialDef::create_and_store(id.to_string(), config, revocation_details)?;
                 let (rev_reg_id, tails_url) = match cred_def.support_revocation {
@@ -87,14 +88,14 @@ impl Agent {
                     Some(tails_url) => {
                         let tails_hash = get_tails_hash(&cd)?;
                         let tails_file = format!("{}/{}", tails_base_path, tails_hash);
-                        upload_tails_file(&tails_url, &tails_file)?;
+                        upload_tails_file(&tails_url, &tails_file).await?;
                         Some(tails_base_path)
                     }
                     None => None
                 };
                 let cred_def_id = cd.get_cred_def_id();
                 let cred_def_json: serde_json::Value = serde_json::from_str(&cd.to_string()?)?;
-                let cred_def_json = cred_def_json["data"]["cred_def_json"].as_str().unwrap();
+                let cred_def_json = cred_def_json["data"]["cred_def_json"].as_str().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to convert cred def json Value to str"))?;
                 self.dbs.cred_def.set(&cred_def.schema_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file: tails_file.clone(), rev_reg_id: rev_reg_id.clone() })?;
                 self.dbs.cred_def.set(&cred_def_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file: tails_file.clone(), rev_reg_id: rev_reg_id.clone() })?;
                 cred_def_id

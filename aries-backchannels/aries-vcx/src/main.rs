@@ -22,6 +22,7 @@ extern crate uuid;
 extern crate futures_util;
 extern crate clap;
 extern crate reqwest;
+extern crate derive_builder;
 
 
 #[derive(Parser)]
@@ -129,12 +130,12 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::default())
             .wrap(middleware::NormalizePath::new(middleware::TrailingSlash::Trim))
-            .data(Mutex::new(Agent {
+            .app_data(web::Data::new(Mutex::new(Agent {
                 dbs: Storage::new(),
                 status: Status::Active,
                 config: config.clone(),
                 last_connection: None
-            }))
+            })))
             .service(
                 web::scope("/agent")
                     .configure(connection::config)

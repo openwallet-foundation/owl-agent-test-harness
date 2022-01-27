@@ -111,14 +111,15 @@ fn _select_credentials(resolved_creds: &str, secondary_required: bool) -> Harnes
 
 fn _secondary_proof_required(prover: &Prover) -> HarnessResult<bool> {
     let attach = prover.get_proof_request_attachment()?;
-    let attach: serde_json::Value = serde_json::from_str(&attach).unwrap();
+    let attach: serde_json::Value = serde_json::from_str(&attach)?;
     Ok(!attach["non_revoked"].is_null())
 }
 
 impl Agent {
     pub async fn send_proof_request(&mut self, presentation_request: &PresentationRequestWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let connection: Connection = self.dbs.connection.get(&presentation_request.connection_id).unwrap();
+        let connection: Connection = self.dbs.connection.get(&presentation_request.connection_id)
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
         for (uid, message) in connection.get_messages().await?.into_iter() {
             match message {
                 A2AMessage::PresentationProposal(_) => {
@@ -134,7 +135,7 @@ impl Agent {
             .requested_predicates(req_data.requested_predicates.unwrap_or_default())
             .non_revoked(req_data.non_revoked)
             .nonce(anoncreds::generate_nonce()?)
-            .build().unwrap();
+            .build()?;
         let mut verifier = Verifier::create_from_request(id.to_string(), &presentation_request)?;
         verifier.send_presentation_request(connection.send_message_closure()?).await?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
@@ -146,7 +147,8 @@ impl Agent {
 
     pub async fn send_proof_proposal(&mut self, presentation_proposal: &PresentationProposalWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let connection: Connection = self.dbs.connection.get(&presentation_proposal.connection_id).unwrap();
+        let connection: Connection = self.dbs.connection.get(&presentation_proposal.connection_id)
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
         let mut proposal_data = PresentationProposalData::create();
         for attr in presentation_proposal.presentation_proposal.attributes.clone().into_iter() {
             proposal_data = proposal_data.add_attribute(attr.clone());
@@ -162,7 +164,8 @@ impl Agent {
     pub async fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
         let mut prover: Prover = self.dbs.prover.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Prover with id {} not found", id)))?;
-        let connection: Connection = self.dbs.connection.get(id).unwrap();
+        let connection: Connection = self.dbs.connection.get(id)
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
         prover.update_state(&connection).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let credentials = prover.retrieve_credentials()?;
@@ -213,13 +216,14 @@ impl Agent {
                 None => {
                     let mut presentation_requests: Vec<VcxPresentationRequest> = Vec::new();
                     for cid in connection_ids.into_iter() {
-                        let connection = self.dbs.connection.get::<Connection>(&cid).unwrap();
+                        let connection = self.dbs.connection.get::<Connection>(&cid)
+                            .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                         let mut _presentation_requests = Vec::<VcxPresentationRequest>::new();
                         for (uid, message) in connection.get_messages_noauth().await?.into_iter() {
                             match message {
                                 A2AMessage::PresentationRequest(presentation_request) => {
                                     connection.update_message_status(&uid).await.ok();
-                                    self.dbs.connection.set(&id, &connection).unwrap();
+                                    self.dbs.connection.set(&id, &connection)?;
                                     _presentation_requests.push(presentation_request);
                                 }
                                 _ => {}

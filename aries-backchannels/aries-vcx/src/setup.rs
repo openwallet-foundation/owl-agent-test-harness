@@ -9,9 +9,7 @@ use uuid;
 
 #[derive(Debug, Deserialize)]
 struct SeedResponse {
-    did: String,
     seed: String,
-    verkey: String
 }
 
 async fn get_trustee_seed() -> String {

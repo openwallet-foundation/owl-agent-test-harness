@@ -78,6 +78,7 @@ fn _get_state_holder(holder: &Holder) -> State {
 }
 
 async fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str) -> HarnessResult<()> {
+    info!("Downloading tails file to {:?}", tails_base_url);
     let url = match tails_base_url.to_string().matches("/").count() {
         0 => format!("{}/{}", tails_base_url, rev_reg_id),
         1.. => tails_base_url.to_string(),
@@ -86,10 +87,10 @@ async fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash:
     let client = reqwest::Client::new();
     let tails_folder_path = std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("tails");
     std::fs::create_dir_all(&tails_folder_path).map_err(|_| HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to create tails folder"))?;
-    let tails_file_path = tails_folder_path.join(tails_hash).to_str().unwrap().to_string();
-    let res = client.get(&url).send().await.unwrap();
+    let tails_file_path = tails_folder_path.join(tails_hash).to_str().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to convert tails hash to str"))?.to_string();
+    let res = client.get(&url).send().await?;
     soft_assert_eq!(res.status(), reqwest::StatusCode::OK);
-    std::fs::write(tails_file_path, res.bytes().await.unwrap()).unwrap();
+    std::fs::write(tails_file_path, res.bytes().await?)?;
     Ok(())
 }
 
@@ -272,9 +273,9 @@ impl Agent {
         holder.update_state(&connection).await?;
         let attach = holder.get_attachment()?;
         let attach: serde_json::Value = serde_json::from_str(&attach)?;
-        let mut attach = attach.as_object().unwrap().clone();
+        let mut attach = attach.as_object().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to convert attach Value to Map"))?.clone();
         attach.insert("referent".to_string(), serde_json::Value::String(id.to_string()));
-        Ok(serde_json::to_string(&attach).unwrap())
+        Ok(serde_json::to_string(&attach)?)
     }
 }
 
