@@ -5,7 +5,7 @@
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
 | [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.7.3 | findy<br>0.25.32 | acapy-main<br>0.7.3 | acapy-main<br>0.7.3 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-findy](#runset-afj-findy) | javascript<br>0.1.0 | findy<br>0.25.32 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**16 / 17<br>94%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-findy](#runset-afj-findy) | javascript<br>0.1.0 | findy<br>0.25.32 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-findy](#runset-dotnet-findy) | dotnet-master<br> | findy<br>0.25.32 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**2 / 10<br>20%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-findy/reports/latest/index.html?redirect=false#behaviors) |
 | [findy-acapy](#runset-findy-acapy) | findy<br>0.25.32 | acapy-main<br>0.7.3 | findy<br>0.25.32 | findy<br>0.25.32 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [findy-dotnet](#runset-findy-dotnet) | findy<br>0.25.32 | dotnet-master<br> | findy<br>0.25.32 | findy<br>0.25.32 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
@@ -23,7 +23,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon Jan 31 02:18:50 UTC 2022*
+*Last run: Wed Feb  2 02:33:32 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -43,10 +43,10 @@ All of the tests being executed in this runset are passing.
 Runset Name: AFJ to findy
 
 ```tip
-**Latest results: 16 out of 17 (94%)**
+**Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon Jan 31 02:29:19 UTC 2022*
+*Last run: Wed Feb  2 02:50:02 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -70,7 +70,7 @@ Runset Name: dotnet to findy
 **Latest results: 2 out of 10 (20%)**
 
 
-*Last run: Fri Jan 28 19:43:16 UTC 2022*
+*Last run: Wed Feb  2 03:42:11 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -95,7 +95,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon Jan 31 02:21:05 UTC 2022*
+*Last run: Wed Feb  2 02:32:56 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -118,7 +118,7 @@ Runset Name: findy to dotnet
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Mon Jan 31 02:20:56 UTC 2022*
+*Last run: Wed Feb  2 02:44:12 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -141,7 +141,7 @@ Runset Name: findy to AFJ to AF-.NET
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon Jan 31 01:49:07 UTC 2022*
+*Last run: Wed Feb  2 01:55:14 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -164,7 +164,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon Jan 31 02:21:21 UTC 2022*
+*Last run: Wed Feb  2 02:34:28 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -187,7 +187,7 @@ Runset Name: findy to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon Jan 31 02:45:46 UTC 2022*
+*Last run: Wed Feb  2 03:09:25 UTC 2022*
 ```
 
 #### Current Runset Status
