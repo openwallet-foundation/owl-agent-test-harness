@@ -6,3 +6,4 @@ python3-indy
 ptvsd
 aiohttp
 ConfigArgParse
+typing_extensions

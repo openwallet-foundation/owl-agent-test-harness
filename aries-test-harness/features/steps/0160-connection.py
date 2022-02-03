@@ -72,7 +72,7 @@ def step_impl(context, n):
             context.responder_name = row['name']
             assert context.responder_url is not None and 0 < len(context.responder_url)
         else:
-            print("Data table in step contains an unrecognized role, must be inviter, invitee, inviteinterceptor, issuer, or holder")
+            print("Data table in step contains an unrecognized role, must be inviter, invitee, inviteinterceptor, issuer, holder, verifier, prover, requester, responder, mediator, and recipient")
 
 
 
@@ -266,7 +266,7 @@ def step_impl(context, sender, receiver):
         context.use_existing_connection = True
         context.use_existing_connection_successful = False
         context.execute_steps(f'''
-            When "{sender}" sends an explicit invitation with a public DID
+            When "{sender}" sends an explicit invitation with a public DID to "{receiver}"
             And "{receiver}" receives the invitation
         ''')
         if not context.use_existing_connection_successful:

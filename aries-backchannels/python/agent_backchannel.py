@@ -8,6 +8,7 @@ from typing import Any, Optional, Tuple
 from dataclasses import dataclass
 
 from aiohttp import web, ClientSession
+from aiohttp.typedefs import Handler
 import ptvsd
 
 from .utils import log_msg
@@ -51,6 +52,9 @@ class BackchannelCommand:
     operation: Optional[str]
     record_id: Optional[str]
     data: Optional[Any]
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
 async def default_genesis_txns():
@@ -104,6 +108,16 @@ class AgentBackchannel:
         self.extra_args = extra_args
         rand_name = str(random.randint(100_000, 999_999))
         self.seed = ("my_seed_000000000000000000000000" + rand_name)[-32:]
+
+        # Set the backchannel on each request so it can be used by the route methods
+        @web.middleware
+        async def backchannel_middleware(request: web.Request, handler: Handler):
+            request["backchannel"] = self
+
+            return await handler(request)
+
+        app = web.Application(middlewares=[backchannel_middleware])
+        self.app = app
 
         self.internal_host = DEFAULT_INTERNAL_HOST
         self.external_host = DEFAULT_EXTERNAL_HOST
@@ -160,83 +174,45 @@ class AgentBackchannel:
         E.g.:  POST to /agent/command/issue_credential/issue         { "id": "<cred exch id>", "data": {...} }
         """
 
-        app = web.Application()
-        app.add_routes(
-            [web.post("/agent/command/{topic}/", self._post_command_backchannel)]
-        )
-        app.add_routes(
-            [web.post("/agent/command/{topic}", self._post_command_backchannel)]
-        )
-        app.add_routes(
+        self.app.add_routes(
             [
+                web.post("/agent/command/{topic}/", self._post_command_backchannel),
+                web.post("/agent/command/{topic}", self._post_command_backchannel),
                 web.post(
                     "/agent/command/{topic}/{operation}/",
                     self._post_command_backchannel,
-                )
-            ]
-        )
-        app.add_routes(
-            [
+                ),
                 web.post(
                     "/agent/command/{topic}/{operation}", self._post_command_backchannel
-                )
-            ]
-        )
-        app.add_routes(
-            [web.get("/agent/command/{topic}/", self._get_command_backchannel)]
-        )
-        app.add_routes(
-            [web.get("/agent/command/{topic}", self._get_command_backchannel)]
-        )
-        app.add_routes(
-            [web.get("/agent/command/{topic}/{id}/", self._get_command_backchannel)]
-        )
-        app.add_routes(
-            [web.get("/agent/command/{topic}/{id}", self._get_command_backchannel)]
-        )
-        app.add_routes(
-            [
+                ),
+                web.get("/agent/command/{topic}/", self._get_command_backchannel),
+                web.get("/agent/command/{topic}", self._get_command_backchannel),
+                web.get("/agent/command/{topic}/{id}/", self._get_command_backchannel),
+                web.get("/agent/command/{topic}/{id}", self._get_command_backchannel),
                 web.get(
                     "/agent/command/{topic}/{operation}/{id}/",
                     self._get_command_backchannel,
-                )
-            ]
-        )
-        app.add_routes(
-            [
+                ),
                 web.get(
                     "/agent/command/{topic}/{operation}/{id}",
                     self._get_command_backchannel,
-                )
-            ]
-        )
-        app.add_routes(
-            [
+                ),
                 web.delete(
                     "/agent/command/{topic}/{id}/", self._delete_command_backchannel
-                )
-            ]
-        )
-        app.add_routes(
-            [
+                ),
                 web.delete(
                     "/agent/command/{topic}/{id}", self._delete_command_backchannel
-                )
+                ),
+                web.get("/agent/response/{topic}/", self._get_response_backchannel),
+                web.get("/agent/response/{topic}", self._get_response_backchannel),
+                web.get(
+                    "/agent/response/{topic}/{id}/", self._get_response_backchannel
+                ),
+                web.get("/agent/response/{topic}/{id}", self._get_response_backchannel),
             ]
         )
-        app.add_routes(
-            [web.get("/agent/response/{topic}/", self._get_response_backchannel)]
-        )
-        app.add_routes(
-            [web.get("/agent/response/{topic}", self._get_response_backchannel)]
-        )
-        app.add_routes(
-            [web.get("/agent/response/{topic}/{id}/", self._get_response_backchannel)]
-        )
-        app.add_routes(
-            [web.get("/agent/response/{topic}/{id}", self._get_response_backchannel)]
-        )
-        runner = web.AppRunner(app)
+
+        runner = web.AppRunner(self.app)
         await runner.setup()
         self.backchannel_site = web.TCPSite(runner, "0.0.0.0", backchannel_port)
         await self.backchannel_site.start()

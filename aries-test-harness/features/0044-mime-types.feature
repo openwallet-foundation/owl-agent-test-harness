@@ -9,7 +9,7 @@ Feature: RFC0044 didcomm mime types
          | Bob  | responder |
       And "Acme" is running with parameters "{"mime-type":<shared-mime-type>}"
       And "Bob" is running with parameters "{"mime-type":<shared-mime-type>}"
-      When "Bob" sends an explicit invitation
+      When "Bob" sends an explicit invitation to "Acme"
       And "Acme" receives the invitation
       And "Acme" sends the request to "Bob"
       And "Bob" receives the request
@@ -31,7 +31,7 @@ Feature: RFC0044 didcomm mime types
          | Bob  | responder |
       And "Acme" is running with parameters "{"mime-type":[<acme-mime-type>,<bob-mime-type>]}"
       And "Bob" is running with parameters "{"mime-type":[<bob-mime-type>,<acme-mime-type>]}"
-      When "Bob" sends an explicit invitation
+      When "Bob" sends an explicit invitation to "Acme"
       And "Acme" receives the invitation
       And "Acme" sends the request to "Bob"
       And "Bob" receives the request
@@ -53,7 +53,7 @@ Feature: RFC0044 didcomm mime types
          | Bob  | responder |
       And "Acme" is running with parameters "{"mime-type":<acme-mime-type>}"
       And "Bob" is running with parameters "{"mime-type":<bob-mime-type>}"
-      When "Bob" sends an explicit invitation
+      When "Bob" sends an explicit invitation to "Acme"
       Then "Acme" can't accept the invitation
 
       Examples:
@@ -69,7 +69,7 @@ Feature: RFC0044 didcomm mime types
          | Bob  | responder |
       And "Acme" is running with parameters "{"mime-type":<acme-mime-type>}"
       And "Bob" is running with parameters "{"mime-type":<bob-mime-type>,"oob-accept":[<acme-mime-type>]}"
-      When "Bob" sends an explicit invitation
+      When "Bob" sends an explicit invitation to "Acme"
       And "Acme" receives the invitation
       And "Acme" sends the request to "Bob"
       And "Bob" receives the request
@@ -91,7 +91,7 @@ Feature: RFC0044 didcomm mime types
          | Bob  | responder |
       And "Acme" is running with parameters "{"mime-type":<acme-mime-type>}"
       And "Bob" is running with parameters "{"mime-type":<bob-mime-type>,"oob-accept":[<acme-mime-type>,<bob-mime-type>]}"
-      When "Bob" sends an explicit invitation
+      When "Bob" sends an explicit invitation to "Acme"
       And "Acme" receives the invitation
       And "Acme" sends the request to "Bob"
       And "Bob" receives the request
@@ -113,7 +113,7 @@ Feature: RFC0044 didcomm mime types
          | Bob  | responder |
       And "Acme" is running with parameters "{"mime-type":<acme-mime-type>}"
       And "Bob" is running with parameters "{"mime-type":<bob-mime-type>,"oob-accept":[<bob-mime-type>]}"
-      When "Bob" sends an explicit invitation
+      When "Bob" sends an explicit invitation to "Acme"
       Then "Acme" can't accept the invitation
 
       Examples:

@@ -32,6 +32,8 @@ from python.storage import (
     pop_resource_latest,
 )
 
+from acapy.routes.mediation_routes import routes as mediation_routes, get_mediation_record_by_connection_id
+
 # from helpers.jsonmapper.json_mapper import JsonMapper
 
 LOGGER = logging.getLogger(__name__)
@@ -137,8 +139,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "proof-v2": "/present-proof-2.0/",
         }
 
-        self.credFormatFilterTranslationDict = {
-            "indy": "indy", "json-ld": "ld_proof"}
+        self.credFormatFilterTranslationDict = {"indy": "indy", "json-ld": "ld_proof"}
 
         self.proofTypeKeyTypeTranslationDict = {
             "Ed25519Signature2018": "ed25519",
@@ -192,15 +193,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         descriptiveTrailer = "-"
         comparibleVersion = self.acapy_version
         if comparibleVersion.startswith("0"):
-            comparibleVersion = comparibleVersion[len("0"):]
+            comparibleVersion = comparibleVersion[len("0") :]
         if "." in comparibleVersion:
             stringParts = comparibleVersion.split(".")
             comparibleVersion = "".join(stringParts)
         if descriptiveTrailer in comparibleVersion:
             # This means its not an offical release and came from Master/Main
             # replace with a .1 so that the number is higher than an offical release
-            comparibleVersion = comparibleVersion.split(
-                descriptiveTrailer)[0] + ".1"
+            comparibleVersion = comparibleVersion.split(descriptiveTrailer)[0] + ".1"
 
         #  Make it a number. At this point "0.5.5-RC" should be 55.1. "0.5.4" should be 54.
         return float(comparibleVersion)
@@ -269,8 +269,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # when it does (and there is talk of supporting YAML) then this code can be removed.
         if os.getenv("TAILS_SERVER_URL") is not None:
             # if the env var is set for tails server then use that.
-            result.append(("--tails-server-base-url",
-                          os.getenv("TAILS_SERVER_URL")))
+            result.append(("--tails-server-base-url", os.getenv("TAILS_SERVER_URL")))
         else:
             # if the tails server env is not set use the gov.bc TEST tails server.
             result.append(
@@ -312,8 +311,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 f"http://{self.external_host}:{str(webhook_port)}/webhooks"
             )
         app = web.Application()
-        app.add_routes(
-            [web.post("/webhooks/topic/{topic}/", self._receive_webhook)])
+        app.add_routes([web.post("/webhooks/topic/{topic}/", self._receive_webhook)])
         runner = web.AppRunner(app)
         await runner.setup()
         self.webhook_site = web.TCPSite(runner, "0.0.0.0", webhook_port)
@@ -348,8 +346,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 )
         else:
             log_msg(
-                "in webhook, topic is: " + topic +
-                " payload is: " + json.dumps(payload)
+                "in webhook, topic is: " + topic + " payload is: " + json.dumps(payload)
             )
 
     async def handle_connections(self, message: Mapping[str, Any]):
@@ -373,8 +370,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_issue_credential(self, message: Mapping[str, Any]):
         thread_id = message["thread_id"]
         push_resource(thread_id, "credential-msg", message)
-        log_msg("Received Issue Credential Webhook message: " +
-                json.dumps(message))
+        log_msg("Received Issue Credential Webhook message: " + json.dumps(message))
         if "revocation_id" in message:  # also push as a revocation message
             push_resource(thread_id, "revocation-registry-msg", message)
             log_msg("Issue Credential Webhook message contains revocation info")
@@ -382,8 +378,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_issue_credential_v2_0(self, message: Mapping[str, Any]):
         thread_id = message["thread_id"]
         push_resource(thread_id, "credential-msg", message)
-        log_msg("Received Issue Credential v2 Webhook message: " +
-                json.dumps(message))
+        log_msg("Received Issue Credential v2 Webhook message: " + json.dumps(message))
         if "revocation_id" in message:  # also push as a revocation message
             push_resource(thread_id, "revocation-registry-msg", message)
             log_msg("Issue Credential Webhook message contains revocation info")
@@ -391,8 +386,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def handle_present_proof_v2_0(self, message: Mapping[str, Any]):
         thread_id = message["thread_id"]
         push_resource(thread_id, "presentation-msg", message)
-        log_msg("Received a Present Proof v2 Webhook message: " +
-                json.dumps(message))
+        log_msg("Received a Present Proof v2 Webhook message: " + json.dumps(message))
 
     async def handle_present_proof(self, message: Mapping[str, Any]):
         thread_id = message["thread_id"]
@@ -403,8 +397,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # No thread id in the webhook for revocation registry messages
         cred_def_id = message["cred_def_id"]
         push_resource(cred_def_id, "revocation-registry-msg", message)
-        log_msg("Received Revocation Registry Webhook message: " +
-                json.dumps(message))
+        log_msg("Received Revocation Registry Webhook message: " + json.dumps(message))
 
     # TODO Handle handle_issuer_cred_rev (this must be newer than the revocation tests?)
     # TODO Handle handle_issue_credential_v2_0_indy
@@ -414,8 +407,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         invitation_id = message["invitation_id"]
         push_resource(invitation_id, "oob-inviation-msg", message)
         log_msg(
-            "Received Out of Band Invitation Webhook message: " +
-            json.dumps(message)
+            "Received Out of Band Invitation Webhook message: " + json.dumps(message)
         )
 
     async def handle_problem_report(self, message: Mapping[str, Any]):
@@ -537,8 +529,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 resp_text = json.dumps(invitation_resp)
 
                 if resp_status == 200:
-                    resp_text = self.agent_state_translation(
-                        command.topic, resp_text)
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
             elif operation == "receive-invitation":
@@ -548,8 +539,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_operation, data=command.data
                 )
                 if resp_status == 200:
-                    resp_text = self.agent_state_translation(
-                        command.topic, resp_text)
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
             elif (
@@ -567,8 +557,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         if not await self.expected_agent_state(
                             f"/connections/{connection_id}", "request", wait_time=60.0
                         ):
-                            raise Exception(
-                                f"Expected state request but not received")
+                            raise Exception(f"Expected state request but not received")
 
                 agent_operation = f"/connections/{connection_id}/{operation}"
                 log_msg("POST Request: ", agent_operation, command.data)
@@ -701,8 +690,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 log_msg(resp_status, resp_text)
                 if resp_status == 200 and self.aip_version != "AIP20":
-                    resp_text = self.agent_state_translation(
-                        command.topic, resp_text)
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
         # Handle issue credential v2 POST operations
@@ -737,8 +725,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             log_msg(resp_status, resp_text)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(
-                    command.topic, resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
         elif command.topic == "proof":
@@ -831,8 +818,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 log_msg(resp_status, resp_text)
                 if resp_status == 200:
-                    resp_text = self.agent_state_translation(
-                        command.topic, resp_text)
+                    resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
         # Handle out of band POST operations
@@ -872,11 +858,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 "use_public_did": data["use_public_did"],
             }
 
+            # If mediator_connection_id is included we should use that as the mediator for this connection 
+            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+                mediation_record = await get_mediation_record_by_connection_id(self, data["mediator_connection_id"])
+                data["mediation_id"] = mediation_record["mediation_id"]
+
         elif operation == "receive-invitation":
             # TODO check for Alias and Auto_accept in data to add to the call (works without for now)
             if "use_existing_connection" in data:
-                use_existing_connection = str(
-                    data["use_existing_connection"]).lower()
+                use_existing_connection = str(data["use_existing_connection"]).lower()
                 data.pop("use_existing_connection")
             else:
                 use_existing_connection = "false"
@@ -972,8 +962,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 # Retrieve matching dids
                 resp_status, resp_text = await self.admin_GET(
                     "/wallet/did",
-                    params={"method": data["did_method"],
-                            "key_type": key_type},
+                    params={"method": data["did_method"], "key_type": key_type},
                 )
 
                 did = None
@@ -1098,8 +1087,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
             if data is not None:
                 # Format the message data that came from the test, to what the Aca-py admin api expects.
-                data = self.map_test_json_to_admin_api_json(
-                    "proof-v2", operation, data)
+                data = self.map_test_json_to_admin_api_json("proof-v2", operation, data)
             log_msg(
                 f"Data translated by backchannel to send to agent for operation: {agent_operation}",
                 data,
@@ -1249,14 +1237,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 record_id, "credential-msg", "credential_exchange_id"
             )
             agent_operation = (
-                self.TopicTranslationDict[command.topic] +
-                "records/" + cred_ex_id
+                self.TopicTranslationDict[command.topic] + "records/" + cred_ex_id
             )
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(
-                    command.topic, resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
         elif command.topic == "issue-credential-v2":
@@ -1265,8 +1251,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 record_id, "credential-msg", "cred_ex_id"
             )
             agent_operation = (
-                self.TopicTranslationDict[command.topic] +
-                "records/" + cred_ex_id
+                self.TopicTranslationDict[command.topic] + "records/" + cred_ex_id
             )
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
@@ -1315,8 +1300,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(
-                    command.topic, resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
         elif command.topic == "proof-v2":
@@ -1325,8 +1309,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 record_id, "presentation-msg", "pres_ex_id"
             )
             agent_operation = (
-                self.TopicTranslationDict[command.topic] +
-                "records/" + pres_ex_id
+                self.TopicTranslationDict[command.topic] + "records/" + pres_ex_id
             )
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
@@ -1349,8 +1332,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(
-                    command.topic, resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
@@ -1366,8 +1348,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_DELETE(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(
-                    command.topic, resp_text)
+                resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
@@ -1489,8 +1470,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             i = 0
             while revocation_msg is None and i < MAX_TIMEOUT:
                 await asyncio.sleep(1)
-                revocation_msg = pop_resource(
-                    record_id, "revocation-registry-msg")
+                revocation_msg = pop_resource(record_id, "revocation-registry-msg")
                 i = i + 1
 
             resp_status = 200
@@ -1642,10 +1622,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     .get("data", {})
                 )
 
-                requested_attributes = request_data.get(
-                    "requested_attributes", {})
-                requested_predicates = request_data.get(
-                    "requested_predicates", {})
+                requested_attributes = request_data.get("requested_attributes", {})
+                requested_predicates = request_data.get("requested_predicates", {})
                 proof_request_name = request_data.get("name", "test proof")
                 proof_request_version = request_data.get("version", "1.0")
                 non_revoked = request_data.get("non_revoked", None)
@@ -1695,8 +1673,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 requested_attributes = data.get("requested_attributes", {})
                 requested_predicates = data.get("requested_predicates", {})
-                self_attested_attributes = data.get(
-                    "self_attested_attributes", {})
+                self_attested_attributes = data.get("self_attested_attributes", {})
 
                 admin_data = {
                     "comment": data["comment"],
@@ -1719,14 +1696,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             if operation == "send-request":
                 request_type = "presentation_request"
 
-                presentation_request_orig = data.get(
-                    "presentation_request", {})
+                presentation_request_orig = data.get("presentation_request", {})
                 pres_request_data = presentation_request_orig.get("data", {})
                 cred_format = presentation_request_orig.get("format")
 
                 if cred_format is None:
-                    raise Exception(
-                        "Credential format not specified for presentation")
+                    raise Exception("Credential format not specified for presentation")
                 elif cred_format == "indy":
                     requested_attributes = pres_request_data.get(
                         "requested_attributes", {}
@@ -1734,10 +1709,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     requested_predicates = pres_request_data.get(
                         "requested_predicates", {}
                     )
-                    proof_request_name = pres_request_data.get(
-                        "name", "test proof")
-                    proof_request_version = pres_request_data.get(
-                        "version", "1.0")
+                    proof_request_name = pres_request_data.get("name", "test proof")
+                    proof_request_version = pres_request_data.get("version", "1.0")
                     non_revoked = pres_request_data.get("non_revoked")
 
                     presentation_request = {
@@ -1756,8 +1729,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     # We use DIF format for JSON-LD credentials
                     presentation_request = {"dif": pres_request_data}
                 else:
-                    raise Exception(
-                        f"Unknown credential format: {cred_format}")
+                    raise Exception(f"Unknown credential format: {cred_format}")
 
                 admin_data = {
                     "comment": presentation_request_orig["comment"],
@@ -1775,13 +1747,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 cred_format = data.get("format")
 
                 if cred_format is None:
-                    raise Exception(
-                        "Credential format not specified for presentation")
+                    raise Exception("Credential format not specified for presentation")
                 elif cred_format == "indy":
                     requested_attributes = data.get("requested_attributes", {})
                     requested_predicates = data.get("requested_predicates", {})
-                    self_attested_attributes = data.get(
-                        "self_attested_attributes", {})
+                    self_attested_attributes = data.get("self_attested_attributes", {})
 
                     presentation_data = {
                         cred_format: {
@@ -1797,8 +1767,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     presentation_data = {"dif": presentation}
 
                 else:
-                    raise Exception(
-                        f"Unknown credential format: {cred_format}")
+                    raise Exception(f"Unknown credential format: {cred_format}")
 
                 admin_data = {
                     **presentation_data,
@@ -1985,6 +1954,9 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
             genesis_data=genesis,
             extra_args=extra_args,
         )
+
+        # add mediation routes
+        agent.app.add_routes(mediation_routes)
 
         # start backchannel (common across all types of agents)
         await agent.listen_backchannel(start_port)

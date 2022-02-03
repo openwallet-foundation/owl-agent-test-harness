@@ -60,6 +60,10 @@ tags:
     description: Agent commands related to `did-exchange` topic
   - name: Out of Band
     description: Agent commands related to `out-of-band` topic
+  - name: Mediator Coordination
+    description: Agent commands related to `mediation` topic
+    externalDocs:
+      url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md
 paths:
   /agent/command/status:
     get:
@@ -1147,7 +1151,6 @@ paths:
                   - properties:
                       state:
                         example: done
-
   /agent/command/proof-v2/send-request:
     post:
       tags:
@@ -1291,6 +1294,111 @@ paths:
                     required:
                       - state
                       - verified
+  /agent/command/mediation/{connectionId}:
+    get:
+      tags:
+        - Coordinate Mediation
+      summary: Get mediation record by connection id
+      operationId: CoordinateMediationGetByConnectionId
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediation record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
+        404:
+          description: Mediation record not found
+  /agent/command/mediation/send-request:
+    post:
+      tags:
+        - Coordinate Mediation
+      summary: Send mediation request message
+      description: >
+        Send a `mediate-request` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#mediation-request
+      operationId: CoordinateMediationSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediate request message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
+  /agent/command/mediation/send-grant:
+    post:
+      tags:
+        - Coordinate Mediation
+      summary: Send mediation grant message
+      description: >
+        Send a `mediate-grant` message to mediator with `mediation_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#mediation-grant
+      operationId: CoordinateMediationSendGrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediate grant message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
+  /agent/command/mediation/send-deny:
+    post:
+      tags:
+        - Coordinate Mediation
+      summary: Send mediation deny message
+      description: >
+        Send a `mediate-deny` message to mediator with `mediation_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#mediation-deny
+      operationId: CoordinateMediationSendDeny
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediate grant message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
 
 components:
   schemas:
@@ -1312,6 +1420,10 @@ components:
     ThreadId:
       title: Thread Id
       example: "e7280776-5315-4569-8cac-42cae108adfe"
+      type: string
+    MediatorId:
+      title: Mediator Id
+      example: "42cab98c-816c-4dec-8d8b-8da55dadaab9"
       type: string
     SchemaId:
       title: Schema Id
@@ -1710,7 +1822,6 @@ components:
           "requested_predicates":
             { "attr_3": { "cred_id": "828761d2-65e9-44a5-852e-1f60b943ab65" } },
         }
-
     PresentProofV2SendRequestIndy:
       required:
         - format
@@ -1889,3 +2000,27 @@ components:
           $ref: "#/components/schemas/IssueCredentialV2AttachFormatIndyCredFilter"
         json-ld:
           $ref: "#/components/schemas/IssueCredentialV2AttachFormatLdProofDetail"
+
+    CoordinateMediationState:
+      title: Coordinate Mediation State
+      description: All possible coordinate mediation state values
+      type: string
+      example: request-sent
+      enum:
+        - request-sent
+        - request-received
+        - grant-sent
+        - grant-received
+        - deny-sent
+        - deny-received
+    CoordinateMediationOperationResponse:
+      title: Coordinate Mediation Operation Response
+      type: object
+      required:
+        - connection_id
+        - state
+      properties:
+        connection_id:
+          $ref: "#/components/schemas/ConnectionId"
+        state:
+          $ref: "#/components/schemas/CoordinateMediationState"
