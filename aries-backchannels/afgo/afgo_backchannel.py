@@ -38,6 +38,7 @@ from python.message_queue import (
     push_message_stack,
     pop_message_stack,
 )
+from afgo.routes.mediation_routes import routes as mediation_routes
 
 LOGGER = logging.getLogger(__name__)
 
@@ -266,8 +267,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 )
         else:
             log_msg(
-                "in webhook, topic is: " + topic +
-                " payload is: " + json.dumps(payload)
+                "in webhook, topic is: " + topic + " payload is: " + json.dumps(payload)
             )
 
     async def handle_out_of_band_states(self, message: Mapping[str, Any]):
@@ -297,8 +297,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             raise Exception(
                 f"invitation_ID not found in didexchange_states Webhook Message: {json.dumps(message)}"
             )
-        print("Processed a didexchange_states Webhook message: " +
-              json.dumps(message))
+        print("Processed a didexchange_states Webhook message: " + json.dumps(message))
 
     async def handle_didexchange_actions(self, message: Mapping[str, Any]):
         if "connectionID" in message["message"]["Properties"]:
@@ -309,8 +308,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 f"connectionID not found in didexchange_actions Webhook Message: {json.dumps(message)}"
             )
         log_msg(
-            "Processed a didexchange_actions Webhook message: " +
-            json.dumps(message)
+            "Processed a didexchange_actions Webhook message: " + json.dumps(message)
         )
 
     async def handle_issue_credential_states(self, message: Mapping[str, Any]):
@@ -378,8 +376,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         # No thread id in the webhook for revocation registry messages
         cred_def_id = message["cred_def_id"]
         push_resource(cred_def_id, "revocation-registry-msg", message)
-        log_msg("Received Revocation Registry Webhook message: " +
-                json.dumps(message))
+        log_msg("Received Revocation Registry Webhook message: " + json.dumps(message))
 
     async def handle_problem_report(self, message: Mapping[str, Any]):
         thread_id = message["thread_id"]
@@ -599,6 +596,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
         data = command.data
         agent_operation = "outofband"
 
+        params = {}
+
         if operation == "send-invitation-message":
             # This label is needed for the accept invitation.
             new_data = {"label": f"Invitation created by {self.admin_url}"}
@@ -606,6 +605,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 new_data["accept"] = data["accept"]
             elif "oob-accept" in self.agent_meta_parms:
                 new_data["accept"] = self.agent_meta_parms["oob-accept"]
+
+            # If mediator_connection_id is included we should use that as the mediator for this connection 
+            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+                params["router_connection_id"] = data["mediator_connection_id"]
 
         elif operation == "receive-invitation":
             # Accept invitation requires my_label be part of the data.
@@ -621,7 +624,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         print(f"admin_POST to {agent_operation} with data {data}")
 
-        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data, params)
 
         if resp_status == 200:
             # call get connection to get the status based on the invitation id.
@@ -841,8 +844,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         if "json" in filter_attmt:
                             data["filter"] = filter_attmt["json"]
                         elif "base64" in filter_attmt:
-                            filter_dec = base64.b64decode(
-                                filter_attmt["base64"])
+                            filter_dec = base64.b64decode(filter_attmt["base64"])
                             filter_json = json.loads(filter_dec)
                             data["filter"] = filter_json
 
@@ -1346,8 +1348,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         log_msg(resp_status, resp_text)
         if resp_status == 200:
-            resp_text = self.agent_state_translation(
-                command.topic, None, resp_text)
+            resp_text = self.agent_state_translation(command.topic, None, resp_text)
         return (resp_status, resp_text)
 
     async def handle_present_proof_POST(self, command: BackchannelCommand):
@@ -1444,8 +1445,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             ammended_data["presentation"]["presentations~attach"] = ammended_data[
                 "presentation"
             ]["request_presentations~attach"]
-            ammended_data["presentation"].pop(
-                "request_presentations~attach", None)
+            ammended_data["presentation"].pop("request_presentations~attach", None)
             ammended_data["presentation"].pop("~thread", None)
             ammended_data["presentation"].pop("will_confirm", None)
             ammended_data["presentation"]["presentations~attach"][0]["data"][
@@ -1532,8 +1532,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             else:
                 wh_id = record_id
             await asyncio.sleep(1)
-            present_proof_states_msg = pop_resource_latest(
-                "present-proof-states-msg")
+            present_proof_states_msg = pop_resource_latest("present-proof-states-msg")
             # present_proof_states_msg = json.loads(wh_text)
             if "StateID" in present_proof_states_msg["message"]:
                 resp_json["state"] = present_proof_states_msg["message"]["StateID"]
@@ -1661,8 +1660,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         connection_infos.append(connection_info)
                     resp_text = json.dumps(connection_infos)
                 # translate the state from that the agent gave to what the tests expect
-                resp_text = self.agent_state_translation(
-                    command.topic, None, resp_text)
+                resp_text = self.agent_state_translation(command.topic, None, resp_text)
             return (resp_status, resp_text)
 
         elif command.topic == "did":
@@ -1688,8 +1686,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             )
             issue_credential_states_msg = json.loads(wh_text)
             if "StateID" in issue_credential_states_msg["message"]:
-                resp_json = {
-                    "state": issue_credential_states_msg["message"]["StateID"]}
+                resp_json = {"state": issue_credential_states_msg["message"]["StateID"]}
             else:
                 raise Exception(
                     f"Could not retieve State from webhook message: {issue_credential_states_msg}"
@@ -1723,8 +1720,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             (wh_status, wh_text) = await self.request_response_present_proof(command)
             present_proof_states_msg = json.loads(wh_text)
             if "StateID" in present_proof_states_msg["message"]:
-                resp_json = {
-                    "state": present_proof_states_msg["message"]["StateID"]}
+                resp_json = {"state": present_proof_states_msg["message"]["StateID"]}
             else:
                 raise Exception(
                     f"Could not retieve State from webhook message: {present_proof_states_msg}"
@@ -1752,8 +1748,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             orb_did = orb_did_file.read()
             orb_did_json = json.loads(orb_did)
             (resp_status, resp_text) = await self.admin_POST(
-                agent_operation, data={
-                    "did": orb_did_json, "name": orb_did_name}
+                agent_operation, data={"did": orb_did_json, "name": orb_did_name}
             )
         if resp_status != 200 and resp_status != 400:
             return (resp_status, resp_text, {})
@@ -1798,8 +1793,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             (resp_status, resp_text) = await self.admin_DELETE(agent_operation)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(
-                    command.topic, None, resp_text)
+                resp_text = self.agent_state_translation(command.topic, None, resp_text)
             return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
@@ -1827,9 +1821,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if rec_id:
             message_type = "didexchange-states-msg" + "," + rec_id
             try:
-                didexchange_msg = await pop_message_queue(
-                    message_type, MAX_TIMEOUT
-                )
+                didexchange_msg = await pop_message_queue(message_type, MAX_TIMEOUT)
             except:
                 print("didex timeout waiting for didexchange-states-msg")
                 return (200, "{}")
@@ -1848,8 +1840,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         resp_status = 200
         if didexchange_msg:
             resp_text = json.dumps(didexchange_msg)
-            resp_text = self.agent_state_translation(
-                "did-exchange", None, resp_text)
+            resp_text = self.agent_state_translation("did-exchange", None, resp_text)
 
             if "message" in didexchange_msg:
                 conn_id = didexchange_msg["message"]["Properties"]["connectionID"]
@@ -1875,8 +1866,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         resp_status = 200
         if didexchange_msg:
             resp_text = json.dumps(didexchange_msg)
-            resp_text = self.agent_state_translation(
-                "out-of-band", None, resp_text)
+            resp_text = self.agent_state_translation("out-of-band", None, resp_text)
 
             if "message" in didexchange_msg:
                 conn_id = didexchange_msg["message"]["Properties"]["connectionID"]
@@ -2013,8 +2003,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if presentation_msg:
             resp_text = json.dumps(presentation_msg)
             if resp_status == 200:
-                resp_text = self.agent_state_translation(
-                    command.topic, None, resp_text)
+                resp_text = self.agent_state_translation(command.topic, None, resp_text)
         else:
             resp_text = "{}"
 
@@ -2310,6 +2299,9 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
         agent = AfGoAgentBackchannel(
             "afgo", start_port + 1, start_port + 2, genesis_data=genesis
         )
+
+        # add mediation routes
+        agent.app.add_routes(mediation_routes)
 
         # start backchannel (common across all types of agents)
         await agent.listen_backchannel(start_port)
