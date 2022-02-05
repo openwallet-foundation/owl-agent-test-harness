@@ -13,6 +13,7 @@ from python.agent_backchannel import (
     AgentBackchannel,
     BackchannelCommand,
     RUN_MODE,
+    AgentPorts,
 )
 from python.utils import (
     log_msg,
@@ -41,12 +42,11 @@ class MobileAgentBackchannel(AgentBackchannel):
     def __init__(
         self,
         ident: str,
-        http_port: int,
-        admin_port: int,
+        agent_ports: AgentPorts,
         genesis_data: str = None,
         params: dict = {},
     ):
-        super().__init__(ident, http_port, admin_port, genesis_data, params)
+        super().__init__(ident, agent_ports, genesis_data, params)
         self.connection_state = "n/a"
 
     async def make_agent_POST_request(
@@ -226,13 +226,17 @@ class MobileAgentBackchannel(AgentBackchannel):
 async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
 
     genesis = None
-
     agent = None
+
+    agent_ports = AgentPorts(
+        http=start_port + 1,
+        admin=start_port + 2,
+        ws=start_port + 3,
+    )
+
     try:
         print("Starting mobile backchannel ...")
-        agent = MobileAgentBackchannel(
-            "mobile", start_port + 1, start_port + 2, genesis_data=genesis
-        )
+        agent = MobileAgentBackchannel("mobile", agent_ports, genesis_data=genesis)
 
         # start backchannel (common across all types of agents)
         await agent.listen_backchannel(start_port)

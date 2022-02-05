@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 from timeit import default_timer
-from typing import Any, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 from aiohttp import (
     web,
@@ -19,6 +19,7 @@ from aiohttp import (
 
 from python.agent_backchannel import (
     AgentBackchannel,
+    AgentPorts,
     BackchannelCommand,
     default_genesis_txns,
     RUN_MODE,
@@ -32,7 +33,10 @@ from python.storage import (
     pop_resource_latest,
 )
 
-from acapy.routes.mediation_routes import routes as mediation_routes, get_mediation_record_by_connection_id
+from acapy.routes.mediation_routes import (
+    routes as mediation_routes,
+    get_mediation_record_by_connection_id,
+)
 
 # from helpers.jsonmapper.json_mapper import JsonMapper
 
@@ -64,13 +68,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     def __init__(
         self,
         ident: str,
-        http_port: int,
-        admin_port: int,
+        agent_ports: AgentPorts,
         genesis_data: str = None,
         params: dict = {},
         extra_args: dict = {},
     ):
-        super().__init__(ident, http_port, admin_port, genesis_data, params, extra_args)
+        super().__init__(ident, agent_ports, genesis_data, params, extra_args)
 
         # get aca-py version if available
         self.acapy_version = None
@@ -207,7 +210,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
     def get_agent_args(self):
         result = [
-            ("--endpoint", self.endpoint),
             ("--label", self.label),
             # "--auto-ping-connection",
             # "--auto-accept-invites",
@@ -218,9 +220,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # "--auto-respond-credential-request",
             # "--auto-respond-presentation-proposal",
             # "--auto-respond-presentation-request",
-            ("--inbound-transport", "http", "0.0.0.0", str(self.http_port)),
-            ("--outbound-transport", "http"),
-            ("--admin", "0.0.0.0", str(self.admin_port)),
+            ("--admin", "0.0.0.0", str(self.agent_ports["http"])),
             "--admin-insecure-mode",
             "--public-invites",
             ("--wallet-type", self.wallet_type),
@@ -301,6 +301,31 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         #    result.extend(self.extra_args)
 
         return result
+
+    def get_host_args(
+        self,
+        inbound_transports: List[Literal["ws", "http"]],
+        outbound_transports: List[Literal["ws", "http"]],
+    ) -> List[str]:
+        args: List[str] = []
+
+        for transport in inbound_transports:
+            port = str(self.agent_ports[transport])
+            endpoint = self.get_agent_endpoint(transport)
+
+            args += [
+                "--endpoint",
+                endpoint,
+                "--inbound-transport",
+                transport,
+                "0.0.0.0",
+                port,
+            ]
+
+        for transport in outbound_transports:
+            args += ["--outbound-transport", transport]
+
+        return args
 
     async def listen_webhooks(self, webhook_port: int):
         self.webhook_port = webhook_port
@@ -858,9 +883,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 "use_public_did": data["use_public_did"],
             }
 
-            # If mediator_connection_id is included we should use that as the mediator for this connection 
-            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
-                mediation_record = await get_mediation_record_by_connection_id(self, data["mediator_connection_id"])
+            # If mediator_connection_id is included we should use that as the mediator for this connection
+            if (
+                "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
+                mediation_record = await get_mediation_record_by_connection_id(
+                    self, data["mediator_connection_id"]
+                )
                 data["mediation_id"] = mediation_record["mediation_id"]
 
         elif operation == "receive-invitation":
@@ -1483,7 +1513,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         return (501, "501: Not Implemented\n\n")
 
-    def _process(self, args, env, loop):
+    def _process(
+        self, args: List[str], env: Dict[str, str], loop: asyncio.AbstractEventLoop
+    ):
         proc = subprocess.Popen(
             args,
             env=env,
@@ -1503,7 +1535,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         )
         return proc
 
-    def get_process_args(self, bin_path: str = None):
+    def get_process_args(self, bin_path: Optional[str] = None) -> List[str]:
         # TODO aca-py needs to be in the path so no need to give it a cmd_path
         cmd_path = "aca-py"
         if bin_path is None:
@@ -1568,7 +1600,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if python_path:
             my_env["PYTHONPATH"] = python_path
 
-        agent_args = self.get_process_args(bin_path)
+        # By default start agent with http inbound / outbound transport
+        agent_args = self.get_process_args(bin_path) + self.get_host_args(
+            inbound_transports=["http"], outbound_transports=["http"]
+        )
 
         # start agent sub-process
         self.log(f"Starting agent sub-process ...")
@@ -1946,11 +1981,17 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
     agent = None
 
+    agent_ports = AgentPorts(
+        http=start_port + 1,
+        admin=start_port + 2,
+        # webhook listens on +3
+        ws=start_port + 4,
+    )
+
     try:
         agent = AcaPyAgentBackchannel(
             "aca-py." + AGENT_NAME,
-            start_port + 1,
-            start_port + 2,
+            agent_ports=agent_ports,
             genesis_data=genesis,
             extra_args=extra_args,
         )

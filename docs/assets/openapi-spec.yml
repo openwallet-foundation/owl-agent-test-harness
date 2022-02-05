@@ -60,7 +60,7 @@ tags:
     description: Agent commands related to `did-exchange` topic
   - name: Out of Band
     description: Agent commands related to `out-of-band` topic
-  - name: Mediator Coordination
+  - name: Coordinate Mediation
     description: Agent commands related to `mediation` topic
     externalDocs:
       url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md
@@ -115,6 +115,13 @@ paths:
         - Status
       requestBody:
         required: true
+        description: >
+          Start the agent with specified parameters. If values are emitted, agent default values should be used.
+
+          For the `inbound_transports` and `outbound_transports` properties the following applies:
+            - If the property is left out the agent should use default configuration. For most agent this means only using HTTP inbound/outbound transport
+            - If the property is an empty array no inbound or outbound transport should be used. This is useful for testing cases where the agent doesn't have an inbound endpoint. An error should be thrown in if the transport requirements can't be met.
+            - If the property contains transports, the specified transports should be used.
         content:
           application/json:
             schema:
@@ -124,7 +131,22 @@ paths:
               properties:
                 parameters:
                   type: object
-                  example: { "mime-type": "didcomm/v2" }
+                  properties:
+                    mime-type:
+                      type: string
+                      example: "didcomm/v2"
+                    inbound_transports:
+                      type: array
+                      items:
+                        type: string
+                        enum: [ws, http]
+                      example: [ws, http]
+                    outbound_transports:
+                      type: array
+                      items:
+                        type: string
+                        enum: [ws, http]
+                      example: [ws, http]
       responses:
         200:
           description: OK

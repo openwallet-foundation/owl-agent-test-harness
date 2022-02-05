@@ -4,7 +4,8 @@ import os
 import traceback
 import random
 
-from typing import Any, Optional, Tuple
+from typing_extensions import TypedDict
+from typing import Any, Literal, Optional, Tuple
 from dataclasses import dataclass
 
 from aiohttp import web, ClientSession
@@ -34,10 +35,13 @@ if RUN_MODE == "docker":
 elif RUN_MODE == "pwd":
     DEFAULT_EXTERNAL_HOST = os.getenv("DOCKERHOST") or "host.docker.internal"
 
+class AgentPorts(TypedDict):
+    admin: int
+    http: int
+    ws: int
 
 def get_ledger_url(ledger_url: str = None):
     return ledger_url or LEDGER_URL or f"http://{DEFAULT_EXTERNAL_HOST}:9000"
-
 
 @dataclass
 class BackchannelCommand:
@@ -92,8 +96,7 @@ class AgentBackchannel:
     def __init__(
         self,
         ident: str,
-        http_port: int,
-        admin_port: int,
+        agent_ports: AgentPorts,
         genesis_data: str = None,
         params: dict = {},
         extra_args: dict = {},
@@ -101,8 +104,7 @@ class AgentBackchannel:
         self.ACTIVE = False
 
         self.ident = ident
-        self.http_port = http_port
-        self.admin_port = admin_port
+        self.agent_ports = agent_ports
         self.genesis_data = genesis_data
         self.params = params
         self.extra_args = extra_args
@@ -123,17 +125,7 @@ class AgentBackchannel:
         self.external_host = DEFAULT_EXTERNAL_HOST
         self.label = ident
 
-        # may be set via ngrok
-        agent_endpoint = os.getenv("AGENT_PUBLIC_ENDPOINT")
-        if agent_endpoint:
-            self.endpoint = agent_endpoint
-        elif RUN_MODE == "pwd":
-            self.endpoint = f"http://{self.external_host}".replace(
-                "{PORT}", str(http_port)
-            )
-        else:
-            self.endpoint = f"http://{self.external_host}:{http_port}"
-        self.admin_url = f"http://{self.internal_host}:{admin_port}"
+        self.admin_url = f"http://{self.internal_host}:" + str(agent_ports["admin"])
 
         self.storage_type = "indy"
         self.wallet_type = (
@@ -148,6 +140,18 @@ class AgentBackchannel:
 
     def activate(self, active: bool = True):
         self.ACTIVE = active
+
+    def get_agent_endpoint(self, transport: Literal["http", "ws"]) -> str:
+        port = str(self.agent_ports[transport])
+
+        # may be set via ngrok. Not supported for WS
+        agent_endpoint = os.getenv("AGENT_PUBLIC_ENDPOINT")
+        if transport == "http" and agent_endpoint:
+            return agent_endpoint
+        elif RUN_MODE == "pwd":
+            return f"http://{self.external_host}".replace("{PORT}", port)
+
+        return f"http://{self.external_host}:{port}"
 
     async def listen_backchannel(self, backchannel_port: int):
         """
