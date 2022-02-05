@@ -174,9 +174,7 @@ def step_impl(context, responder: str, requester: str):
     resp_json = json.loads(resp_text)
 
     if "connection_id" in resp_text:
-        context.connection_id_dict[responder][requester] = resp_json[
-            "connection_id"
-        ]
+        context.connection_id_dict[responder][requester] = resp_json["connection_id"]
 
     # Check to see if the responder name is the same as this person. If not, it is a 3rd person acting as an issuer that needs a connection
     # TODO: it would be nicer to pass the names on every call to remove the need for global keeping of who's the requester / responder
