@@ -34,6 +34,7 @@ from python.storage import (
     pop_resource_latest,
 )
 
+from acapy.routes.agent_routes import routes as agent_routes
 from acapy.routes.mediation_routes import (
     routes as mediation_routes,
     get_mediation_record_by_connection_id,
@@ -2044,6 +2045,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
         # add mediation routes
         agent.app.add_routes(mediation_routes)
+        agent.app.add_routes(agent_routes)
 
         # start backchannel (common across all types of agents)
         await agent.listen_backchannel(start_port)
