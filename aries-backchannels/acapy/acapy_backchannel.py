@@ -7,7 +7,8 @@ import subprocess
 import sys
 
 from timeit import default_timer
-from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
+from typing_extensions import Literal
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from aiohttp import (
     web,

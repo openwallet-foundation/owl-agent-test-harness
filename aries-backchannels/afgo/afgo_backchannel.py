@@ -4,7 +4,8 @@ import json
 import logging
 import os
 import subprocess
-from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing_extensions import Literal
 import uuid
 import base64
 import datetime

@@ -1,9 +1,7 @@
-import json
-from time import sleep
-from typing import TYPE_CHECKING, List, Literal, Optional
+from typing import TYPE_CHECKING, List, Optional
 from aiohttp import web
 
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, Literal
 
 if TYPE_CHECKING:
     from acapy.acapy_backchannel import AcaPyAgentBackchannel

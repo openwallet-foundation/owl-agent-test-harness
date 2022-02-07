@@ -4,8 +4,8 @@ import os
 import traceback
 import random
 
-from typing_extensions import TypedDict
-from typing import Any, Literal, Optional, Tuple
+from typing_extensions import TypedDict, Literal
+from typing import Any, Optional, Tuple
 from dataclasses import dataclass
 
 from aiohttp import web, ClientSession
