@@ -223,7 +223,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # "--auto-respond-credential-request",
             # "--auto-respond-presentation-proposal",
             # "--auto-respond-presentation-request",
-            ("--admin", "0.0.0.0", str(self.agent_ports["http"])),
+            ("--admin", "0.0.0.0", str(self.agent_ports["admin"])),
             "--admin-insecure-mode",
             "--public-invites",
             ("--wallet-type", self.wallet_type),
