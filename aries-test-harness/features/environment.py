@@ -117,6 +117,14 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     context.responder_url = None
     context.responder_name = None
 
+    # mediator
+    context.mediator_url = None
+    context.mediator_name = None
+    
+    # recipient
+    context.recipient_url = None
+    context.recipient_name = None
+
     # Agent name to connection id mapping
     # {
     #   "<agent_name>": "<connection_id>"
@@ -411,6 +419,16 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # 
     # context.current_cred_format = "json-ld"
     context.current_cred_format = None
+
+    # Stores mapping of which agent to use as mediation when creating connections.
+    # {
+    #   "<recipient_name>": "<mediator_name>"
+    # }
+    #
+    # context.mediator_dict = {
+    #   "Faber": "Acme"
+    # }
+    context.mediator_dict = {}
 
 
 def after_feature(context: Context, feature: Feature):

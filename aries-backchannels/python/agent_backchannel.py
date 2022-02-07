@@ -35,13 +35,16 @@ if RUN_MODE == "docker":
 elif RUN_MODE == "pwd":
     DEFAULT_EXTERNAL_HOST = os.getenv("DOCKERHOST") or "host.docker.internal"
 
+
 class AgentPorts(TypedDict):
     admin: int
     http: int
     ws: int
 
+
 def get_ledger_url(ledger_url: str = None):
     return ledger_url or LEDGER_URL or f"http://{DEFAULT_EXTERNAL_HOST}:9000"
+
 
 @dataclass
 class BackchannelCommand:
@@ -56,9 +59,6 @@ class BackchannelCommand:
     operation: Optional[str]
     record_id: Optional[str]
     data: Optional[Any]
-
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
 async def default_genesis_txns():
@@ -149,9 +149,9 @@ class AgentBackchannel:
         if transport == "http" and agent_endpoint:
             return agent_endpoint
         elif RUN_MODE == "pwd":
-            return f"http://{self.external_host}".replace("{PORT}", port)
+            return f"{transport}://{self.external_host}".replace("{PORT}", port)
 
-        return f"http://{self.external_host}:{port}"
+        return f"{transport}://{self.external_host}:{port}"
 
     async def listen_backchannel(self, backchannel_port: int):
         """
@@ -272,13 +272,13 @@ class AgentBackchannel:
             if resp_status == 200:
                 return web.Response(text=resp_text, status=resp_status)
             elif resp_status == 404:
-                return self.not_found_response(json.dumps(command))
+                return self.not_found_response(json.dumps(command.__dict__))
             elif resp_status == 501:
-                return self.not_implemented_response(json.dumps(command))
+                return self.not_implemented_response(json.dumps(command.__dict__))
             else:
                 return web.Response(body=resp_text, status=resp_status)
         except NotImplementedError:
-            return self.not_implemented_response(json.dumps(command))
+            return self.not_implemented_response(json.dumps(command.__dict__))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()
@@ -297,13 +297,13 @@ class AgentBackchannel:
             if resp_status == 200:
                 return web.Response(text=resp_text, status=resp_status)
             elif resp_status == 404:
-                return self.not_found_response(json.dumps(command))
+                return self.not_found_response(json.dumps(command.__dict__))
             elif resp_status == 501:
-                return self.not_implemented_response(json.dumps(command))
+                return self.not_implemented_response(json.dumps(command.__dict__))
             else:
                 return web.Response(body=resp_text, status=resp_status)
         except NotImplementedError:
-            return self.not_implemented_response(json.dumps(command))
+            return self.not_implemented_response(json.dumps(command.__dict__))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()
@@ -322,13 +322,13 @@ class AgentBackchannel:
             if resp_status == 200:
                 return web.Response(text=resp_text, status=resp_status)
             elif resp_status == 404:
-                return self.not_found_response(json.dumps(command))
+                return self.not_found_response(json.dumps(command.__dict__))
             elif resp_status == 501:
-                return self.not_implemented_response(json.dumps(command))
+                return self.not_implemented_response(json.dumps(command.__dict__))
             else:
                 return web.Response(body=resp_text, status=resp_status)
         except NotImplementedError:
-            return self.not_implemented_response(json.dumps(command))
+            return self.not_implemented_response(json.dumps(command.__dict__))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()
@@ -348,13 +348,13 @@ class AgentBackchannel:
             if resp_status == 200:
                 return web.Response(text=resp_text, status=resp_status)
             elif resp_status == 404:
-                return self.not_found_response(json.dumps(command))
+                return self.not_found_response(json.dumps(command.__dict__))
             elif resp_status == 501:
-                return self.not_implemented_response(json.dumps(command))
+                return self.not_implemented_response(json.dumps(command.__dict__))
             else:
                 return web.Response(body=resp_text, status=resp_status)
         except NotImplementedError:
-            return self.not_implemented_response(json.dumps(command))
+            return self.not_implemented_response(json.dumps(command.__dict__))
         except Exception as e:
             print("Exception:", e)
             traceback.print_exc()

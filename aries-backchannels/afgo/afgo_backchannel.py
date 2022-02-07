@@ -23,7 +23,7 @@ from python.agent_backchannel import (
     RUN_MODE,
     START_TIMEOUT,
     BackchannelCommand,
-    AgentPorts
+    AgentPorts,
 )
 from python.utils import flatten, log_msg, output_reader, prompt_loop
 from python.storage import (
@@ -235,6 +235,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 "--inbound-host",
                 f"{transport}@0.0.0.0:{port}",
             ]
+
+        # If we don't have any inbound transports we can use return routing
+        # to still be able to interact with other agents.
+        if len(inbound_transports) == 0:
+            args += ["--transport-return-route", "all"]
 
         for transport in outbound_transports:
             args += ["--outbound-transport", transport]
@@ -568,7 +573,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         return (501, "501: Not Implemented\n\n")
 
-
     async def handle_agent_POST(self, command: BackchannelCommand):
         data = command.data
 
@@ -621,8 +625,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
         data = command.data
         agent_operation = "outofband"
 
-        params = {}
-
         if operation == "send-invitation-message":
             # This label is needed for the accept invitation.
             new_data = {"label": f"Invitation created by {self.admin_url}"}
@@ -633,13 +635,17 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             # If mediator_connection_id is included we should use that as the mediator for this connection 
             if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
-                params["router_connection_id"] = data["mediator_connection_id"]
+                new_data["router_connection_id"] = data["mediator_connection_id"]
 
         elif operation == "receive-invitation":
             # Accept invitation requires my_label be part of the data.
             # That is wy the create invitation above adds a label to have some consistency.
             new_data = {"invitation": data}
             new_data["my_label"] = data["label"]
+
+            # If mediator_connection_id is included we should use that as the mediator for this connection 
+            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+                new_data["router_connections"] = data["mediator_connection_id"]
 
         data = new_data
 
@@ -649,7 +655,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         print(f"admin_POST to {agent_operation} with data {data}")
 
-        (resp_status, resp_text) = await self.admin_POST(agent_operation, data, params)
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
         if resp_status == 200:
             # call get connection to get the status based on the invitation id.
@@ -752,7 +758,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif operation == "send-response":
             agent_operation = f"/connections/{record_id}/accept-request"
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            params = {}
+
+            # Mediator connection id must also be set for the accept-request message
+            if data and "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+                params["router_connections"] = data["mediator_connection_id"]
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data, params)
             if resp_status == 200:
                 # Response doesn't have a state, get it from the connection record.
                 resp_text = await self.amend_response_with_state(

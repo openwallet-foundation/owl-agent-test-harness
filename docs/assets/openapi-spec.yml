@@ -36,6 +36,8 @@ info:
 tags:
   - name: Status
     description: Agent commands to get agent status
+  - name: Agent
+    description: Agent commands to manage an agent
   - name: Connection
     description: Agent commands related to `connection` topic
   - name: DID
@@ -112,7 +114,7 @@ paths:
       summary: (re)start the agent
       operationId: AgentStart
       tags:
-        - Status
+        - Agent
       requestBody:
         required: true
         description: >
@@ -127,26 +129,31 @@ paths:
             schema:
               type: object
               required:
-                - parameters
+                - data
               properties:
-                parameters:
+                data:
                   type: object
+                  required:
+                    - parameters
                   properties:
-                    mime-type:
-                      type: string
-                      example: "didcomm/v2"
-                    inbound_transports:
-                      type: array
-                      items:
-                        type: string
-                        enum: [ws, http]
-                      example: [ws, http]
-                    outbound_transports:
-                      type: array
-                      items:
-                        type: string
-                        enum: [ws, http]
-                      example: [ws, http]
+                    parameters:
+                      type: object
+                      properties:
+                        mime-type:
+                          type: string
+                          example: "didcomm/v2"
+                        inbound_transports:
+                          type: array
+                          items:
+                            type: string
+                            enum: [ws, http]
+                          example: [ws, http]
+                        outbound_transports:
+                          type: array
+                          items:
+                            type: string
+                            enum: [ws, http]
+                          example: [ws, http]
       responses:
         200:
           description: OK

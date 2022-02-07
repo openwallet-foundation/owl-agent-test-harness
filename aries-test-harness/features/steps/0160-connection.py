@@ -9,7 +9,7 @@
 # -----------------------------------------------------------
 
 from time import sleep
-from behave import given, when, then
+from behave import given, when, then, step
 import json
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST, expected_agent_state, check_if_already_connected
 
@@ -71,8 +71,13 @@ def step_impl(context, n):
             context.responder_url = context.config.userdata.get(row['name'])
             context.responder_name = row['name']
             assert context.responder_url is not None and 0 < len(context.responder_url)
+        elif row['role'] == 'mediator':
+            context.mediator_url = context.config.userdata.get(row['name'])
+            context.mediator_name = row['name']
+            assert context.mediator_url is not None and 0 < len(context.mediator_url)
         else:
-            print("Data table in step contains an unrecognized role, must be inviter, invitee, inviteinterceptor, issuer, holder, verifier, prover, requester, responder, mediator, and recipient")
+            role = row['role']
+            print(f"Data table in step contains an unrecognized role '{role}', must be inviter, invitee, inviteinterceptor, issuer, holder, verifier, prover, requester, responder, mediator, and recipient")
 
 
 
@@ -259,6 +264,28 @@ def step_impl(context, inviter, invitee):
 
     # get connection and verify status for invitee
     assert expected_agent_state(invitee_url, "connection", invitee_connection_id, "complete")
+
+
+@step('"{sender}" and "{receiver}" create a new connection')
+def step_impl(context, sender, receiver):
+    """Create a new connection, explicitly not using connection reuse"""
+    if "DIDExchangeConnection" in context.tags:
+        context.execute_steps(f'''
+            When "{sender}" and "{receiver}" create a new didexchange connection
+        ''')
+
+    else:
+        context.execute_steps(f'''
+           When "{sender}" generates a connection invitation
+            And "{receiver}" receives the connection invitation
+            And "{receiver}" sends a connection request to "{sender}"
+            And "{sender}" receives the connection request
+            And "{sender}" sends a connection response to "{receiver}"
+            And "{receiver}" receives the connection response
+            And "{receiver}" sends trustping to "{sender}"
+           Then "{sender}" and "{receiver}" have a connection
+        ''')
+
 
 @given('"{sender}" and "{receiver}" have an existing connection')
 def step_impl(context, sender, receiver):

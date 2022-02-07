@@ -9,8 +9,7 @@
 #
 # -----------------------------------------------------------
 
-from typing import Optional
-from behave import given, when
+from behave import given, when, step
 import json, time
 from agent_backchannel_client import (
     agent_backchannel_GET,
@@ -19,17 +18,33 @@ from agent_backchannel_client import (
     setup_already_connected,
 )
 
+@step('"{sender}" and "{receiver}" create a new didexchange connection')
+def step_impl(context, sender: str, receiver: str):
+    # Almost all agents only allow mediation to be set-up once for a given connection
+    # Reusing existing connections could mean mediation has already been set-up.
+    context.use_existing_connection = False
+    context.use_existing_connection_successful = False
+    context.execute_steps(
+        f"""
+        When "{sender}" sends an explicit invitation to "{receiver}"
+        And "{receiver}" receives the invitation
+        When "{receiver}" sends the request to "{sender}"
+        And "{sender}" receives the request
+        And "{sender}" sends a response to "{receiver}"
+        And "{receiver}" receives the response
+        And "{receiver}" sends complete to "{sender}"
+        Then "{sender}" and "{receiver}" have a connection
+    """
+    )
 
-@when(
-    '"{responder}" sends an explicit invitation to "{requester}" using "{mediator}" as a mediator'
-)
 @when('"{responder}" sends an explicit invitation to "{requester}"')
-def step_impl(context, responder: str, requester: str, mediator: Optional[str] = None):
+def step_impl(context, responder: str, requester: str):
     responder_url = context.config.userdata.get(responder)
 
     data = {"use_public_did": False}
 
-    # If mediator is provided, set the mediator_connection_id
+    # If mediator is set for the current connection, set the mediator_connection_id
+    mediator = context.mediator_dict.get(responder)
     if mediator:
         data["mediator_connection_id"] = context.connection_id_dict[responder][mediator]
 
@@ -70,7 +85,7 @@ def step_impl(context, responder: str, requester: str, mediator: Optional[str] =
 
 
 @given('"{requester}" has a resolvable DID')
-def step_impl(context, requester):
+def step_impl(context, requester: str):
     requester_url = context.config.userdata.get(requester)
 
     (resp_status, resp_text) = agent_backchannel_GET(
@@ -174,9 +189,7 @@ def step_impl(context, responder: str, requester: str):
     resp_json = json.loads(resp_text)
 
     if "connection_id" in resp_text:
-        context.connection_id_dict[responder][requester] = resp_json[
-            "connection_id"
-        ]
+        context.connection_id_dict[responder][requester] = resp_json["connection_id"]
 
     # Check to see if the responder name is the same as this person. If not, it is a 3rd person acting as an issuer that needs a connection
     # TODO: it would be nicer to pass the names on every call to remove the need for global keeping of who's the requester / responder
@@ -195,8 +208,15 @@ def step_impl(context, requester):
     # if feature is DID Exchange or MIME Types then set use existing connection to false
     if "0023" in context.feature.name or "0044" in context.feature.name:
         context.use_existing_connection = False
+
     data = context.responder_invitation
     data["use_existing_connection"] = context.use_existing_connection
+
+    # If mediator is set for the current connection, set the mediator_connection_id
+    mediator = context.mediator_dict.get(requester)
+    if mediator:
+        data["mediator_connection_id"] = context.connection_id_dict[requester][mediator]
+
     (resp_status, resp_text) = agent_backchannel_POST(
         requester_url + "/agent/command/",
         "out-of-band",
@@ -230,6 +250,36 @@ def step_impl(context, requester, responder):
         id=requester_connection_id,
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+
+@then('"{responder}" does not receive the request')
+def step_impl(context, responder: str):
+    responder_url = context.config.userdata.get(responder)
+
+    # If the connection id dict is not populated for the responder to requester relationship, it means the agent in use doesn't
+    # support giving the responders connection_id before the send-request
+    # Make a call to the responder for the connection id and add it to the collection
+    if context.requester_name not in context.connection_id_dict[responder]:
+        # One way (maybe preferred) to get the connection id is to get it from the probable webhook that the controller gets because of the previous step
+        invitation_id = context.responder_invitation["@id"]
+        time.sleep(0.5)  # delay for webhook to execute
+        (resp_status, resp_text) = agent_backchannel_GET(
+            responder_url + "/agent/response/", "did-exchange", id=invitation_id
+        )  # {}
+        assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+        resp_json = json.loads(resp_text)
+
+        if "connection_id" not in resp_text:
+            # If we weren't able to find the connection_id it means the request
+            # probably never arrived. We don't have to do a check
+            return
+
+        context.connection_id_dict[responder][context.requester_name] = resp_json[
+            "connection_id"
+        ]
+
+    # Check the request never arrived
+    assert expected_agent_state(responder_url, "did-exchange", context.connection_id_dict[responder][context.requester_name] , ["invitation-sent"])
+
 
 
 @when('"{responder}" receives the request')
@@ -278,15 +328,23 @@ def step_impl(context, responder):
 
 
 @when('"{responder}" sends a response to "{requester}"')
-def step_impl(context, responder, requester):
+def step_impl(context, responder: str, requester: str):
     responder_connection_id = context.connection_id_dict[responder][requester]
     responder_url = context.config.userdata.get(responder)
+
+    data = {}
+
+    # If mediator is set for the current connection, set the mediator_connection_id
+    mediator = context.mediator_dict.get(responder)
+    if mediator:
+        data["mediator_connection_id"] = context.connection_id_dict[responder][mediator]
 
     (resp_status, resp_text) = agent_backchannel_POST(
         responder_url + "/agent/command/",
         "did-exchange",
         operation="send-response",
         id=responder_connection_id,
+        data=data
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 

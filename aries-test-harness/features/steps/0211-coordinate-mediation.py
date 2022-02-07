@@ -97,34 +97,6 @@ def step_impl(context: Context, mediator: str, recipient: str):
     )
 
 
-@given('"{sender}" and "{receiver}" create a new didexchange connection')
-@when(
-    '"{sender}" and "{receiver}" create a new didexchange connection using "{mediator}" as a mediator'
-)
-def step_impl(context, sender: str, receiver: str, mediator: Optional[str] = None):
-    # If mediator is passed, append it to the send invitation message
-    if mediator:
-        send_invitation = f"""
-            When "{sender}" sends an explicit invitation to "{receiver}" using "{mediator}" as a mediator
-        """
-    else:
-        send_invitation = f"""
-            When "{sender}" sends an explicit invitation to "{receiver}"
-        """
-
-    # Almost all agents only allow mediation to be set-up once for a given connection
-    # Reusing existing connections could mean mediation has already been set-up.
-    context.use_existing_connection = False
-    context.use_existing_connection_successful = False
-    context.execute_steps(
-        f"""
-        {send_invitation}
-        And "{receiver}" receives the invitation
-        When "{receiver}" sends the request to "{sender}"
-        And "{sender}" receives the request
-        And "{sender}" sends a response to "{receiver}"
-        And "{receiver}" receives the response
-        And "{receiver}" sends complete to "{sender}"
-        Then "{sender}" and "{receiver}" have a connection
-    """
-    )
+@when('"{recipient}" uses "{mediator}" as a mediator')
+def step_impl(context, recipient: str, mediator: str):
+    context.mediator_dict[recipient] = mediator
