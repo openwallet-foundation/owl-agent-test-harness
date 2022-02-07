@@ -32,7 +32,10 @@ from python.storage import (
     pop_resource_latest,
 )
 
-from acapy.routes.mediation_routes import routes as mediation_routes, get_mediation_record_by_connection_id
+from acapy.routes.mediation_routes import (
+    routes as mediation_routes,
+    get_mediation_record_by_connection_id,
+)
 
 # from helpers.jsonmapper.json_mapper import JsonMapper
 
@@ -858,9 +861,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 "use_public_did": data["use_public_did"],
             }
 
-            # If mediator_connection_id is included we should use that as the mediator for this connection 
-            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
-                mediation_record = await get_mediation_record_by_connection_id(self, data["mediator_connection_id"])
+            # If mediator_connection_id is included we should use that as the mediator for this connection
+            if (
+                "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
+                mediation_record = await get_mediation_record_by_connection_id(
+                    self, data["mediator_connection_id"]
+                )
                 data["mediation_id"] = mediation_record["mediation_id"]
 
         elif operation == "receive-invitation":

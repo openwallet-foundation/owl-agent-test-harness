@@ -180,7 +180,9 @@ class PicoAgentBackchannel(AgentBackchannel):
             self.log(f"Error during GET {path}: {str(e)}")
             raise
 
-    async def admin_POST(self, path, data=None, text=False, params=None) -> Tuple[int, str]:
+    async def admin_POST(
+        self, path, data=None, text=False, params=None
+    ) -> Tuple[int, str]:
         try:
             return await self.make_admin_request("POST", path, data, text, params)
         except ClientError as e:

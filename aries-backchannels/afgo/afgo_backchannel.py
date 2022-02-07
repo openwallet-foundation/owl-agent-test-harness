@@ -606,8 +606,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
             elif "oob-accept" in self.agent_meta_parms:
                 new_data["accept"] = self.agent_meta_parms["oob-accept"]
 
-            # If mediator_connection_id is included we should use that as the mediator for this connection 
-            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+            # If mediator_connection_id is included we should use that as the mediator for this connection
+            if (
+                "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
                 params["router_connection_id"] = data["mediator_connection_id"]
 
         elif operation == "receive-invitation":

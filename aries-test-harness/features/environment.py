@@ -10,16 +10,17 @@ from collections import defaultdict
 from behave.runner import Context
 from behave.model import Scenario, Feature
 
+
 def before_scenario(context: Context, scenario: Scenario):
     setup_scenario_context(context, scenario)
 
     # Check if the scenario has an issue associated
     for tag in context.tags:
-        if '.issue:' in tag:
+        if ".issue:" in tag:
 
             # Parse out the URL in the issue tag.
             l_issue_info = tag.split(":")
-            s_issue_url = 'https:' + l_issue_info[2]
+            s_issue_url = "https:" + l_issue_info[2]
 
             # get the test id for this scenario
             for tag in context.tags:
@@ -28,50 +29,60 @@ def before_scenario(context: Context, scenario: Scenario):
                     break
 
             # Tell the user the scenario will fail and the URL to the issue
-            print(f'NOTE: Test {test_id}:{scenario.name}, WILL FAIL due to an outstanding issue not yet resolved.')
-            print(f'For more information see issue details at {s_issue_url}')
+            print(
+                f"NOTE: Test {test_id}:{scenario.name}, WILL FAIL due to an outstanding issue not yet resolved."
+            )
+            print(f"For more information see issue details at {s_issue_url}")
             break
 
     # Check if the @MultiUseInvite tag exists
-    if 'MultiUseInvite' in context.tags:
-        print(f'NOTE: Test "{scenario.name}" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.')
+    if "MultiUseInvite" in context.tags:
+        print(
+            f'NOTE: Test "{scenario.name}" WILL FAIL if your Agent Under Test is not started with or does not support Multi Use Invites.'
+        )
 
     # Check for Present Proof Feature to be able to handle the loading of schemas and credential definitions before the scenarios.
-    if 'present proof' in context.feature.name or 'revocation' in context.feature.name or 'Issue Credential' in context.feature.name:
+    if (
+        "present proof" in context.feature.name
+        or "revocation" in context.feature.name
+        or "Issue Credential" in context.feature.name
+    ):
         # get the tag with "Schema_".
         for tag in context.tags:
-            if 'ProofType_' in tag:
+            if "ProofType_" in tag:
                 # Get and assign the proof type to the context
                 # tag is in format "ProofType_PROOFTYPESTRING"
                 context.proof_type = tag.split("ProofType_")[1]
-            if 'DidMethod_' in tag:
+            if "DidMethod_" in tag:
                 # Get and assign the did method to the context
                 # tag is in format "@DidMethod_DIDMETHOD"
                 context.did_method = tag.split("DidMethod_")[1]
-            if 'Schema_' in tag:
+            if "Schema_" in tag:
                 # Get and assign the schema to the context
                 try:
-                    schema_json_file = open(
-                        'features/data/' + tag.lower() + '.json')
+                    schema_json_file = open("features/data/" + tag.lower() + ".json")
                     schema_json = json.load(schema_json_file)
 
                     # If this is issue credential then you can't created multiple credential defs at the same time, like Proof uses
                     # multiple credential types in the proof. So just set the context.schema here to be used in the issue cred test.
                     # This makes the rule that you can only have one @Schema_ tag in an issue credential test scenario.
-                    if 'Issue Credential' in context.feature.name:
+                    if "Issue Credential" in context.feature.name:
                         context.schema = schema_json["schema"]
                         # Get and assign the credential definition info to the context
-                        context.support_revocation = schema_json["cred_def_support_revocation"]
+                        context.support_revocation = schema_json[
+                            "cred_def_support_revocation"
+                        ]
 
                     # Support multiple schemas for multiple creds in a proof request.
                     # for each schema in tags add the schema and revocation support to a dict keyed by schema name.
 
                     context.schema_dict[tag] = schema_json["schema"]
-                    context.support_revocation_dict[tag] = schema_json["cred_def_support_revocation"]
+                    context.support_revocation_dict[tag] = schema_json[
+                        "cred_def_support_revocation"
+                    ]
 
                 except FileNotFoundError:
-                    print('FileNotFoundError: features/data/' +
-                          tag.lower() + '.json')
+                    print("FileNotFoundError: features/data/" + tag.lower() + ".json")
 
 
 def setup_scenario_context(context: Context, scenario: Scenario):
@@ -387,7 +398,7 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     #        "<cred_format>": ?
     #   }
     # }
-    # 
+    #
     # context.filters_dict = {
     #   "Schema_DriversLicense_v2": {
     #      "indy": {},
@@ -395,12 +406,12 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     #   }
     # }
     context.filters_dict = {}
-    
+
     # Current present proof filter (taken from filters dict)
     # {
     #   "<cred_format>": ?
     # }
-    # 
+    #
     # context.filters = {
     #   "indy": {},
     #   "json-ld": {}
@@ -408,7 +419,7 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     context.filters = None
 
     # Current cred format used
-    # 
+    #
     # context.current_cred_format = "json-ld"
     context.current_cred_format = None
 
@@ -416,7 +427,7 @@ def setup_scenario_context(context: Context, scenario: Scenario):
 def after_feature(context: Context, feature: Feature):
     if "UsesCustomParameters" in feature.tags:
         # after a feature that uses custom parameters, clear all custom parameters in each agent
-        for agent in ['Acme', 'Bob', 'Faber', 'Mallory']:
+        for agent in ["Acme", "Bob", "Faber", "Mallory"]:
             context.execute_steps(
                 f'Given "{agent}" is running with parameters ' + '"{}"'
             )
