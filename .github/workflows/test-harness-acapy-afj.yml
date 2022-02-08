@@ -45,7 +45,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a javascript"
           TEST_AGENTS: "-d acapy-main -b javascript"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10,@revocation -t ~@wip"
           REPORT_PROJECT: acapy-b-javascript
         continue-on-error: true
       - name: run-send-gen-test-results-secure
