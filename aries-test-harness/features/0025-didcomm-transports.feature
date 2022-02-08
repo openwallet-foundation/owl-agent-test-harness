@@ -58,5 +58,3 @@ Feature: RFC 0025 DIDComm Transports
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["http"]                | ["http"]                 | ["ws"]                 | ["ws"]                  |
       | ["ws"]                  | ["ws"]                   | ["http"]               | ["http"]                |
-      | ["http"]                | ["http"]                 | ["ws"]                 | ["ws", "http"]          |
-      | ["ws"]                  | ["ws", "http"]           | ["http"]               | ["http"]                |
