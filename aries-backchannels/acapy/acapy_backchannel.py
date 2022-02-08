@@ -3,6 +3,7 @@ import functools
 import json
 import logging
 import os
+import signal
 import subprocess
 import sys
 
@@ -1533,6 +1534,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             args,
             env=env,
             encoding="utf-8",
+            preexec_fn=os.setsid
         )
         stdout = loop.run_in_executor(
             None,
@@ -1655,6 +1657,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
     def _terminate(self):
         if self.proc and self.proc.poll() is None:
+            # proc.terminate by itself won't kill the servers, this does
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
             self.proc.terminate()
             try:
                 self.proc.wait(timeout=0.5)
