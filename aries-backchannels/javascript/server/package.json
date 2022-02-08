@@ -11,8 +11,8 @@
     "format": "prettier --ignore-path .gitignore '**/*.+(js|json|ts|md|yml|yaml)' --write"
   },
   "dependencies": {
-    "@aries-framework/core": "alpha",
-    "@aries-framework/node": "alpha",
+    "@aries-framework/core": "file:../aries-framework-core-v0.1.0.tgz",
+    "@aries-framework/node": "file:../aries-framework-node-v0.1.0.tgz",
     "@tsed/common": "6.75.4",
     "@tsed/core": "6.75.4",
     "@tsed/di": "6.75.4",
