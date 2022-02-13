@@ -30,10 +30,10 @@ Want to add your Aries component to this page? You need to add a runset to the
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
 | [ACA-Py](acapy.md)| AIP 1, 2 | None | 52 / 52<br>100% | 20 / 20<br>100% | 46 / 46<br>100% | 43 / 51<br>84% | 0 / 2<br>0% | 34 / 34<br>100% | 64 / 64<br>100% | **247 / 257<br>96%** |
 | [AF-Go](afgo.md)| AIP 2 | None | 20 / 20<br>100% | 25 / 25<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **45 / 45<br>100%** |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 46 / 46<br>100% | 0 / 0<br>0% | 17 / 17<br>100% | 53 / 53<br>100% | 0 / 0<br>0% | 50 / 51<br>98% | 0 / 0<br>0% | **137 / 138<br>99%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 46 / 46<br>100% | 0 / 0<br>0% | 17 / 17<br>100% | 53 / 53<br>100% | 0 / 0<br>0% | 51 / 51<br>100% | 0 / 0<br>0% | **138 / 138<br>100%** |
 | [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 43 / 51<br>84% | 0 / 0<br>0% | 53 / 53<br>100% | 12 / 12<br>100% | 0 / 0<br>0% | 31 / 39<br>79% | 0 / 0<br>0% | **110 / 126<br>87%** |
 | [Verity](verity.md)| AIP 1 | Credential Exchange | 0 / 2<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **0 / 2<br>0%** |
-| [Findy](findy.md)| AIP 1 | Revocation | 34 / 34<br>100% | 0 / 0<br>0% | 50 / 51<br>98% | 31 / 39<br>79% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | **115 / 124<br>92%** |
+| [Findy](findy.md)| AIP 1 | Revocation | 34 / 34<br>100% | 0 / 0<br>0% | 51 / 51<br>100% | 31 / 39<br>79% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | **116 / 124<br>93%** |
 | [VCX](aries-vcx.md)| AIP 1 | Proof Proposals, Public Dids, Revocations | 64 / 64<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 33 / 34<br>97% | **97 / 98<br>98%** |
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
@@ -42,5 +42,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Thu Feb 10 03:52:38 UTC 2022*
+*Results last updated: Sun Feb 13 03:52:17 UTC 2022*
 

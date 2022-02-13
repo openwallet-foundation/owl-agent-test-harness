@@ -8,7 +8,7 @@
 | [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.3 | javascript<br>0.1.0 | dotnet-master<br> | acapy-main<br>0.7.3 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 | [afj-acapy](#runset-afj-acapy) | javascript<br>0.1.0 | acapy-main<br>0.7.3 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afj-dotnet](#runset-afj-dotnet) | javascript<br>0.1.0 | dotnet-master<br> | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-findy](#runset-afj-findy) | javascript<br>0.1.0 | findy<br>0.25.32 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**16 / 17<br>94%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-findy](#runset-afj-findy) | javascript<br>0.1.0 | findy<br>0.25.32 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
 | [afj](#runset-afj) | javascript<br>0.1.0 | javascript<br>0.1.0 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-javascript](#runset-dotnet-javascript) | dotnet-master<br> | javascript<br>0.1.0 | dotnet-master<br> | dotnet-master<br> | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | findy<br>0.25.32 | javascript<br>0.1.0 | dotnet-master<br> | findy<br>0.25.32 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
@@ -24,7 +24,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 01:40:21 UTC 2022*
+*Last run: Sun Feb 13 01:49:56 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -47,7 +47,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Feb 10 01:49:11 UTC 2022*
+*Last run: Sun Feb 13 01:53:04 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -72,7 +72,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 02:03:18 UTC 2022*
+*Last run: Sun Feb 13 02:04:43 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -95,7 +95,7 @@ Runset Name: AFJ to AF-.NET
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Feb 10 02:00:24 UTC 2022*
+*Last run: Sun Feb 13 02:03:50 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -115,10 +115,10 @@ All of the tests being executed in this runset are passing.
 Runset Name: AFJ to findy
 
 ```tip
-**Latest results: 16 out of 17 (94%)**
+**Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 02:29:31 UTC 2022*
+*Last run: Sun Feb 13 02:31:57 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -142,7 +142,7 @@ Runset Name: AFJ to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 02:33:07 UTC 2022*
+*Last run: Sun Feb 13 02:37:21 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -165,7 +165,7 @@ Runset Name: AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Feb 10 02:23:50 UTC 2022*
+*Last run: Sun Feb 13 02:25:03 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -188,7 +188,7 @@ Runset Name: findy to AFJ to AF-.NET
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 01:53:52 UTC 2022*
+*Last run: Sun Feb 13 01:57:39 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -211,7 +211,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 02:21:42 UTC 2022*
+*Last run: Sun Feb 13 02:26:15 UTC 2022*
 ```
 
 #### Current Runset Status
