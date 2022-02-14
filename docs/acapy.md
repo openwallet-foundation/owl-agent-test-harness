@@ -29,7 +29,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 10 out of 10 (100%)**
 
 
-*Last run: Thu Feb 10 01:30:44 UTC 2022*
+*Last run: Mon Feb 14 01:29:12 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -52,7 +52,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 01:40:21 UTC 2022*
+*Last run: Mon Feb 14 01:36:50 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -75,7 +75,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 01:43:34 UTC 2022*
+*Last run: Mon Feb 14 01:38:39 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -98,7 +98,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 35 out of 35 (100%)**
 
 
-*Last run: Thu Feb 10 02:04:56 UTC 2022*
+*Last run: Mon Feb 14 02:02:46 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -121,7 +121,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 31 out of 31 (100%)**
 
 
-*Last run: Thu Feb 10 03:04:58 UTC 2022*
+*Last run: Mon Feb 14 02:57:14 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -143,7 +143,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Feb 10 01:49:11 UTC 2022*
+*Last run: Mon Feb 14 01:47:33 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -168,7 +168,7 @@ Runset Name: ACA-PY to AF-.NET
 **Latest results: 26 out of 27 (96%)**
 
 
-*Last run: Thu Feb 10 02:04:44 UTC 2022*
+*Last run: Mon Feb 14 02:01:21 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -193,7 +193,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 02:21:47 UTC 2022*
+*Last run: Mon Feb 14 02:18:56 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -216,7 +216,7 @@ Runset Name: ACA-PY to Verity
 **Latest results: 0 out of 2 (0%)**
 
 
-*Last run: Thu Feb 10 02:25:22 UTC 2022*
+*Last run: Mon Feb 14 02:23:26 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -239,7 +239,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 10 out of 10 (100%)**
 
 
-*Last run: Thu Feb 10 01:56:13 UTC 2022*
+*Last run: Mon Feb 14 01:53:00 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -262,7 +262,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 02:03:18 UTC 2022*
+*Last run: Mon Feb 14 01:59:43 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -285,7 +285,7 @@ Runset Name: aries-vcx to acapy
 **Latest results: 33 out of 33 (100%)**
 
 
-*Last run: Thu Feb 10 02:51:54 UTC 2022*
+*Last run: Mon Feb 14 02:47:25 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -307,7 +307,7 @@ Runset Name: AF-.NET to ACA-PY
 **Latest results: 5 out of 12 (41%)**
 
 
-*Last run: Thu Feb 10 02:17:33 UTC 2022*
+*Last run: Mon Feb 14 02:15:33 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -330,7 +330,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Feb 10 02:21:54 UTC 2022*
+*Last run: Mon Feb 14 02:20:22 UTC 2022*
 ```
 
 #### Current Runset Status
