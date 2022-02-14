@@ -634,8 +634,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
             elif "oob-accept" in self.agent_meta_params:
                 new_data["accept"] = self.agent_meta_params["oob-accept"]
 
-            # If mediator_connection_id is included we should use that as the mediator for this connection 
-            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+            # If mediator_connection_id is included we should use that as the mediator for this connection
+            if (
+                "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
                 new_data["router_connection_id"] = data["mediator_connection_id"]
 
         elif operation == "receive-invitation":
@@ -644,8 +647,11 @@ class AfGoAgentBackchannel(AgentBackchannel):
             new_data = {"invitation": data}
             new_data["my_label"] = data["label"]
 
-            # If mediator_connection_id is included we should use that as the mediator for this connection 
-            if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+            # If mediator_connection_id is included we should use that as the mediator for this connection
+            if (
+                "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
                 new_data["router_connections"] = data["mediator_connection_id"]
 
         data = new_data
@@ -762,10 +768,16 @@ class AfGoAgentBackchannel(AgentBackchannel):
             params = {}
 
             # Mediator connection id must also be set for the accept-request message
-            if data and "mediator_connection_id" in data and data["mediator_connection_id"] != None:
+            if (
+                data
+                and "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
                 params["router_connections"] = data["mediator_connection_id"]
 
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data, params)
+            (resp_status, resp_text) = await self.admin_POST(
+                agent_operation, data, params
+            )
             if resp_status == 200:
                 # Response doesn't have a state, get it from the connection record.
                 resp_text = await self.amend_response_with_state(

@@ -874,10 +874,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         # If mediator_connection_id is included we should use that as the mediator for this connection
         mediation_id = None
-        if (
-            "mediator_connection_id" in data
-            and data["mediator_connection_id"] != None
-        ):
+        if "mediator_connection_id" in data and data["mediator_connection_id"] != None:
             mediation_record = await get_mediation_record_by_connection_id(
                 self, data["mediator_connection_id"]
             )
@@ -1530,12 +1527,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     def _process(
         self, args: List[str], env: Dict[str, str], loop: asyncio.AbstractEventLoop
     ):
-        proc = subprocess.Popen(
-            args,
-            env=env,
-            encoding="utf-8",
-            preexec_fn=os.setsid
-        )
+        proc = subprocess.Popen(args, env=env, encoding="utf-8", preexec_fn=os.setsid)
         stdout = loop.run_in_executor(
             None,
             output_reader,

@@ -69,8 +69,7 @@ class MobileAgentBackchannel(AgentBackchannel):
                 message_bytes = json.dumps(data).encode("ascii")
                 base64_bytes = base64.b64encode(message_bytes)
                 base64_message = base64_bytes.decode("ascii")
-                invitation_url = data["serviceEndpoint"] + \
-                    "?c_i=" + base64_message
+                invitation_url = data["serviceEndpoint"] + "?c_i=" + base64_message
 
                 qr = QRCode(border=1)
                 qr.add_data(invitation_url)
@@ -88,11 +87,13 @@ class MobileAgentBackchannel(AgentBackchannel):
 
                 return (
                     200,
-                    json.dumps({
-                        "result": "ok",
-                        "connection_id": "1",
-                        "state": self.connection_state
-                    })
+                    json.dumps(
+                        {
+                            "result": "ok",
+                            "connection_id": "1",
+                            "state": self.connection_state,
+                        }
+                    ),
                 )
 
             elif (
@@ -105,11 +106,13 @@ class MobileAgentBackchannel(AgentBackchannel):
                 self.connection_state = "requested"
                 return (
                     200,
-                    json.dumps({
-                        "result": "ok",
-                        "connection_id": "1",
-                        "state": self.connection_state
-                    })
+                    json.dumps(
+                        {
+                            "result": "ok",
+                            "connection_id": "1",
+                            "state": self.connection_state,
+                        }
+                    ),
                 )
 
         elif command.topic == "issue-credential":
@@ -128,8 +131,14 @@ class MobileAgentBackchannel(AgentBackchannel):
             elif operation == "store":
                 return (
                     200,
-                    json.dumps({"result": "ok", "thread_id": "1",
-                               "credential_id": record_id, "state": "done"})
+                    json.dumps(
+                        {
+                            "result": "ok",
+                            "thread_id": "1",
+                            "credential_id": record_id,
+                            "state": "done",
+                        }
+                    ),
                 )
             else:
                 return (200, '{"result": "ok", "thread_id": "1", "state": "N/A"}')
@@ -171,21 +180,22 @@ class MobileAgentBackchannel(AgentBackchannel):
             return (
                 200,
                 json.dumps(
-                    {"result": "ok", "credential_id": record_id, "state": "N/A"})
+                    {"result": "ok", "credential_id": record_id, "state": "N/A"}
+                ),
             )
 
         elif command.topic == "credential":
             return (
                 200,
                 json.dumps(
-                    {"result": "ok", "credential_id": record_id, "state": "N/A"})
+                    {"result": "ok", "credential_id": record_id, "state": "N/A"}
+                ),
             )
 
         elif command.topic == "proof":
             return (
                 200,
-                json.dumps(
-                    {"result": "ok", "thread_id": record_id, "state": "N/A"})
+                json.dumps({"result": "ok", "thread_id": record_id, "state": "N/A"}),
             )
 
         if command.topic == "version":
