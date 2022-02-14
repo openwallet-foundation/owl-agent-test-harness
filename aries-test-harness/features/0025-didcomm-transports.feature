@@ -46,7 +46,7 @@ Feature: RFC 0025 DIDComm Transports
       | ["http"]                | ["ws", "http"]           | ["ws"]                 | ["ws", "http"]          |
       | ["ws"]                  | ["ws", "http"]           | ["http"]               | ["ws", "http"]          |
 
-  @T002-RFC0025 @DIDExchangeConnection @RFC0023
+  @T002-RFC0025
   Scenario Outline: Fail creating a connection between two agents that have mismatching transports configured
     Given we have "2" agents
       | name | role      |
@@ -60,14 +60,7 @@ Feature: RFC 0025 DIDComm Transports
     When "Bob" sends the request to "Acme"
     Then "Acme" does not receive the request
 
-    @Transport_HTTP @Transport_WS @Transport_NoHttpOutbound
+    @Transport_HTTP @Transport_WS
     Examples: Both agents having no overlap in inbound and outbound transports
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
-      | ["http"]                | ["http"]                 | ["ws"]                 | ["ws"]                  |
-      | ["ws"]                  | ["ws"]                   | ["http"]               | ["http"]                |
-
-    @Transport_HTTP @Transport_WS @Transport_NoHttpOutbound
-    Examples: Both agents having some overlap in inbound and outbound transports, but not enough to communicate
-      | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["ws"]                  | ["http"]                 | ["ws"]                 | ["http"]                |
-      | ["ws"]                  | ["http"]                 | ["http"]               | ["http"]                |
