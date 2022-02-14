@@ -57,7 +57,7 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
     And "Acme" grants the mediation request from "Bob"
     Then "Bob" has "Acme" set up as a mediator
 
-    When "Faber" and "Acme" create a new didexchange connection
+    When "Acme" and "Faber" create a new didexchange connection
     And "Faber" requests mediation from "Acme"
     And "Acme" grants the mediation request from "Faber"
     Then "Faber" has "Acme" set up as a mediator
