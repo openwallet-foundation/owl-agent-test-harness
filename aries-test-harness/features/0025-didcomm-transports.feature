@@ -17,30 +17,30 @@ Feature: RFC 0025 DIDComm Transports
 
     Then the invitation serviceEndpoint should use the "<acme-inbound-transports>" protocol scheme
 
-    @Transport_HTTP
+    @Transport_Http
     Examples: DIDExchange connection with both agents using HTTP for inbound and outbound transport
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["http"]                | ["http"]                 | ["http"]               | ["http"]                |
 
-    @Transport_WS @Transport_NoHttpOutbound
+    @Transport_Ws @Transport_NoHttpOutbound
     Examples: DIDExchange connection with both agents using WS for inbound and outbound transport
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["ws"]                  | ["ws"]                   | ["ws"]                 | ["ws"]                  |
 
     # This test is basically the same as the one above, but mainly for ACA-Py that doesn't support running without
     # HTTP outbound, as it uses the HTTP outbound transport to send webhook events.
-    @Transport_WS @Transport_HTTP
+    @Transport_Ws @Transport_Http
     Examples: DIDExchange connection with both agents using WS for inbound and outbound transport, but also supporting http for outbound transport
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["ws"]                  | ["ws", "http"]           | ["ws"]                 | ["ws", "http"]          |
 
-    @Transport_HTTP @Transport_WS
+    @Transport_Http @Transport_Ws
     Examples: DIDExchange connection with both agents using HTTP and WS for inbound and outbound transport
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["http", "ws"]          | ["http", "ws"]           | ["http", "ws"]         | ["http", "ws"]          |
       | ["ws", "http"]          | ["ws", "http"]           | ["ws", "http"]         | ["ws", "http"]          |
 
-    @Transport_HTTP @Transport_WS
+    @Transport_Http @Transport_Ws
     Examples: DIDExchange connection with one agent using http for inbound and the other using ws and both agents supporting ws and http outbound
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["http"]                | ["ws", "http"]           | ["ws"]                 | ["ws", "http"]          |
@@ -60,7 +60,7 @@ Feature: RFC 0025 DIDComm Transports
     When "Bob" sends the request to "Acme"
     Then "Acme" does not receive the request
 
-    @Transport_HTTP @Transport_WS
+    @Transport_Http @Transport_Ws
     Examples: Both agents having no overlap in inbound and outbound transports
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports |
       | ["ws"]                  | ["http"]                 | ["ws"]                 | ["http"]                |
