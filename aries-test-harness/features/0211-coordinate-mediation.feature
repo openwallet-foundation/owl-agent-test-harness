@@ -57,7 +57,7 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
     And "Acme" grants the mediation request from "Bob"
     Then "Bob" has "Acme" set up as a mediator
 
-    When "Acme" and "Faber" create a new didexchange connection
+    When "Faber" and "Acme" create a new didexchange connection
     And "Faber" requests mediation from "Acme"
     And "Acme" grants the mediation request from "Faber"
     Then "Faber" has "Acme" set up as a mediator
@@ -72,9 +72,8 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports | faber-inbound-transports | faber-outbound-transports |
       | ["ws", "http"]          | ["ws", "http"]           | []                     | ["ws", "http"]          | []                       | ["ws", "http"]            |
 
-    # Not all agents support being started without inbound transports. By specifying non-matching inbound transports
-    # between Faber and Bob the only way for them to connect is using the mediation as they can't connect directly
-    @Transport_HTTP @Transport_WS @wip
-    Examples: Creating a DIDExchange connection using a mediator with non-overlapping inbound transports
+    # Not all agents support being started without inbound transports.
+    @Transport_HTTP @Transport_WS
+    Examples: Creating a DIDExchange connection using a mediator with overlapping transports
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports | faber-inbound-transports | faber-outbound-transports |
-      | ["http", "ws"]          | ["http", "ws"]           | ["ws"]                 | ["ws"]                  | ["http"]                 | ["http"]                  |
+      | ["http", "ws"]          | ["http", "ws"]           | ["http", "ws"]         | ["http", "ws"]          | ["http", "ws"]           | ["http", "ws"]            |

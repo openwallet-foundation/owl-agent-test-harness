@@ -1,8 +1,8 @@
 @RFC0025 @AIP20 @UsesCustomParameters @DIDExchangeConnection
 Feature: RFC 0025 DIDComm Transports
-  In order to communicate with otehr agents,
+  In order to communicate with other agents,
   As an Agent
-  I want to various transprot protocol.
+  I want to various transport protocol.
 
   @T001-RFC0025
   Scenario Outline: Create connection between two agents with overlapping transports
