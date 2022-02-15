@@ -2,7 +2,7 @@
 Feature: RFC 0025 DIDComm Transports
   In order to communicate with other agents,
   As an Agent
-  I want to various transport protocol.
+  I want to create connections using different transport protocols.
 
   @T001-RFC0025
   Scenario Outline: Create connection between two agents with overlapping transports
