@@ -7,16 +7,17 @@ import {
   ProofRequest,
   RequestedCredentials,
   ProofRecord,
-  IndyCredentialInfo,
   AgentConfig,
   Logger,
   ProofEventTypes,
   ProofStateChangedEvent,
   ProofState,
+  RequestedAttribute,
+  RequestedPredicate,
 } from '@aries-framework/core'
-import { CredentialUtils } from '../utils/CredentialUtils'
 import { ProofUtils } from '../utils/ProofUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
+import util from 'util'
 
 @Controller('/agent/command/proof')
 export class PresentProofController {
@@ -135,31 +136,30 @@ export class PresentProofController {
       RequestedCredentials
     )
 
-    this.logger.info('Created requested credentials ', {
-      requestedCredentials: JSON.stringify(requestedCredentials.toJSON(), null, 2),
+    const retrievedCredentials = await this.agent.proofs.getRequestedCredentialsForProofRequest(proofRecord.id, {
+      filterByPresentationPreview: true,
     })
 
-    const credentialUtils = new CredentialUtils(this.agent)
-    Object.values(requestedCredentials.requestedAttributes).forEach(async (requestedAttribute) => {
-      const credentialInfo = JsonTransformer.fromJSON(
-        await credentialUtils.getIndyCredentialById(requestedAttribute.credentialId),
-        IndyCredentialInfo
-      )
-      requestedAttribute.credentialInfo = credentialInfo
-    })
-    Object.values(requestedCredentials.requestedPredicates).forEach(async (requestedPredicate) => {
-      const credentialInfo = JsonTransformer.fromJSON(
-        await credentialUtils.getIndyCredentialById(requestedPredicate.credentialId),
-        IndyCredentialInfo
-      )
-      requestedPredicate.credentialInfo = credentialInfo
+    this.logger.info('Created proof request', {
+      requestedCredentials: util.inspect(requestedCredentials, { showHidden: false, depth: null }),
+      retrievedCredentials: util.inspect(retrievedCredentials, { showHidden: false, depth: null }),
     })
 
-    this.logger.info('Created proof request ', {
-      requestedCredentials: requestedCredentials.toJSON(),
+    Object.keys(requestedCredentials.requestedAttributes).forEach((key) => {
+      requestedCredentials.requestedAttributes[key] = retrievedCredentials.requestedAttributes[key].find(
+        (a) => a.credentialId === requestedCredentials.requestedAttributes[key].credentialId
+      ) as RequestedAttribute
     })
 
-    proofRecord = await this.agent.proofs.acceptRequest(proofRecord.id, requestedCredentials, { comment: data.comment })
+    Object.keys(requestedCredentials.requestedPredicates).forEach((key) => {
+      requestedCredentials.requestedPredicates[key] = retrievedCredentials.requestedPredicates[key].find(
+        (p) => p.credentialId === requestedCredentials.requestedPredicates[key].credentialId
+      ) as RequestedPredicate
+    })
+
+    proofRecord = await this.agent.proofs.acceptRequest(proofRecord.id, requestedCredentials, {
+      comment: data.comment,
+    })
 
     return this.mapProofRecord(proofRecord)
   }
