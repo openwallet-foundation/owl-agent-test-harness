@@ -138,6 +138,9 @@ export class PresentProofController {
 
     const retrievedCredentials = await this.agent.proofs.getRequestedCredentialsForProofRequest(proofRecord.id, {
       filterByPresentationPreview: true,
+      // Some tests include presenting a revoked credential, expecting the verification to fail
+      // So not excluding those from the retrieved credentials.
+      filterByNonRevocationRequirements: false,
     })
 
     this.logger.info('Created proof request', {
