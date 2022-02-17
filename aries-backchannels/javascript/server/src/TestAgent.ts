@@ -1,6 +1,7 @@
 import { $log } from '@tsed/common'
 import { Agent, HttpOutboundTransport, InitConfig, WsOutboundTransport } from '@aries-framework/core'
 import { agentDependencies, HttpInboundTransport } from '@aries-framework/node'
+import indy from 'indy-sdk'
 
 import { TsedLogger } from './TsedLogger'
 
@@ -22,6 +23,14 @@ export async function createAgent({
   // TODO: Public did does not seem to be registered
   // TODO: Schema is prob already registered
   $log.level = 'debug'
+
+  // @ts-ignore
+  indy.setLogger(function (level: string, target: string, message: string, modulePath: string, file: string, line: string) {
+    console.log('libindy said:', level, target, message, modulePath, file, line)
+  })
+
+  // @ts-ignore
+  indy.setRuntimeConfig({ collect_backtrace: true })
 
   const agentConfig: InitConfig = {
     label: agentName,
