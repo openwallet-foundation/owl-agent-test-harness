@@ -60,7 +60,7 @@ tags:
     description: Agent commands related to `did-exchange` topic
   - name: Out of Band
     description: Agent commands related to `out-of-band` topic
-  - name: Mediator Coordination
+  - name: Coordinate Mediation
     description: Agent commands related to `mediation` topic
     externalDocs:
       url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md
@@ -1400,6 +1400,276 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoordinateMediationOperationResponse"
 
+  /agent/command/out-of-band/send-invitation-message:
+    post:
+      tags:
+        - Out of Band
+      summary: Create a new out of band invitation
+      operationId: OutOfBandCreateInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - use_public_did
+                  properties:
+                    mediator_connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    use_public_did:
+                      type: boolean
+      responses:
+        200:
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                required:
+                  - state
+                  - invitation
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    allOf:
+                      - $ref: "#/components/schemas/DidExchangeState"
+                      - example: invitation-sent
+                  invitation:
+                    $ref: "#/components/schemas/OutOfBandInvitation"
+  /agent/command/out-of-band/receive-invitation:
+    post:
+      tags:
+        - Out of Band
+      summary: Receive an out of band invitation
+      operationId: OutOfBandReceiveInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  allOf:
+                    - $ref: "#/components/schemas/OutOfBandInvitation"
+                    - type: object
+                      properties:
+                        use_existing_connection:
+                          type: boolean
+                      required:
+                        - use_existing_connection
+                  example:
+                    {
+                      "@id": "f3375429-b116-4224-b55f-563d7ef461f1",
+                      "@type": "https://didcomm.org/out-of-band/1.0/invitation",
+                      "label": "Invitation created by http://host.docker.internal:9042",
+                      "services":
+                        [
+                          {
+                            "id": "86548a10-2b2a-47ce-b9cc-5e835e9add50",
+                            "type": "did-communication",
+                            "recipientKeys":
+                              [
+                                "did:key:z6MkurAvs5HUdN8ARq8indff9ZvVAHNMqWBEevrc82ydPLNh",
+                              ],
+                            "serviceEndpoint": "http://host.docker.internal:9041",
+                          },
+                        ],
+                      "accept": ["didcomm/aip2;env=rfc19"],
+                      "handshake_protocols":
+                        ["https://didcomm.org/didexchange/1.0"],
+                      "use_existing_connection": false,
+                    }
+      responses:
+        200:
+          description: Invitation received
+          content:
+            application/json:
+              schema:
+                required:
+                  - state
+                  - connection_id
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    allOf:
+                      - $ref: "#/components/schemas/DidExchangeState"
+                      - example: invitation-received
+
+  /agent/command/did-exchange/{connectionId}:
+    get:
+      tags:
+        - DID Exchange
+      summary: Get did exchange connection by id
+      operationId: DidExchangeGetById
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: DID Exchange Connection
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                  - state
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    $ref: "#/components/schemas/DidExchangeState"
+        404:
+          description: Connection not found
+  /agent/response/did-exchange/{invitationId}:
+    get:
+      tags:
+        - DID Exchange
+      summary: Get did exchange connection by invitation id. Can be used to determine the connection id based of an invitation id.
+      operationId: DidExchangeGetByInvitationId
+      parameters:
+        - in: path
+          name: invitationId
+          description: The invitation `@id`
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: DID Exchange Connection
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/did-exchange/create-request-resolvable-did:
+    post:
+      tags:
+        - DID Exchange
+      summary: Send a did exchange request to the didcomm service registered in the public did
+      operationId: DidExchangeCreateRequestResolvableDid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - their_public_did
+                    - their_did
+                  properties:
+                    their_public_did:
+                      $ref: "#/components/schemas/FullDid"
+                    their_did:
+                      $ref: "#/components/schemas/FullDid"
+      responses:
+        200:
+          description: Request Sent
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/did-exchange/receive-request-resolvable-did:
+    post:
+      tags:
+        - DID Exchange
+      operationId: DidExchangeReceiveRequestResolvableDid
+      summary: "The documentation of this endpoint need to be looked at."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+      responses:
+        200:
+          description: Request Received
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/did-exchange/send-request:
+    post:
+      tags:
+        - DID Exchange
+      summary: Send a did exchange request to the connection with specified id.
+      operationId: DidExchangeSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+
+      responses:
+        200:
+          description: Request sent
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /agent/command/did-exchange/send-response:
+    post:
+      tags:
+        - DID Exchange
+      summary: Send a did exchange response to the connection with specified id.
+      operationId: DidExchangeSendResponse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Response Sent
+          content:
+            application/json:
+              schema:
+                properties: {}
+        400:
+          description: Error sending response. This should send a problem report
+          content:
+            application/json:
+              schema:
+                properties: {}
 components:
   schemas:
     ConnectionInvitation:
@@ -1443,6 +1713,41 @@ components:
         - request
         - response
         - active
+    DidExchangeState:
+      title: Did Exchange State
+      description: All possible did exchange state values
+      type: string
+      example: invitation-sent
+      enum:
+        - start
+        - invitation-sent
+        - request-sent
+        - request-received
+        - response-sent
+        - response-received
+        - abandoned
+        - completed
+    OutOfBandInvitation:
+      title: Out of Band Invitation
+      type: object
+      example:
+        {
+          "@id": "f3375429-b116-4224-b55f-563d7ef461f1",
+          "@type": "https://didcomm.org/out-of-band/1.0/invitation",
+          "label": "Invitation created by http://host.docker.internal:9042",
+          "services":
+            [
+              {
+                "id": "86548a10-2b2a-47ce-b9cc-5e835e9add50",
+                "type": "did-communication",
+                "recipientKeys":
+                  ["did:key:z6MkurAvs5HUdN8ARq8indff9ZvVAHNMqWBEevrc82ydPLNh"],
+                "serviceEndpoint": "http://host.docker.internal:9041",
+              },
+            ],
+          "accept": ["didcomm/aip2;env=rfc19"],
+          "handshake_protocols": ["https://didcomm.org/didexchange/1.0"],
+        }
     Connection:
       title: Connection
       example: {}
