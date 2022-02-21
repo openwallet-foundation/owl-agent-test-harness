@@ -59,7 +59,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T002-HIPE0011 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
+   @T002-HIPE0011 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
    Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential with timesstamp
       Given "2" agents
          | name  | role     |
@@ -329,7 +329,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T013-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense @Indy
+   @T013-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense @Indy @RFC0441
    Scenario Outline: Non-revocable Credential, not revoked, and holder proves claims with the credential with timesstamp
       Given "2" agents
          | name  | role     |
@@ -346,7 +346,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | timeframe | request_for_proof        | presentation                 |
          | Acme   | Data_DL_MinValues | now:now   | proof_request_DL_address | presentation_DL_address_w_ts |
 
-   @T014-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
+   @T014-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
    Scenario Outline: Revocable Credential, not revoked, and holder proves claims with the credential with timesstamp
       Given "2" agents
          | name  | role     |
