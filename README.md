@@ -210,4 +210,4 @@ To read about what protocols and features from Aries Interop Profile 1.0, see th
 
 ### Test Reporting
 
-For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST-REPORTING.md).
+For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST_REPORTING.md).
