@@ -16,5 +16,11 @@
   "type": "Bls12381G2Key2020",
   "purposes": ["assertionMethod"],
   "b58Key":"y2BD5ZME7awdMPYS4FY5AFsk18qjwh45ZJi3vMrjATiGL74eL7tgK7p96ztNtvZFAGVKm5SwNMPhg5qmGaZgvJWHR9cHGEisrdKvGHWSTDN2uc6wTA1C1pPDXqiaRiA6WyN"
+ },
+ {
+  "id": "key4",
+  "type": "JsonWebKey2020",
+  "purposes": ["keyAgreement"],
+  "jwkPath": "./did-keys/create/key4_jwk.json"
  }
 ]
