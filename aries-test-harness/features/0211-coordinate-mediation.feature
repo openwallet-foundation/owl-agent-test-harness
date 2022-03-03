@@ -67,13 +67,13 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
     And "Faber" uses "Acme" as a mediator
     And "Faber" and "Bob" create a new didexchange connection
 
-    @Transport_Http @Transport_Ws @Transport_NoInbound
+    @Transport_Http @Transport_Ws @Transport_NoInbound @normal
     Examples: Creating a DIDExchange connection using a mediator without having inbound transports
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports | faber-inbound-transports | faber-outbound-transports |
       | ["ws", "http"]          | ["ws", "http"]           | []                     | ["ws", "http"]          | []                       | ["ws", "http"]            |
 
     # Not all agents support being started without inbound transports.
-    @Transport_Http @Transport_Ws
+    @Transport_Http @Transport_Ws @critical
     Examples: Creating a DIDExchange connection using a mediator with overlapping transports
       | acme-inbound-transports | acme-outbound-transports | bob-inbound-transports | bob-outbound-transports | faber-inbound-transports | faber-outbound-transports |
       | ["http", "ws"]          | ["http", "ws"]           | ["http", "ws"]         | ["http", "ws"]          | ["http", "ws"]           | ["http", "ws"]            |
