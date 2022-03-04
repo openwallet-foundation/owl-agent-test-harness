@@ -2,16 +2,16 @@ name: test-harness-acapy-aip20
 # RUNSET_NAME: "ACA-PY to ACA-Py"
 # Scope: AIP 2.0
 # Exceptions: None
-# 
+#
 # Summary
 #
 # This runset uses the current main branch of ACA-Py for all of the agents. The runset runs all of the tests in the suite
 # that are expected to pass given the current state of ACA-Py support for AIP 2.
 #
 # Current
-# 
+#
 # All of the tests being executed in this runset are passing.
-# 
+#
 # *Status Note Updated: 2021.03.16*
 #
 # End
@@ -43,12 +43,12 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main"
           TEST_AGENTS: "-d acapy-main"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP20 -t ~@wip"
-          REPORT_PROJECT: acapy-aip20  
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP20 -t ~@wip -t ~@Transport_NoInbound -t ~@Transport_NoHttpOutbound"
+          REPORT_PROJECT: acapy-aip20
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy-aip20 
+          REPORT_PROJECT: acapy-aip20
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}

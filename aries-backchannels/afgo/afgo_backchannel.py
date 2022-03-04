@@ -4,7 +4,8 @@ import json
 import logging
 import os
 import subprocess
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing_extensions import Literal
 import uuid
 import base64
 import datetime
@@ -23,6 +24,7 @@ from python.agent_backchannel import (
     RUN_MODE,
     START_TIMEOUT,
     BackchannelCommand,
+    AgentPorts,
 )
 from python.utils import flatten, log_msg, output_reader, prompt_loop
 from python.storage import (
@@ -71,15 +73,14 @@ class AfGoAgentBackchannel(AgentBackchannel):
     def __init__(
         self,
         ident: str,
-        http_port: int,
-        admin_port: int,
+        agent_ports: AgentPorts,
         genesis_data: str = None,
         params: dict = {},
     ):
-        super().__init__(ident, http_port, admin_port, genesis_data, params)
+        super().__init__(ident, agent_ports, genesis_data, params)
 
         self.output_handler_futures = []
-        self.agent_meta_parms = {}
+        self.agent_meta_params = {}
 
         # Afgo : RFC
         self.connectionResponderStateTranslationDict = {
@@ -205,16 +206,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
         #    --database-type mem \
         #    --webhook-url "http://192.168.65.3:8020"
 
-        result = [
-            ("--inbound-host-external", "http@" + self.endpoint),
+        result: List[Tuple[str, str]] = [
             ("--agent-default-label", self.label),
-            # "--auto-ping-connection",
-            # "--auto-accept-invites",
-            # "--auto-accept-requests",
-            # "--auto-respond-messages",
-            ("--inbound-host", "http@0.0.0.0:" + str(self.http_port)),
-            ("--outbound-transport", "http"),
-            ("--api-host", "0.0.0.0:" + str(self.admin_port)),
+            ("--api-host", "0.0.0.0:" + str(self.agent_ports["admin"])),
             (
                 "--database-type",
                 "mem",
@@ -224,6 +218,34 @@ class AfGoAgentBackchannel(AgentBackchannel):
             result.append(("--webhook-url", self.webhook_url))
 
         return result
+
+    def get_host_args(
+        self,
+        inbound_transports: List[Literal["ws", "http"]],
+        outbound_transports: List[Literal["ws", "http"]],
+    ) -> List[str]:
+        args: List[str] = []
+
+        for transport in inbound_transports:
+            port = self.agent_ports[transport]
+            endpoint = self.get_agent_endpoint(transport)
+
+            args += [
+                "--inbound-host-external",
+                f"{transport}@{endpoint}",
+                "--inbound-host",
+                f"{transport}@0.0.0.0:{port}",
+            ]
+
+        # If we don't have any inbound transports we can use return routing
+        # to still be able to interact with other agents.
+        if len(inbound_transports) == 0:
+            args += ["--transport-return-route", "all"]
+
+        for transport in outbound_transports:
+            args += ["--outbound-transport", transport]
+
+        return args
 
     async def listen_webhooks(self, webhook_port: int):
         self.webhook_port = webhook_port
@@ -558,33 +580,41 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if command.operation != "start":
             return (404, "Unsupported operation")
 
-        input_params = data["parameters"]
+        input_params: Dict[str, Any] = data["parameters"]
         print(f"(re)start agent with params: {input_params}")
 
-        self.agent_meta_parms = {}
+        self.agent_meta_params = {}
 
-        args = []
-        for k in input_params:
-            v = input_params[k]
+        # Get agent host args. If inbound / outbound transports is not provided we use http by default
+        # If an empty array is provided it means we don't want to use any transport
+        # Useful for testing agents without endpoint
+        inbound: List[str] = input_params.get("inbound_transports", ["http"])
+        outbound: List[str] = input_params.get("outbound_transports", ["http"])
 
-            arg = k
+        args = self.get_host_args(
+            inbound_transports=inbound,
+            outbound_transports=outbound,
+        )
+
+        for key, value in input_params.items():
+            arg = key
             if arg in self.map_cmdline_params:
                 arg = self.map_cmdline_params[arg]
             else:
                 # parameters that aren't mapped to the agent will stay in the backchannel
-                self.agent_meta_parms[k] = v
+                self.agent_meta_params[key] = value
                 continue
 
             arg = "--" + arg
 
             args.append(arg)
 
-            if v:
+            if value:
                 # if v is a list, make it a csv string
-                if isinstance(v, list):
-                    v = ",".join(v)
+                if isinstance(value, list):
+                    value = ",".join(value)
 
-                args.append(v)
+                args.append(value)
 
         await self.kill_agent()
         await self.start_process_with_extra_args(args=args)
@@ -596,28 +626,33 @@ class AfGoAgentBackchannel(AgentBackchannel):
         data = command.data
         agent_operation = "outofband"
 
-        params = {}
-
         if operation == "send-invitation-message":
             # This label is needed for the accept invitation.
             new_data = {"label": f"Invitation created by {self.admin_url}"}
             if "accept" in data:
                 new_data["accept"] = data["accept"]
-            elif "oob-accept" in self.agent_meta_parms:
-                new_data["accept"] = self.agent_meta_parms["oob-accept"]
+            elif "oob-accept" in self.agent_meta_params:
+                new_data["accept"] = self.agent_meta_params["oob-accept"]
 
             # If mediator_connection_id is included we should use that as the mediator for this connection
             if (
                 "mediator_connection_id" in data
                 and data["mediator_connection_id"] != None
             ):
-                params["router_connection_id"] = data["mediator_connection_id"]
+                new_data["router_connection_id"] = data["mediator_connection_id"]
 
         elif operation == "receive-invitation":
             # Accept invitation requires my_label be part of the data.
             # That is wy the create invitation above adds a label to have some consistency.
             new_data = {"invitation": data}
             new_data["my_label"] = data["label"]
+
+            # If mediator_connection_id is included we should use that as the mediator for this connection
+            if (
+                "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
+                new_data["router_connections"] = data["mediator_connection_id"]
 
         data = new_data
 
@@ -627,7 +662,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         print(f"admin_POST to {agent_operation} with data {data}")
 
-        (resp_status, resp_text) = await self.admin_POST(agent_operation, data, params)
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
         if resp_status == 200:
             # call get connection to get the status based on the invitation id.
@@ -730,7 +765,19 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif operation == "send-response":
             agent_operation = f"/connections/{record_id}/accept-request"
-            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            params = {}
+
+            # Mediator connection id must also be set for the accept-request message
+            if (
+                data
+                and "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
+                params["router_connections"] = data["mediator_connection_id"]
+
+            (resp_status, resp_text) = await self.admin_POST(
+                agent_operation, data, params
+            )
             if resp_status == 200:
                 # Response doesn't have a state, get it from the connection record.
                 resp_text = await self.amend_response_with_state(
@@ -2072,7 +2119,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         return (501, "501: Not Implemented\n\n")
 
-    def _process(self, args, env, loop):
+    def _process(
+        self, args: List[str], env: Dict[str, str], loop: asyncio.AbstractEventLoop
+    ):
         proc = subprocess.Popen(
             args,
             env=env,
@@ -2093,7 +2142,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self.output_handler_futures = [stdout, stderr]
         return proc
 
-    def get_process_args(self, bin_path: str = None):
+    def get_process_args(self, bin_path: Optional[str] = None) -> List[str]:
         # TODO aries-agent-rest needs to be in the path so no need to give it a cmd_path
         cmd_path = "aries-agent-rest"
         if bin_path is None:
@@ -2130,7 +2179,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             )
 
     async def start_process_with_extra_args(
-        self, *_, args: list = [], bin_path: str = None, wait: bool = True
+        self, *, args: List[str] = [], bin_path: Optional[str] = None, wait: bool = True
     ):
         my_env = os.environ.copy()
         agent_args = self.get_process_args(bin_path) + args
@@ -2152,7 +2201,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
     async def start_process(self, bin_path: str = None, wait: bool = True):
         my_env = os.environ.copy()
 
-        agent_args = self.get_process_args(bin_path)
+        # By default start agent with http inbound / outbound transport
+        agent_args = self.get_process_args(bin_path) + self.get_host_args(
+            inbound_transports=["http"], outbound_transports=["http"]
+        )
 
         # start agent sub-process
         self.log(f"Starting agent sub-process ...")
@@ -2179,7 +2231,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 self.log(msg)
                 raise Exception(msg)
 
-    async def kill_agent(self, loop=None):
+    async def kill_agent(self, loop: Optional[asyncio.AbstractEventLoop] = None):
         if loop is None:
             loop = asyncio.get_event_loop()
 
@@ -2195,7 +2247,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self.loaded_jsonld_contexts = []
 
     async def terminate(self):
-        self.kill_agent()
+        await self.kill_agent()
 
         await self.client_session.close()
         if self.webhook_site:
@@ -2298,9 +2350,18 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
     genesis = None
     agent = None
 
+    agent_ports = AgentPorts(
+        http=start_port + 1,
+        admin=start_port + 2,
+        # webhook listens on +3
+        ws=start_port + 4,
+    )
+
     try:
         agent = AfGoAgentBackchannel(
-            "afgo", start_port + 1, start_port + 2, genesis_data=genesis
+            "afgo",
+            agent_ports=agent_ports,
+            genesis_data=genesis,
         )
 
         # add mediation routes
