@@ -743,6 +743,7 @@ startHarness(){
     export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
     startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
   fi
+  
   echo
   # Check if agents were successfully started. 
   if [[ "$ACME" != "none" ]]; then
