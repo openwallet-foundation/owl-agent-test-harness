@@ -21,8 +21,8 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018 @DidMethod_key
-  Scenario Outline: Issue a JSON-LD Ed25519Signature2018 credential with the Holder beginning with a proposal
+  @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
+  Scenario Outline: Issue a JSON-LD credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
       | Acme | issuer |
