@@ -300,6 +300,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if os.getenv("LOG_LEVEL") is not None:
             result.append(("--log-level", os.getenv("LOG_LEVEL")))
 
+        # aca-py supports a config.yaml file to pass in arguments. This env var point to such a file.
+        if os.getenv("AGENT_CONFIG_FILE") is not None:
+            # if the env var is set then use that.
+            print(os.getenv("AGENT_CONFIG_FILE"))
+            result.append(("--arg-file", os.getenv("AGENT_CONFIG_FILE")))
+
         # result.append(("--trace", "--trace-target", "log", "--trace-tag", "acapy.events", "--trace-label", "acapy",))
 
         # if self.extra_args:
