@@ -13,5 +13,14 @@
     "kid": "oqAJot77k-nHS1wIGWnsbQnTSbha78phuwjGAnBQwCf",
     "x":"oqAJot77k-nHS1wIGWnsbQnTSbha78phuwjGAnBQwCf6Y7ojdW9c9CPoAufenSEzBTWJ6ZQN_6I63Jc0uDfn-gCSFYZJkEh1LYpS160VRtORUls95eR_csuFduSbbqpR",
     "d":"P6yf2ydsLHmx9BwEBH9i7xdoTfynmfPza2dxZUBNX64"
+  },
+  "_1" : {
+    "kty": "EC",
+    "use": "enc",
+    "d": "ssUkM1yKf_afxKpfeP9R6sn0Ei4r7QyfsQj8KIQkKZ0",
+    "crv": "P-256",
+    "kid": "8Yl5zcT9AMHZycFW_BhmeWv_9YdKCc23_PNXu4lY5us",
+    "x": "IAY6G0xR4kcVkc_KrIyPb1a50qMCMjHPjVfUunrVGvs",
+    "y": "qzOw6AnovPqnYn2l6MdEBYfVMPNEQTpMxrlcKRDenCk"
   }
 }

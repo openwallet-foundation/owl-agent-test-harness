@@ -66,6 +66,8 @@ tags:
     description: Agent commands related to `mediation` topic
     externalDocs:
       url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md
+  - name: Out of Band V2
+    description: Agent commands related to `oob-v2` topic
 paths:
   /agent/command/status:
     get:
@@ -1699,6 +1701,91 @@ paths:
             application/json:
               schema:
                 properties: {}
+
+  /agent/command/oob-v2/create-invitation:
+    post:
+      tags:
+        - Out of Band V2
+      summary: Create a new DIDComm V2 out of band invitation
+      operationId: DIDCommV2CreateInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    goal-code:
+                      $ref: "#/components/schemas/GoalCode"
+      responses:
+        200:
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                required:
+                  - invitation
+                properties:
+                  invitation:
+                    $ref: "#/components/schemas/DIDCommV2Invitation"
+  /agent/command/oob-v2/accept-invitation:
+    post:
+      tags:
+        - Out of Band V2
+      summary: Accept a DIDComm V2 out of band invitation
+      operationId: DIDCommV2AcceptInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    invitation:
+                      $ref: "#/components/schemas/DIDCommV2Invitation"
+      responses:
+        200:
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/oob-v2/invitation-connection/{invitationId}:
+    get:
+      tags:
+        - Out of Band V2
+      summary: Get connection ID of new connection created by a response to this invitation.
+      operationId: DIDCommV2GetByInvitationId
+      parameters:
+        - in: path
+          name: invitationId
+          description: The invitation `@id`
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Connection ID
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
 components:
   schemas:
     ConnectionInvitation:
@@ -1777,6 +1864,23 @@ components:
           "accept": ["didcomm/aip2;env=rfc19"],
           "handshake_protocols": ["https://didcomm.org/didexchange/1.0"],
         }
+    DIDCommV2Invitation:
+      title: DIDComm V2 Out of Band Invitation
+      type: object
+      example:
+        {
+          "id": "f3375429-b116-4224-b55f-563d7ef461f1",
+          "type": "https://didcomm.org/out-of-band/2.0/invitation",
+          "from": "did:orb:example.org:EiCRKRZKozDBAlxpZ0UI2UylXW6AmwSdQfguo0VGeyVKKg",
+          "body": {
+            "goal-code": "streamlined-vc",
+            "accept": ["didcomm/v2"]
+          }
+        }
+    GoalCode:
+      title: DIDComm V2 Out of Band Invitation Goal Code
+      type: string
+      example: streamlined-vc
     Connection:
       title: Connection
       example: {}
