@@ -222,7 +222,7 @@ class AgentBackchannel:
         await self.backchannel_site.start()
         print("Listening to backchannel on port", backchannel_port)
 
-    async def parse_request(self, request: web.Request):
+    async def parse_request(self, request: web.Request) -> BackchannelCommand:
         record_id = request.match_info.get("id", None)
         operation = request.match_info.get("operation", None)
         topic = request.match_info.get("topic", None)
