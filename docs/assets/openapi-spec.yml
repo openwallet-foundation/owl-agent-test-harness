@@ -982,6 +982,189 @@ paths:
                           credential_id:
                             $ref: "#/components/schemas/CredentialId"
 
+  /agent/command/issue-credential-v3/send-proposal:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` and `pthid` in body.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#propose-credential
+      operationId: IssueCredentialV3SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - pthid
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    pthid:
+                      $ref: "#/components/schemas/pthid"
+
+      responses:
+        200:
+          description: Credential proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential-v3/retrieve-credential-proposal:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Propose Credential object received by the agent.
+      description: >
+        Retrieves the Propose Credential object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialProposal
+
+      responses:
+        200:
+          description: Propose Credential object
+  /agent/command/issue-credential-v3/send-offer:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#offer-credential
+      operationId: IssueCredentialV3SendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Credential offer sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential-v3/send-request:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#request-credential
+      operationId: IssueCredentialV3SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                type: object
+
+      responses:
+        200:
+          description: Credential request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential-v3/retrieve-credential-application:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Credential Application object received by the agent.
+      description: >
+        Retrieves the Credential Application object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialApplication
+
+      responses:
+        200:
+          description: Credential Application object
+  /agent/command/issue-credential-v3/issue:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Issue credential
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#issue-credential
+      operationId: IssueCredentialV3Issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential-v3/store:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Store/accept credential
+      operationId: IssueCredentialV3Store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - required:
+                      - credential_id
+                    properties:
+                      state:
+                        example: done
+
   /agent/command/credential/{credentialId}:
     get:
       tags:
@@ -1986,6 +2169,10 @@ components:
     ThreadId:
       title: Thread Id
       example: "e7280776-5315-4569-8cac-42cae108adfe"
+      type: string
+    pthid:
+      title: pthid
+      example: "5a7f69cf-ee3c-4a75-9975-1aa3c28db122"
       type: string
     MediatorId:
       title: Mediator Id
