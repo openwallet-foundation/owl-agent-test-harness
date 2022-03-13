@@ -1,3 +1,4 @@
+import asyncio
 import json
 from time import sleep
 from typing import Any, Dict, TYPE_CHECKING
@@ -99,22 +100,14 @@ async def mediation_send_grant(request: web.Request):
     backchannel: "AcaPyAgentBackchannel" = request["backchannel"]
 
     # This seems to need a sleep to work
-    sleep(2)
+    await asyncio.sleep(2)
 
     mediation_record = await get_mediation_record_by_connection_id(
         backchannel, connection_id
     )
-    mediation_id = mediation_record["mediation_id"]
 
-    (resp_status, resp_text) = await backchannel.admin_POST(
-        f"/mediation/requests/{mediation_id}/grant", {}
-    )
-
-    if resp_status != 201:
-        return web.Response(text=resp_text, status=resp_status)
-
-    resp_json = json.loads(resp_text)
-    return web.json_response(mediation_record_to_response(resp_json))
+    # Auto accept is enabled, so we're not granting the mediation explicitly
+    return web.json_response(mediation_record_to_response(mediation_record))
 
 
 @routes.post("/agent/command/mediation/send-deny/")

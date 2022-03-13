@@ -10,7 +10,7 @@ def step_impl(context: Context, transport_str: str):
     if "DIDExchangeConnection" in context.tags:
         serviceEndpoint = context.responder_invitation["services"][0]["serviceEndpoint"]
     else:
-        serviceEndpoint = context.inviter_invitation["invitation"]["serviceEndpoint"]
+        serviceEndpoint = context.inviter_invitation["serviceEndpoint"]
 
     for transport in transport_list:
         if serviceEndpoint.startswith(transport):

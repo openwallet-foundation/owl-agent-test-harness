@@ -1,14 +1,12 @@
-import { $log } from '@tsed/common'
-import { PlatformExpress } from '@tsed/platform-express'
-import { registerProvider } from '@tsed/di'
-import { Agent } from '@aries-framework/core'
+import { $log, registerProvider } from '@tsed/common'
 import minimist from 'minimist'
+import indy from 'indy-sdk'
 
-import { createAgent } from './TestAgent'
+import { TestHarnessConfig } from './TestHarnessConfig'
+import { PlatformExpress } from '@tsed/platform-express'
 import { Server } from './Server'
-import { getGenesisPath, getRandomSeed, registerPublicDid } from './utils/ledgerUtils'
 
-async function bootstrap() {
+async function startup() {
   const cliArguments = minimist(process.argv.slice(2), {
     alias: {
       port: 'p',
@@ -18,54 +16,48 @@ async function bootstrap() {
     },
   })
 
-  const backchannelPort = Number(cliArguments.port)
-  const agentPort = backchannelPort + 1
-  const dockerHost = process.env.DOCKERHOST ?? 'host.docker.internal'
-  const runMode = process.env.RUN_MODE
-  const externalHost = runMode === 'docker' ? dockerHost : 'localhost'
-  const agentName = process.env.AGENT_NAME ? `AFJ ${process.env.AGENT_NAME}` : `AFJ Agent (${agentPort})`
-
-  let endpointUrl = process.env.AGENT_PUBLIC_ENDPOINT
-  if (!endpointUrl) {
-    endpointUrl = `http://${externalHost}:${agentPort}`
-  }
-
-  // There are multiple ways to retrieve the genesis file
-  // we account for all of them
-  const genesisFile = process.env.GENESIS_FILE
-  const genesisUrl = process.env.GENESIS_URL
-  const ledgerUrl = process.env.LEDGER_URL ?? `http://${externalHost}:9000`
-  const genesisPath = await getGenesisPath(genesisFile, genesisUrl, ledgerUrl, dockerHost)
-
-  // Register public did
-  const publicDidSeed = getRandomSeed()
-  await registerPublicDid(ledgerUrl, publicDidSeed)
-
-  const agent = await createAgent({
-    agentName,
-    port: agentPort,
-    endpoint: endpointUrl,
-    publicDidSeed,
-    genesisPath,
-    useLegacyDidSovPrefix: true,
-  })
+  const testHarnessConfig = new TestHarnessConfig({ backchannelPort: Number(cliArguments.port) })
 
   registerProvider({
-    provide: Agent,
-    useValue: agent,
+    provide: TestHarnessConfig,
+    useValue: testHarnessConfig,
   })
+
+  $log.level = 'debug'
+
+  // @ts-ignore
+  indy.setLogger(function (
+    level: string,
+    target: string,
+    message: string,
+    modulePath: string,
+    file: string,
+    line: string
+  ) {
+    console.log('libindy said:', level, target, message, modulePath, file, line)
+  })
+
+  // @ts-ignore
+  indy.setRuntimeConfig({ collect_backtrace: true })
+
+  await testHarnessConfig.startAgent({ inboundTransports: ['http'], outboundTransports: ['http'] })
 
   try {
     $log.debug('Start server...')
     const platform = await PlatformExpress.bootstrap(Server)
 
-    platform.settings.port = cliArguments.port
+    platform.settings.port = testHarnessConfig.backchannelPort
+
+    await testHarnessConfig.agentStartup()
 
     await platform.listen()
-    $log.debug('Server initialized')
+
+    $log.level = 'debug'
   } catch (er) {
     $log.error(er)
+
+    throw er
   }
 }
 
-bootstrap()
+startup()

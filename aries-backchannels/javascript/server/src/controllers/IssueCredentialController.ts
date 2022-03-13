@@ -1,7 +1,6 @@
 import { BodyParams, Controller, Get, PathParams, Post } from '@tsed/common'
 import { BadRequest, NotFound } from '@tsed/exceptions'
 import {
-  Agent,
   CredentialEventTypes,
   CredentialPreview,
   CredentialRecord,
@@ -11,19 +10,24 @@ import {
 } from '@aries-framework/core'
 import { CredentialUtils } from '../utils/CredentialUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/issue-credential')
-export class IssueCredentialController {
-  private agent: Agent
+export class IssueCredentialController extends BaseController {
   private credentialUtils: CredentialUtils
   private subject = new ReplaySubject<CredentialStateChangedEvent>()
 
-  public constructor(agent: Agent) {
-    this.agent = agent
-    this.credentialUtils = new CredentialUtils(agent)
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
 
+    this.credentialUtils = new CredentialUtils(this.agent)
+  }
+
+  public onStartup() {
+    this.subject = new ReplaySubject<CredentialStateChangedEvent>()
     // Catch all events in replay subject for later use
-    agent.events
+    this.agent.events
       .observable<CredentialStateChangedEvent>(CredentialEventTypes.CredentialStateChanged)
       .subscribe(this.subject)
   }

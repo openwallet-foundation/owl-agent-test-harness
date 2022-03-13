@@ -1,7 +1,6 @@
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { NotFound } from '@tsed/exceptions'
 import {
-  Agent,
   JsonTransformer,
   PresentationPreview,
   ProofRequest,
@@ -18,21 +17,26 @@ import {
 import { ProofUtils } from '../utils/ProofUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
 import util from 'util'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/proof')
-export class PresentProofController {
-  private agent: Agent
+export class PresentProofController extends BaseController {
   private logger: Logger
   private proofUtils: ProofUtils
   private subject = new ReplaySubject<ProofStateChangedEvent>()
 
-  public constructor(agent: Agent) {
-    this.agent = agent
-    this.logger = agent.injectionContainer.resolve(AgentConfig).logger
-    this.proofUtils = new ProofUtils(agent)
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
 
+    this.logger = this.agent.injectionContainer.resolve(AgentConfig).logger
+    this.proofUtils = new ProofUtils(this.agent)
+  }
+
+  public onStartup() {
+    this.subject = new ReplaySubject<ProofStateChangedEvent>()
     // Catch all events in replay subject for later use
-    agent.events.observable<ProofStateChangedEvent>(ProofEventTypes.ProofStateChanged).subscribe(this.subject)
+    this.agent.events.observable<ProofStateChangedEvent>(ProofEventTypes.ProofStateChanged).subscribe(this.subject)
   }
 
   @Get('/:threadId')

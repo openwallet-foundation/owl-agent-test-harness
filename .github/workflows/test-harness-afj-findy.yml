@@ -45,7 +45,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript -a findy"
           TEST_AGENTS: "-d javascript -b findy"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
           REPORT_PROJECT: javascript-b-findy
         continue-on-error: true
       - name: run-send-gen-test-results-secure

@@ -1,13 +1,12 @@
 import { Controller, Get, PathParams } from '@tsed/common'
-import { Agent } from '@aries-framework/core'
 import { CredentialUtils } from '../utils/CredentialUtils'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/credential')
-export class CredentialController {
-  private agent: Agent
-
-  public constructor(agent: Agent) {
-    this.agent = agent
+export class CredentialController extends BaseController {
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
   }
 
   @Get('/:credentialId')

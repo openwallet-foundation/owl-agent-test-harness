@@ -43,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript"
           TEST_AGENTS: "-d javascript"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211 -t ~@DIDExchangeConnection"
           REPORT_PROJECT: javascript
         continue-on-error: true
       - name: run-send-gen-test-results-secure

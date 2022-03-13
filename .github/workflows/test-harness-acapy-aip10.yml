@@ -43,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main"
           TEST_AGENTS: "-d acapy-main"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10,@RFC0211 -t ~@wip -t ~@T004-RFC0211 -t ~@Transport_NoHttpOutbound"
           REPORT_PROJECT: acapy-aip10  
         continue-on-error: true
       - name: run-send-gen-test-results-secure
