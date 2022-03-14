@@ -11,6 +11,6 @@ export class CredentialController extends BaseController {
 
   @Get('/:credentialId')
   async getCredentialById(@PathParams('credentialId') credentialId: string) {
-    return await new CredentialUtils(this.agent).getIndyCredentialById(credentialId)
+    return await CredentialUtils.getIndyCredentialById(this.agent, credentialId)
   }
 }

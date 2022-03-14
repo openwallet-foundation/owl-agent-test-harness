@@ -23,14 +23,12 @@ import { TestHarnessConfig } from '../TestHarnessConfig'
 @Controller('/agent/command/proof')
 export class PresentProofController extends BaseController {
   private logger: Logger
-  private proofUtils: ProofUtils
   private subject = new ReplaySubject<ProofStateChangedEvent>()
 
   public constructor(testHarnessConfig: TestHarnessConfig) {
     super(testHarnessConfig)
 
     this.logger = this.agent.injectionContainer.resolve(AgentConfig).logger
-    this.proofUtils = new ProofUtils(this.agent)
   }
 
   public onStartup() {
@@ -41,7 +39,7 @@ export class PresentProofController extends BaseController {
 
   @Get('/:threadId')
   async getProofByThreadId(@PathParams('threadId') threadId: string) {
-    const proofRecord = await this.proofUtils.getProofByThreadId(threadId)
+    const proofRecord = await ProofUtils.getProofByThreadId(this.agent, threadId)
 
     if (!proofRecord) {
       throw new NotFound(`proof record for thead id "${threadId}" not found.`)
@@ -129,7 +127,7 @@ export class PresentProofController extends BaseController {
     }
   ) {
     await this.waitForState(threadId, ProofState.RequestReceived)
-    let proofRecord = await this.proofUtils.getProofByThreadId(threadId)
+    let proofRecord = await ProofUtils.getProofByThreadId(this.agent, threadId)
 
     const requestedCredentials = JsonTransformer.fromJSON(
       {
@@ -175,7 +173,7 @@ export class PresentProofController extends BaseController {
   async verifyPresentation(@BodyParams('id') threadId: string) {
     await this.waitForState(threadId, ProofState.PresentationReceived)
 
-    let proofRecord = await this.proofUtils.getProofByThreadId(threadId)
+    let proofRecord = await ProofUtils.getProofByThreadId(this.agent, threadId)
     if (proofRecord) {
       return this.mapProofRecord(await this.agent.proofs.acceptPresentation(proofRecord.id))
     }
