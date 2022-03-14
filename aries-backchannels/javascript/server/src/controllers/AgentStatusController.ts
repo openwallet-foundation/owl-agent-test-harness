@@ -39,8 +39,8 @@ export class AgentStatusController extends BaseController {
     await this.testHarnessConfig.stopAgent()
 
     await this.testHarnessConfig.startAgent({
-      inboundTransports: data.parameters.inbound_transports ?? [],
-      outboundTransports: data.parameters.outbound_transports ?? [],
+      inboundTransports: data.parameters.inbound_transports ?? ['http'],
+      outboundTransports: data.parameters.outbound_transports ?? ['http'],
     })
 
     await this.testHarnessConfig.agentStartup()
