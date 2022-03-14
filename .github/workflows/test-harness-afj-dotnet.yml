@@ -45,7 +45,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript -a dotnet-master"
           TEST_AGENTS: "-d javascript -b dotnet-master"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@ProofProposal"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@ProofProposal -t ~@RFC0025"
           REPORT_PROJECT: javascript-b-dotnet
         continue-on-error: true
       - name: run-send-gen-test-results-secure

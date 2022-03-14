@@ -203,6 +203,20 @@ paths:
         - Connection
       summary: Create a new connection invitation
       operationId: ConnectionCreateInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    mediator_connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
       responses:
         200:
           description: Invitation created
@@ -233,7 +247,11 @@ paths:
                 - data
               properties:
                 data:
-                  $ref: "#/components/schemas/ConnectionInvitation"
+                  allOf:
+                    - $ref: "#/components/schemas/ConnectionInvitation"
+                    - properties:
+                        mediator_connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
       responses:
         200:
           description: Invitation received
@@ -1495,6 +1513,8 @@ paths:
                       properties:
                         use_existing_connection:
                           type: boolean
+                        mediator_connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
                       required:
                         - use_existing_connection
                   example:
@@ -1518,6 +1538,7 @@ paths:
                       "handshake_protocols":
                         ["https://didcomm.org/didexchange/1.0"],
                       "use_existing_connection": false,
+                      "mediator_connection_id": "77d58e00-f79a-477c-9e50-c05254ab4b54",
                     }
       responses:
         200:

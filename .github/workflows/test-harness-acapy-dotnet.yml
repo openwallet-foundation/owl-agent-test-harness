@@ -47,7 +47,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a dotnet-master"
           TEST_AGENTS: "-d acapy-main -b dotnet-master"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@AIP20 -t ~@RFC0025"
           REPORT_PROJECT: acapy-b-dotnet
         continue-on-error: true
       - name: run-send-gen-test-results-secure
