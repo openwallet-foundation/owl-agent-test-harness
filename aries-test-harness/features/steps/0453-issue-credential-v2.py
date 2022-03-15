@@ -69,7 +69,7 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
                 + ".json"
             )
 
-        if "AIP20" in context.tags:
+        if "AIP20" in context.tags or "DIDComm-V2" in context.tags:
             context.filters_dict[schema] = credential_data_json[credential_data][
                 "filters"
             ]
@@ -77,7 +77,7 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
 
     holder_url = context.config.userdata.get(holder)
 
-    if "AIP20" in context.tags:
+    if "AIP20" in context.tags or "DIDComm-V2" in context.tags:
         # We only want to send data for the cred format being used
         assert (
             cred_format in context.filters
