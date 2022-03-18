@@ -46,7 +46,7 @@ Feature: RFC 0025 DIDComm Transports
       | ["http"]                | ["ws", "http"]           | ["ws"]                 | ["ws", "http"]          |
       | ["ws"]                  | ["ws", "http"]           | ["http"]               | ["ws", "http"]          |
 
-  @T002-RFC0025 @AcceptanceTest
+  @T002-RFC0025 @AcceptanceTest @RFC0160
   Scenario Outline: Create 0160 connection between two agents with overlapping transports
     Given we have "2" agents
       | name | role    |
