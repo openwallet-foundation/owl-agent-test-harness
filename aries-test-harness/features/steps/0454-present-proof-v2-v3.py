@@ -33,15 +33,10 @@ def step_impl(context, prover, issuer, credential_data):
                 )
 
     # Check if a connection between the players has already been established in this test.
-    if (
+    should_create_connection = (
         prover not in context.connection_id_dict
         or issuer not in context.connection_id_dict[prover]
-    ):
-        context.execute_steps(
-            f"""
-            Given "{issuer}" and "{prover}" have an existing connection
-        """
-        )
+    )
 
     # Set the cred format from the feature tags.
     # TODO Check of the Prefix CredFormat exists, throw and error if not. It is mandatory
@@ -78,22 +73,46 @@ def step_impl(context, prover, issuer, credential_data):
     context.issuer_name = issuer
     assert context.issuer_url is not None and len(context.issuer_url) > 0
 
+    use_didcomm_v2 = "DIDComm-V2" in context.tags
+
+
     # issue the credential to prover
     # If there is a schema_dict then we are working with mulitple credential types, loop as many times as
     # there are schemas and add the schema to context as the issue cred tests expect.
     if "CredProposalStart" in context.tags:
         context_steps_start = f"""
-            When  "{prover}" proposes a "{context.current_cred_format}" credential to "{issuer}" with {credential_data}
-            And """
+            When "{prover}" proposes a "{context.current_cred_format}" credential to "{issuer}" with {credential_data}
+            """
     else:
-        context_steps_start = f"""
-            When """
+        context_steps_start = ""
+
+    if should_create_connection:
+        if use_didcomm_v2:
+            context_steps_start = (
+                f"""
+                Given "{issuer}" creates a didcomm v2 invitation
+                And "{prover}" accepts the didcomm v2 invitation from "{issuer}"
+                """ +
+                context_steps_start +
+                f"""
+                When "{issuer}" has received a didcomm v2 message from "{prover}" and created a connection
+                """
+            )
+        else:
+            context.execute_steps(
+                f"""
+                Given "{issuer}" and "{prover}" have an existing connection
+            """
+            )
+
+
     for schema in context.schema_dict:
         context.credential_data = context.credential_data_dict[schema]
         context.schema = context.schema_dict[schema]
         context_steps = (
             context_steps_start
-            + f""" "{issuer}" offers the "{context.current_cred_format}" credential
+            + f"""
+            When "{issuer}" offers the "{context.current_cred_format}" credential
             And "{prover}" requests the "{context.current_cred_format}" credential
             And  "{issuer}" issues the "{context.current_cred_format}" credential
             And "{prover}" acknowledges the "{context.current_cred_format}" credential issue
@@ -101,6 +120,36 @@ def step_impl(context, prover, issuer, credential_data):
         """
         )
         context.execute_steps(context_steps)
+
+
+@when(
+    '"{prover}" sends a presentation proposal to "{verifier}"'
+)
+def step_impl(context, verifier: str, prover: str):
+    presentation_proposal = {
+        "presentation_proposal": {
+            "comment": "This is a comment for the proposed presentation.",
+            "connection_id": context.connection_id_dict[prover][verifier]
+        }
+    }
+
+    if "PresentProofV3" in context.tags:
+        proof_endpoint = "proof-v3"
+    else:
+        proof_endpoint = "proof-v2"
+
+    # send presentation proposal
+    (resp_status, resp_text) = agent_backchannel_POST(
+        context.prover_url + "/agent/command/",
+        proof_endpoint,
+        operation="send-proposal",
+        data=presentation_proposal,
+    )
+
+    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+    resp_json = json.loads(resp_text)
+
+    context.presentation_thread_id = resp_json["thread_id"]
 
 
 @when(
@@ -139,25 +188,52 @@ def step_impl(context, verifier, request_for_proof, prover):
         }
     }
 
-    if context.connectionless:
-        (resp_status, resp_text) = agent_backchannel_POST(
-            context.verifier_url + "/agent/command/",
-            "proof-v2",
-            operation="create-send-connectionless-request",
-            data=presentation_request,
-        )
-    else:
-        presentation_request["presentation_request"][
-            "connection_id"
-        ] = context.connection_id_dict[verifier][prover]
+    use_v3 = "PresentProofV3" in context.tags
 
-        # send presentation request
-        (resp_status, resp_text) = agent_backchannel_POST(
-            context.verifier_url + "/agent/command/",
-            "proof-v2",
-            operation="send-request",
-            data=presentation_request,
-        )
+    if use_v3:
+        if context.presentation_thread_id:
+            # send presentation request in response to proposal
+            (resp_status, resp_text) = agent_backchannel_POST(
+                context.verifier_url + "/agent/command/",
+                "proof-v3",
+                operation="send-request",
+                id=context.presentation_thread_id,
+                data=presentation_request,
+            )
+
+            assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+        else:
+            presentation_request[
+                "connection_id"
+            ] = context.connection_id_dict[verifier][prover]
+
+            # send presentation request
+            (resp_status, resp_text) = agent_backchannel_POST(
+                context.verifier_url + "/agent/command/",
+                "proof-v3",
+                operation="send-request",
+                data=presentation_request,
+            )
+    else:
+        if context.connectionless:
+            (resp_status, resp_text) = agent_backchannel_POST(
+                context.verifier_url + "/agent/command/",
+                "proof-v2",
+                operation="create-send-connectionless-request",
+                data=presentation_request,
+            )
+        else:
+            presentation_request["presentation_request"][
+                "connection_id"
+            ] = context.connection_id_dict[verifier][prover]
+
+            # send presentation request
+            (resp_status, resp_text) = agent_backchannel_POST(
+                context.verifier_url + "/agent/command/",
+                "proof-v2",
+                operation="send-request",
+                data=presentation_request,
+            )
 
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
     resp_json = json.loads(resp_text)
@@ -165,7 +241,7 @@ def step_impl(context, verifier, request_for_proof, prover):
     if context.connectionless:
         # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
         context.presentation_exchange_id = resp_json["presentation_exchange_id"]
-    else:
+    elif not context.presentation_thread_id:
         # save off anything that is returned in the response to use later?
         context.presentation_thread_id = resp_json["thread_id"]
 
@@ -257,9 +333,16 @@ def step_impl(context, prover, presentation):
             "serviceEndpoint": context.verifier_url,
         }
 
+    use_v3 = "PresentProofV3" in context.tags
+
+    if use_v3:
+        proof_endpoint = "proof-v3"
+    else:
+        proof_endpoint = "proof-v2"
+
     (resp_status, resp_text) = agent_backchannel_POST(
         prover_url + "/agent/command/",
-        "proof-v2",
+        proof_endpoint,
         operation="send-presentation",
         id=context.presentation_thread_id,
         data=presentation,
@@ -271,9 +354,16 @@ def step_impl(context, prover, presentation):
 def step_impl(context, verifier):
     verifier_url = context.verifier_url
 
+    use_v3 = "PresentProofV3" in context.tags
+
+    if use_v3:
+        proof_endpoint = "proof-v3"
+    else:
+        proof_endpoint = "proof-v2"
+
     (resp_status, resp_text) = agent_backchannel_POST(
         verifier_url + "/agent/command/",
-        "proof-v2",
+        proof_endpoint,
         operation="verify-presentation",
         id=context.presentation_thread_id,
     )
@@ -290,9 +380,16 @@ def step_impl(context, verifier):
 
 @then('"{prover}" has the proof with formats verified')
 def step_impl(context, prover):
+    use_v3 = "PresentProofV3" in context.tags
+
+    if use_v3:
+        proof_endpoint = "proof-v3"
+    else:
+        proof_endpoint = "proof-v2"
+
     # check the state of the presentation from the prover's perspective
     assert expected_agent_state(
-        context.prover_url, "proof-v2", context.presentation_thread_id, "done"
+        context.prover_url, proof_endpoint, context.presentation_thread_id, "done"
     )
 
     # Check the status of the verification in the verify-presentation call. Should be True
