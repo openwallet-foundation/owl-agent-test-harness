@@ -6,9 +6,9 @@
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
 | [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.7.3 | javascript<br>0.1.0 | acapy-main<br>0.7.3 | acapy-main<br>0.7.3 | AIP 1.0 | [**37 / 37<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [afj-acapy](#runset-afj-acapy) | javascript<br>0.1.0 | acapy-main<br>0.7.3 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**27 / 27<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-findy](#runset-afj-findy) | javascript<br>0.1.0 | findy<br>0.30.0 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-findy](#runset-afj-findy) | javascript<br>0.1.0 | findy<br>0.30.2 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
 | [afj](#runset-afj) | javascript<br>0.1.0 | javascript<br>0.1.0 | javascript<br>0.1.0 | javascript<br>0.1.0 | AIP 1.0 | [**28 / 28<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript](#runset-findy-javascript) | findy<br>0.30.0 | javascript<br>0.1.0 | findy<br>0.30.0 | findy<br>0.30.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript](#runset-findy-javascript) | findy<br>0.30.2 | javascript<br>0.1.0 | findy<br>0.30.2 | findy<br>0.30.2 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -20,7 +20,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 37 out of 37 (100%)**
 
 
-*Last run: Thu Mar 17 02:09:43 UTC 2022*
+*Last run: Sat Mar 19 02:09:13 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -43,7 +43,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 27 out of 27 (100%)**
 
 
-*Last run: Thu Mar 17 02:26:36 UTC 2022*
+*Last run: Sat Mar 19 02:18:41 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -66,7 +66,7 @@ Runset Name: AFJ to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Mar 17 02:45:43 UTC 2022*
+*Last run: Sat Mar 19 02:42:12 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -90,7 +90,7 @@ Runset Name: AFJ to AFJ
 **Latest results: 28 out of 28 (100%)**
 
 
-*Last run: Thu Mar 17 02:50:44 UTC 2022*
+*Last run: Sat Mar 19 02:49:05 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -113,7 +113,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Mar 17 02:43:24 UTC 2022*
+*Last run: Sat Mar 19 02:40:57 UTC 2022*
 ```
 
 #### Current Runset Status
