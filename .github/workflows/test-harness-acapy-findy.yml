@@ -44,7 +44,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a findy"
           TEST_AGENTS: "-d acapy-main -b findy"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
           REPORT_PROJECT: acapy-b-findy
         continue-on-error: true
       - name: run-send-gen-test-results-secure

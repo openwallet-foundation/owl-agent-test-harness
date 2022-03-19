@@ -4,9 +4,18 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>0.7.3 | aries-vcx<br>1.0.0 | acapy-main<br>0.7.3 | acapy-main<br>0.7.3 | AIP 1.0 | [**31 / 31<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>0.7.3 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**33 / 33<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-ariesvcx](#runset-ariesvcx-ariesvcx) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**33 / 34<br>97%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>0.7.3 | aries-vcx<br>1.0.0 | acapy-main<br>0.7.3 | acapy-main<br>0.7.3 | AIP 1.0 | [**31 / 42<br>73%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-dotnet](#runset-acapy-dotnet) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-dotnet](#runset-afj-dotnet) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>0.7.3 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**19 / 20<br>95%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-ariesvcx](#runset-ariesvcx-ariesvcx) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**20 / 20<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-acapy](#runset-dotnet-acapy) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-findy](#runset-dotnet-findy) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-javascript](#runset-dotnet-javascript) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet](#runset-dotnet) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-dotnet](#runset-findy-dotnet) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 0<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -15,10 +24,10 @@
 Runset Name: acapy to aries-vcx
 
 ```tip
-**Latest results: 31 out of 31 (100%)**
+**Latest results: 31 out of 42 (73%)**
 
 
-*Last run: Mon Feb 28 03:07:21 UTC 2022*
+*Last run: Sat Mar 19 03:10:48 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -32,15 +41,88 @@ No test status note is available for this runset. Please update: .github/workflo
 - [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-aries-vcx/reports/latest)
 
 
+### Runset **acapy-dotnet-javascript**
+
+Runset Name: ACA-PY to AF-.NET to AFJ
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+All tests are working, except for three tests that include Faber in the test run as an issuer.
+These tests are; T001-RFC0037@1.2, T001.2-RFC0037@1.2, T001.4-RFC0037@1.1 . Further investigation 
+is required to determine the issue in these three tests.
+
+*Status Note Updated: 2021.03.18*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-javascript-f-dotnet/reports/latest)
+
+
+### Runset **acapy-dotnet**
+
+Runset Name: ACA-PY to AF-.NET
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+The majority of tests are running and passing. T013-HIPE0011 is failing due to the Aries Framework Dotnet not supporting
+presentations containing a non-revocation interval, with a non-revocable credential. This issue is being tracked in 
+https://github.com/hyperledger/aries-framework-dotnet/issues/184
+
+*Status Note Updated: 2021.04.08*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-dotnet/reports/latest)
+
+
+### Runset **afj-dotnet**
+
+Runset Name: AFJ to AF-.NET
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+All of the tests being executed in this runset are passing.
+
+*Status Note Updated: 2021.03.05*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-dotnet/reports/latest)
+
+
 ### Runset **ariesvcx-acapy**
 
 Runset Name: aries-vcx to acapy
 
 ```tip
-**Latest results: 33 out of 33 (100%)**
+**Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Mon Feb 28 03:06:09 UTC 2022*
+*Last run: Sat Mar 19 02:58:26 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -59,10 +141,10 @@ No test status note is available for this runset. Please update: .github/workflo
 Runset Name: aries-vcx to aries-vcx
 
 ```tip
-**Latest results: 33 out of 34 (97%)**
+**Latest results: 20 out of 20 (100%)**
 
 
-*Last run: Sat Feb 26 02:35:35 UTC 2022*
+*Last run: Sat Mar 19 02:38:59 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -74,6 +156,146 @@ No test status note is available for this runset. Please update: .github/workflo
 
 - [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx/reports/latest/index.html?redirect=false#behaviors)
 - [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/aries-vcx/reports/latest)
+
+
+### Runset **dotnet-acapy**
+
+Runset Name: AF-.NET to ACA-PY
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+More tests are failing than are passing when Aries Framework .NET is playing the issuer role. More investigation is needed.
+
+*Status Note Updated: 2021.03.17*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet-b-acapy/reports/latest)
+
+
+### Runset **dotnet-findy**
+
+Runset Name: dotnet to findy
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+Two connection tests are passing out of Nineteen total. There are multiple issues in Issue Credential and Proof
+with dotnet as the issuer and findy as the holder. Removed a large portion of Proof tests since jobs were getting cancelled.
+These will be added back when tests or agents are fixed and stability has returned.
+
+*Status Note Updated: 2022.01.28*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-findy/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet-b-findy/reports/latest)
+
+
+### Runset **dotnet-javascript**
+
+Runset Name: AF-.NET to AFJ
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+More tests are failing than are passing when Aries Framework .NET is playing the issuer role. More investigation is needed.
+
+*Status Note Updated: 2021.03.18*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet-b-javascript/reports/latest)
+
+
+### Runset **dotnet**
+
+Runset Name: AF-.NET to AF-.NET
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+All of the tests being executed in this runset are passing.
+
+*Status Note Updated: 2021.03.05*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/dotnet/reports/latest)
+
+
+### Runset **findy-dotnet**
+
+Runset Name: findy to dotnet
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+All test scenarios are passing. 
+
+*Status Note Updated: 2021.10.15*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/findy-b-dotnet/reports/latest)
+
+
+### Runset **findy-javascript-dotnet**
+
+Runset Name: findy to AFJ to AF-.NET
+
+```tip
+**Latest results: 0 out of 0 (0%)**
+
+
+*Last run: *
+```
+
+#### Current Runset Status
+
+All of the tests being executed in this runset are passing. 
+
+*Status Note Updated: 2021.10.15*
+
+#### Runset Details
+
+- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors)
+- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/findy-b-javascript-f-dotnet/reports/latest)
 
 Jump back to the [interoperability summary](./README.md).
 

@@ -94,8 +94,18 @@ def step_impl(context, n):
 def step_impl(context, inviter):
     inviter_url = context.config.userdata.get(inviter)
 
+    data = {}
+
+    # If mediator is set for the current connection, set the mediator_connection_id
+    mediator = context.mediator_dict.get(inviter)
+    if mediator:
+        data["mediator_connection_id"] = context.connection_id_dict[inviter][mediator]
+
     (resp_status, resp_text) = agent_backchannel_POST(
-        inviter_url + "/agent/command/", "connection", operation="create-invitation"
+        inviter_url + "/agent/command/",
+        "connection",
+        operation="create-invitation",
+        data=data,
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 
@@ -127,6 +137,12 @@ def step_impl(context, invitee):
     invitee_url = context.config.userdata.get(invitee)
 
     data = context.inviter_invitation
+
+    # If mediator is set for the current connection, set the mediator_connection_id
+    mediator = context.mediator_dict.get(invitee)
+    if mediator:
+        data["mediator_connection_id"] = context.connection_id_dict[invitee][mediator]
+
     (resp_status, resp_text) = agent_backchannel_POST(
         invitee_url + "/agent/command/",
         "connection",

@@ -44,7 +44,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript -a verity"
           TEST_AGENTS: "-d javascript -a verity"
-          TEST_SCOPE: "-t @RFC0160 -t @AcceptanceTest -t ~@wip"
+          TEST_SCOPE: "-t @RFC0160 -t @AcceptanceTest -t ~@wip -t ~AIP20"
           REPORT_PROJECT: javascript-a-verity
       #   continue-on-error: true
       # - name: run-send-gen-test-results-secure

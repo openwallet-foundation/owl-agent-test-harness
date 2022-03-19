@@ -1,14 +1,14 @@
 import { Logger } from '@tsed/common'
-
 import { LogLevel, BaseLogger } from '@aries-framework/core'
+import util from 'util'
 
 export class TsedLogger extends BaseLogger {
   private logger: Logger
 
   // Map our log levels to tslog levels
   private tsedLogLevelMap = {
-    [LogLevel.test]: 'trace',
-    [LogLevel.trace]: 'trace',
+    [LogLevel.test]: 'debug',
+    [LogLevel.trace]: 'debug',
     [LogLevel.debug]: 'debug',
     [LogLevel.info]: 'info',
     [LogLevel.warn]: 'warn',
@@ -25,7 +25,7 @@ export class TsedLogger extends BaseLogger {
     const tsedLogLevel = this.tsedLogLevelMap[level]
 
     if (data) {
-      this.logger[tsedLogLevel](message, data)
+      this.logger[tsedLogLevel](message, util.inspect(data, { showHidden: false, depth: null }))
     } else {
       this.logger[tsedLogLevel](message)
     }

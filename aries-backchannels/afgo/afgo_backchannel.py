@@ -174,6 +174,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self.proofOperationTranslationDict = {
             "prepare-json-ld": "",
             "send-proposal": "send-propose-presentation",
+            "accept-proposal": "accept-propose-presentation",
             "send-request": "send-request-presentation",
             "send-presentation": "accept-request-presentation",
             "verify-presentation": "accept-presentation",
@@ -190,6 +191,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "issue-credential-v2": "/issuecredential/",
             "proof": "/presentproof/",
             "proof-v2": "/presentproof/",
+            "proof-v3": "/presentproof/",
         }
 
         # Generic AATH parameter to AFGO commandline parameter
@@ -364,6 +366,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if "piid" in message["message"]["Properties"]:
             thread_id = message["message"]["Properties"]["piid"]
             push_resource(thread_id, "present-proof-states-msg", message)
+
+            await push_message_stack("present-proof-states-msg" + "," + thread_id, message)
         else:
             raise Exception(
                 f"piid not found in present_proof_states Webhook Message: {json.dumps(message)}"
@@ -558,6 +562,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
             (resp_status, resp_text) = await self.handle_present_proof_POST(command)
             return (resp_status, resp_text)
 
+        elif command.topic == "proof-v3":
+            (resp_status, resp_text) = await self.handle_present_proof_v3_POST(command)
+            return (resp_status, resp_text)
+
         # Handle out of band POST operations
         elif command.topic == "out-of-band":
             (resp_status, resp_text) = await self.handle_out_of_band_POST(command)
@@ -570,6 +578,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "agent":
             (resp_status, resp_text) = await self.handle_agent_POST(command)
+            return (resp_status, resp_text)
+
+        elif command.topic == "oob-v2":
+            (resp_status, resp_text) = await self.handle_oob_v2_POST(command)
             return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
@@ -620,6 +632,80 @@ class AfGoAgentBackchannel(AgentBackchannel):
         await self.start_process_with_extra_args(args=args)
 
         return (200, "{}")
+
+    async def handle_oob_v2_POST(self, command: BackchannelCommand):
+        operation = command.operation
+        data = command.data
+
+        if operation == "create-invitation":
+            (
+                orb_did_status,
+                orb_did_text,
+                priv_key_kids,
+            ) = await self.get_orb_did()
+            if orb_did_status != 200:
+                err_msg = f"Couldn't retrieve my public did: status={orb_did_status} body={orb_did_text}"
+                print(err_msg)
+
+                return (500, err_msg)
+
+            my_pub_did = json.loads(orb_did_text)["did"]
+
+            afgo_endpoint = "/outofband/2.0/create-invitation"
+            create_req = {
+                "from": my_pub_did
+            }
+
+            if data and "goal-code" in data:
+                create_req["body"] = {
+                    "goal-code": data["goal-code"]
+                }
+
+            (resp_status, resp_text) = await self.admin_POST(afgo_endpoint, create_req)
+
+            return (resp_status, resp_text)
+
+        if operation == "accept-invitation":
+            data["my_label"] = "dummy-label"
+
+            afgo_endpoint = "/outofband/2.0/accept-invitation"
+
+            (resp_status, resp_text) = await self.admin_POST(afgo_endpoint, data)
+            # afgo's reponse object looks like {"connection_id":"<connection ID>"}
+            return (resp_status, resp_text)
+
+        return (501, f"didcomm v2 operation '{operation}' not implemented")
+
+    async def handle_oob_v2_GET(self, command: BackchannelCommand):
+        operation = command.operation
+
+        if operation == "invitation-connection":
+            connection_id = ""
+            invitation_id = command.record_id
+
+            afgo_endpoint = f"/connections"
+
+            (resp_status, resp_text) = await self.admin_GET(afgo_endpoint)
+            if resp_status != 200:
+                return (resp_status, f"failed to query afgo connections, response: {resp_text}")
+
+            resp_json = json.loads(resp_text)
+            if "results" not in resp_json:
+                return (500, f"failed to query afgo connections, missing connection list from {resp_text}")
+
+            for connection in resp_json["results"]:
+                log_msg(f"Check connection: {connection}")
+                if connection["InvitationID"] == invitation_id:
+                    connection_id = connection["ConnectionID"]
+                    break
+
+            response = {
+                "connection_id": connection_id
+            }
+
+            return (200, json.dumps(response))
+
+        return (501, f"didcomm v2 operation '{operation}' not implemented")
 
     async def handle_out_of_band_POST(self, command: BackchannelCommand):
         operation = command.operation
@@ -821,15 +907,18 @@ class AfGoAgentBackchannel(AgentBackchannel):
         record_id = command.record_id
         data = command.data
 
-        if record_id is None:
-            agent_operation = f"{self.TopicTranslationDict[topic]}{self.issueCredentialOperationTranslationDict[operation]}"
-        else:
-            agent_operation = (
+        def make_agent_operation(record_id: str):
+            return (
                 self.TopicTranslationDict[topic]
                 + record_id
                 + "/"
                 + self.issueCredentialWRecIDOperationTranslationDict[operation]
             )
+
+        if record_id is None:
+            agent_operation = f"{self.TopicTranslationDict[topic]}{self.issueCredentialOperationTranslationDict[operation]}"
+        else:
+            agent_operation = make_agent_operation(record_id)
 
         if data is not None:
             log_msg(
@@ -904,6 +993,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 ]
                 their_did = issue_credential_actions_msg["message"]["Properties"][
                     "theirDID"
+                ]
+
+                record_id = issue_credential_actions_msg["message"]["Properties"][
+                    "piid"
                 ]
 
             else:
@@ -1025,6 +1118,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
                     data.pop("filter")
 
+            if record_id is not None:
+                # in some cases we overwrite record_id with the correct piid
+                agent_operation = make_agent_operation(record_id)
+
             log_msg(
                 f"Data translated by backchannel to send to agent for operation: {agent_operation}",
                 data,
@@ -1064,6 +1161,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif operation == "send-request":
+            (wh_status, wh_text) = await self.request_response_issue_credential(
+                rec_id=record_id, message_name="issue-credential-actions-msg"
+            )
+            issue_credential_actions_msg = json.loads(wh_text)
+
+            record_id = issue_credential_actions_msg["message"]["Properties"]["piid"]
+
+            agent_operation = make_agent_operation(record_id)
+
             log_msg(
                 f"Data translated by backchannel to send to agent for operation: {agent_operation}",
                 data,
@@ -1102,6 +1208,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif operation == "store":
+            (wh_status, wh_text) = await self.request_response_issue_credential(
+                rec_id=record_id, message_name="issue-credential-actions-msg"
+            )
+            issue_credential_actions_msg = json.loads(wh_text)
+
+            record_id = issue_credential_actions_msg["message"]["Properties"]["piid"]
+
+            agent_operation = make_agent_operation(record_id)
+
             data = {"names": [record_id]}
 
             log_msg(
@@ -1143,6 +1258,9 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     ][0]["format"]
                     format = self.CredentialFromatTranslationDict[format]
                     resp_json[format] = {"credential_id": record_id}
+                else: # assume json-ld by default
+                    resp_json["json-ld"] = {"credential_id": record_id}
+
                 # This is is also the Name of the cred.
                 resp_json["credential_id"] = record_id
                 resp_text = json.dumps(resp_json)
@@ -1166,27 +1284,37 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 )
                 log_msg(f"Credential Data retreived from webhook message: ", wh_text)
 
+                issue_credential_states_msg = json.loads(wh_text)
+                record_id = issue_credential_states_msg["message"]["Properties"]["piid"]
+
                 # if the messsage doesn't contain credential details get it from the credential_details_msg
-                if "filters~attach" in wh_text:
-                    issue_credential_states_msg = json.loads(wh_text)
-                else:
+                if "filters~attach" not in wh_text:
                     issue_credential_states_msg = pop_resource(
                         record_id, "credential-details-msg"
                     )
                     wh_text = json.dumps(issue_credential_states_msg)
+                    log_msg(f"Credential Data retreived from details message: ", wh_text)
 
                 # Format the proposal for afgo issue
                 # suppliment the message data with whatever afgo needs to make the store credential work
                 # IMO this is a defect in afgo
                 if topic == "issue-credential-v2":
+                    src_msg = issue_credential_states_msg["message"]["Message"]
+
+                    cred_attachments = []
+                    if "filters~attach" in src_msg:
+                        cred_attachments = src_msg["filters~attach"]
+                    else:
+                        cred_attachments = src_msg["attachments"]
+
+                    cred_formats = []
+                    if "formats" in src_msg:
+                        cred_formats = src_msg["formats"]
+
                     data = {
                         "issue_credential": {
-                            "credentials~attach": issue_credential_states_msg[
-                                "message"
-                            ]["Message"]["filters~attach"],
-                            "formats": issue_credential_states_msg["message"][
-                                "Message"
-                            ]["formats"],
+                            "credentials~attach": cred_attachments,
+                            "formats": cred_formats,
                         }
                     }
 
@@ -1339,6 +1467,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             ]
                         }
                     }
+
+            agent_operation = make_agent_operation(record_id)
 
             log_msg(
                 f"Data translated by backchannel to send to agent for operation: {agent_operation}",
@@ -1599,6 +1729,193 @@ class AfGoAgentBackchannel(AgentBackchannel):
             )
         return (resp_status, resp_text)
 
+    async def handle_present_proof_v3_POST(self, command: BackchannelCommand):
+        topic = command.topic
+        operation = command.operation
+        record_id = command.record_id
+        data = command.data
+
+        def get_agent_operation_path(record_id: str, operation: str):
+            if record_id is None:
+                return f"{self.TopicTranslationDict[topic]}{self.proofOperationTranslationDict[operation]}"
+            else:
+                return (
+                    self.TopicTranslationDict[topic]
+                    + record_id
+                    + "/"
+                    + self.proofOperationTranslationDict[operation]
+                )
+
+        agent_operation = get_agent_operation_path(record_id, operation)
+
+        if data is not None:
+            log_msg(
+                f"Data passed to backchannel by test for operation: {agent_operation}",
+                data,
+            )
+
+        await self.load_jsonld_contexts()
+
+        if operation == "send-proposal":
+            data = {
+                "connection_id": data["presentation_proposal"]["connection_id"],
+                "propose_presentation": {
+                    "type": "https://didcomm.org/present-proof/3.0/propose-presentation",
+                    "body": {
+                        "comment": data["presentation_proposal"]["comment"],
+                    },
+                },
+            }
+
+        if operation == "send-request":
+            # create extra fields needed in presentation
+            attach_id = str(uuid.uuid1())
+            if (
+                "json_ld" in data["presentation_request"]["format"]
+                or "json-ld" in data["presentation_request"]["format"]
+            ):
+                format_key = "dif/presentation-exchange/definitions@v1.0"
+                mime_type = "application/ld+json"
+            else:
+                raise Exception(f"format not supported for present-proof v3: {data}")
+
+            amended_data = {
+                "request_presentation": {
+                    "type": "https://didcomm.org/present-proof/3.0/request-presentation",
+                    "body": {
+                        "comment": data["presentation_request"]["comment"],
+                    },
+                    "attachments": [
+                        {
+                            "id": attach_id,
+                            "format": format_key,
+                            "data": {"json": data["presentation_request"]["data"]},
+                            "mime-type": mime_type,
+                        }
+                    ],
+                },
+            }
+
+            if "connection_id" in amended_data:
+                amended_data["connection_id"] = data["connection_id"]
+            else: # use afgo's accept-propose-presentation command
+                operation = "accept-proposal"
+                agent_operation = get_agent_operation_path(record_id, operation)
+
+            data = amended_data
+
+        elif operation == "send-presentation":
+            # Get the presentation details from the webook data
+            (wh_status, wh_text) = await self.request_response_present_proof(
+                command, message_name="present-proof-actions-msg"
+            )
+            if wh_status != 200 or wh_text is None:
+                raise Exception(
+                    f"Could not retieve presentation information from webhook message for operation: {agent_operation}"
+                )
+
+            present_proof_msg = json.loads(wh_text)
+
+            piid = present_proof_msg["message"]["Properties"]["piid"]
+
+            presentation = present_proof_msg["message"]["Message"]
+
+            presentation["type"] = "https://didcomm.org/present-proof/3.0/presentation"
+
+            presentation.pop("request_presentations~attach", None)
+            presentation.pop("attachments", None)
+            presentation.pop("~thread", None)
+            presentation.pop("will_confirm", None)
+
+            if "json_ld" in data["format"] or "json-ld" in data["format"]:
+
+                cred_attach_list = []
+
+                if "record_ids" in data:
+                    for record_id_list in data["record_ids"].values():
+                        for record_id in record_id_list:
+                            cred_record_list = get_resource(
+                                record_id, "credential-cache-msg"
+                            )
+
+                            if len(cred_record_list) > 0:
+                                cred_attachments = cred_record_list[-1]["message"]["Message"]["attachments"]
+
+                                for cred_attach in cred_attachments:
+                                    cred_attach_list.append(cred_attach)
+
+                for cred_attach in cred_attach_list:
+                    cred_attach["media_type"] = "application/ld+json"
+
+                    if (
+                        "json" in cred_attach["data"]
+                        and "json-ld" in cred_attach["data"]["json"]
+                    ):
+                        # merge the cred proper with its wrapping
+                        cred_attach["data"]["json"]["json-ld"]["credential"][
+                            "issuer"
+                        ] = cred_attach["data"]["json"]["issuer"]
+                        cred_attach["data"]["json"]["json-ld"]["credential"][
+                            "issuanceDate"
+                        ] = cred_attach["data"]["json"]["issuanceDate"]
+
+                        cred_attach["data"]["json"] = cred_attach["data"]["json"][
+                            "json-ld"
+                        ]["credential"]
+
+                presentation["attachments"] = cred_attach_list
+
+            data = {
+                "presentation": presentation,
+                "piid": piid,
+            }
+
+        elif operation == "verify-presentation":
+
+            data = {"names": [record_id]}
+
+        log_msg(
+            f"Data translated by backchannel to send to agent for operation: {agent_operation}",
+            data,
+        )
+
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        if resp_status!= 200:
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
+        resp_json = json.loads(resp_text)
+
+        if operation == "send-request" or operation == "send-proposal":
+            # set a thread_id for the test harness
+            if "piid" in resp_json:
+                resp_json["thread_id"] = resp_json["piid"]
+            else:
+                raise Exception(
+                    f"No piid(thread_id) found in response for operation: {agent_operation} {resp_text}"
+                )
+
+        # The response doesn't have a state. Get it from the present_proof_states webhook message
+        await asyncio.sleep(1)
+        present_proof_states_msg = pop_resource_latest("present-proof-states-msg")
+        # present_proof_states_msg = json.loads(wh_text)
+        if "StateID" in present_proof_states_msg["message"]:
+            resp_json["state"] = present_proof_states_msg["message"]["StateID"]
+        else:
+            raise Exception(
+                f"Could not retieve State from webhook message: {present_proof_states_msg}"
+            )
+        resp_text = json.dumps(resp_json)
+
+        log_msg(resp_status, resp_text)
+
+        if resp_status == 200:
+            resp_text = self.agent_state_translation(
+                command.topic, operation, resp_text
+            )
+        return (resp_status, resp_text)
+
     async def load_jsonld_contexts(self):
         if not hasattr(self, "loaded_jsonld_contexts"):
             self.loaded_jsonld_contexts = []
@@ -1766,21 +2083,32 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     )
             return (resp_status, resp_text)
 
-        elif command.topic == "proof" or command.topic == "proof-v2":
-            (wh_status, wh_text) = await self.request_response_present_proof(command)
-            present_proof_states_msg = json.loads(wh_text)
+        elif command.topic == "proof" or command.topic == "proof-v2" or command.topic == "proof-v3":
+            present_proof_states_msg = await pop_message_stack(
+                    "present-proof-states-msg" + "," + command.record_id, MAX_TIMEOUT
+            )
+
+            # (wh_status, wh_text) = await self.request_response_present_proof(command)
+            # present_proof_states_msg = json.loads(wh_text)
             if "StateID" in present_proof_states_msg["message"]:
                 resp_json = {"state": present_proof_states_msg["message"]["StateID"]}
             else:
                 raise Exception(
                     f"Could not retieve State from webhook message: {present_proof_states_msg}"
                 )
-            return (wh_status, json.dumps(resp_json))
+
+            print("GET proof state response: " + json.dumps(resp_json))
+
+            return (200, json.dumps(resp_json))
 
         elif command.topic == "revocation":
             # afgo does not support indy revocation. Return dummy data
             schema = {"indy_revocation": "not supported by AFGO"}
             return (200, json.dumps(schema))
+
+        elif command.topic == "oob-v2":
+            (resp_status, resp_text) = await self.handle_oob_v2_GET(command)
+            return (resp_status, resp_text)
 
         return (501, "501: Not Implemented\n\n")
 
@@ -1974,13 +2302,13 @@ class AfGoAgentBackchannel(AgentBackchannel):
         # it to the stack again keyed by the piid called credential_details_msg. This way if any call has a problem
         # getting the cred details from the webhook messages, we have it here to fall back on.
         credential_msg_txt = json.dumps(credential_msg)
-        if "filters~attach" in credential_msg_txt:
+        if "filters~attach" in credential_msg_txt or "/3.0/propose-credential" in credential_msg_txt:
             thread_id = credential_msg["message"]["Properties"]["piid"]
             push_resource(thread_id, "credential-details-msg", credential_msg)
             log_msg(
                 f"Added credential details back into webhook storage: {json.dumps(credential_msg)}"
             )
-        if "credentials~attach" in credential_msg_txt:
+        if "credentials~attach" in credential_msg_txt or "/3.0/issue-credential" in credential_msg_txt:
             thread_id = credential_msg["message"]["Properties"]["piid"]
             push_resource(thread_id, "credential-cache-msg", credential_msg)
             log_msg(
