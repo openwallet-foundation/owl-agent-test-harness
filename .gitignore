@@ -44,3 +44,6 @@ env/
 
 # VSCode
 .vscode/settings.json
+
+#JetBrains
+.idea
