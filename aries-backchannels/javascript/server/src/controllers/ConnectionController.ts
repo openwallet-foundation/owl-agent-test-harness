@@ -1,7 +1,6 @@
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { NotFound } from '@tsed/exceptions'
 import {
-  Agent,
   ConnectionRecord,
   ConnectionInvitationMessage,
   JsonTransformer,
@@ -12,18 +11,22 @@ import {
 } from '@aries-framework/core'
 
 import { replaceNewDidCommPrefixWithLegacyDidSovOnMessage } from '@aries-framework/core/build/utils/messageType'
-import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
+import { ReplaySubject } from 'rxjs'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/connection')
-export class ConnectionController {
-  private agent: Agent
+export class ConnectionController extends BaseController {
   private subject = new ReplaySubject<ConnectionStateChangedEvent>()
 
-  public constructor(agent: Agent) {
-    this.agent = agent
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
+  }
 
+  onStartup = () => {
+    this.subject = new ReplaySubject<ConnectionStateChangedEvent>()
     // Catch all events in replay subject for later use
-    agent.events
+    this.agent.events
       .observable<ConnectionStateChangedEvent>(ConnectionEventTypes.ConnectionStateChanged)
       .subscribe(this.subject)
   }
@@ -47,8 +50,15 @@ export class ConnectionController {
   }
 
   @Post('/create-invitation')
-  async createInvitation() {
-    const { invitation, connectionRecord } = await this.agent.connections.createConnection()
+  async createInvitation(@BodyParams('data') data?: { mediator_connection_id?: string }) {
+    const mediatorId = await this.mediatorIdFromMediatorConnectionId(data?.mediator_connection_id)
+
+    const { invitation, connectionRecord } = await this.agent.connections.createConnection({
+      mediatorId,
+      // Needed to complete connection: https://github.com/hyperledger/aries-framework-javascript/issues/668
+      autoAcceptConnection: true,
+    })
+
     const invitationJson = invitation.toJSON()
 
     const config = this.agent.injectionContainer.resolve(AgentConfig)
@@ -63,9 +73,18 @@ export class ConnectionController {
   }
 
   @Post('/receive-invitation')
-  async receiveInvitation(@BodyParams('data') invitation: Record<string, unknown>) {
+  async receiveInvitation(@BodyParams('data') data: Record<string, unknown> & { mediator_connection_id?: string }) {
+    const { mediator_connection_id, ...invitation } = data
+
+    const mediatorId = await this.mediatorIdFromMediatorConnectionId(mediator_connection_id)
+
     const connection = await this.agent.connections.receiveInvitation(
-      JsonTransformer.fromJSON(invitation, ConnectionInvitationMessage)
+      JsonTransformer.fromJSON(invitation, ConnectionInvitationMessage),
+      {
+        mediatorId,
+        // Needed to complete connection: https://github.com/hyperledger/aries-framework-javascript/issues/668
+        autoAcceptConnection: true,
+      }
     )
 
     return this.mapConnection(connection)
@@ -73,17 +92,13 @@ export class ConnectionController {
 
   @Post('/accept-invitation')
   async acceptInvitation(@BodyParams('id') connectionId: string) {
-    const connection = await this.agent.connections.acceptInvitation(connectionId)
-
+    const connection = await this.agent.connections.getById(connectionId)
     return this.mapConnection(connection)
   }
 
   @Post('/accept-request')
   async acceptRequest(@BodyParams('id') connectionId: string) {
-    await this.waitForState(connectionId, ConnectionState.Requested)
-
-    const connection = await this.agent.connections.acceptRequest(connectionId)
-
+    const connection = await this.agent.connections.getById(connectionId)
     return this.mapConnection(connection)
   }
 
@@ -94,27 +109,24 @@ export class ConnectionController {
     // AFJ doesn't support passing it for now
     @BodyParams('data') data: any
   ) {
-    await this.waitForState(connectionId, ConnectionState.Responded)
-    const connection = await this.agent.connections.acceptResponse(connectionId)
-
+    const connection = await this.agent.connections.getById(connectionId)
     return this.mapConnection(connection)
   }
 
-  private async waitForState(connectionId: string, state: ConnectionState) {
-    // Wait for event that we have received the connection request
-    // max waiting 20 seconds.
-    return await firstValueFrom(
-      this.subject.pipe(
-        filter((c) => c.payload.connectionRecord.id === connectionId),
-        filter((c) => c.payload.connectionRecord.state === ConnectionState.Requested),
-        timeout(20000)
-      )
-    )
+  private async mediatorIdFromMediatorConnectionId(mediatorConnectionId?: string): Promise<string | undefined> {
+    if (!mediatorConnectionId) return undefined
+
+    // Find mediator id if mediator connection id is provided
+    const mediator = await this.agent.mediationRecipient.findByConnectionId(mediatorConnectionId)
+
+    return mediator?.id
   }
 
   private mapConnection(connection: ConnectionRecord) {
     return {
-      state: connection.state,
+      // If we use auto accept, we can't include the state as we will move quicker than the calls in the test harness. This will
+      // make verification fail. The test harness recognizes the 'N/A' state.
+      state: connection.state === ConnectionState.Complete ? connection.state : 'N/A',
       connection_id: connection.id,
       connection,
     }

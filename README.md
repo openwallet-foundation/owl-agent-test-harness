@@ -123,6 +123,38 @@ To enable full control over behave's behaviour (if you will...), the `-i <ini fi
 
 For a full inventory of tests available to run, use the `./manage tests`. Note that tests in the list tagged @wip are works in progress and should generally not be run.
 
+## Using AATH Agents as Services
+You may have the need to utilize the agents and their controller/backchannels separately from running interop tests with them. This can be for debugging AATH test code, or for something outside of AATH, like Aries Mobile Test Harness (AMTH) tests. To assist in this requirement the manage script can start 1-n agents of any aries framework that exists in AATH. This is done as follows:
+
+```
+./manage start -a acapy-main
+```
+The command above will only start Acme as ACA-py. No other agents (Bob, Faber, etc.) will be started. 
+```
+LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a afgo-interop -b acapy-main -n
+```
+The second command above, will start Acme as AFGO, and Bob as ACA-py, utilizing an external Ledger and Tails Server, with a custom configuration to start ACA-py with. It will also start ngrok which is usually needed for mobile testing in AMTH. 
+
+To stop any agents started in this manner just run `./manage stop`.
+
+### Use Cases
+#### Debugging within AATH
+When running test code in a debugger, you may not always want or need all the agents running when doing your debugging. Your test may only utilize Acme and Bob, and have no need for Faber and Mallory. This feature will allow you to start only the agents needed in your test you are debugging. The following example will run ACA-py as Acme and Bob with no other agents running. 
+```
+./manage start -a acapy-main -b acapy-main
+```
+#### Aries Mobile Test Harness
+Aries Mobile Test Harness (AMTH) is a testing stack used to test mobile Aries wallets. To do this end to end, mobile tests need issuers, verifiers, and maybe mediators. Instead of AMTH managing a set of controllers and agents, AMTH can point to an Issuer or Verifier controller/agent URL. AMTH can take advantage of the work done across aries frameworks and backchannels to assign AATH agents as issuers or verifiers in testing aries wallets. For example, the BC Wallet tests in AMTH are utilizing ACA-py agents in AATH as an issuer and verifier. This is done by executing the following.
+From within aries-agent-test-harness
+```
+./manage start -a acapy-main -b acapy-main
+```
+From within aries-mobile-test-harness
+```
+LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io REGION=us-west-1 ./manage run -d SauceLabs -u <device-cloud-username> -k <device-cloud-access-key> -p iOS -a AriesBifold-114.ipa -i http://0.0.0.0:9020 -v http://0.0.0.0:9030 -t @bc_wallet -t @T001-Connect
+```
+The URLs for issuer and verifier are pointers to the backchannel controllers for Acme and Bob in AATH, so that these test take advantage of the work done there. 
+
 ## Extra Backchannel-Specific Parameters
 
 You can pass backchannel-specific parameters as follows:
@@ -136,6 +168,25 @@ The environment variable name is of the format `-<agent_name>`, where `<agent_na
 The contents of the environment variable are backchannel-specific. For aca-py it is a JSON structure containing parameters to use for agent startup.
 
 The above example runs all the tests using the `askar` wallet type (vs `indy`, which is the default).
+
+## Custom Configurations for Agents
+  Alternatively to the Extra Backchannel-Specific Parameters above, you can also pass a configuration file through to your agent when it starts (only works if your agent is started by your backchannel). The AATH tests have a predefined set of options needed for the test flow to function properly so, adding this configuration to AATH test execution may have side effects causing the interop tests to fail. However, this is helpful when using the agents as services outside of AATH tests like with Mobile Wallet tests in Aries Mobile Test Harness, where the agents usually will benefit from having auto options turned on. You can pass through your config file using the environment variable AGENT_CONFIG_FILE as follows:
+  ```
+  LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -b acapy-main -n
+  ```
+The config file should live in the `aries-backchannels/<agent>` folder so it gets copied into the agent container automatically. Currently only the acapy backchannel supports this custom configuration in this manner. 
+
+### Use Cases
+#### Aries Mobile Test Harness
+When using AATH agents as a service for AMTH, these agent services will need to be started with differet or extra parameters on the agents than AATH starts them with by default. Mobile test issuers and verifiers may need the auto parameters turned on, like `--auto-accept-requests`, `--auto-respond-credential-proposal`, etc. The only way to do this when using the AATH agents is through using this configuration file handling. There is an existing file in `aries-backchannels/acapy` called auto_isser_config.yaml that is there to support this requirement for the BC wallet. This works in BC Wallet as follows;
+From within aries-agent-test-harness
+```
+LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a acapy-main -b acapy-main -n
+```
+From within aries-mobile-test-harness
+```
+LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io REGION=us-west-1 ./manage run -d SauceLabs -u <device-cloud-username> -k <device-cloud-access-key> -p iOS -a AriesBifold-114.ipa -i http://0.0.0.0:9020 -v http://0.0.0.0:9030 -t @bc_wallet -t @T001-Connect
+```
 
 ## Test Tags
 

@@ -1,17 +1,17 @@
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { InternalServerError, NotFound } from '@tsed/exceptions'
-import { Agent } from '@aries-framework/core'
 import { Schema } from 'indy-sdk'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/schema')
-export class SchemaController {
-  private agent: Agent
+export class SchemaController extends BaseController {
   private createdSchemas: {
     [schemaName: string]: Schema
   } = {}
 
-  public constructor(agent: Agent) {
-    this.agent = agent
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
   }
 
   @Get('/:schemaId')
@@ -20,7 +20,7 @@ export class SchemaController {
       const schema = await this.agent.ledger.getSchema(schemaId)
 
       return schema
-    } catch (error) {
+    } catch (error: any) {
       // Schema does not exist on ledger
       if (error.message === 'LedgerNotFound') {
         throw new NotFound(`schema with schemaId "${schemaId}" not found.`)

@@ -1,7 +1,6 @@
 import { BodyParams, Controller, Get, PathParams, Post } from '@tsed/common'
 import { BadRequest, NotFound } from '@tsed/exceptions'
 import {
-  Agent,
   CredentialEventTypes,
   CredentialPreview,
   CredentialRecord,
@@ -11,26 +10,28 @@ import {
 } from '@aries-framework/core'
 import { CredentialUtils } from '../utils/CredentialUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/issue-credential')
-export class IssueCredentialController {
-  private agent: Agent
-  private credentialUtils: CredentialUtils
+export class IssueCredentialController extends BaseController {
   private subject = new ReplaySubject<CredentialStateChangedEvent>()
 
-  public constructor(agent: Agent) {
-    this.agent = agent
-    this.credentialUtils = new CredentialUtils(agent)
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
+  }
 
+  public onStartup() {
+    this.subject = new ReplaySubject<CredentialStateChangedEvent>()
     // Catch all events in replay subject for later use
-    agent.events
+    this.agent.events
       .observable<CredentialStateChangedEvent>(CredentialEventTypes.CredentialStateChanged)
       .subscribe(this.subject)
   }
 
   @Get('/:threadId')
   async getCredentialByThreadId(@PathParams('threadId') threadId: string) {
-    const credential = await this.credentialUtils.getCredentialByThreadId(threadId)
+    const credential = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
     if (!credential) {
       throw new NotFound(`credential for thead id "${threadId}" not found.`)
     }
@@ -85,7 +86,7 @@ export class IssueCredentialController {
 
     if (threadId) {
       await this.waitForState(threadId, CredentialState.ProposalReceived)
-      const { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
+      const { id } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
       credentialRecord = await this.agent.credentials.acceptProposal(id)
       return this.mapCredential(credentialRecord)
     } else if (data) {
@@ -102,7 +103,7 @@ export class IssueCredentialController {
   @Post('/send-request')
   async sendRequest(@BodyParams('id') threadId: string) {
     await this.waitForState(threadId, CredentialState.OfferReceived)
-    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
+    let { id } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
 
     const credentialRecord = await this.agent.credentials.acceptOffer(id)
     return this.mapCredential(credentialRecord)
@@ -111,7 +112,7 @@ export class IssueCredentialController {
   @Post('/issue')
   async acceptRequest(@BodyParams('id') threadId: string, @BodyParams('data') data?: { comment?: string }) {
     await this.waitForState(threadId, CredentialState.RequestReceived)
-    const { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
+    const { id } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
 
     const credentialRecord = await this.agent.credentials.acceptRequest(id, {
       comment: data?.comment,
@@ -122,7 +123,7 @@ export class IssueCredentialController {
   @Post('/store')
   async storeCredential(@BodyParams('id') threadId: string) {
     await this.waitForState(threadId, CredentialState.CredentialReceived)
-    let { id } = await this.credentialUtils.getCredentialByThreadId(threadId)
+    let { id } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
     const credentialRecord = await this.agent.credentials.acceptCredential(id)
 
     return this.mapCredential(credentialRecord)

@@ -16,6 +16,7 @@ export LEDGER_TIMEOUT=60
 # these two can be overrode via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
+export AGENT_CONFIG_FILE="${AGENT_CONFIG_FILE}"
 
 # these are derived from the above two
 LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
@@ -501,7 +502,11 @@ startAgent() {
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
     export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
-    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    if [[ -z ${AGENT_CONFIG_FILE} ]]; then
+      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    else
+      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "AGENT_CONFIG_FILE=${AGENT_CONFIG_FILE}" -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    fi
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"
@@ -724,24 +729,43 @@ startHarness(){
 
   dockerhost_url_templates
 
-  export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
-  export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
-  export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
-  export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
   export AIP_CONFIG=${AIP_CONFIG:-10}
 
-  export PROJECT_ID=${PROJECT_ID:-general}
-
-  startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021 "$AIP_CONFIG" "$ACME"
-  startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031 "$AIP_CONFIG" "$BOB"
-  startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040 9041 "$AIP_CONFIG" "$FABER"
-  startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
-
+  # Only start agents that are asked for in the ./manage start command
+  if [[ "$ACME" != "none" ]]; then
+    export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
+    startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021 "$AIP_CONFIG" "$ACME"
+  fi
+  if [[ "$BOB" != "none" ]]; then
+    export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
+    startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031 "$AIP_CONFIG" "$BOB"
+  fi
+  if [[ "$FABER" != "none" ]]; then
+    export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
+    startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040 9041 "$AIP_CONFIG" "$FABER"
+  fi
+  if [[ "$MALLORY" != "none" ]]; then
+    export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
+    startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
+  fi
+  
   echo
-  waitForAgent Acme 9020
-  waitForAgent Bob 9030
-  waitForAgent Faber 9040
-  waitForAgent Mallory 9050
+  # Check if agents were successfully started. 
+  if [[ "$ACME" != "none" ]]; then
+    waitForAgent Acme 9020
+  fi
+  if [[ "$BOB" != "none" ]]; then
+    waitForAgent Bob 9030
+  fi
+  if [[ "$FABER" != "none" ]]; then
+    waitForAgent Faber 9040
+  fi
+  if [[ "$MALLORY" != "none" ]]; then
+    waitForAgent Mallory 9050
+  fi
+  echo
+
+  export PROJECT_ID=${PROJECT_ID:-general}
 
   echo
   # Allure Reports environment.properties file handling

@@ -42,11 +42,7 @@ def before_scenario(context: Context, scenario: Scenario):
         )
 
     # Check for Present Proof Feature to be able to handle the loading of schemas and credential definitions before the scenarios.
-    if (
-        "present proof" in context.feature.name
-        or "revocation" in context.feature.name
-        or "Issue Credential" in context.feature.name
-    ):
+    if 'present proof' in context.feature.name or 'revocation' in context.feature.name or 'Issue Credential' in context.feature.name or 'WACI' in context.feature.name:
         # get the tag with "Schema_".
         for tag in context.tags:
             if "ProofType_" in tag:
@@ -66,7 +62,7 @@ def before_scenario(context: Context, scenario: Scenario):
                     # If this is issue credential then you can't created multiple credential defs at the same time, like Proof uses
                     # multiple credential types in the proof. So just set the context.schema here to be used in the issue cred test.
                     # This makes the rule that you can only have one @Schema_ tag in an issue credential test scenario.
-                    if "Issue Credential" in context.feature.name:
+                    if 'Issue Credential' in context.feature.name or 'WACI' in context.feature.name:
                         context.schema = schema_json["schema"]
                         # Get and assign the credential definition info to the context
                         context.support_revocation = schema_json[
@@ -127,6 +123,14 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # responder
     context.responder_url = None
     context.responder_name = None
+
+    # mediator
+    context.mediator_url = None
+    context.mediator_name = None
+    
+    # recipient
+    context.recipient_url = None
+    context.recipient_name = None
 
     # Agent name to connection id mapping
     # {
@@ -422,6 +426,16 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     #
     # context.current_cred_format = "json-ld"
     context.current_cred_format = None
+
+    # Stores mapping of which agent to use as mediation when creating connections.
+    # {
+    #   "<recipient_name>": "<mediator_name>"
+    # }
+    #
+    # context.mediator_dict = {
+    #   "Faber": "Acme"
+    # }
+    context.mediator_dict = {}
 
 
 def after_feature(context: Context, feature: Feature):
