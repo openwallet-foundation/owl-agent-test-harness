@@ -10,6 +10,7 @@ import uuid
 import base64
 import datetime
 from timeit import default_timer
+import base58
 
 from aiohttp import (
     web,
@@ -26,7 +27,7 @@ from python.agent_backchannel import (
     BackchannelCommand,
     AgentPorts,
 )
-from python.utils import flatten, log_msg, output_reader, prompt_loop
+from python.utils import flatten, log_msg, output_reader, prompt_loop, pad_base64
 from python.storage import (
     get_resource,
     push_resource,
@@ -193,6 +194,15 @@ class AfGoAgentBackchannel(AgentBackchannel):
             "proof": "/presentproof/",
             "proof-v2": "/presentproof/",
             "proof-v3": "/presentproof/",
+        }
+
+        self.proofTypeKeyTypeTranslationDict = {
+            "Ed25519Signature2018": "ED25519",
+            "BbsBlsSignature2020": "BLS12381G2",
+        }
+        self.keyTypeVerificationMethodTypeTranslationDict = {
+            "ED25519": "Ed25519VerificationKey2018",
+            "BLS12381G2": "Bls12381G2Key2020",
         }
 
         # Generic AATH parameter to AFGO commandline parameter
@@ -945,8 +955,64 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 isWACI = True
 
         if operation == "prepare-json-ld":
-            (orb_did_status, orb_did_text, priv_key_kids) = await self.get_orb_did()
-            return (orb_did_status, orb_did_text)
+            did_method = data["did_method"]
+            if did_method == "orb":
+                (orb_did_status, orb_did_text, priv_key_kids) = await self.get_orb_did()
+                return (orb_did_status, orb_did_text)
+            elif did_method == "key":
+                # create key set
+                key_type = self.proofTypeKeyTypeTranslationDict[data["proof_type"]]
+                (resp_status, resp_text) = await self.admin_POST(
+                    "/kms/keyset", {"KeyType": key_type}
+                )
+
+                if resp_status != 200:
+                    return (resp_status, resp_text)
+
+                resp_json = json.loads(resp_text)
+
+                public_key_base64 = resp_json["publicKey"]
+                print("The public key is: ", public_key_base64)
+
+                verification_method_type = (
+                    self.keyTypeVerificationMethodTypeTranslationDict[key_type]
+                )
+                public_key_base58 = base58.b58encode(
+                    base64.urlsafe_b64decode(pad_base64(public_key_base64))
+                ).decode("ascii")
+                print("The public key is: ", public_key_base58)
+
+                did_document = {
+                    "method": "key",
+                    "did": {
+                        "@context": [
+                            "https://www.w3.org/ns/did/v1",
+                        ],
+                        "id": "",
+                        "verificationMethod": [
+                            {
+                                "id": "",
+                                "type": verification_method_type,
+                                "controller": "",
+                                "publicKeyBase58": public_key_base58,
+                            }
+                        ],
+                    },
+                    "opts": {"store": True},
+                }
+
+                (resp_status, resp_text) = await self.admin_POST(
+                    "/vdr/did/create", did_document
+                )
+
+                if resp_status != 200:
+                    return (resp_status, resp_text)
+
+                resp_json = json.loads(resp_text)
+
+                return (200, json.dumps({"did": resp_json["did"]["id"]}))
+            else:
+                return (500, f"Unsupported did method: {did_method}")
 
         if operation == "send-proposal" or operation == "send-offer":
             if operation == "send-proposal" and isWACI:

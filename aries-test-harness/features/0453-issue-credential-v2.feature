@@ -51,6 +51,15 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
+    @ProofType_Ed25519Signature2018 @DidMethod_orb
+    Examples:
+      | credential_data   |
+      | Data_DL_MaxValues |
+
+    @ProofType_BbsBlsSignature2020 @DidMethod_orb
+    Examples:
+      | credential_data   |
+      | Data_DL_MaxValues |
 
   @T002-RFC0453 @normal @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
   Scenario Outline: Issue a credential with the Holder beginning with a proposal with negotiation
