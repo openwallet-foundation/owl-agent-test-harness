@@ -11,6 +11,9 @@ jobs:
     outputs:
       harnesses: ${{ steps.get-file-list.outputs.files }}
     steps:
+      - name: Echo github info
+        run: echo '${{toJSON(github)}}'
+
       - name: Git checkout
         uses: actions/checkout@v2
 
@@ -30,8 +33,8 @@ jobs:
           # Ignore specific test harnesses here
           # ----------------------------------------------
           # - verity:
-          #   - Ignored due to issues with the tests being 
-          #     canceled intermitently due to (seemingly) 
+          #   - Ignored due to issues with the tests being
+          #     canceled intermitently due to (seemingly)
           #     resource issues.
           # ==============================================
           ignore_files_starts_with: "test-harness-verity-"
@@ -52,7 +55,7 @@ jobs:
         uses: convictional/trigger-workflow-and-wait@v1.6.0
         with:
           workflow_file_name: ${{ matrix.test-workflow }}
-          owner: ${{ github.event.repository.owner.name }}
+          owner: ${{ github.repository_owner }}
           repo: ${{ github.event.repository.name }}
           ref: ${{ github.event.ref }}
           github_token: ${{ secrets.REPO_ACCESS_TOKEN }}
