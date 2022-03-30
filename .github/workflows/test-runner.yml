@@ -72,7 +72,7 @@ jobs:
         uses: convictional/trigger-workflow-and-wait@v1.6.0
         with:
           workflow_file_name: generate-summary-results.yml
-          owner: ${{ github.event.repository.owner.name }}
+          owner: ${{ github.repository_owner }}
           repo: ${{ github.event.repository.name }}
           ref: ${{ github.event.ref }}
           github_token: ${{ secrets.REPO_ACCESS_TOKEN }}
