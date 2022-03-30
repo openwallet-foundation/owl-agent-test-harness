@@ -1,0 +1,77 @@
+name: test-harness-runner
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+jobs:
+  get-test-harnesses:
+    name: Get Test Harnesses
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    outputs:
+      harnesses: ${{ steps.get-file-list.outputs.files }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Get File List
+        id: get-file-list
+        uses: the-coding-turtle/ga-file-list@v0.4.1
+        with:
+          directory: ".github/workflows"
+          file_extension: "yml"
+
+          # ==============================================
+          # Include all test harnesses by default.
+          # ==============================================
+          only_files_starts_with: "test-harness-"
+
+          # ==============================================
+          # Ignore specific test harnesses here
+          # ----------------------------------------------
+          # - verity:
+          #   - Ignored due to issues with the tests being 
+          #     canceled intermitently due to (seemingly) 
+          #     resource issues.
+          # ==============================================
+          ignore_files_starts_with: "test-harness-verity-"
+
+  run-test-harness:
+    name: Run Test Harness
+    needs: [get-test-harnesses]
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    strategy:
+      max-parallel: 5
+      matrix:
+        test-workflow: ${{ fromJson(needs.get-test-harnesses.outputs.harnesses) }}
+      fail-fast: false
+    steps:
+      - name: ${{ matrix.test-workflow }}
+        if: success() || failure()
+        uses: convictional/trigger-workflow-and-wait@v1.6.0
+        with:
+          workflow_file_name: ${{ matrix.test-workflow }}
+          owner: ${{ github.event.repository.owner.name }}
+          repo: ${{ github.event.repository.name }}
+          ref: ${{ github.event.ref }}
+          github_token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          wait_workflow: true
+          wait_interval: 60
+
+  generate-summary-results:
+    name: Generate Summary Results
+    needs: [run-test-harness]
+    if: (success() || failure()) && ((github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: generate-summary-results.yml
+        uses: convictional/trigger-workflow-and-wait@v1.6.0
+        with:
+          workflow_file_name: generate-summary-results.yml
+          owner: ${{ github.event.repository.owner.name }}
+          repo: ${{ github.event.repository.name }}
+          ref: ${{ github.event.ref }}
+          github_token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          wait_workflow: true
+          wait_interval: 60

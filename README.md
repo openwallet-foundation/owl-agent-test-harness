@@ -38,6 +38,7 @@ We'd love to have help in building out a full Aries interoperability lab.
   - [Running Tagged Tests](#running-tagged-tests)
   - [Test Coverage](#test-coverage)
   - [Test Reporting](#test-reporting)
+- [Adding Runsets](#adding-runsets)
 
 ## Architecture
 
@@ -262,3 +263,11 @@ To read about what protocols and features from Aries Interop Profile 1.0, see th
 ### Test Reporting
 
 For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST-REPORTING.md).
+
+## Adding Runsets
+
+Runsets are GHA based workflows that automate the execution of your interop tests and reporting of the results.
+
+These workflows are contained in the .github/workflows folder and must be named `test-harness-<name>.yml`.  Refer to the existing files for examples on how to create one specific to your use case.  In most cases you will be able to copy an existing file and change a few parameters.
+
+Test execution is controlled by the [`test-harness-runner`](./.github/workflows/test-runner.yml).  This workflow will dynamically pick up and run any workflow conforming to the `test-harness-*.yml` naming convention.  Specific test harnesses can be excluded by adding their file name pattern to the `ignore_files_starts_with` list separated by a `,`.  The test harnesses are run by the **Run Test Harness** job which uses a throttled matrix strategy.  The number of concurrent test harness runs can be controlled by setting the `max-parallel` parameter to an appropriate number.
