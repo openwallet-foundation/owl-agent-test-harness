@@ -10,9 +10,17 @@ jobs:
     if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     outputs:
       harnesses: ${{ steps.get-file-list.outputs.files }}
+      repo-name: ${{ steps.get-repo-info.outputs.name }}
     steps:
       - name: Echo github info
         run: echo '${{toJSON(github)}}'
+
+      - name: Get Repository Info
+        id: get-repo-info
+        run: |
+          repository="${{github.repository}}"
+          name=$(echo ${repository##*/})
+          echo "::set-output name=name::${name}"
 
       - name: Git checkout
         uses: actions/checkout@v2
@@ -56,7 +64,7 @@ jobs:
         with:
           workflow_file_name: ${{ matrix.test-workflow }}
           owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
+          repo: ${{ needs.get-test-harnesses.outputs.repo-name }}
           ref: ${{ github.event.ref }}
           github_token: ${{ secrets.REPO_ACCESS_TOKEN }}
           wait_workflow: true
@@ -64,7 +72,7 @@ jobs:
 
   generate-summary-results:
     name: Generate Summary Results
-    needs: [run-test-harness]
+    needs: [get-test-harnesses, run-test-harness]
     if: (success() || failure()) && ((github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule'))
     runs-on: ubuntu-latest
     steps:
@@ -73,7 +81,7 @@ jobs:
         with:
           workflow_file_name: generate-summary-results.yml
           owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
+          repo: ${{ needs.get-test-harnesses.outputs.repo-name }}
           ref: ${{ github.event.ref }}
           github_token: ${{ secrets.REPO_ACCESS_TOKEN }}
           wait_workflow: true
