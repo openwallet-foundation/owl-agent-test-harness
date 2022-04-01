@@ -70,6 +70,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
     agent_connection_id = None
 
     myDID = None
+    myKeyId = None
 
     def __init__(
         self,
@@ -958,6 +959,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
             did_method = data["did_method"]
             if did_method == "orb":
                 (orb_did_status, orb_did_text, priv_key_kids) = await self.get_orb_did()
+
+                self.myKeyId = None
                 return (orb_did_status, orb_did_text)
             elif did_method == "key":
                 # create key set
@@ -972,6 +975,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 resp_json = json.loads(resp_text)
 
                 public_key_base64 = resp_json["publicKey"]
+                self.myKeyId = resp_json["keyID"]
                 print("The public key is: ", public_key_base64)
 
                 verification_method_type = (
@@ -1559,8 +1563,6 @@ class AfGoAgentBackchannel(AgentBackchannel):
                             f"Couldn't retrieve my public did: status={orb_did_status} body={orb_did_text}"
                         )
 
-                    my_pub_did = json.loads(orb_did_text)["did"]
-
                     for dat in data["issue_credential"]["credentials~attach"]:
                         if "json" in dat["data"]:
                             cred = dat["data"]["json"]
@@ -1623,7 +1625,12 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
                             proof_type = options.get("proofType", "")
 
-                            selected_kid = priv_key_kids.get(proof_type, "")
+                            if self.myKeyId:
+                                my_pub_did = cred["issuer"] if isinstance(cred["issuer"], str) else cred["issuer"]["id"]
+                                selected_kid = self.myKeyId
+                            else:
+                                selected_kid = priv_key_kids.get(proof_type, "")
+                                my_pub_did = json.loads(orb_did_text)["did"]
 
                             # signatureRepresentation is an integer code used in afgo
                             # to indicate the representation of the signature
