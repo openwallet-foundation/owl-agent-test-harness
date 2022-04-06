@@ -364,44 +364,17 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MinValues | now:now   | proof_request_DL_revoc_address | presentation_DL_revoc_address_w_ts |
 
 
-   @T001-RFC0183 @RFC0183 @wip @AcceptanceTest @Schema_DriversLicense_Revoc @NeedsReview
-   Scenario Outline: Issuer revokes a credential and then sends notification
-      Given "3" agents
+   @T001-RFC0183 @RFC0183 @HIPE0011 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @RFC0441
+   Scenario Outline: Issuer revokes a credential and sends a v1 revocation notification
+      Given "2" agents
          | name  | role     |
          | Acme  | issuer   |
-         | Bob   | holder   |
+         | Bob   | prover   |
          | Faber | verifier |
-      And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from "Acme" with <credential_data>
-      When "Acme" revokes the credential
-      And "Acme" sends a revocation notification
+      And "Bob" has an issued credential from Acme with <credential_data>
+      When Acme revokes the credential with a revocation notification
       Then "Bob" receives the revocation notification
-      And "Bob" cannot make a proof with the credential
 
       Examples:
-         | issuer | credential_data   | request_for_proof        | presentation            |
-         | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_address |
-
-
-   @T002-RFC0183 @RFC0183 @wip @AcceptanceTest @Schema_DriversLicense_Revoc @NeedsReview
-   Scenario Outline: Issuer revokes multiple credentials for multiple holders and sends notification
-      Given "3" agents
-         | name  | role     |
-         | Acme  | issuer   |
-         | Bob   | holder   |
-         | Faber | verifier |
-      And "Faber" and "Bob" have an existing connection
-      And "Bob" has an issued credential from "Acme" with <credential_data>
-      And “Faber” has an issued credential from "Acme" with <credential_data_2>
-      When "Acme" revokes "Bob’s" credential
-      And "Acme" sends a revocation notification to "Bob"
-      And "Acme" revokes "Faber’s" credential
-      And "Acme" sends a revocation notification to "Faber"
-      Then "Bob" receives the revocation notification
-      And "Faber" receives the revocation notification
-      And "Bob" cannot make a proof with the credential
-      And "Faber" cannot make a proof with the credential
-
-      Examples:
-         | issuer | credential_data   | request_for_proof        | presentation            |
-         | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_address |
+         | credential_data   |
+         | Data_DL_MinValues |

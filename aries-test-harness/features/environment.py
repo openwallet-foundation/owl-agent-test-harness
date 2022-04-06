@@ -10,6 +10,8 @@ from collections import defaultdict
 from behave.runner import Context
 from behave.model import Scenario, Feature
 
+def before_step(context: Context, step):
+    context.step = step
 
 def before_scenario(context: Context, scenario: Scenario):
     setup_scenario_context(context, scenario)

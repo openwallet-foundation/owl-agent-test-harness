@@ -231,6 +231,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-type", self.wallet_type),
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
+            "--monitor-revocation-notification",
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
@@ -363,11 +364,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
     async def handle_webhook(self, topic: str, payload):
         if topic != "webhook":  # would recurse
-            handler = f"handle_{topic}"
-
-            # Remove this handler change when bug is fixed.
-            if handler == "handle_oob-invitation":
-                handler = "handle_oob_invitation"
+            # Some topics use dashes instead of underscores
+            handler_topic = topic.replace("-", "_")
+            handler = f"handle_{handler_topic}"
 
             method = getattr(self, handler, None)
             # put a log message here
@@ -402,6 +401,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 f"Unknown message type in Connections Webhook: {json.dumps(message)}"
             )
         log_msg("Received a Connection Webhook message: " + json.dumps(message))
+
+    async def handle_revocation_notification(self, message: Mapping[str, Any]):
+        log_msg(
+            "Received a Revocation Notification Webhook message: " + json.dumps(message)
+        )
+
+        thread_id = message["thread_id"]
+
+        # thread_id = indy::{rev_reg_id}::{cred_rev_id}
+        push_resource(thread_id, "revocation-notification-msg", message)
 
     async def handle_issue_credential(self, message: Mapping[str, Any]):
         thread_id = message["thread_id"]
@@ -706,12 +715,19 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         cred_rev_id = command.record_id
                         rev_reg_id = data["rev_registry_id"]
                         publish = data["publish_immediately"]
+                        notify_connection_id = data.get("notify_connection_id")
                         agent_operation = (
                             f"{acapy_topic}{operation}"
                             f"?cred_rev_id={cred_rev_id}"
                             f"&rev_reg_id={rev_reg_id}"
                             f"&publish={str(publish).lower()}"
                         )
+
+                        # If notify connection id is present, notify the holder
+                        if notify_connection_id:
+                            agent_operation += (
+                                "&notify=true&connection_id={notify_connection_id}"
+                            )
                         data = None
                     else:
                         agent_operation = acapy_topic + operation
@@ -1528,6 +1544,23 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             return (resp_status, resp_text)
 
+        elif topic == "revocation-notification" and record_id:
+            revocation_notification = pop_resource(record_id, "revocation-notification-msg")
+            i = 0
+            while revocation_notification is None and i < MAX_TIMEOUT:
+                await asyncio.sleep(1)
+                revocation_notification = pop_resource(record_id, "revocation-notification-msg")
+                i = i + 1
+            
+            # Not sure why the status is 200 even if not found? That's quite confusing
+            resp_status = 200
+            if revocation_notification:
+                resp_text = json.dumps(revocation_notification)
+            else:
+                resp_text = "{}"
+
+            return (resp_status, resp_text)
+
         return (501, "501: Not Implemented\n\n")
 
     def _process(
@@ -1966,7 +1999,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_operation = f"/revocation/{operation}"
                     if "cred_ex_id" in data:
                         admin_data = {
-                            "cred_ex_ed": data["cred_ex_id"],
+                            "cred_ex_id": data["cred_ex_id"],
                         }
                     else:
                         admin_data = {
@@ -1974,6 +2007,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                             "rev_reg_id": data["rev_registry_id"],
                             "publish": str(data["publish_immediately"]).lower(),
                         }
+                    
+                    # Revocation Notification
+                    notify_connection_id = data.get("notify_connection_id")
+                    if notify_connection_id:
+                        admin_data["notify"] = True
+                        admin_data["connection_id"] = notify_connection_id
                     data = admin_data
                 else:
                     agent_operation = "/issue-credential/" + operation
