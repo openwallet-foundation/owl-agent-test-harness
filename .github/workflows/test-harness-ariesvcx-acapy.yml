@@ -8,15 +8,12 @@ name: test-harness-ariesvcx-acapy
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "40 1 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2
@@ -37,7 +34,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx -a acapy-main"
           TEST_AGENTS: "-d aries-vcx -b acapy-main"
-          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T014-HIPE0011"
+          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T014-HIPE0011 -t ~@AIP20"
           REPORT_PROJECT: aries-vcx-b-acapy  
         continue-on-error: true
       - uses: actions/upload-artifact@v2

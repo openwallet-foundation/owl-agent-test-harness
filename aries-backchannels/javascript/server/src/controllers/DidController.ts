@@ -1,12 +1,11 @@
 import { Controller, Get } from '@tsed/common'
-import { Agent } from '@aries-framework/core'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/did')
-export class DidController {
-  private agent: Agent
-
-  public constructor(agent: Agent) {
-    this.agent = agent
+export class DidController extends BaseController {
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
   }
 
   @Get()

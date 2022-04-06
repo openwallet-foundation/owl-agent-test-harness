@@ -174,6 +174,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self.proofOperationTranslationDict = {
             "prepare-json-ld": "",
             "send-proposal": "send-propose-presentation",
+            "accept-proposal": "accept-propose-presentation",
             "send-request": "send-request-presentation",
             "send-presentation": "accept-request-presentation",
             "verify-presentation": "accept-presentation",
@@ -188,8 +189,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
         self.TopicTranslationDict = {
             "issue-credential": "/issuecredential/",
             "issue-credential-v2": "/issuecredential/",
+            "issue-credential-v3": "/issuecredential/",
             "proof": "/presentproof/",
             "proof-v2": "/presentproof/",
+            "proof-v3": "/presentproof/",
         }
 
         # Generic AATH parameter to AFGO commandline parameter
@@ -364,6 +367,8 @@ class AfGoAgentBackchannel(AgentBackchannel):
         if "piid" in message["message"]["Properties"]:
             thread_id = message["message"]["Properties"]["piid"]
             push_resource(thread_id, "present-proof-states-msg", message)
+
+            await push_message_stack("present-proof-states-msg" + "," + thread_id, message)
         else:
             raise Exception(
                 f"piid not found in present_proof_states Webhook Message: {json.dumps(message)}"
@@ -544,6 +549,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
         elif (
             command.topic == "issue-credential"
             or command.topic == "issue-credential-v2"
+            or command.topic == "issue-credential-v3"
         ):
             (resp_status, resp_text) = await self.handle_issue_credential_POST(command)
             return (resp_status, resp_text)
@@ -556,6 +562,10 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "proof" or command.topic == "proof-v2":
             (resp_status, resp_text) = await self.handle_present_proof_POST(command)
+            return (resp_status, resp_text)
+
+        elif command.topic == "proof-v3":
+            (resp_status, resp_text) = await self.handle_present_proof_v3_POST(command)
             return (resp_status, resp_text)
 
         # Handle out of band POST operations
@@ -920,109 +930,153 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
         await self.load_jsonld_contexts()
 
+        isWACI = False
+
+        if operation == "send-proposal" and "pthid" in data:
+            isWACI = True
+        elif operation == "send-offer":
+            if isinstance(data, list) and "credential_manifest" in data[0]["data"]["json"]:
+                isWACI = True
+        elif operation == "send-request":
+            if isinstance(data, list) and "credential_application" in data[0]["data"]["json"]:
+                isWACI = True
+        elif operation == "issue":
+            if isinstance(data, list) and "credential_fulfillment" in data[0]["data"]["json"]:
+                isWACI = True
+
         if operation == "prepare-json-ld":
             (orb_did_status, orb_did_text, priv_key_kids) = await self.get_orb_did()
             return (orb_did_status, orb_did_text)
 
         if operation == "send-proposal" or operation == "send-offer":
-            if data is None:
-                # get the credential_proposal from the webhook
-                if record_id is None:
-                    raise Exception(
-                        f"Cannot have both data and rec_id empty for issuecredential/{operation}"
-                    )
+            if operation == "send-proposal" and isWACI:
+                # Get connection by connection id contained in the data received
+                # Get the DID keys from the connection record
+                (their_did, my_did) = await self.get_DIDs_for_participants(data["connectionID"])
+                self.myDID = my_did
+
+                data = {"pthid": data["pthid"],
+                    "my_did": my_did,
+                        "their_did": their_did,
+                        "propose_credential": {}}
+
+            elif operation == "send-offer" and isWACI:
+                # The data passed in to the handler here contains just the
+                # Credential Manifest and Credential Fulfillment preview attachments.
+                # Below we arrange them as needed to be accepted by the AFGo agent's accept-proposal endpoint.
 
                 (wh_status, wh_text) = await self.request_response_issue_credential(
                     rec_id=record_id, message_name="issue-credential-actions-msg"
                 )
                 issue_credential_actions_msg = json.loads(wh_text)
-                # Format the proposal for afgo offer
 
-                data = {}
+                record_id = issue_credential_actions_msg["message"]["Properties"]["piid"]
 
-                cred_prev = {}
+                agent_operation = make_agent_operation(record_id)
 
-                if (
-                    "credential_proposal"
-                    in issue_credential_actions_msg["message"]["Message"]
-                ):
-                    cred_prev = issue_credential_actions_msg["message"]["Message"][
-                        "credential_proposal"
-                    ]
-                elif (
-                    "credential_preview"
-                    in issue_credential_actions_msg["message"]["Message"]
-                ):
-                    cred_prev = issue_credential_actions_msg["message"]["Message"][
-                        "credential_preview"
-                    ]
-
-                if operation == "send-proposal":
-                    data["credential_proposal"] = cred_prev
-                elif operation == "send-offer":
-                    data["credential_preview"] = cred_prev
-
-                if (
-                    "filters~attach"
-                    in issue_credential_actions_msg["message"]["Message"]
-                ):
-                    filters_attach = issue_credential_actions_msg["message"]["Message"][
-                        "filters~attach"
-                    ]
-                    # TODO support more than one filter
-                    if len(filters_attach) > 0:
-                        filter_attmt = filters_attach[0]["data"]
-                        if "json" in filter_attmt:
-                            data["filter"] = filter_attmt["json"]
-                        elif "base64" in filter_attmt:
-                            filter_dec = base64.b64decode(filter_attmt["base64"])
-                            filter_json = json.loads(filter_dec)
-                            data["filter"] = filter_json
-
-                # Save Issuer DID off for ease of later use
-                self.myDID = issue_credential_actions_msg["message"]["Properties"][
-                    "myDID"
-                ]
-                their_did = issue_credential_actions_msg["message"]["Properties"][
-                    "theirDID"
-                ]
-
-                record_id = issue_credential_actions_msg["message"]["Properties"][
-                    "piid"
-                ]
+                data = {"offer_credential": {
+                    "@type": "https://didcomm.org/issue-credential/3.0/offer-credential",
+                    "attachments": data
+                }}
 
             else:
-                data_text = json.dumps(data)
+                if data is None:
+                    # get the credential_proposal from the webhook
+                    if record_id is None:
+                        raise Exception(
+                            f"Cannot have both data and rec_id empty for issuecredential/{operation}"
+                        )
 
-                # Get connection by connection id contained in the data received
-                # Get the DID keys from the connection record
-                (their_did, my_did) = await self.get_DIDs_for_participants(
-                    data["connection_id"]
-                )
-                self.myDID = my_did
+                    (wh_status, wh_text) = await self.request_response_issue_credential(
+                        rec_id=record_id, message_name="issue-credential-actions-msg"
+                    )
+                    issue_credential_actions_msg = json.loads(wh_text)
+                    # Format the proposal for afgo offer
 
-                # remove schema/indy related items from data
-                if "schema_id" in data:
-                    data.pop("schema_id")
-                if "schema_issuer_did" in data:
-                    data.pop("schema_issuer_did")
-                if "issuer_did" in data:
-                    data.pop("issuer_did")
-                if "schema_name" in data:
-                    data.pop("schema_name")
-                if "cred_def_id" in data:
-                    data.pop("cred_def_id")
-                if "schema_version" in data:
-                    data.pop("schema_version")
-                if "connection_id" in data:
-                    data.pop("connection_id")
+                    data = {}
 
-            # add their did and my did to the data
-            data["my_did"] = self.myDID
-            data["their_did"] = their_did
+                    cred_prev = {}
+
+                    if (
+                            "credential_proposal"
+                            in issue_credential_actions_msg["message"]["Message"]
+                    ):
+                        cred_prev = issue_credential_actions_msg["message"]["Message"][
+                            "credential_proposal"
+                        ]
+                    elif (
+                            "credential_preview"
+                            in issue_credential_actions_msg["message"]["Message"]
+                    ):
+                        cred_prev = issue_credential_actions_msg["message"]["Message"][
+                            "credential_preview"
+                        ]
+
+                    if operation == "send-proposal" and not isWACI:
+                        data["credential_proposal"] = cred_prev
+                    elif operation == "send-offer" and not isWACI:
+                        data["credential_preview"] = cred_prev
+
+                    if (
+                            "filters~attach"
+                            in issue_credential_actions_msg["message"]["Message"]
+                    ):
+                        filters_attach = issue_credential_actions_msg["message"]["Message"][
+                            "filters~attach"
+                        ]
+                        # TODO support more than one filter
+                        if len(filters_attach) > 0:
+                            filter_attmt = filters_attach[0]["data"]
+                            if "json" in filter_attmt:
+                                data["filter"] = filter_attmt["json"]
+                            elif "base64" in filter_attmt:
+                                filter_dec = base64.b64decode(filter_attmt["base64"])
+                                filter_json = json.loads(filter_dec)
+                                data["filter"] = filter_json
+
+                    # Save Issuer DID off for ease of later use
+                    self.myDID = issue_credential_actions_msg["message"]["Properties"][
+                        "myDID"
+                    ]
+                    their_did = issue_credential_actions_msg["message"]["Properties"][
+                        "theirDID"
+                    ]
+
+                    record_id = issue_credential_actions_msg["message"]["Properties"][
+                        "piid"
+                    ]
+                else:
+                    data_text = json.dumps(data)
+
+                    # Get connection by connection id contained in the data received
+                    # Get the DID keys from the connection record
+                    (their_did, my_did) = await self.get_DIDs_for_participants(
+                        data["connection_id"]
+                    )
+                    self.myDID = my_did
+
+                    # remove schema/indy related items from data
+                    if "schema_id" in data:
+                        data.pop("schema_id")
+                    if "schema_issuer_did" in data:
+                        data.pop("schema_issuer_did")
+                    if "issuer_did" in data:
+                        data.pop("issuer_did")
+                    if "schema_name" in data:
+                        data.pop("schema_name")
+                    if "cred_def_id" in data:
+                        data.pop("cred_def_id")
+                    if "schema_version" in data:
+                        data.pop("schema_version")
+                    if "connection_id" in data:
+                        data.pop("connection_id")
+
+                # add their did and my did to the data
+                data["my_did"] = self.myDID
+                data["their_did"] = their_did
 
             # Properly construct the credential proposal for afgo
-            if operation == "send-proposal":
+            if operation == "send-proposal" and not isWACI:
                 if "credential_proposal" in data:
                     data["propose_credential"] = {
                         "credential_proposal": data["credential_proposal"]
@@ -1070,7 +1124,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
                     data.pop("filter")
 
-            elif operation == "send-offer":
+            elif operation == "send-offer" and not isWACI:
                 if "credential_preview" in data:
                     data["offer_credential"] = {
                         "credential_preview": data["credential_preview"]
@@ -1151,6 +1205,69 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 resp_text = json.dumps(resp_json)
 
             return (resp_status, resp_text)
+
+        elif operation == "send-request" and isWACI:
+            log_msg(
+                f"Data translated by backchannel to send to agent for operation: {agent_operation}",
+                data,
+            )
+
+            # The data passed in to the handler here contains just the
+            # Credential Application attachment.
+            # Below we arrange it as needed to be accepted by the AFGo agent's accept-offer endpoint.
+
+            data = {
+                "request_credential": {
+                    "ID": "ae639a44-1c63-4d11-ba05-39a1f97993aa",
+                    "Type": "https://didcomm.org/issue-credential/3.0/request-credential",
+                    "Comment": "",
+                    "GoalCode": "",
+                    "Attachments": data
+                }
+            }
+
+            (wh_status, wh_text) = await self.request_response_issue_credential(
+                rec_id=record_id, message_name="issue-credential-actions-msg"
+            )
+            issue_credential_actions_msg = json.loads(wh_text)
+
+            record_id = issue_credential_actions_msg["message"]["Properties"]["piid"]
+
+            agent_operation = make_agent_operation(record_id)
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            log_msg(resp_status, resp_text)
+            resp_json = json.loads(resp_text)
+
+            if resp_status == 200:
+                # Get the state form the webhook callback.
+                if record_id == None:
+                    if "piid" in resp_json:
+                        record_id = resp_json["piid"]
+                    else:
+                        raise Exception(
+                            f"No piid found to retrieve State from webhook message: {resp_text}"
+                        )
+
+                (wh_status, wh_text) = await self.request_response_issue_credential(
+                    record_id
+                )
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = issue_credential_states_msg["message"][
+                        "StateID"
+                    ]
+                else:
+                    raise Exception(
+                        f"Could not retieve State from webhook message: {issue_credential_states_msg}"
+                    )
+
+                resp_json["thread_id"] = record_id
+
+                resp_text = json.dumps(resp_json)
+
+            return resp_status, resp_text
 
         elif operation == "send-request":
             (wh_status, wh_text) = await self.request_response_issue_credential(
@@ -1259,6 +1376,62 @@ class AfGoAgentBackchannel(AgentBackchannel):
 
             return (resp_status, resp_text)
 
+        elif operation == "issue" and isWACI:
+            # The data passed in to the handler here contains just the
+            # Credential fulfillment attachment.
+            # Below we arrange it as needed to be accepted by the AFGo agent's accept-request endpoint.
+
+            data = {
+                "issue_credential": {
+                    "Type": "https://didcomm.org/issue-credential/3.0/issue-credential",
+                    "ID": "1c60ffac-cd87-4433-9909-fa6e93431a14",
+                    "Comment": "",
+                    "Attachments": data,
+                    "GoalCode": "",
+                    "ReplacementID": ""
+                }
+            }
+
+            (wh_status, wh_text) = await self.request_response_issue_credential(
+                rec_id=record_id, message_name="issue-credential-states-msg"
+            )
+            issue_credential_actions_msg = json.loads(wh_text)
+
+            record_id = issue_credential_actions_msg["message"]["Properties"]["piid"]
+
+            agent_operation = make_agent_operation(record_id)
+
+            (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+            log_msg(resp_status, resp_text)
+
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                # Get the state form the webhook callback.
+                if record_id == None:
+                    if "piid" in resp_json:
+                        record_id = resp_json["piid"]
+                    else:
+                        raise Exception(
+                            f"No piid found to retrieve State from webhook message: {resp_text}"
+                        )
+                (wh_status, wh_text) = await self.request_response_issue_credential(
+                    record_id
+                )
+                issue_credential_states_msg = json.loads(wh_text)
+                if "StateID" in issue_credential_states_msg["message"]:
+                    resp_json["state"] = self.issueCredentialStateTranslationDict[
+                        issue_credential_states_msg["message"]["StateID"]
+                    ]
+                else:
+                    raise Exception(
+                        f"Could not retrieve State from webhook message: {issue_credential_states_msg}"
+                    )
+
+                resp_text = json.dumps(resp_json)
+
+            return (resp_status, resp_text)
+
+
         elif operation == "issue":
             cred = {}
 
@@ -1290,7 +1463,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 # Format the proposal for afgo issue
                 # suppliment the message data with whatever afgo needs to make the store credential work
                 # IMO this is a defect in afgo
-                if topic == "issue-credential-v2":
+                if topic == "issue-credential-v2" or topic == "issue-credential-v3":
                     src_msg = issue_credential_states_msg["message"]["Message"]
 
                     cred_attachments = []
@@ -1447,7 +1620,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                                                     timespec="seconds"
                                                 )
                                             )
-                                            + "Z",
+                                                + "Z",
                                             "issuer": {"id": self.myDID},
                                             "type": [
                                                 "VerifiableCredential",
@@ -1496,6 +1669,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                 resp_text = json.dumps(resp_json)
 
             return (resp_status, resp_text)
+
 
         # Make Special provisions for revoke since it is passing multiple query params not just one id.
         elif operation == "revoke":
@@ -1721,6 +1895,193 @@ class AfGoAgentBackchannel(AgentBackchannel):
             )
         return (resp_status, resp_text)
 
+    async def handle_present_proof_v3_POST(self, command: BackchannelCommand):
+        topic = command.topic
+        operation = command.operation
+        record_id = command.record_id
+        data = command.data
+
+        def get_agent_operation_path(record_id: str, operation: str):
+            if record_id is None:
+                return f"{self.TopicTranslationDict[topic]}{self.proofOperationTranslationDict[operation]}"
+            else:
+                return (
+                    self.TopicTranslationDict[topic]
+                    + record_id
+                    + "/"
+                    + self.proofOperationTranslationDict[operation]
+                )
+
+        agent_operation = get_agent_operation_path(record_id, operation)
+
+        if data is not None:
+            log_msg(
+                f"Data passed to backchannel by test for operation: {agent_operation}",
+                data,
+            )
+
+        await self.load_jsonld_contexts()
+
+        if operation == "send-proposal":
+            data = {
+                "connection_id": data["presentation_proposal"]["connection_id"],
+                "propose_presentation": {
+                    "type": "https://didcomm.org/present-proof/3.0/propose-presentation",
+                    "body": {
+                        "comment": data["presentation_proposal"]["comment"],
+                    },
+                },
+            }
+
+        if operation == "send-request":
+            # create extra fields needed in presentation
+            attach_id = str(uuid.uuid1())
+            if (
+                "json_ld" in data["presentation_request"]["format"]
+                or "json-ld" in data["presentation_request"]["format"]
+            ):
+                format_key = "dif/presentation-exchange/definitions@v1.0"
+                mime_type = "application/ld+json"
+            else:
+                raise Exception(f"format not supported for present-proof v3: {data}")
+
+            amended_data = {
+                "request_presentation": {
+                    "type": "https://didcomm.org/present-proof/3.0/request-presentation",
+                    "body": {
+                        "comment": data["presentation_request"]["comment"],
+                    },
+                    "attachments": [
+                        {
+                            "id": attach_id,
+                            "format": format_key,
+                            "data": {"json": data["presentation_request"]["data"]},
+                            "mime-type": mime_type,
+                        }
+                    ],
+                },
+            }
+
+            if "connection_id" in amended_data:
+                amended_data["connection_id"] = data["connection_id"]
+            else: # use afgo's accept-propose-presentation command
+                operation = "accept-proposal"
+                agent_operation = get_agent_operation_path(record_id, operation)
+
+            data = amended_data
+
+        elif operation == "send-presentation":
+            # Get the presentation details from the webook data
+            (wh_status, wh_text) = await self.request_response_present_proof(
+                command, message_name="present-proof-actions-msg"
+            )
+            if wh_status != 200 or wh_text is None:
+                raise Exception(
+                    f"Could not retieve presentation information from webhook message for operation: {agent_operation}"
+                )
+
+            present_proof_msg = json.loads(wh_text)
+
+            piid = present_proof_msg["message"]["Properties"]["piid"]
+
+            presentation = present_proof_msg["message"]["Message"]
+
+            presentation["type"] = "https://didcomm.org/present-proof/3.0/presentation"
+
+            presentation.pop("request_presentations~attach", None)
+            presentation.pop("attachments", None)
+            presentation.pop("~thread", None)
+            presentation.pop("will_confirm", None)
+
+            if "json_ld" in data["format"] or "json-ld" in data["format"]:
+
+                cred_attach_list = []
+
+                if "record_ids" in data:
+                    for record_id_list in data["record_ids"].values():
+                        for record_id in record_id_list:
+                            cred_record_list = get_resource(
+                                record_id, "credential-cache-msg"
+                            )
+
+                            if len(cred_record_list) > 0:
+                                cred_attachments = cred_record_list[-1]["message"]["Message"]["attachments"]
+
+                                for cred_attach in cred_attachments:
+                                    cred_attach_list.append(cred_attach)
+
+                for cred_attach in cred_attach_list:
+                    cred_attach["media_type"] = "application/ld+json"
+
+                    if (
+                        "json" in cred_attach["data"]
+                        and "json-ld" in cred_attach["data"]["json"]
+                    ):
+                        # merge the cred proper with its wrapping
+                        cred_attach["data"]["json"]["json-ld"]["credential"][
+                            "issuer"
+                        ] = cred_attach["data"]["json"]["issuer"]
+                        cred_attach["data"]["json"]["json-ld"]["credential"][
+                            "issuanceDate"
+                        ] = cred_attach["data"]["json"]["issuanceDate"]
+
+                        cred_attach["data"]["json"] = cred_attach["data"]["json"][
+                            "json-ld"
+                        ]["credential"]
+
+                presentation["attachments"] = cred_attach_list
+
+            data = {
+                "presentation": presentation,
+                "piid": piid,
+            }
+
+        elif operation == "verify-presentation":
+
+            data = {"names": [record_id]}
+
+        log_msg(
+            f"Data translated by backchannel to send to agent for operation: {agent_operation}",
+            data,
+        )
+
+        (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        if resp_status!= 200:
+            log_msg(resp_status, resp_text)
+            return (resp_status, resp_text)
+
+        resp_json = json.loads(resp_text)
+
+        if operation == "send-request" or operation == "send-proposal":
+            # set a thread_id for the test harness
+            if "piid" in resp_json:
+                resp_json["thread_id"] = resp_json["piid"]
+            else:
+                raise Exception(
+                    f"No piid(thread_id) found in response for operation: {agent_operation} {resp_text}"
+                )
+
+        # The response doesn't have a state. Get it from the present_proof_states webhook message
+        await asyncio.sleep(1)
+        present_proof_states_msg = pop_resource_latest("present-proof-states-msg")
+        # present_proof_states_msg = json.loads(wh_text)
+        if "StateID" in present_proof_states_msg["message"]:
+            resp_json["state"] = present_proof_states_msg["message"]["StateID"]
+        else:
+            raise Exception(
+                f"Could not retieve State from webhook message: {present_proof_states_msg}"
+            )
+        resp_text = json.dumps(resp_json)
+
+        log_msg(resp_status, resp_text)
+
+        if resp_status == 200:
+            resp_text = self.agent_state_translation(
+                command.topic, operation, resp_text
+            )
+        return (resp_status, resp_text)
+
     async def load_jsonld_contexts(self):
         if not hasattr(self, "loaded_jsonld_contexts"):
             self.loaded_jsonld_contexts = []
@@ -1852,7 +2213,23 @@ class AfGoAgentBackchannel(AgentBackchannel):
         elif (
             command.topic == "issue-credential"
             or command.topic == "issue-credential-v2"
+            or command.topic == "issue-credential-v3"
         ):
+            if command.record_id == "retrieve-credential-proposal":
+                propose_credential_message_from_holder = get_resource_latest("issue-credential-actions-msg")
+
+                propose_credential_message = propose_credential_message_from_holder["message"]["Message"]
+
+                return 200, json.dumps(propose_credential_message)
+
+            elif command.record_id == "retrieve-credential-application":
+                request_credential_message_from_holder = get_resource_latest("issue-credential-actions-msg")
+
+                credential_application_attachment = \
+                    request_credential_message_from_holder["message"]["Message"]["attachments"][0]["data"]["json"]
+
+                return 200, json.dumps(credential_application_attachment)
+
             (wh_status, wh_text) = await self.request_response_issue_credential(
                 record_id
             )
@@ -1888,16 +2265,23 @@ class AfGoAgentBackchannel(AgentBackchannel):
                     )
             return (resp_status, resp_text)
 
-        elif command.topic == "proof" or command.topic == "proof-v2":
-            (wh_status, wh_text) = await self.request_response_present_proof(command)
-            present_proof_states_msg = json.loads(wh_text)
+        elif command.topic == "proof" or command.topic == "proof-v2" or command.topic == "proof-v3":
+            present_proof_states_msg = await pop_message_stack(
+                    "present-proof-states-msg" + "," + command.record_id, MAX_TIMEOUT
+            )
+
+            # (wh_status, wh_text) = await self.request_response_present_proof(command)
+            # present_proof_states_msg = json.loads(wh_text)
             if "StateID" in present_proof_states_msg["message"]:
                 resp_json = {"state": present_proof_states_msg["message"]["StateID"]}
             else:
                 raise Exception(
                     f"Could not retieve State from webhook message: {present_proof_states_msg}"
                 )
-            return (wh_status, json.dumps(resp_json))
+
+            print("GET proof state response: " + json.dumps(resp_json))
+
+            return (200, json.dumps(resp_json))
 
         elif command.topic == "revocation":
             # afgo does not support indy revocation. Return dummy data
@@ -2223,7 +2607,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
             return await self.request_response_out_of_band(record_id)
 
         elif (
-            topic == "issue-credential" or topic == "issue-credential-v2"
+            topic == "issue-credential" or topic == "issue-credential-v2" or topic == "issue-credential-v3"
         ) and record_id:
             return await self.request_response_issue_credential(
                 record_id, message_name=message_name
@@ -2436,7 +2820,7 @@ class AfGoAgentBackchannel(AgentBackchannel):
                         agent_state,
                         self.connectionResponderStateTranslationDict[agent_state],
                     )
-            elif topic == "issue-credential" or topic == "issue-credential-v2":
+            elif topic == "issue-credential" or topic == "issue-credential-v2" or topic == "issue-credential-v3":
                 data = data.replace(
                     agent_state, self.issueCredentialStateTranslationDict[agent_state]
                 )

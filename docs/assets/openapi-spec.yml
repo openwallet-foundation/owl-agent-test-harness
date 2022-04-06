@@ -56,6 +56,8 @@ tags:
     description: Agent commands related to `proof` topic
   - name: Present Proof V2
     description: Agent commands related to `proof-v2` topic
+  - name: Present Proof V3
+    description: Agent commands related to `proof-v3` topic
   - name: Revocation
     description: Agent commands related to `revocation` topic
   - name: DID Exchange
@@ -203,6 +205,20 @@ paths:
         - Connection
       summary: Create a new connection invitation
       operationId: ConnectionCreateInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    mediator_connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
       responses:
         200:
           description: Invitation created
@@ -233,7 +249,11 @@ paths:
                 - data
               properties:
                 data:
-                  $ref: "#/components/schemas/ConnectionInvitation"
+                  allOf:
+                    - $ref: "#/components/schemas/ConnectionInvitation"
+                    - properties:
+                        mediator_connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
       responses:
         200:
           description: Invitation received
@@ -962,6 +982,189 @@ paths:
                           credential_id:
                             $ref: "#/components/schemas/CredentialId"
 
+  /agent/command/issue-credential-v3/send-proposal:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` and `pthid` in body.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#propose-credential
+      operationId: IssueCredentialV3SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - pthid
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    pthid:
+                      $ref: "#/components/schemas/pthid"
+
+      responses:
+        200:
+          description: Credential proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential-v3/retrieve-credential-proposal:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Propose Credential object received by the agent.
+      description: >
+        Retrieves the Propose Credential object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialProposal
+
+      responses:
+        200:
+          description: Propose Credential object
+  /agent/command/issue-credential-v3/send-offer:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#offer-credential
+      operationId: IssueCredentialV3SendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Credential offer sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential-v3/send-request:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#request-credential
+      operationId: IssueCredentialV3SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+
+      responses:
+        200:
+          description: Credential request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential-v3/retrieve-credential-application:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Credential Application object received by the agent.
+      description: >
+        Retrieves the Credential Application object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialApplication
+
+      responses:
+        200:
+          description: Credential Application object
+  /agent/command/issue-credential-v3/issue:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Issue credential
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#issue-credential
+      operationId: IssueCredentialV3Issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential-v3/store:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Store/accept credential
+      operationId: IssueCredentialV3Store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - required:
+                      - credential_id
+                    properties:
+                      state:
+                        example: done
+
   /agent/command/revocation/revoke:
     post:
       tags:
@@ -1023,7 +1226,6 @@ paths:
                 properties:
                   thread_id:
                     type: string
-
   /agent/command/credential/{credentialId}:
     get:
       tags:
@@ -1291,6 +1493,7 @@ paths:
                   - properties:
                       state:
                         example: done
+
   /agent/command/proof-v2/send-request:
     post:
       tags:
@@ -1350,7 +1553,6 @@ paths:
                                   $ref: "#/components/schemas/ConnectionId"
                               required:
                                 - connection_id
-
       responses:
         200:
           description: Presentation request sent
@@ -1434,6 +1636,163 @@ paths:
                     required:
                       - state
                       - verified
+
+  /agent/command/proof-v3/send-proposal:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Send presentation proposal
+      description: >
+        Send a `propose-presentation` message to connection with `connection_id` in body.
+      operationId: PresentProofV3SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Proposal
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - presentation_proposal
+                      properties:
+                        presentation_proposal:
+                          required:
+                            - connection_id
+                          properties:
+                            connection_id:
+                              $ref: "#/components/schemas/ConnectionId"
+                            comment:
+                              $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Presentation proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/proof-v3/send-request:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Send present-proof v3 presentation request
+      description: >
+        Send a `request-presentation` message, either as the start of a thread, or as an acceptance of a presentation proposal.
+         - To accept a presentation proposal: include thread `id` in body.
+         - To start a thread: include `connection_id` in body.
+      operationId: PresentProofV3SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                connection_id:
+                  $ref: "#/components/schemas/ConnectionId"
+                data:
+                  type: object
+                  properties:
+                    presentation_request:
+                      anyOf:
+                        - $ref: "#/components/schemas/PresentProofV2SendRequestIndy"
+                        - $ref: "#/components/schemas/PresentProofV2SendRequestDIF"
+      responses:
+        200:
+          description: Presentation request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/proof-v3/send-presentation:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Send presentation
+      description: >
+        Send a `presentation` message in response to presentation request with specified thread id.
+      operationId: PresentProofV3SendPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  title: TODO
+      responses:
+        200:
+          description: Presentation sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: presentation-sent
+  /agent/command/proof-v3/verify-presentation:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Verify presentation
+      description: >
+        Verify the received presentation with specified thread id.
+      operationId: PresentProofV3VerifyPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation verified
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: done
+                      verified:
+                        type: boolean
+                        example: true
+                    required:
+                      - state
+                      - verified
+
   /agent/command/mediation/{connectionId}:
     get:
       tags:
@@ -1604,6 +1963,8 @@ paths:
                       properties:
                         use_existing_connection:
                           type: boolean
+                        mediator_connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
                       required:
                         - use_existing_connection
                   example:
@@ -1627,6 +1988,7 @@ paths:
                       "handshake_protocols":
                         ["https://didcomm.org/didexchange/1.0"],
                       "use_existing_connection": false,
+                      "mediator_connection_id": "77d58e00-f79a-477c-9e50-c05254ab4b54",
                     }
       responses:
         200:
@@ -1915,6 +2277,10 @@ components:
     ThreadId:
       title: Thread Id
       example: "e7280776-5315-4569-8cac-42cae108adfe"
+      type: string
+    pthid:
+      title: pthid
+      example: "5a7f69cf-ee3c-4a75-9975-1aa3c28db122"
       type: string
     MediatorId:
       title: Mediator Id

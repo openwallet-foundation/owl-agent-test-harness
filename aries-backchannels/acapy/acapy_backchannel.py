@@ -218,7 +218,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--label", self.label),
             # "--auto-ping-connection",
             # "--auto-accept-invites",
-            # "--auto-accept-requests",
+            "--auto-accept-requests",
             # "--auto-respond-messages",
             # "--auto-respond-credential-proposal",
             # "--auto-respond-credential-offer",
@@ -232,6 +232,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
             "--monitor-revocation-notification",
+            "--open-mediation",
+            "--enable-undelivered-queue"
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
@@ -562,12 +564,33 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     async def make_agent_POST_request(
         self, command: BackchannelCommand
     ) -> Tuple[int, str]:
+        data = command.data
+
         if command.topic == "connection":
+            # If mediator_connection_id is included we should use that as the mediator for this connection
+            mediation_id = None
+            if (
+                data
+                and "mediator_connection_id" in data
+                and data["mediator_connection_id"] != None
+            ):
+                mediation_record = await get_mediation_record_by_connection_id(
+                    self, data["mediator_connection_id"]
+                )
+                mediation_id = mediation_record["mediation_id"]
+
             operation = command.operation
             if operation == "create-invitation":
                 agent_operation = f"/connections/{operation}"
 
-                (resp_status, resp_text) = await self.admin_POST(agent_operation)
+                post_data = {}
+
+                if mediation_id:
+                    post_data["mediation_id"] = mediation_id
+
+                (resp_status, resp_text) = await self.admin_POST(
+                    agent_operation, data=post_data
+                )
 
                 # extract invitation from the agent's response
                 invitation_resp = json.loads(resp_text)
@@ -579,6 +602,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             elif operation == "receive-invitation":
                 agent_operation = "/connections/" + operation
+
+                if mediation_id:
+                    agent_operation += f"?mediation_id={mediation_id}"
 
                 (resp_status, resp_text) = await self.admin_POST(
                     agent_operation, data=command.data

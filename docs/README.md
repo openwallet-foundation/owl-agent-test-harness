@@ -28,13 +28,13 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 | Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | Verity | Findy | VCX | **All Tests** |
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | 52 / 52<br>100% | 20 / 20<br>100% | 56 / 56<br>100% | 23 / 51<br>45% | 0 / 2<br>0% | 34 / 34<br>100% | 64 / 64<br>100% | **237 / 267<br>88%** |
-| [AF-Go](afgo.md)| AIP 2 | None | 20 / 20<br>100% | 25 / 25<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **45 / 45<br>100%** |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 56 / 56<br>100% | 0 / 0<br>0% | 17 / 17<br>100% | 47 / 53<br>88% | 0 / 0<br>0% | 51 / 51<br>100% | 0 / 0<br>0% | **142 / 148<br>95%** |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 23 / 51<br>45% | 0 / 0<br>0% | 47 / 53<br>88% | 6 / 12<br>50% | 0 / 0<br>0% | 25 / 39<br>64% | 0 / 0<br>0% | **72 / 126<br>57%** |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 84 / 85<br>98% | 21 / 22<br>95% | 64 / 64<br>100% | 0 / 0<br>0% | 0 / 2<br>0% | 34 / 34<br>100% | 51 / 62<br>82% | **254 / 269<br>94%** |
+| [AF-Go](afgo.md)| AIP 2 | None | 21 / 22<br>95% | 39 / 39<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **60 / 61<br>98%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 64 / 64<br>100% | 0 / 0<br>0% | 28 / 28<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 34 / 34<br>100% | 0 / 0<br>0% | **126 / 126<br>100%** |
+| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **0 / 0<br>0%** |
 | [Verity](verity.md)| AIP 1 | Credential Exchange | 0 / 2<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **0 / 2<br>0%** |
-| [Findy](findy.md)| AIP 1 | Revocation | 34 / 34<br>100% | 0 / 0<br>0% | 51 / 51<br>100% | 25 / 39<br>64% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | **110 / 124<br>88%** |
-| [VCX](aries-vcx.md)| AIP 1 | Proof Proposals, Public Dids, Revocations | 64 / 64<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 33 / 34<br>97% | **97 / 98<br>98%** |
+| [Findy](findy.md)| AIP 1 | Revocation | 34 / 34<br>100% | 0 / 0<br>0% | 34 / 34<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | **85 / 85<br>100%** |
+| [VCX](aries-vcx.md)| AIP 1 | Proof Proposals, Public Dids, Revocations | 51 / 62<br>82% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 20 / 20<br>100% | **71 / 82<br>86%** |
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
 - The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
@@ -42,5 +42,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Mon Feb 28 03:52:22 UTC 2022*
+*Results last updated: Thu Mar 31 03:44:55 UTC 2022*
 

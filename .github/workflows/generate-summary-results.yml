@@ -1,15 +1,12 @@
 name: generate-aath-summary-results
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "45 3 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2

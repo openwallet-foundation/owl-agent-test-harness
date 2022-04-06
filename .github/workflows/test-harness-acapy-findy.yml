@@ -18,15 +18,12 @@ name: test-harness-acapy-findy
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "20 1 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -44,7 +41,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a findy"
           TEST_AGENTS: "-d acapy-main -b findy"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
           REPORT_PROJECT: acapy-b-findy
         continue-on-error: true
       - name: run-send-gen-test-results-secure

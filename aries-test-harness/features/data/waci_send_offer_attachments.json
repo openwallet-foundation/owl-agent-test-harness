@@ -1,0 +1,239 @@
+[
+  {
+    "@id": "0ebbf26f-a726-4e73-8c6b-4fee39a0acd6",
+    "mime-type": "application/json",
+    "lastmod_time": "0001-01-01T00:00:00Z",
+    "data": {
+      "json": {
+        "credential_manifest": {
+          "id": "dcc75a16-19f5-4273-84ce-4da69ee2b7fe",
+          "version": "0.1.0",
+          "issuer": {
+            "id": "did:example:123?linked-domains=3",
+            "name": "Government of Ontario",
+            "styles": {
+              "thumbnail": {
+
+              },
+              "hero": {
+
+              },
+              "background": {
+                "color": ""
+              },
+              "text": {
+                "color": ""
+              }
+            }
+          },
+          "output_descriptors": [
+            {
+              "id": "driver_license_output",
+              "schema": "https://schema.org/EducationalOccupationalCredential",
+              "display": {
+                "title": {
+                  "path": [
+                    "$.name",
+                    "$.vc.name"
+                  ],
+                  "schema": {
+                    "type": "string"
+                  },
+                  "fallback": "Ontario Driver's License"
+                },
+                "subtitle": {
+                  "path": [
+                    "$.class",
+                    "$.vc.class"
+                  ],
+                  "schema": {
+                    "type": "string"
+                  },
+                  "fallback": "Class A, Commercial"
+                },
+                "description": {
+                  "text": "License to operate a vehicle with a gross combined weight rating (GCWR) of 26,001 or more pounds, as long as the GVWR of the vehicle(s) being towed is over 10,000 pounds.",
+                  "schema": {
+
+                  }
+                },
+                "properties": [
+                  {
+                    "path": [
+                      "$.donor",
+                      "$.vc.donor"
+                    ],
+                    "schema": {
+                      "type": "boolean"
+                    },
+                    "fallback": "Unknown",
+                    "label": "Organ Donor"
+                  }
+                ]
+              },
+              "styles": {
+                "thumbnail": {
+                  "uri": "https://ontario.ca/logo.png",
+                  "alt": "Washington State Seal"
+                },
+                "hero": {
+                  "uri": "https://dol.wa.com/happy-people-driving.png",
+                  "alt": "Happy people driving"
+                },
+                "background": {
+                  "color": "#ff0000"
+                },
+                "text": {
+                  "color": "#d4d400"
+                }
+              }
+            }
+          ],
+          "format": {
+            "jwt": {
+              "alg": [
+                "EdDSA",
+                "ES256K",
+                "ES384"
+              ]
+            },
+            "jwt_vc": {
+              "alg": [
+                "ES256K",
+                "ES384"
+              ]
+            },
+            "jwt_vp": {
+              "alg": [
+                "EdDSA",
+                "ES256K"
+              ]
+            },
+            "ldp": {
+              "proof_type": [
+                "RsaSignature2018"
+              ]
+            },
+            "ldp_vc": {
+              "proof_type": [
+                "JsonWebSignature2020",
+                "Ed25519Signature2018",
+                "EcdsaSecp256k1Signature2019",
+                "RsaSignature2018"
+              ]
+            },
+            "ldp_vp": {
+              "proof_type": [
+                "Ed25519Signature2018"
+              ]
+            }
+          },
+          "presentation_definition": {
+            "id": "8246867e-fdce-48de-a825-9d84ec16c6c9",
+            "input_descriptors": [
+              {
+                "id": "prc_input",
+                "name": "Permanent Resident Card",
+                "purpose": "We need a PRC to verify your status.",
+                "schema": [
+                  {
+                    "uri": "https://w3id.org/citizenship#PermanentResidentCard"
+                  }
+                ],
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.credentialSubject.givenName"
+                      ],
+                      "filter": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "path": [
+                        "$.credentialSubject.familyName"
+                      ],
+                      "filter": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "path": [
+                        "$.credentialSubject.birthCountry"
+                      ],
+                      "filter": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "path": [
+                        "$.credentialSubject.birthDate"
+                      ],
+                      "filter": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "options": {
+          "challenge": "508adef4-b8e0-4edf-a53d-a260371c1423",
+          "domain": "9rf25a28rs96"
+        }
+      }
+    }
+  },
+  {
+    "@id": "638c66fb-a981-49e9-ba10-63eee1db7b94",
+    "mime-type": "application/json",
+    "lastmod_time": "0001-01-01T00:00:00Z",
+    "data": {
+      "json": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://identity.foundation/credential-manifest/fulfillment/v1"
+        ],
+        "credential_fulfillment": {
+          "id": "a30e3b91-fb77-4d22-95fa-871689c322e2",
+          "manifest_id": "dcc75a16-19f5-4273-84ce-4da69ee2b7fe",
+          "descriptor_map": [
+            {
+              "id": "driver_license_output",
+              "format": "ldp_vc",
+              "path": "$.verifiableCredential[0]"
+            }
+          ]
+        },
+        "type": [
+          "VerifiablePresentation",
+          "CredentialFulfillment"
+        ],
+        "verifiableCredential": [
+          {
+            "@context": [
+              "https://www.w3.org/2018/credentials/v1"
+            ],
+            "credentialSubject": {
+              "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+              "license": {
+                "dob": "07/13/80",
+                "number": "34DGE352"
+              }
+            },
+            "id": "https://ontario.ca/claims/DriversLicense",
+            "issuanceDate": "2010-01-01T19:53:24Z",
+            "issuer": "did:foo:123",
+            "type":[
+              "VerifiableCredential",
+              "OntarioDriversLicense"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
