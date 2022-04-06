@@ -17,15 +17,12 @@ name: test-harness-acapy-aip10
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "15 0 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -43,7 +40,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main"
           TEST_AGENTS: "-d acapy-main"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10,@RFC0211 -t ~@wip -t ~@T004-RFC0211 -t ~@Transport_NoHttpOutbound"
           REPORT_PROJECT: acapy-aip10  
         continue-on-error: true
       - name: run-send-gen-test-results-secure

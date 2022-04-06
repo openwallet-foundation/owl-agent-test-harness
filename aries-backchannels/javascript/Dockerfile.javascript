@@ -34,6 +34,7 @@ WORKDIR /src
 ENV RUN_MODE="docker"
 
 COPY javascript/server/package.json package.json
+COPY javascript/aries-framework-core-v0.1.0.tgz /
 
 # Run install after copying only depdendency file
 # to make use of docker layer caching

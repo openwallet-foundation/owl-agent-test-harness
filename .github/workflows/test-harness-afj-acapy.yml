@@ -18,15 +18,12 @@ name: test-harness-javascript-acapy
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "50 0 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -44,7 +41,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript -a acapy-main"
           TEST_AGENTS: "-d javascript -b acapy-main"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211 -t ~@Transport_NoHttpOutbound -t ~@DIDExchangeConnection"
           REPORT_PROJECT: javascript-b-acapy
         continue-on-error: true
       - name: run-send-gen-test-results-secure

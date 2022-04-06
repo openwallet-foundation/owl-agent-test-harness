@@ -4,13 +4,13 @@ import { Agent, IndySdkError } from '@aries-framework/core'
 import { LedgerNotFoundError } from '@aries-framework/core/build/modules/ledger/error/LedgerNotFoundError'
 import type * as Indy from 'indy-sdk'
 import { isIndyError } from '@aries-framework/core/build/utils/indyError'
+import { BaseController } from '../BaseController'
+import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/credential-definition')
-export class CredentialDefinitionController {
-  private agent: Agent
-
-  public constructor(agent: Agent) {
-    this.agent = agent
+export class CredentialDefinitionController extends BaseController {
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
   }
 
   @Get('/:credentialDefinitionId')
@@ -65,7 +65,7 @@ export class CredentialDefinitionController {
         credential_definition_id: credentialDefinition.id,
         credential_definition: credentialDefinition,
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new InternalServerError(`Error registering credential definition: ${error.message}`, error)
     }
   }

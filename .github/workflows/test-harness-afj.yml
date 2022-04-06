@@ -17,15 +17,12 @@ name: test-harness-javascript-javascript
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 2 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -43,7 +40,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript"
           TEST_AGENTS: "-d javascript"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211 -t ~@DIDExchangeConnection"
           REPORT_PROJECT: javascript
         continue-on-error: true
       - name: run-send-gen-test-results-secure
