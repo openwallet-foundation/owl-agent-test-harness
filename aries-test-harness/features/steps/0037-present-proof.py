@@ -194,6 +194,51 @@ def step_impl(context, verifier, prover):
             "request-received",
         )
 
+@when('"{verifier}" creates a proof request')
+def step_impl(context, verifier: str):
+
+    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
+    if context.request_for_proof:
+        data = context.request_for_proof
+
+        if context.non_revoked_timeframe:
+            data["non_revoked"] = context.non_revoked_timeframe["non_revoked"]
+    else:
+        data = {
+            "requested_attributes": {
+                "attr_1": {
+                    "name": "attr_1",
+                    "restrictions": [
+                        {
+                            "schema_name": "test_schema." + context.issuer_name,
+                            "schema_version": "1.0.0",
+                        }
+                    ],
+                }
+            }
+        }
+
+    presentation_request = {
+        "presentation_request": {
+            "comment": "This is a comment for the request for presentation.",
+            "proof_request": {"data": data},
+        }
+    }
+
+    (resp_status, resp_text) = agent_backchannel_POST(
+            context.verifier_url + "/agent/command/",
+            "proof",
+            operation="create-request",
+            data=presentation_request,
+        )
+
+    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+    resp_json = json.loads(resp_text)
+
+    assert "record" in resp_json
+    context.presentation_thread_id = resp_json["record"]["thread_id"]
+    context.proof_request = resp_json["message"]
+
 
 @when(
     '"{verifier}" agrees with the proposal so sends a {request_for_proof} presentation to "{prover}"'

@@ -134,9 +134,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         # AATH API : Acapy Admin API
         self.proofv2OperationTranslationDict = {
-            "create-send-connectionless-request": "create-request",
             "send-presentation": "send-presentation",
             "send-request": "send-request",
+            "create-request": "create-request",
             "verify-presentation": "verify-presentation",
             "send-proposal": "send-proposal",
         }
@@ -803,9 +803,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             record_id = command.record_id
             data = command.data
 
-            if operation == "create-send-connectionless-request":
-                operation = "create-request"
-
             if (
                 self.auto_respond_presentation_proposal
                 and operation == "send-request"
@@ -889,6 +886,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 log_msg(resp_status, resp_text)
                 if resp_status == 200:
                     resp_text = self.agent_state_translation(command.topic, resp_text)
+
+                if operation == "create-request":
+                    resp_json = json.loads(resp_text)
+                    resp_text = json.dumps({
+                        "record": resp_json,
+                        "message": resp_json["presentation_request_dict"]
+                    })
                 return (resp_status, resp_text)
 
         # Handle out of band POST operations
@@ -951,16 +955,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     resp_json = json.loads(resp_text)
                     record_id = resp_json["results"][0]["cred_ex_record"]["cred_ex_id"]
                     record_type = "credential-offer"
-                elif message_type.endswitch("present-proof/1.0/request-presentation"):
+                elif message_type.endswith("present-proof/1.0/request-presentation"):
                     (_, resp_text) = await self.admin_GET(
                         "/present-proof/records", params={"thread_id": thread_id}
                     )
                     resp_json = json.loads(resp_text)
                     record_id = resp_json["results"][0]["presentation_exchange_id"]
                     record_type = "present-proof"
-                elif message_type.endswitch("present-proof/2.0/request-presentation"):
+                elif message_type.endswith("present-proof/2.0/request-presentation"):
                     (_, resp_text) = await self.admin_GET(
-                        "/present-proof/records", params={"thread_id": thread_id}
+                        "/present-proof-2.0/records", params={"thread_id": thread_id}
                     )
                     resp_json = json.loads(resp_text)
                     record_id = resp_json["results"][0]["pres_ex_id"]
@@ -1237,6 +1241,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
             await asyncio.sleep(1)
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+            if operation == "create-request":
+                resp_json = json.loads(resp_text)
+                resp_text = json.dumps({
+                    "record": resp_json,
+                    "message": resp_json["pres_request"]
+                })
 
             log_msg(resp_status, resp_text)
             resp_text = self.move_field_to_top_level(resp_text, "state")
@@ -1873,7 +1884,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         if topic == "proof-v2":
 
-            if operation == "send-request":
+            if operation == "send-request" or operation == "create-request":
                 request_type = "presentation_request"
 
                 presentation_request_orig = data.get("presentation_request", {})
@@ -1917,10 +1928,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     request_type: presentation_request,
                 }
 
-                if "connection_id" in presentation_request_orig:
-                    admin_data["connection_id"] = presentation_request_orig[
-                        "connection_id"
-                    ]
+                connection_id = presentation_request_orig.get("connection_id")
+                if connection_id:
+                    admin_data["connection_id"] = connection_id
 
             elif operation == "send-presentation":
 
