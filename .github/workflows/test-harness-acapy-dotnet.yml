@@ -42,8 +42,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a acapy-main -a dotnet-master"
-          TEST_AGENTS: "-d acapy-main -b dotnet-master"
+          BUILD_AGENTS: "-a acapy-main -a dotnet"
+          TEST_AGENTS: "-d acapy-main -b dotnet"
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@AIP20 -t ~@RFC0025"
           REPORT_PROJECT: acapy-b-dotnet
         continue-on-error: true
