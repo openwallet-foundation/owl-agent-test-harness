@@ -235,3 +235,10 @@ def log_timer(label: str, show: bool = True, logger=None, **kwargs):
 
 def create_uuid():
     return str(uuid.uuid4())
+
+
+def pad_base64(value: str) -> str:
+    if len(value) % 4 != 0:
+        n_missing = 4 - (len(value) % 4)
+        value = value + (n_missing * "=")
+    return value

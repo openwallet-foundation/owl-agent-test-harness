@@ -7,3 +7,4 @@ ptvsd
 aiohttp>=3.8.1
 ConfigArgParse
 typing_extensions
+base58
