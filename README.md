@@ -33,7 +33,14 @@ We'd love to have help in building out a full Aries interoperability lab.
 - [Aries Agent Backchannels](#aries-agent-backchannels)
   - [Implemented Backchannels](#implemented-backchannels)
 - [The `manage` bash script](#the-manage-bash-script)
+- [Using AATH Agents as Services](#using-aath-agents-as-services)
+  - [Use Cases](#use-cases)
+    - [Debugging within AATH](#debugging-within-aath)
+    - [Aries Mobile Test Harness](#aries-mobile-test-harness)
 - [Extra Backchannel-Specific Parameters](#extra-backchannel-specific-parameters)
+- [Custom Configurations for Agents](#custom-configurations-for-agents)
+  - [Use Cases](#use-cases-1)
+    - [Aries Mobile Test Harness](#aries-mobile-test-harness-1)
 - [Test Tags](#test-tags)
   - [Running Tagged Tests](#running-tagged-tests)
   - [Test Coverage](#test-coverage)
@@ -262,7 +269,7 @@ To read about what protocols and features from Aries Interop Profile 1.0, see th
 
 ### Test Reporting
 
-For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST-REPORTING.md).
+For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST_REPORTING.md).
 
 ## Adding Runsets
 
