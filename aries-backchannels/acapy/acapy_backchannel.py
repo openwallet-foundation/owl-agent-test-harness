@@ -126,6 +126,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         self.issueCredentialv2OperationTranslationDict = {
             "send-proposal": "send-proposal",
             "send-offer": "send-offer",
+            "create-offer": "create-offer",
             "send-request": "send-request",
             "issue": "issue",
             "store": "store",
@@ -753,6 +754,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 log_msg(resp_status, resp_text)
                 if resp_status == 200 and self.aip_version != "AIP20":
                     resp_text = self.agent_state_translation(command.topic, resp_text)
+
+                if operation == "create-offer":
+                    resp_json = json.loads(resp_text)
+                    resp_text = json.dumps({
+                        "record": resp_json,
+                        "message": resp_json["credential_offer_dict"]
+                    })
                 return (resp_status, resp_text)
 
         # Handle issue credential v2 POST operations
@@ -921,13 +929,64 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 agent_operation + "create-invitation" + "?multi_use=" + multi_use
             )
 
+            attachments = data.get("attachments", [])
+            handshake_protocols = data.get("handshake_protocols", None)
+            formatted_attachments = []
+
+            for attachment in attachments:
+                message_type = attachment["@type"]
+                thread_id = attachment.get("~thread", {}).get("thid") or attachment.get("@id")
+
+                if message_type.endswith("/issue-credential/1.0/offer-credential"):
+                    (_, resp_text) = await self.admin_GET(
+                        "/issue-credential/records", params={"thread_id": thread_id}
+                    )
+                    resp_json = json.loads(resp_text)
+                    record_id = resp_json["results"][0]["credential_exchange_id"]
+                    record_type = "credential-offer"
+                elif message_type.endswith("/issue-credential/2.0/offer-credential"):
+                    (_, resp_text) = await self.admin_GET(
+                        "/issue-credential-2.0/records", params={"thread_id": thread_id}
+                    )
+                    resp_json = json.loads(resp_text)
+                    record_id = resp_json["results"][0]["cred_ex_record"]["cred_ex_id"]
+                    record_type = "credential-offer"
+                elif message_type.endswitch("present-proof/1.0/request-presentation"):
+                    (_, resp_text) = await self.admin_GET(
+                        "/present-proof/records", params={"thread_id": thread_id}
+                    )
+                    resp_json = json.loads(resp_text)
+                    record_id = resp_json["results"][0]["presentation_exchange_id"]
+                    record_type = "present-proof"
+                elif message_type.endswitch("present-proof/2.0/request-presentation"):
+                    (_, resp_text) = await self.admin_GET(
+                        "/present-proof/records", params={"thread_id": thread_id}
+                    )
+                    resp_json = json.loads(resp_text)
+                    record_id = resp_json["results"][0]["pres_ex_id"]
+                    record_type = "present-proof"
+                else:
+                    return (500, f"Unsupported message type '{message_type}'")
+
+                formatted_attachments.append({
+                    "id": record_id,
+                    "type": record_type
+                })
+
             # Add handshake protocols to message body
             data = {
-                "handshake_protocols": [
-                    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0"
-                ],
-                "use_public_did": data["use_public_did"],
+                "use_public_did": data.get("use_public_did", False),
+                "attachments": formatted_attachments
             }
+
+            # If no handshake_protocols is provided and no formatted attachments we use didexchange handshake protocol
+            # by default. This is a legacy need because at first it was always assumed we use handshake_protocols with didexchange
+            if handshake_protocols == None and not formatted_attachments:
+                data["handshake_protocols"] = [
+                    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0"
+                ]
+            else:
+                data["handshake_protocols"] = handshake_protocols or []
 
             # If mediator_connection_id is included we should use that as the mediator for this connection
             if mediation_id:
@@ -958,7 +1017,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         log_msg(resp_status, resp_text)
-        if resp_status == 200:
+        if resp_status == 200 and operation == "receive-invitation":
+            resp_json = json.loads(resp_text)
+            resp_json["state"] = "invitation-received"
+            resp_text = json.dumps(resp_json)
+        elif resp_status == 200:
             resp_text = self.agent_state_translation(command.topic, resp_text)
         return (resp_status, resp_text)
 
@@ -1107,6 +1170,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             log_msg(resp_status, resp_text)
             resp_text = self.move_field_to_top_level(resp_text, "state")
+
+            if operation == "create-offer":
+                resp_json = json.loads(resp_text)
+                resp_text = json.dumps({
+                    "record": resp_json,
+                    "message": resp_json["cred_offer"]
+                })
             return (resp_status, resp_text)
 
     async def handle_proof_v2_POST(self, command: BackchannelCommand):

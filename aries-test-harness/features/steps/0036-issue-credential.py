@@ -294,6 +294,36 @@ def step_impl(context, issuer):
         context.holder_url, "issue-credential", context.cred_thread_id, "offer-received"
     )
 
+@given('"{issuer}" creates a credential offer')
+@when('"{issuer}" creates a credential offer')
+def step_impl(context, issuer):
+    issuer_url = context.config.userdata.get(issuer)
+
+    cred_data = context.credential_data or CREDENTIAL_ATTR_TEMPLATE.copy()
+
+    cred_def_id = context.issuer_credential_definition_dict[context.schema["schema_name"]]["id"]
+
+    credential_offer = {
+        "cred_def_id": cred_def_id,
+        "credential_preview": {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+            "attributes": cred_data,
+        }
+    }
+
+    (resp_status, resp_text) = agent_backchannel_POST(
+        issuer_url + "/agent/command/",
+        "issue-credential",
+        operation="create-offer",
+        data=credential_offer,
+    )
+    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+    resp_json = json.loads(resp_text)
+
+    assert "record" in resp_json
+    context.cred_thread_id = resp_json["record"]["thread_id"]
+    context.credential_offer = resp_json["message"]
+
 
 @when('"{holder}" requests the credential')
 @when('"{holder}" sends a credential request')
@@ -415,9 +445,7 @@ def step_impl(context, holder):
     (resp_status, resp_text) = agent_backchannel_GET(
         holder_url + "/agent/command/",
         "credential",
-        id=context.credential_id_dict[context.schema["schema_name"]][
-            len(context.credential_id_dict[context.schema["schema_name"]]) - 1
-        ],
+        id=context.credential_id_dict[context.schema["schema_name"]][-1],
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
     resp_json = json.loads(resp_text)

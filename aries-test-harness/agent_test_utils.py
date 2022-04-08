@@ -1,5 +1,6 @@
 import time
 import datetime
+from typing import Optional
 
 
 def create_non_revoke_interval(timeframe):
@@ -55,29 +56,20 @@ def get_relative_timestamp_to_epoch(timestamp):
 
 
 def format_cred_proposal_by_aip_version(
-    context, aip_version, cred_data, connection_id, filters=None
+    context, aip_version, cred_data, connection_id: Optional[str] = None, filters=None
 ):
-
     if aip_version == "AIP20":
-
         filters = amend_filters_with_runtime_data(context, filters)
-
-        # credential_proposal = {
-        #     "connection_id": connection_id,
-        #     "credential_preview": {
-        #         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
-        #         "attributes": cred_data,
-        #     },
-        #     "filter": filters
-        # }
         credential_proposal = {
-            "connection_id": connection_id,
             "credential_preview": {
                 "@type": "issue-credential/2.0/credential-preview",
                 "attributes": cred_data,
             },
             "filter": filters,
         }
+
+        if connection_id:
+            credential_proposal["connection_id"] = connection_id
 
     return credential_proposal
 
