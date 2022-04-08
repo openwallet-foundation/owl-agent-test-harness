@@ -1047,11 +1047,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         else:
             if operation == "prepare-json-ld":
                 key_type = self.proofTypeKeyTypeTranslationDict[data["proof_type"]]
+                did_method = data["did_method"]
+
+                params = {"method": did_method, "key_type": key_type}
+
+                # If did method is sov, we want to only look for public did
+                if did_method == "sov":
+                    params["posture"] = "public"
 
                 # Retrieve matching dids
                 resp_status, resp_text = await self.admin_GET(
                     "/wallet/did",
-                    params={"method": data["did_method"], "key_type": key_type},
+                    params=params,
                 )
 
                 did = None
@@ -1064,11 +1071,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         did = resp_json["results"][0]["did"]
 
                 # If there was no matching did create a new one
-                if not did:
+                # Can't do this for did:sov like this.
+                if not did and did_method != "sov":
                     (resp_status, resp_text) = await self.admin_POST(
                         "/wallet/did/create",
                         {
-                            "method": data["did_method"],
+                            "method": did_method,
                             "options": {"key_type": key_type},
                         },
                     )
@@ -1077,10 +1085,17 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         did = resp_json["result"]["did"]
 
                 if did:
+                    # prepend did:method to did if not already
+                    # ACA-Py doesn't include did:sov prefix for sov dids
+                    if not did.startswith(f"did:{did_method}"):
+                        did = f"did:{did_method}:{did}"
+
                     resp_text = json.dumps({"did": did})
 
-                log_msg(resp_status, resp_text)
-                return (resp_status, resp_text)
+                    log_msg(resp_status, resp_text)
+                    return (resp_status, resp_text)
+                else:
+                    return (500, "Unable to create did")
 
             if record_id is None:
                 agent_operation = (
