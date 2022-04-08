@@ -39,8 +39,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a dotnet-master -a findy"
-          TEST_AGENTS: "-d findy -b dotnet-master"
+          BUILD_AGENTS: "-a dotnet -a findy"
+          TEST_AGENTS: "-d findy -b dotnet"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@ProofProposal -t ~@RFC0025"
           REPORT_PROJECT: findy-b-dotnet
         continue-on-error: true
