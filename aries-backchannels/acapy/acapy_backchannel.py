@@ -835,19 +835,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         or operation == "remove"
                     ):
 
-                        if (
-                            operation not in "send-presentation"
-                            or operation not in "send-request"
-                        ) and (data is None or "~service" not in data):
-                            # swap thread id for pres ex id from the webhook
-                            pres_ex_id = await self.swap_thread_id_for_exchange_id(
-                                record_id,
-                                "presentation-msg",
-                                "presentation_exchange_id",
-                            )
-                        else:
-                            # swap the thread id for the pres ex id in the service decorator (this is a connectionless proof)
-                            pres_ex_id = data["~service"]["recipientKeys"][0]
+                        # swap thread id for pres ex id from the webhook
+                        pres_ex_id = await self.swap_thread_id_for_exchange_id(
+                            record_id,
+                            "presentation-msg",
+                            "presentation_exchange_id",
+                        )
                         agent_operation = (
                             f"/present-proof/records/{pres_ex_id}/{operation}"
                         )
@@ -1888,10 +1881,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             else:
                 admin_data = data
 
-            # Add on the service decorator if it exists.
-            if "~service" in data:
-                admin_data["~service"] = data["~service"]
-
             return admin_data
 
         if topic == "proof-v2":
@@ -1978,10 +1967,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             else:
                 admin_data = data
-
-            # Add on the service decorator if it exists.
-            if "~service" in data:
-                admin_data["~service"] = data["~service"]
 
             return admin_data
 

@@ -222,33 +222,22 @@ def step_impl(context, verifier, request_for_proof, prover):
                 data=presentation_request,
             )
     else:
-        if context.connectionless:
-            (resp_status, resp_text) = agent_backchannel_POST(
-                context.verifier_url + "/agent/command/",
-                "proof-v2",
-                operation="create-send-connectionless-request",
-                data=presentation_request,
-            )
-        else:
-            presentation_request["presentation_request"][
-                "connection_id"
-            ] = context.connection_id_dict[verifier][prover]
+        presentation_request["presentation_request"][
+            "connection_id"
+        ] = context.connection_id_dict[verifier][prover]
 
-            # send presentation request
-            (resp_status, resp_text) = agent_backchannel_POST(
-                context.verifier_url + "/agent/command/",
-                "proof-v2",
-                operation="send-request",
-                data=presentation_request,
-            )
+        # send presentation request
+        (resp_status, resp_text) = agent_backchannel_POST(
+            context.verifier_url + "/agent/command/",
+            "proof-v2",
+            operation="send-request",
+            data=presentation_request,
+        )
 
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
     resp_json = json.loads(resp_text)
 
-    if context.connectionless:
-        # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
-        context.presentation_exchange_id = resp_json["presentation_exchange_id"]
-    elif not context.presentation_thread_id:
+    if not context.presentation_thread_id:
         # save off anything that is returned in the response to use later?
         context.presentation_thread_id = resp_json["thread_id"]
 
@@ -351,14 +340,6 @@ def step_impl(context, prover, presentation):
             raise Exception(f"Unknown format {context.current_cred_format}")
 
         presentation["format"] = context.current_cred_format
-
-    # if this is happening connectionless, then add the service decorator to the presentation
-    if context.connectionless:
-        presentation["~service"] = {
-            "recipientKeys": [context.presentation_exchange_id],
-            "routingKeys": None,
-            "serviceEndpoint": context.verifier_url,
-        }
 
     use_v3 = "PresentProofV3" in context.tags
 

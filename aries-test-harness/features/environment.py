@@ -292,12 +292,11 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # Present proof request for proof (presentation proposal object)
     context.request_for_proof = None
 
-    # Whether exchange is connectionless
-    context.connectionless = False
+    # Proof request didcomm message used for connectionless / OOB exchange
+    context.proof_request = None
 
-    # Presentation exchange id used for connectionless exchanges
-    # context.presentation_exchange_id = "6f96b535-0afa-4fff-938a-9f9bd6aa2814"
-    context.presentation_exchange_id = None
+    # Credential offer didcomm message used for connectionless / OOB exchange
+    context.credential_offer = None
 
     # Loaded presentation data
     #
