@@ -231,7 +231,8 @@ def step_impl(context, requester):
         context.use_existing_connection_successful = True
         setup_already_connected(context, resp_json, requester, context.responder_name)
     else:
-        assert resp_json["state"] == "invitation-received"
+        state = resp_json["state"]
+        assert state == "invitation-received", f"state is {state}, expected invitation-received"
 
         if "connection_id" in resp_json:
             context.connection_id_dict[requester][context.responder_name] = resp_json[

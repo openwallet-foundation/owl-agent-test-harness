@@ -1020,11 +1020,23 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         )
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
+
+        # TODO: this now returns an oob record. If connection_id is present fetch the 
+        # connection and return that. Otherwise return state "invitation-received"
         log_msg(resp_status, resp_text)
         if resp_status == 200 and operation == "receive-invitation":
+            # AATH expects DIDExchange state instead of actual OOB state... :(
             resp_json = json.loads(resp_text)
-            resp_json["state"] = "invitation-received"
-            resp_text = json.dumps(resp_json)
+            connection_id = resp_json.get("connection_id")
+            state = resp_json.get("state")
+
+            # If connection exists return the actual connection
+            if connection_id:
+                (resp_status, resp_text) = await self.admin_GET(f"/connections/{connection_id}")
+                resp_text = self.agent_state_translation(command.topic, resp_text)
+            elif state == "prepare-response":
+              resp_json["state"] = "invitation-received"
+              resp_text = json.dumps(resp_json)
         elif resp_status == 200:
             resp_text = self.agent_state_translation(command.topic, resp_text)
         return (resp_status, resp_text)
