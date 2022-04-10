@@ -648,6 +648,18 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             agent_operation = "/schemas"
             log_msg(agent_operation, command.data)
 
+            # Check if schema id already exists
+            schema_name = command.data.get("schema_name")
+            schema_version = command.data.get("schema_version")
+            (resp_status, resp_text) = await self.admin_GET("/schemas/created", params={
+                "schema_version": schema_version,
+                "schema_name": schema_name
+            })
+            resp_json = json.loads(resp_text)
+            if len(resp_json["schema_ids"]) > 0:
+                schema_id = resp_json["schema_ids"][0]
+                return (200, json.dumps({"schema_id": schema_id }))
+
             (resp_status, resp_text) = await self.admin_POST(
                 agent_operation, command.data
             )
@@ -660,6 +672,20 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # POST operation is to create a new cred def
             agent_operation = "/credential-definitions"
             log_msg(agent_operation, command.data)
+
+            # Check if credential definition id already exists
+            schema_id = command.data.get("schema_id")
+            tag = command.data.get("tag")
+            (resp_status, resp_text) = await self.admin_GET("/credential-definitions/created", params={
+                "schema_id": schema_id,
+            })
+            resp_json = json.loads(resp_text)
+            if len(resp_json["credential_definition_ids"]) > 0:
+                # need to check the 'tag' value
+                for cred_def_id in resp_json["credential_definition_ids"]:
+                    cred_def_id_parts = cred_def_id.split(":")
+                    if tag == cred_def_id_parts[4]:
+                        return (200, json.dumps({"credential_definition_id": cred_def_id }))
 
             (resp_status, resp_text) = await self.admin_POST(
                 agent_operation, command.data
