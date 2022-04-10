@@ -2,14 +2,14 @@ name: test-harness-afgo-afgo
 # RUNSET_NAME: "AF-Go to AF-Go"
 # Scope: AIP 2.0
 # Exceptions: None
-# 
+#
 # Summary
 #
 # This runset uses the current main branch of Aries Framework Go for all of the agents. The runset runs some of the tests in the suite
 # that are expected to pass given the current state of Aries Framework Go support for 2 DID exchange.
 #
 # Current
-# 
+#
 # All of the tests being executed in this runset are passing.
 #
 # *Status Note Updated: 2021.09.27*
@@ -44,12 +44,12 @@ jobs:
         with:
           BUILD_AGENTS: "-a afgo-master"
           TEST_AGENTS: "-d afgo-master"
-          TEST_SCOPE: "-t @RFC0023,@RFC0044,@T001.1-RFC0036,@RFC0453,@RFC0454,@RFC0211,@RFC0025,@DIDComm-V2 -t ~@wip -t ~@RFC0160 -t ~@CredFormat_Indy -t ~@RFC0434"
-          REPORT_PROJECT: afgo 
+          TEST_SCOPE: "-t @RFC0023,@RFC0044,@T001.1-RFC0036,@RFC0453,@RFC0454,@RFC0211,@RFC0025,@DIDComm-V2 -t ~@wip -t ~@RFC0160 -t ~@CredFormat_Indy -t ~@RFC0434 t ~@DidMethod_sov"
+          REPORT_PROJECT: afgo
         continue-on-error: true
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: afgo 
+          REPORT_PROJECT: afgo
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}

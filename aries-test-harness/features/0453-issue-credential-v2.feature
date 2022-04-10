@@ -21,8 +21,8 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_Ed25519Signature2018 @DidMethod_key
-  Scenario Outline: Issue a JSON-LD Ed25519Signature2018 credential with the Holder beginning with a proposal
+  @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
+  Scenario Outline: Issue a JSON-LD credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
       | Acme | issuer |
@@ -36,29 +36,30 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     And "Bob" acknowledges the "json-ld" credential issue
     Then "Bob" has the "json-ld" credential issued
 
+    @ProofType_Ed25519Signature2018 @DidMethod_sov
     Examples:
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.2-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2 @ProofType_BbsBlsSignature2020 @DidMethod_key
-  Scenario Outline: Issue a JSON-LD BbsBlsSignature2020 credential with the Holder beginning with a proposal
-    Given "2" agents
-      | name | role   |
-      | Acme | issuer |
-      | Bob  | holder |
-    And "Acme" is ready to issue a "json-ld" credential
-    And "Acme" and "Bob" have an existing connection
-    When "Bob" proposes a "json-ld" credential to "Acme" with <credential_data>
-    And "Acme" offers the "json-ld" credential
-    And "Bob" requests the "json-ld" credential
-    And "Acme" issues the "json-ld" credential
-    And "Bob" acknowledges the "json-ld" credential issue
-    Then "Bob" has the "json-ld" credential issued
-
+    @ProofType_Ed25519Signature2018 @DidMethod_key
     Examples:
       | credential_data   |
       | Data_DL_MaxValues |
 
+    @ProofType_BbsBlsSignature2020 @DidMethod_key
+    Examples:
+      | credential_data   |
+      | Data_DL_MaxValues |
+
+    @ProofType_Ed25519Signature2018 @DidMethod_orb
+    Examples:
+      | credential_data   |
+      | Data_DL_MaxValues |
+
+    @ProofType_BbsBlsSignature2020 @DidMethod_orb
+    Examples:
+      | credential_data   |
+      | Data_DL_MaxValues |
 
   @T002-RFC0453 @normal @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
   Scenario Outline: Issue a credential with the Holder beginning with a proposal with negotiation

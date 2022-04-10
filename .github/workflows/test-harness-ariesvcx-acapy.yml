@@ -2,9 +2,9 @@ name: test-harness-ariesvcx-acapy
 # RUNSET_NAME: "aries-vcx to acapy"
 # Scope: AIP 1.0
 # Exceptions: Public Dids
-# 
+#
 # Passing tests: @RFC0036,@RFC0037,@RFC0160,@revocation
-# 
+#
 # End
 on:
   workflow_dispatch:
@@ -34,8 +34,8 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx -a acapy-main"
           TEST_AGENTS: "-d aries-vcx -b acapy-main"
-          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T014-HIPE0011 -t ~@AIP20"
-          REPORT_PROJECT: aries-vcx-b-acapy  
+          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@RFC0183 -t ~@wip -t ~@RFC0183 -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T014-HIPE0011 -t ~@AIP20"
+          REPORT_PROJECT: aries-vcx-b-acapy
         continue-on-error: true
       - uses: actions/upload-artifact@v2
         with:
@@ -44,6 +44,6 @@ jobs:
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: aries-vcx-b-acapy 
+          REPORT_PROJECT: aries-vcx-b-acapy
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}

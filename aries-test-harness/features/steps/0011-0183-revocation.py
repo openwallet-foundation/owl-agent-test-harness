@@ -27,7 +27,8 @@ from agent_test_utils import create_non_revoke_interval
 
 
 @when("{issuer} revokes the credential")
-def step_impl(context, issuer):
+@when("{issuer} revokes the credential with a revocation notification")
+def step_impl(context, issuer: str):
 
     issuer_url = context.config.userdata.get(issuer)
 
@@ -36,6 +37,10 @@ def step_impl(context, issuer):
         "rev_registry_id": context.rev_reg_id,
         "publish_immediately": True,
     }
+
+    if context.step.name.endswith("with a revocation notification"):
+        connection_id = context.connection_id_dict[issuer][context.holder_name]
+        credential_revocation["notify_connection_id"] = connection_id
 
     (resp_status, resp_text) = agent_backchannel_POST(
         issuer_url + "/agent/command/",
@@ -52,9 +57,7 @@ def step_impl(context, issuer):
     (resp_status, resp_text) = agent_backchannel_GET(
         context.config.userdata.get(context.holder_name) + "/agent/command/",
         "credential",
-        id=context.credential_id_dict[context.schema["schema_name"]][
-            len(context.credential_id_dict[context.schema["schema_name"]]) - 1
-        ],
+        id=context.credential_id_dict[context.schema["schema_name"]][-1],
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 
@@ -67,9 +70,7 @@ def step_impl(context, issuer):
             context.prover_url + "/agent/command/",
             "credential",
             operation="revoked",
-            id=context.credential_id_dict[context.schema["schema_name"]][
-                len(context.credential_id_dict[context.schema["schema_name"]]) - 1
-            ],
+            id=context.credential_id_dict[context.schema["schema_name"]][-1],
         )
         assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
         # get the credential status verified out of the response
@@ -81,9 +82,7 @@ def step_impl(context, issuer):
             (resp_status, resp_text) = agent_backchannel_DELETE(
                 context.prover_url + "/agent/command/",
                 "credential",
-                id=context.credential_id_dict[context.schema["schema_name"]][
-                    len(context.credential_id_dict[context.schema["schema_name"]]) - 1
-                ],
+                id=context.credential_id_dict[context.schema["schema_name"]][-1],
             )
             assert (
                 resp_status == 200
@@ -139,3 +138,38 @@ def step_impl(context, verifier, request_for_proof, prover, timeframe):
         When "{verifier}" sends a {request_for_proof} presentation to "{prover}"
     """
     )
+
+
+@then('"{holder}" receives the revocation notification')
+def step_impl(context, holder: str):
+    holder_url = context.config.userdata.get(holder)
+
+    # The revocation notification RFC requires the thread id of the credential exchange
+    # to be used to identify the credential. This implementation hasn't been adopted by
+    # any implementations and rather the format used in the v2 protocol is used instead
+    # for interopeability purposes we check both the RFC thread id and the one that is 
+    # implemented (in ACA-Py)
+    rfc_thread_id = context.cred_thread_id
+
+    (resp_status, resp_text) = agent_backchannel_GET(
+        holder_url + "/agent/response/", "revocation-notification", id=rfc_thread_id
+    )
+
+    # For some reason the 'could not find the response' return value is an empty object and not a 404 response
+    # So we have to look for the existence of the thread_id property
+    resp_json = json.loads(resp_text)
+    if "thread_id" in resp_json:
+        return
+
+    
+    # format is 
+    # indy::K6DfyjNaKtoYdeYk6KKizB:4:K6DfyjNaKtoYdeYk6KKizB:3:CL:124264:4430:CL_ACCUM:de2609a7-31b1-4892-9b6d-bd551f4030de::1
+    thread_id = f"indy::{context.rev_reg_id}::{context.cred_rev_id}"
+    
+    (resp_status, resp_text) = agent_backchannel_GET(
+        holder_url + "/agent/response/", "revocation-notification", id=thread_id
+    )
+
+    resp_json = json.loads(resp_text)
+    if "thread_id" not in resp_json:
+        raise Exception(f"Could not find revocation notification event using id '{rfc_thread_id}' or '{thread_id}'")

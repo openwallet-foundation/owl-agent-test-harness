@@ -1325,6 +1325,67 @@ paths:
                       state:
                         example: done
 
+  /agent/command/revocation/revoke:
+    post:
+      tags:
+        - Revocation
+      summary: Revoke Credential
+      operationId: RevocationRevokeCredential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    cred_rev_id:
+                      $ref: "#/components/schemas/IndyCredentialRevocationId"
+                    rev_registry_id:
+                      $ref: "#/components/schemas/IndyRevocationRegistryId"
+                    publish_immediately:
+                      type: boolean
+                    notify_connection_id:
+                      description: Id of the connection to notify of the revocation. If not present, will not notify
+                      $ref: "#/components/schemas/ConnectionId"
+                  required:
+                    - cred_rev_id
+                    - rev_registry_id
+                    - publish_immediately
+
+      responses:
+        200:
+          description: Credential revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+  /agent/response/revocation-notification/{threadId}:
+    get:
+      tags:
+        - Revocation
+      summary: Get revocation notification message based on the revocation notification message `thread_id` property.
+      operationId: RevocationGetNotificationByThreadId
+      parameters:
+        - in: path
+          name: threadId
+          description: The value of the `threadId` property in the revocation notification message
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Revocation Notification
+          content:
+            application/json:
+              schema:
+                properties:
+                  thread_id:
+                    type: string
   /agent/command/credential/{credentialId}:
     get:
       tags:
@@ -1367,6 +1428,53 @@ paths:
                         $ref: "#/components/schemas/CredentialId"
                       credential:
                         $ref: "#/components/schemas/W3CCredential"
+        404:
+          description: Credential not found
+    delete:
+      tags:
+        - Credential
+      summary: Delete credential by id
+      operationId: CredentialDeleteById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+
+        404:
+          description: Credential not found
+  /agent/command/credential/revoked/{credentialId}:
+    get:
+      tags:
+        - Credential
+      summary: Get Credential Revocation Status
+      operationId: CredentialGetRevocationStatusById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential Revocation Status
+          content:
+            application/json:
+              schema:
+                required:
+                  - revoked
+                properties:
+                  revoked:
+                    type: boolean
         404:
           description: Credential not found
 
@@ -2358,6 +2466,14 @@ components:
     CredentialDefinitionId:
       title: Credential Definition Id
       example: "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default"
+      type: string
+    IndyRevocationRegistryId:
+      title: Indy Revocation Registry Id
+      example: "WgWxqztrNooG92RXvxSTWv:4:WgWxqztrNooG92RXvxSTWv:3:CL:20:tag:CL_ACCUM:0"
+      type: string
+    IndyCredentialRevocationId:
+      title: Indy Credential Revocation Id
+      example: "12345"
       type: string
     ConnectionState:
       title: Connection State
