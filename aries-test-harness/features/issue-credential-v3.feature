@@ -1,7 +1,7 @@
-@DIDComm-V2 @WACI
+@DIDComm-V2 @WACI @IssueCredentialV3
 Feature: WACI Issuance
 
-  @DIDExchangeConnection
+  @T001-IssueCredentialV3 @DIDExchangeConnection @DidMethod_orb
   Scenario: WACI issuance flow
     Given "2" agents
       | name | role   |
