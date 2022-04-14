@@ -59,6 +59,7 @@ jobs:
       fail-fast: false
     steps:
       - name: ${{ matrix.test-workflow }}
+        timeout-minutes: 60
         if: success() || failure()
         uses: convictional/trigger-workflow-and-wait@v1.6.0
         with:
