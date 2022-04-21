@@ -16,7 +16,8 @@ using Hyperledger.Aries.Contracts;
 using Hyperledger.Aries.Utils;
 using Hyperledger.Aries.Decorators.Threading;
 using Hyperledger.Aries.Models.Events;
-using Hyperledger.Aries.Features.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.Common;
 
 namespace DotNet.Backchannel.Handlers
 {

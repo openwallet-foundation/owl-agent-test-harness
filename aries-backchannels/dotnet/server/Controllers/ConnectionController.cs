@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using DotNet.Backchannel.Models;
 
-using Hyperledger.Aries.Features.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.Connection;
+using Hyperledger.Aries.Features.Handshakes.Connection.Models;
+using Hyperledger.Aries.Features.Handshakes.Common;
 using Hyperledger.Aries.Features.TrustPing;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Models.Events;
