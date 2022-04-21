@@ -2,21 +2,18 @@ name: test-harness-acapy-ariesvcx
 # RUNSET_NAME: "acapy to aries-vcx"
 # Scope: AIP 1.0
 # Exceptions: Public Dids
-# 
+#
 # Passing tests: @RFC0036,@RFC0037,@RFC0160,@revocation
-# 
+#
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "50 1 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2
@@ -37,8 +34,8 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx -a acapy-main"
           TEST_AGENTS: "-d acapy-main -b aries-vcx"
-          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T003-RFC0160 -t ~@T004-RFC0160 -t ~@T014-HIPE0011"
-          REPORT_PROJECT: acapy-b-aries-vcx  
+          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@RFC0183 -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T003-RFC0160 -t ~@T004-RFC0160 -t ~@T014-HIPE0011"
+          REPORT_PROJECT: acapy-b-aries-vcx
         continue-on-error: true
       - uses: actions/upload-artifact@v2
         with:
@@ -47,6 +44,6 @@ jobs:
       - name: run-send-gen-test-results-secure
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy-b-aries-vcx 
+          REPORT_PROJECT: acapy-b-aries-vcx
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}

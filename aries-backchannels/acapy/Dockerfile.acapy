@@ -12,7 +12,7 @@ WORKDIR /aries-backchannels
 
 COPY python/requirements.txt python/
 COPY acapy/requirements-latest.txt acapy/
-RUN pip install -r python/requirements.txt -r acapy/requirements-latest.txt
+RUN pip install -r acapy/requirements-latest.txt && pip install -r python/requirements.txt
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 COPY python python

@@ -33,11 +33,19 @@ We'd love to have help in building out a full Aries interoperability lab.
 - [Aries Agent Backchannels](#aries-agent-backchannels)
   - [Implemented Backchannels](#implemented-backchannels)
 - [The `manage` bash script](#the-manage-bash-script)
+- [Using AATH Agents as Services](#using-aath-agents-as-services)
+  - [Use Cases](#use-cases)
+    - [Debugging within AATH](#debugging-within-aath)
+    - [Aries Mobile Test Harness](#aries-mobile-test-harness)
 - [Extra Backchannel-Specific Parameters](#extra-backchannel-specific-parameters)
+- [Custom Configurations for Agents](#custom-configurations-for-agents)
+  - [Use Cases](#use-cases-1)
+    - [Aries Mobile Test Harness](#aries-mobile-test-harness-1)
 - [Test Tags](#test-tags)
   - [Running Tagged Tests](#running-tagged-tests)
   - [Test Coverage](#test-coverage)
   - [Test Reporting](#test-reporting)
+- [Adding Runsets](#adding-runsets)
 
 ## Architecture
 
@@ -261,4 +269,12 @@ To read about what protocols and features from Aries Interop Profile 1.0, see th
 
 ### Test Reporting
 
-For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST-REPORTING.md).
+For information on enhanced test reporting with the Aries Agent Test Harness, see [Advanced Test Reporting](./TEST_REPORTING.md).
+
+## Adding Runsets
+
+Runsets are GHA based workflows that automate the execution of your interop tests and reporting of the results.
+
+These workflows are contained in the .github/workflows folder and must be named `test-harness-<name>.yml`.  Refer to the existing files for examples on how to create one specific to your use case.  In most cases you will be able to copy an existing file and change a few parameters.
+
+Test execution is controlled by the [`test-harness-runner`](./.github/workflows/test-runner.yml).  This workflow will dynamically pick up and run any workflow conforming to the `test-harness-*.yml` naming convention.  Specific test harnesses can be excluded by adding their file name pattern to the `ignore_files_starts_with` list separated by a `,`.  The test harnesses are run by the **Run Test Harness** job which uses a throttled matrix strategy.  The number of concurrent test harness runs can be controlled by setting the `max-parallel` parameter to an appropriate number.

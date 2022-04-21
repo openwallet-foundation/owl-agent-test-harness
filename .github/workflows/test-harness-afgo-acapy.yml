@@ -18,15 +18,12 @@ name: test-harness-afgo-acapy
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "40 0 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -49,7 +46,7 @@ jobs:
           BUILD_AGENTS: "-a afgo-interop -a acapy-main"
           TEST_AGENTS: "-d afgo-interop -b acapy-main"
           OTHER_PARAMS: "-v 20"
-          TEST_SCOPE: "-t @RFC0023,@RFC0453,@RFC0454,@RFC0025 -t ~@wip -t ~@CredFormat_Indy -t ~@Transport_NoHttpOutbound -t ~@Transport_Ws -t ~@RFC0160"
+          TEST_SCOPE: "-t @RFC0023,@RFC0453,@RFC0454,@RFC0025 -t ~@wip -t ~@CredFormat_Indy -t ~@Transport_NoHttpOutbound -t ~@Transport_Ws -t ~@RFC0160 -t ~@DidMethod_sov"
           REPORT_PROJECT: afgo-b-acapy
         env:
           EMIT-NEW-DIDCOMM-PREFIX: true

@@ -19,15 +19,12 @@ name: test-harness-verity-dotnet
 # End
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: "25 1 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://dev.bcovrin.vonx.io"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -41,8 +38,8 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a dotnet-master -a verity"
-          TEST_AGENTS: "-d dotnet-master -a verity"
+          BUILD_AGENTS: "-a dotnet -a verity"
+          TEST_AGENTS: "-d dotnet -a verity"
           TEST_SCOPE: "-t @RFC0160 -t @AcceptanceTest -t ~@wip -t ~@AIP20"
           REPORT_PROJECT: dotnet-a-verity
       #   continue-on-error: true
