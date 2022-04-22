@@ -4,15 +4,15 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.7.4-rc0 | javascript<br>0.2.0-alpha.49 | acapy-main<br>0.7.4-rc0 | acapy-main<br>0.7.4-rc0 | AIP 1.0 | [**37 / 38<br>97%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.4-rc0 | javascript<br>0.2.0-alpha.49 | dotnet<br> | acapy-main<br>0.7.4-rc0 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>0.2.0-alpha.49 | acapy-main<br>0.7.4-rc0 | javascript<br>0.2.0-alpha.49 | javascript<br>0.2.0-alpha.49 | AIP 1.0 | [**27 / 27<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-dotnet](#runset-afj-dotnet) | javascript<br>0.2.0-alpha.49 | dotnet<br> | javascript<br>0.2.0-alpha.49 | javascript<br>0.2.0-alpha.49 | AIP 1.0 | [**9 / 12<br>75%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-findy](#runset-afj-findy) | javascript<br>0.2.0-alpha.49 | findy<br>0.30.9 | javascript<br>0.2.0-alpha.49 | javascript<br>0.2.0-alpha.49 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj](#runset-afj) | javascript<br>0.2.0-alpha.49 | javascript<br>0.2.0-alpha.49 | javascript<br>0.2.0-alpha.49 | javascript<br>0.2.0-alpha.49 | AIP 1.0 | [**28 / 28<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [dotnet-javascript](#runset-dotnet-javascript) | dotnet<br> | javascript<br>0.2.0-alpha.49 | dotnet<br> | dotnet<br> | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | findy<br>0.30.9 | javascript<br>0.2.0-alpha.50 | dotnet<br> | findy<br>0.30.9 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript](#runset-findy-javascript) | findy<br>0.30.9 | javascript<br>0.2.0-alpha.50 | findy<br>0.30.9 | findy<br>0.30.9 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.7.4-rc0 | javascript<br>0.2.0-alpha.55 | acapy-main<br>0.7.4-rc0 | acapy-main<br>0.7.4-rc0 | AIP 1.0 | [**37 / 38<br>97%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-dotnet-javascript](#runset-acapy-dotnet-javascript) | acapy-main<br>0.7.4-rc0 | javascript<br>0.2.0-alpha.55 | dotnet<br> | acapy-main<br>0.7.4-rc0 | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>0.2.0-alpha.55 | acapy-main<br>0.7.4-rc0 | javascript<br>0.2.0-alpha.55 | javascript<br>0.2.0-alpha.55 | AIP 1.0 | [**27 / 27<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-dotnet](#runset-afj-dotnet) | javascript<br>0.2.0-alpha.55 | dotnet<br> | javascript<br>0.2.0-alpha.55 | javascript<br>0.2.0-alpha.55 | AIP 1.0 | [**9 / 12<br>75%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-findy](#runset-afj-findy) | javascript<br>0.2.0-alpha.55 | findy<br>0.30.11 | javascript<br>0.2.0-alpha.55 | javascript<br>0.2.0-alpha.55 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj](#runset-afj) | javascript<br>0.2.0-alpha.55 | javascript<br>0.2.0-alpha.55 | javascript<br>0.2.0-alpha.55 | javascript<br>0.2.0-alpha.55 | AIP 1.0 | [**28 / 28<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-javascript](#runset-dotnet-javascript) | dotnet<br> | javascript<br>0.2.0-alpha.55 | dotnet<br> | dotnet<br> | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | findy<br>0.30.11 | javascript<br>0.2.0-alpha.55 | dotnet<br> | findy<br>0.30.11 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript](#runset-findy-javascript) | findy<br>0.30.11 | javascript<br>0.2.0-alpha.55 | findy<br>0.30.11 | findy<br>0.30.11 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -24,7 +24,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 37 out of 38 (97%)**
 
 
-*Last run: Wed Apr 13 02:13:43 UTC 2022*
+*Last run: Fri Apr 22 02:22:29 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -47,7 +47,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Wed Apr 13 08:26:18 UTC 2022*
+*Last run: Fri Apr 22 02:35:37 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -72,7 +72,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 27 out of 27 (100%)**
 
 
-*Last run: Tue Apr 12 19:48:35 UTC 2022*
+*Last run: Fri Apr 22 03:13:49 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -95,7 +95,7 @@ Runset Name: AFJ to AF-.NET
 **Latest results: 9 out of 12 (75%)**
 
 
-*Last run: Tue Apr 12 19:43:04 UTC 2022*
+*Last run: Fri Apr 22 03:12:14 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -118,7 +118,7 @@ Runset Name: AFJ to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Tue Apr 12 19:41:56 UTC 2022*
+*Last run: Fri Apr 22 03:28:08 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -142,7 +142,7 @@ Runset Name: AFJ to AFJ
 **Latest results: 28 out of 28 (100%)**
 
 
-*Last run: Tue Apr 12 19:45:09 UTC 2022*
+*Last run: Fri Apr 22 03:34:23 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -165,7 +165,7 @@ Runset Name: AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Wed Apr 13 07:59:17 UTC 2022*
+*Last run: Fri Apr 22 04:07:59 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -188,7 +188,7 @@ Runset Name: findy to AFJ to AF-.NET
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Apr 13 14:02:31 UTC 2022*
+*Last run: Fri Apr 22 04:24:53 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -211,7 +211,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Apr 13 14:03:16 UTC 2022*
+*Last run: Fri Apr 22 04:19:58 UTC 2022*
 ```
 
 #### Current Runset Status
