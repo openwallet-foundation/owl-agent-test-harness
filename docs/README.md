@@ -28,8 +28,8 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 | Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | Verity | Findy | VCX | **All Tests** |
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | 88 / 89<br>98% | 29 / 31<br>93% | 76 / 77<br>98% | 29 / 36<br>80% | 0 / 2<br>0% | 34 / 34<br>100% | 51 / 62<br>82% | **295 / 319<br>92%** |
-| [AF-Go](afgo.md)| AIP 2 | None | 29 / 31<br>93% | 45 / 45<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **74 / 76<br>97%** |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 88 / 89<br>98% | 30 / 31<br>96% | 76 / 77<br>98% | 29 / 36<br>80% | 0 / 2<br>0% | 34 / 34<br>100% | 51 / 62<br>82% | **296 / 319<br>92%** |
+| [AF-Go](afgo.md)| AIP 2 | None | 30 / 31<br>96% | 45 / 45<br>100% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **75 / 76<br>98%** |
 | [AFJ](javascript.md)| AIP 1 | Revocation | 76 / 77<br>98% | 0 / 0<br>0% | 28 / 28<br>100% | 50 / 53<br>94% | 0 / 0<br>0% | 51 / 51<br>100% | 0 / 0<br>0% | **176 / 180<br>97%** |
 | [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 29 / 36<br>80% | 0 / 0<br>0% | 50 / 53<br>94% | 12 / 12<br>100% | 0 / 0<br>0% | 31 / 39<br>79% | 0 / 0<br>0% | **93 / 111<br>83%** |
 | [Verity](verity.md)| AIP 1 | Credential Exchange | 0 / 2<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **0 / 2<br>0%** |
@@ -42,5 +42,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Wed Apr 13 19:47:44 UTC 2022*
+*Results last updated: Fri Apr 22 04:26:39 UTC 2022*
 
