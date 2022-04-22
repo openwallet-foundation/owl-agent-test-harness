@@ -1,5 +1,6 @@
 using System.Runtime.Serialization;
-using Hyperledger.Aries.Features.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.Connection.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
