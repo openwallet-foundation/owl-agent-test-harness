@@ -36,12 +36,12 @@ jobs:
           TEST_AGENTS: "-d acapy-main -b aries-vcx"
           TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@RFC0183 -t ~@wip -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@T003-RFC0160 -t ~@T004-RFC0160 -t ~@T014-HIPE0011 -t ~@RFC0434"
           REPORT_PROJECT: acapy-b-aries-vcx
-        continue-on-error: true
       - uses: actions/upload-artifact@v2
         with:
           name: agent-logs
           path: ./test-harness/.logs/
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: acapy-b-aries-vcx

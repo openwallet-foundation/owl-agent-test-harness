@@ -51,8 +51,8 @@ jobs:
         env:
           EMIT-NEW-DIDCOMM-PREFIX: true
           EMIT-NEW-DIDCOMM-MIME-TYPE: true
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: afgo-b-acapy

@@ -47,8 +47,8 @@ jobs:
           TEST_AGENTS: "-d acapy-main -b javascript -f dotnet"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@ProofProposal -t ~@RFC0025"
           REPORT_PROJECT: acapy-b-javascript-f-dotnet
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: acapy-b-javascript-f-dotnet 

@@ -45,8 +45,8 @@ jobs:
           TEST_AGENTS: "-d dotnet -b findy"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@T001.3-RFC0037 -t ~@T001.4-RFC0037 -t ~@T001.5-RFC0037 -t ~@T003-RFC0037 -t ~@T003.1-RFC0037 -t ~@T006-RFC0037 -t ~@RFC0025"
           REPORT_PROJECT: dotnet-b-findy
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: dotnet-b-findy

@@ -46,8 +46,8 @@ jobs:
           TEST_AGENTS: "-d afgo-master"
           TEST_SCOPE: "-t @RFC0023,@RFC0044,@T001.1-RFC0036,@RFC0453,@RFC0454,@RFC0211,@RFC0025,@DIDComm-V2 -t ~@wip -t ~@RFC0160 -t ~@CredFormat_Indy -t ~@RFC0434 -t ~@DidMethod_sov"
           REPORT_PROJECT: afgo
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: afgo

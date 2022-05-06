@@ -44,8 +44,8 @@ jobs:
           TEST_AGENTS: "-d acapy-main -b javascript"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10,@RFC0441,@RFC0211,@T001-RFC0453 -t ~@wip -t ~@DIDExchangeConnection -t ~@T004-RFC0211"
           REPORT_PROJECT: acapy-b-javascript
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: acapy-b-javascript
