@@ -37,12 +37,28 @@ runs:
       run: ./manage build ${{ inputs.BUILD_AGENTS }}
       shell: bash
       working-directory: test-harness
+    - name: start-harness-agents
+      run: ./manage start ${{ inputs.TEST_AGENTS }}
+      shell: bash
+      working-directory: test-harness
     - name: run-test-harness-acapy
-      run: PROJECT_ID=${{inputs.REPORT_PROJECT}} ./manage run ${{ inputs.TEST_AGENTS }} ${{ inputs.REPORTING }} ${{ inputs.OTHER_PARAMS }} ${{ inputs.TEST_SCOPE }}
+      run: PROJECT_ID=${{inputs.REPORT_PROJECT}} ./manage test ${{ inputs.TEST_AGENTS }} ${{ inputs.REPORTING }} ${{ inputs.OTHER_PARAMS }} ${{ inputs.TEST_SCOPE }}
       shell: bash
       env:
         NO_TTY: "1"
       working-directory: test-harness
+    - name: Collect docker logs
+      if: ${{ always() }}
+      uses: jwalton/gh-docker-logs@v2.2.0
+      with:
+        dest: "./.logs/docker-logs"
+    - name: archive logs
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: container-logs
+        path: .logs
+        retention-days: 14
 branding:
   icon: "mic"
   color: "purple"
