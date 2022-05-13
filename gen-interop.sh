@@ -238,13 +238,22 @@ for file in ${workflows}; do
         ALLURE_DATE[$count]=$( date -d@${epoch_seconds} )
     fi
 
+    # echo File: $file
+    # echo ALLURE_PROJECT: ${ALLURE_PROJECT[$count]}
+    # echo ALLURE_LINK: ${ALLURE_LINK[$count]}
+    # echo ALLURE_BEHAVIORS_LINK: ${ALLURE_BEHAVIORS_LINK[$count]}
+    # echo ALLURE_SUMMARY: ${ALLURE_SUMMARY[$count]}
+    # echo ALLURE_ENVIRONMENT: ${ALLURE_ENVIRONMENT[$count]}
+    # echo TOTAL_CASES: ${TOTAL_CASES[$count]}
+
+    # echo ACME: ${ACME_VERSION[$count]}
+    # echo BOB: ${BOB_VERSION[$count]}
+    # echo FABER: ${FABER_VERSION[$count]}
+    # echo MALLORY: ${MALLORY_VERSION[$count]}
+    # echo ${ALLURE_DATE[$count]}
+
     count=$(expr ${count} + 1)
 done
-
-# echo ACME: ${ACME_VERSION[@]}
-# echo BOB: ${BOB_VERSION[@]}
-# echo FABER: ${FABER_VERSION[@]}
-# echo MALLORY: ${MALLORY_VERSION[@]}
 
 # First write the summary file -- make sure to replace the old version with a ">" and ">>" for the rest
 outfile=docs/README.md
