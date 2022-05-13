@@ -226,12 +226,24 @@ for file in ${workflows}; do
     TOTAL_CASES[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"total" : \([0-9]*\).*/\1/' )
     PASSED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
     FAILED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
-    if [ ${TOTAL_CASES[$count]} -eq 0 ]; then
+
+    if [ ${#TOTAL_CASES[$count]} -gt 4 ]; then
+        # Special case: No results found for the runset
+        TOTAL_CASES[$count]=0
+    fi
+
+    if [ "${TOTAL_CASES[$count]}" -eq "0" ]; then
         PERCENT[$count]=0
     else
         PERCENT[$count]=$((PASSED[$count]*100/TOTAL_CASES[$count]))
     fi
+
+    # Figure out the date/time of the last test for the runset
     epoch_seconds=$(echo ${ALLURE_SUMMARY[$count]} | sed 's/.*"stop" : \([0-9]\{10\}\).*/\1/' )
+    if [ ${#epoch_seconds} -gt 10 ]; then
+        # Special case: No results found for the runset
+        epoch_seconds=$(date +%s)
+    fi
     if [ ${machine} == 'Mac' ]; then
         ALLURE_DATE[$count]=$( date -j -f %s ${epoch_seconds} )
     else
@@ -243,6 +255,7 @@ for file in ${workflows}; do
     # echo ALLURE_LINK: ${ALLURE_LINK[$count]}
     # echo ALLURE_BEHAVIORS_LINK: ${ALLURE_BEHAVIORS_LINK[$count]}
     # echo ALLURE_SUMMARY: ${ALLURE_SUMMARY[$count]}
+    # echo ALLURE_DATE: ${ALLURE_DATE[$count]}
     # echo ALLURE_ENVIRONMENT: ${ALLURE_ENVIRONMENT[$count]}
     # echo TOTAL_CASES: ${TOTAL_CASES[$count]}
 
