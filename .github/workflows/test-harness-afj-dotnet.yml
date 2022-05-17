@@ -18,6 +18,9 @@ name: test-harness-javascript-dotnet
 #
 # End
 on:
+  pull_request:
+    branches:
+    - main
   workflow_dispatch:
 defaults:
   run:
@@ -46,6 +49,7 @@ jobs:
           REPORT_PROJECT: javascript-b-dotnet
         continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ((github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness'))
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: javascript-b-dotnet
