@@ -1,3 +1,6 @@
+---
+sort: 6 # follow a certain sequence of letters or numbers
+---
 # Findy Agent Interoperability
 
 ## Runsets with Findy

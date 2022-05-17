@@ -1,3 +1,6 @@
+---
+sort: 3 # follow a certain sequence of letters or numbers
+---
 # Aries Framework Go Interoperability
 
 ## Runsets with AF-Go

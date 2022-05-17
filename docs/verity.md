@@ -1,3 +1,6 @@
+---
+sort: 8 # follow a certain sequence of letters or numbers
+---
 # Evernym Verity Interoperability
 
 ## Runsets with Verity
