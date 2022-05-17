@@ -4,6 +4,10 @@ name: test-harness-verity-afj
 # Exceptions: None
 # SKIP
 #
+# Currently skipped due to issues with the tests being
+#     canceled intermittently due to (seemingly)
+#     resource issues.
+#
 # Summary
 #
 # Initial implementation to get the tests running smoothly. Currently testing connection only.

@@ -4,6 +4,10 @@ name: test-harness-verity-dotnet
 # Exceptions: None
 # SKIP
 #
+# Currently skipped due to issues with the tests being
+#     canceled intermittently due to (seemingly)
+#     resource issues.
+#
 # Summary
 #
 # This runset uses the current main branch of DotNet for all of the agents except Acme (Issuer),
