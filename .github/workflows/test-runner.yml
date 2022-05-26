@@ -40,12 +40,12 @@ jobs:
           # ==============================================
           # Ignore specific test harnesses here
           # ----------------------------------------------
-          # - verity:
-          #   - Ignored due to issues with the tests being
-          #     canceled intermitently due to (seemingly)
-          #     resource issues.
+          # Ignore tests by renaming the GHA file for the
+          # test to have a prefix of "skip-". Line below
+          # is not really needed, but left in to make
+          # it clear the file are being ignored.
           # ==============================================
-          ignore_files_starts_with: "test-harness-verity-"
+          ignore_files_starts_with: "skip-test-harness"
 
   run-test-harness:
     name: Run Test Harness
