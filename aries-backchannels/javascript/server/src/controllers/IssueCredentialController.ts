@@ -99,7 +99,6 @@ export class IssueCredentialController extends BaseController {
       const { id, credentialAttributes } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
       credentialRecord = await this.agent.credentials.acceptProposal({
         credentialRecordId: id,
-        protocolVersion: CredentialProtocolVersion.V1,
         credentialFormats: {
           indy: {
             // FIXME: shouldn't be required
