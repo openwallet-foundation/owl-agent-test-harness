@@ -13,6 +13,7 @@ import { CredentialUtils } from '../utils/CredentialUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
+import { ConnectionUtils } from '../utils/ConnectionUtils'
 
 @Controller('/agent/command/issue-credential')
 export class IssueCredentialController extends BaseController {
@@ -61,8 +62,10 @@ export class IssueCredentialController extends BaseController {
     }
   ) {
     const preview = JsonTransformer.fromJSON(data.credential_proposal, V1CredentialPreview)
+
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
     const credentialRecord = await this.agent.credentials.proposeCredential({
-      connectionId: data.connection_id,
+      connectionId: connection.id,
       protocolVersion: CredentialProtocolVersion.V1,
       credentialFormats: {
         indy: {
@@ -109,8 +112,9 @@ export class IssueCredentialController extends BaseController {
       return this.mapCredential(credentialRecord)
     } else if (data) {
       const preview = JsonTransformer.fromJSON(data.credential_preview, V1CredentialPreview)
+      const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
       credentialRecord = await this.agent.credentials.offerCredential({
-        connectionId: data.connection_id,
+        connectionId: connection.id,
         protocolVersion: CredentialProtocolVersion.V1,
         credentialFormats: {
           indy: {

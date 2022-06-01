@@ -19,6 +19,7 @@ import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
 import util from 'util'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
+import { ConnectionUtils } from '../utils/ConnectionUtils'
 
 @Controller('/agent/command/proof')
 export class PresentProofController extends BaseController {
@@ -76,7 +77,9 @@ export class PresentProofController extends BaseController {
     }
     const presentationProposal = JsonTransformer.fromJSON(newPresentationProposal, PresentationPreview)
 
-    const proofRecord = await this.agent.proofs.proposeProof(data.connection_id, presentationProposal, {
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
+
+    const proofRecord = await this.agent.proofs.proposeProof(connection.id, presentationProposal, {
       comment: data.presentation_proposal.comment,
     })
 
@@ -99,10 +102,12 @@ export class PresentProofController extends BaseController {
   ) {
     const proofRequest = JsonTransformer.fromJSON(data.presentation_request.proof_request.data, ProofRequest)
 
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
+
     // TODO: AFJ doesn't support to negotiate proposal yet
     // if thread id is present
     const proofRecord = await this.agent.proofs.requestProof(
-      data.connection_id,
+      connection.id,
       {
         requestedAttributes: proofRequest.requestedAttributes,
         requestedPredicates: proofRequest.requestedPredicates,
