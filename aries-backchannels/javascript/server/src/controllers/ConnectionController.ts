@@ -13,7 +13,7 @@ import {
 } from '@aries-framework/core'
 
 import { convertToNewInvitation } from '@aries-framework/core/build/modules/oob/helpers'
-import { ReplaySubject } from 'rxjs'
+import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { ConnectionUtils } from '../utils/ConnectionUtils'
@@ -107,16 +107,15 @@ export class ConnectionController extends BaseController {
   async acceptInvitation(@BodyParams('id') id: string) {
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
 
-    if (!connection) throw new NotFound(`Connection with id ${id} not found`)
-
     return this.mapConnection(connection)
   }
 
   @Post('/accept-request')
   async acceptRequest(@BodyParams('id') id: string) {
-    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
+    // possible here that the request hasn't finished processing yet
+    await this.waitForState(id, DidExchangeState.RequestReceived)
 
-    if (!connection) throw new NotFound(`Connection with id ${id} not found`)
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
 
     return this.mapConnection(connection)
   }
@@ -142,6 +141,16 @@ export class ConnectionController extends BaseController {
     const mediator = await this.agent.mediationRecipient.findByConnectionId(mediatorConnectionId)
 
     return mediator?.id
+  }
+
+  private async waitForState(id: string, state: DidExchangeState) {
+    return await firstValueFrom(
+      this.subject.pipe(
+        filter((c) => c.payload.connectionRecord.id === id || c.payload.connectionRecord.outOfBandId === id),
+        filter((c) => c.payload.connectionRecord.state === state),
+        timeout(20000)
+      )
+    )
   }
 
   private mapConnection(connection: ConnectionRecord) {
