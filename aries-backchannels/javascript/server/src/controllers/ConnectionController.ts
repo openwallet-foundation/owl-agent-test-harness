@@ -146,7 +146,6 @@ export class ConnectionController extends BaseController {
   private async waitForState(id: string, state: DidExchangeState) {
     return await firstValueFrom(
       this.subject.pipe(
-        tap((c) => console.log(`ConnectionController.waitForState: ${id}, ${state}: `, c)),
         filter((c) => c.payload.connectionRecord.id === id || c.payload.connectionRecord.outOfBandId === id),
         filter((c) => c.payload.connectionRecord.state === state),
         timeout(20000)

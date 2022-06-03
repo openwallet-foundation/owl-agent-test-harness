@@ -1,4 +1,4 @@
-import { $log, registerProvider } from '@tsed/common'
+import { $log, Logger, registerProvider } from '@tsed/common'
 import minimist from 'minimist'
 import indy from 'indy-sdk'
 
@@ -25,6 +25,8 @@ async function startup() {
 
   $log.level = 'debug'
 
+  const $indyLogger = new Logger('Libindy')
+
   // @ts-ignore
   indy.setLogger(function (
     level: string,
@@ -34,7 +36,11 @@ async function startup() {
     file: string,
     line: string
   ) {
-    console.log('libindy said:', level, target, message, modulePath, file, line)
+    $indyLogger.debug(`${level} ${target} ${message}`, {
+      modulePath,
+      file,
+      line,
+    })
   })
 
   // @ts-ignore
