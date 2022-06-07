@@ -23,7 +23,9 @@ subjectAltName = @alt_names
 DNS.1 = localhost
 DNS.2 = orb.domain1.com
 DNS.3 = orb.domain2.com
-DNS.4 = orb2.domain1.com" >> "$tmp"
+DNS.4 = orb2.domain1.com
+DNS.5 = orb.file-server.com
+DNS.6 = orb.kms" >> "$tmp"
 
 export RANDFILE=./.rnd
 
@@ -41,6 +43,8 @@ openssl x509 -req -in keys/tls/ec-key.csr -CA keys/tls/ec-cacert.pem -CAkey keys
 mkdir -p keys/recover
 mkdir -p keys/update
 
+mkdir -p keys/kms
+openssl rand 32 | base64 | sed 's/+/-/g; s/\//_/g' > keys/kms/secret-lock.key
 
 export agent_names="Acme Bob Faber Mallory"
 

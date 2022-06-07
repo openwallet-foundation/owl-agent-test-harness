@@ -1,0 +1,128 @@
+#
+# Copyright SecureKey Technologies Inc. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+version: '2'
+
+services:
+
+  orb-domain1:
+    container_name: orb.domain1.com
+    image: ${ORB_FIXTURE_IMAGE}:${ORB_FIXTURE_VERSION}
+    restart: always
+    environment:
+      - ORB_HOST_URL=0.0.0.0:443
+      - ORB_EXTERNAL_ENDPOINT=https://orb.domain1.com
+      - ORB_HOST_METRICS_URL=0.0.0.0:${DOMAIN1_METRICS_PORT}
+      - DID_NAMESPACE=did:orb
+      - LOG_LEVEL=${ORB_SERVER_LOG_LEVEL}
+
+      - ORB_TLS_CERTIFICATE=/etc/orb/tls/ec-pubCert.pem
+      - ORB_TLS_KEY=/etc/orb/tls/ec-key.pem
+      - ORB_TLS_SYSTEMCERTPOOL=true
+      - ORB_TLS_CACERTS=/etc/orb/tls/ec-cacert.pem
+
+      - ALLOWED_ORIGINS=https://orb.domain1.com,https://orb.domain2.com
+      - ORB_AUTH_TOKENS=admin=ADMIN_TOKEN,read=READ_TOKEN
+      - ORB_AUTH_TOKENS_DEF=/services/orb/keys,/services/orb/outbox|admin&read|admin,/services/orb/inbox|admin&read|admin,/services/orb/.*|read&admin,/transactions|read&admin,/sidetree/.*/identifiers|read&admin,/sidetree/.*/operations|read&admin|admin,/cas|read&admin
+
+      - ANCHOR_CREDENTIAL_DOMAIN=https://orb.domain1.com
+      - ANCHOR_CREDENTIAL_ISSUER=http://orb.domain1.com
+      - ANCHOR_CREDENTIAL_SIGNATURE_SUITE=Ed25519Signature2018
+      - ANCHOR_CREDENTIAL_URL=http://orb.domain1.com/vc
+
+      - BATCH_WRITER_TIMEOUT=200
+      - CAS_TYPE=local
+      - CID_VERSION=${CID_VERSION_DOMAIN1}
+      - HTTP_SIGNATURES_ENABLED=true
+
+      - DATABASE_TYPE=mem
+      - ORB_KMS_TYPE=local
+      - KMSSECRETS_DATABASE_TYPE=mem
+
+      - INCLUDE_PUBLISHED_OPERATIONS_IN_METADATA=true
+      - INCLUDE_UNPUBLISHED_OPERATIONS_IN_METADATA=true
+      - UNPUBLISHED_OPERATION_STORE_ENABLED=true
+      - DID_DISCOVERY_ENABLED=true
+
+    ports:
+      - ${DOMAIN1_PORT}:443
+      - ${DOMAIN1_METRICS_PORT}:${DOMAIN1_METRICS_PORT}
+    command: start
+    volumes:
+      - ./.build/keys/tls:/etc/orb/tls
+      - ./testdata/keys/domain1:/etc/orb/activitypub
+    networks:
+      - aath_network
+
+  orb-domain2:
+    container_name: orb.domain2.com
+    image: ${ORB_FIXTURE_IMAGE}:${ORB_FIXTURE_VERSION}
+    restart: always
+    environment:
+      - ORB_HOST_URL=0.0.0.0:443
+      - ORB_EXTERNAL_ENDPOINT=https://orb.domain2.com
+      - ORB_HOST_METRICS_URL=0.0.0.0:${DOMAIN2_METRICS_PORT}
+      - DID_NAMESPACE=did:orb
+      - LOG_LEVEL=${ORB_SERVER_LOG_LEVEL}
+
+      - ORB_TLS_CERTIFICATE=/etc/orb/tls/ec-pubCert.pem
+      - ORB_TLS_KEY=/etc/orb/tls/ec-key.pem
+      - ORB_TLS_SYSTEMCERTPOOL=true
+      - ORB_TLS_CACERTS=/etc/orb/tls/ec-cacert.pem
+
+      - ALLOWED_ORIGINS=https://orb.domain1.com,https://orb.domain2.com
+      - ORB_AUTH_TOKENS=admin=ADMIN_TOKEN,read=READ_TOKEN
+      - ORB_AUTH_TOKENS_DEF=/services/orb/keys,/services/orb/outbox|admin&read|admin,/services/orb/inbox|admin&read|admin,/services/orb/.*|read&admin,/transactions|read&admin,/sidetree/.*/identifiers|read&admin,/sidetree/.*/operations|read&admin|admin,/cas|read&admin
+
+      - ANCHOR_CREDENTIAL_DOMAIN=https://orb.domain2.com
+      - ANCHOR_CREDENTIAL_ISSUER=http://orb.domain2.com
+      - ANCHOR_CREDENTIAL_URL=http://orb.domain2.com/vc
+      - ANCHOR_CREDENTIAL_SIGNATURE_SUITE=Ed25519Signature2018
+
+      - BATCH_WRITER_TIMEOUT=200
+      - CAS_TYPE=local
+      - CID_VERSION=${CID_VERSION_DOMAIN2}
+      - HTTP_SIGNATURES_ENABLED=true
+
+      - DATABASE_TYPE=mem
+      - ORB_KMS_TYPE=local
+      - KMSSECRETS_DATABASE_TYPE=mem
+
+      - INCLUDE_PUBLISHED_OPERATIONS_IN_METADATA=true
+      - INCLUDE_UNPUBLISHED_OPERATIONS_IN_METADATA=true
+      - UNPUBLISHED_OPERATION_STORE_ENABLED=true
+      - DID_DISCOVERY_ENABLED=true
+
+    ports:
+      - ${DOMAIN2_PORT}:443
+      - ${DOMAIN2_METRICS_PORT}:${DOMAIN2_METRICS_PORT}
+    command: start
+    volumes:
+      - ./.build/keys/tls:/etc/orb/tls
+      - ./testdata/keys/domain2:/etc/orb/activitypub
+    networks:
+      - aath_network
+
+  orb.driver:
+    container_name: orb.driver
+    image: ${ORB_DRIVER_IMAGE}:${ORB_DRIVER_VERSION}
+    environment:
+      - ORB_DRIVER_HOST_URL=0.0.0.0:${ORB_DRIVER_PORT}
+      - ORB_DRIVER_DOMAIN=https://orb.domain1.com
+      - ORB_DRIVER_TLS_SYSTEMCERTPOOL=true
+      - ORB_DRIVER_TLS_CACERTS=/etc/orb/tls/ec-cacert.pem
+      - ORB_DRIVER_SIDETREE_TOKEN=READ_TOKEN
+      - ORB_DRIVER_VERIFY_RESOLUTION_RESULT_TYPE=none
+    volumes:
+      - ./.build/keys/tls:/etc/orb/tls
+    ports:
+      - ${ORB_DRIVER_PORT}:${ORB_DRIVER_PORT}
+    command: start
+    networks:
+      - aath_network
+
+networks:
+  aath_network:
+    external: true
