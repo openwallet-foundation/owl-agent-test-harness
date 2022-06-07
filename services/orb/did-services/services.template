@@ -19,8 +19,7 @@
     "id": "svc3",
     "type": "DIDCommMessaging",
     "priority": 2,
-    "routingKeys": [],
     "recipientKeys": ["#key4"],
-    "serviceEndpoint": "http://AGENT_URL:AGENT_PORT"
+    "serviceEndpoint": [{"uri": "http://AGENT_URL:AGENT_PORT"}]
   }
 ]
