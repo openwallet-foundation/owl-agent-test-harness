@@ -2,6 +2,14 @@
 
 cd /etc/orb-cli
 
+.build/orb-cli follower \
+  --outbox-url=https://orb.domain2.com/services/orb/outbox \
+  --actor=https://orb.domain2.com/services/orb \
+  --to https://orb.domain1.com/services/orb \
+  --tls-cacerts .build/keys/tls/ec-cacert.pem \
+  --auth-token ADMIN_TOKEN \
+  --action=Follow
+
 agent_names=( "Acme" "Bob" "Faber" "Mallory" )
 
 for AGENT_NAME in "${agent_names[@]}"; do
