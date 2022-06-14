@@ -7,6 +7,34 @@ from time import sleep
 CRED_FORMAT_INDY = "indy"
 CRED_FORMAT_JSON_LD = "json-ld"
 
+def setup_schemas_for_issuance(context, credential_data):
+    # Prepare schemas for usage
+    for schema in context.schema_dict:
+        try:
+            credential_data_json_file = open(
+                "features/data/cred_data_" + schema.lower() + ".json"
+            )
+            credential_data_json = json.load(credential_data_json_file)
+            context.credential_data_dict[schema] = credential_data_json[
+                credential_data
+            ]["attributes"]
+
+            context.credential_data = context.credential_data_dict[schema]
+            context.schema = context.schema_dict[schema]
+        except FileNotFoundError:
+            print(
+                FileNotFoundError
+                + ": features/data/cred_data_"
+                + schema.lower()
+                + ".json"
+            )
+
+        if "AIP20" in context.tags or "DIDComm-V2" in context.tags:
+            context.filters_dict[schema] = credential_data_json[credential_data][
+                "filters"
+            ]
+            context.filters = context.filters_dict[schema]
+
 
 @given('"{issuer}" is ready to issue a "{cred_format}" credential')
 def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
@@ -48,32 +76,8 @@ def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
     '"{holder}" proposes a "{cred_format}" credential to "{issuer}" with {credential_data}'
 )
 def step_impl(context, holder, cred_format, issuer, credential_data):
-
-    for schema in context.schema_dict:
-        try:
-            credential_data_json_file = open(
-                "features/data/cred_data_" + schema.lower() + ".json"
-            )
-            credential_data_json = json.load(credential_data_json_file)
-            context.credential_data_dict[schema] = credential_data_json[
-                credential_data
-            ]["attributes"]
-
-            context.credential_data = context.credential_data_dict[schema]
-            context.schema = context.schema_dict[schema]
-        except FileNotFoundError:
-            print(
-                FileNotFoundError
-                + ": features/data/cred_data_"
-                + schema.lower()
-                + ".json"
-            )
-
-        if "AIP20" in context.tags or "DIDComm-V2" in context.tags:
-            context.filters_dict[schema] = credential_data_json[credential_data][
-                "filters"
-            ]
-            context.filters = context.filters_dict[schema]
+    # Set up schemas / filters for issuance
+    setup_schemas_for_issuance(context, credential_data)
 
     holder_url = context.config.userdata.get(holder)
 
@@ -148,6 +152,46 @@ def step_impl(context, issuer, cred_format):
         assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
         resp_json = json.loads(resp_text)
         context.cred_thread_id = resp_json["thread_id"]
+
+@given('"{issuer}" creates a "{cred_format}" credential offer with {credential_data}')
+@when('"{issuer}" creates a "{cred_format}" credential offer with {credential_data}')
+@given('"{issuer}" creates an "{cred_format}" credential offer with {credential_data}')
+@when('"{issuer}" creates an "{cred_format}" credential offer with {credential_data}')
+def step_impl(context, issuer, cred_format, credential_data):
+    # Set up schemas / filters for issuance
+    setup_schemas_for_issuance(context, credential_data)
+
+    issuer_url = context.config.userdata.get(issuer)
+
+
+    cred_data = context.credential_data
+
+    # We only want to send data for the cred format being used
+    assert (
+        cred_format in context.filters
+    ), f"credential data has no filter for cred format {cred_format}"
+    filters = {cred_format: context.filters[cred_format]}
+
+    credential_offer = format_cred_proposal_by_aip_version(
+        context,
+        "AIP20",
+        cred_data,
+        None,
+        filters,
+    )
+
+    (resp_status, resp_text) = agent_backchannel_POST(
+        issuer_url + "/agent/command/",
+        "issue-credential-v2",
+        operation="create-offer",
+        data=credential_offer,
+    )
+    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+    resp_json = json.loads(resp_text)
+
+    assert "record" in resp_json
+    context.cred_thread_id = resp_json["record"]["thread_id"]
+    context.credential_offer = resp_json["message"]
 
 
 @when('"{holder}" requests the "{cred_format}" credential')

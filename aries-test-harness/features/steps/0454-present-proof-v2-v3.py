@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_POST, expected_agent_state
@@ -6,6 +7,42 @@ from agent_test_utils import (
     amend_presentation_definition_with_runtime_data,
 )
 from distutils.util import strtobool
+
+def prepare_proof_request(context: Any, request_for_proof: str) -> Dict[str, Any]:
+    try:
+        request_for_proof_json_file = open(
+            "features/data/" + request_for_proof + ".json"
+        )
+        request_for_proof_json = json.load(request_for_proof_json_file)
+        context.request_for_proof = request_for_proof_json["presentation_request"]
+
+    except FileNotFoundError:
+        print(f"FileNotFoundError: features/data/{request_for_proof}.json")
+
+    data = None
+
+    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
+    if context.request_for_proof:
+        data = context.request_for_proof
+
+        if context.current_cred_format == "indy":
+            if context.non_revoked_timeframe:
+                data["non_revoked"] = context.non_revoked_timeframe["non_revoked"]
+
+        elif context.current_cred_format == "json-ld":
+            data = amend_presentation_definition_with_runtime_data(context, data)
+        else:
+            raise Exception(f"Unknown cred format {context.current_cred_format}")
+
+    presentation_request = {
+        "presentation_request": {
+            "format": context.current_cred_format,
+            "comment": "This is a comment for the request for presentation.",
+            "data": data,
+        }
+    }
+
+    return presentation_request
 
 
 @given(
@@ -156,37 +193,7 @@ def step_impl(context, verifier: str, prover: str):
     '"{verifier}" sends a {request_for_proof} presentation with formats to "{prover}"'
 )
 def step_impl(context, verifier, request_for_proof, prover):
-    try:
-        request_for_proof_json_file = open(
-            "features/data/" + request_for_proof + ".json"
-        )
-        request_for_proof_json = json.load(request_for_proof_json_file)
-        context.request_for_proof = request_for_proof_json["presentation_request"]
-
-    except FileNotFoundError:
-        print(FileNotFoundError + ": features/data/" + request_for_proof + ".json")
-
-    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
-    if context.request_for_proof:
-        data = context.request_for_proof
-
-        if context.current_cred_format == "indy":
-
-            if context.non_revoked_timeframe:
-                data["non_revoked"] = context.non_revoked_timeframe["non_revoked"]
-
-        elif context.current_cred_format == "json-ld":
-            data = amend_presentation_definition_with_runtime_data(context, data)
-        else:
-            raise Exception(f"Unknown cred format {context.current_cred_format}")
-
-    presentation_request = {
-        "presentation_request": {
-            "format": context.current_cred_format,
-            "comment": "This is a comment for the request for presentation.",
-            "data": data,
-        }
-    }
+    presentation_request = prepare_proof_request(context, request_for_proof)
 
     use_v3 = "PresentProofV3" in context.tags
 
@@ -215,36 +222,45 @@ def step_impl(context, verifier, request_for_proof, prover):
                 data=presentation_request,
             )
     else:
-        if context.connectionless:
-            (resp_status, resp_text) = agent_backchannel_POST(
-                context.verifier_url + "/agent/command/",
-                "proof-v2",
-                operation="create-send-connectionless-request",
-                data=presentation_request,
-            )
-        else:
-            presentation_request["presentation_request"][
-                "connection_id"
-            ] = context.connection_id_dict[verifier][prover]
+        presentation_request["presentation_request"][
+            "connection_id"
+        ] = context.connection_id_dict[verifier][prover]
 
-            # send presentation request
-            (resp_status, resp_text) = agent_backchannel_POST(
-                context.verifier_url + "/agent/command/",
-                "proof-v2",
-                operation="send-request",
-                data=presentation_request,
-            )
+        # send presentation request
+        (resp_status, resp_text) = agent_backchannel_POST(
+            context.verifier_url + "/agent/command/",
+            "proof-v2",
+            operation="send-request",
+            data=presentation_request,
+        )
 
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
     resp_json = json.loads(resp_text)
 
-    if context.connectionless:
-        # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
-        context.presentation_exchange_id = resp_json["presentation_exchange_id"]
-    elif not context.presentation_thread_id:
+    if not context.presentation_thread_id:
         # save off anything that is returned in the response to use later?
         context.presentation_thread_id = resp_json["thread_id"]
 
+@when(
+    '"{verifier}" creates a "{request_for_proof}" proof request'
+)
+def step_impl(context, verifier: str, request_for_proof: str):
+    presentation_request = prepare_proof_request(context, request_for_proof)
+
+    # send presentation request
+    (resp_status, resp_text) = agent_backchannel_POST(
+        context.verifier_url + "/agent/command/",
+        "proof-v2",
+        operation="create-request",
+        data=presentation_request,
+    )
+
+    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+    resp_json = json.loads(resp_text)
+
+    assert "record" in resp_json
+    context.presentation_thread_id = resp_json["record"]["thread_id"]
+    context.proof_request = resp_json["message"]    
 
 @when('"{prover}" makes the {presentation} of the proof with formats')
 def step_impl(context, prover, presentation):
@@ -324,14 +340,6 @@ def step_impl(context, prover, presentation):
             raise Exception(f"Unknown format {context.current_cred_format}")
 
         presentation["format"] = context.current_cred_format
-
-    # if this is happening connectionless, then add the service decorator to the presentation
-    if context.connectionless:
-        presentation["~service"] = {
-            "recipientKeys": [context.presentation_exchange_id],
-            "routingKeys": None,
-            "serviceEndpoint": context.verifier_url,
-        }
 
     use_v3 = "PresentProofV3" in context.tags
 

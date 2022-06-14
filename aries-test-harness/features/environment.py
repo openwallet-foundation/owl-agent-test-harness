@@ -44,7 +44,9 @@ def before_scenario(context: Context, scenario: Scenario):
         )
 
     # Check for Present Proof Feature to be able to handle the loading of schemas and credential definitions before the scenarios.
-    if 'present proof' in context.feature.name or 'revocation' in context.feature.name or 'Issue Credential' in context.feature.name or 'WACI' in context.feature.name:
+    # FIXME: we should find a better (hopefully more explicit way) to run this code. I think feature files that need it could run a 
+    # step do this, as this is not a really scalable solution
+    if 'present proof' in context.feature.name or 'revocation' in context.feature.name or 'Issue Credential' in context.feature.name or 'WACI' in context.feature.name or "RFC 0434" in context.feature.name:
         # get the tag with "Schema_".
         for tag in context.tags:
             if "ProofType_" in tag:
@@ -64,7 +66,7 @@ def before_scenario(context: Context, scenario: Scenario):
                     # If this is issue credential then you can't created multiple credential defs at the same time, like Proof uses
                     # multiple credential types in the proof. So just set the context.schema here to be used in the issue cred test.
                     # This makes the rule that you can only have one @Schema_ tag in an issue credential test scenario.
-                    if 'Issue Credential' in context.feature.name or 'WACI' in context.feature.name:
+                    if 'Issue Credential' in context.feature.name or 'WACI' in context.feature.name or "RFC 0434" in context.feature.name:
                         context.schema = schema_json["schema"]
                         # Get and assign the credential definition info to the context
                         context.support_revocation = schema_json[
@@ -292,12 +294,11 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # Present proof request for proof (presentation proposal object)
     context.request_for_proof = None
 
-    # Whether exchange is connectionless
-    context.connectionless = False
+    # Proof request didcomm message used for connectionless / OOB exchange
+    context.proof_request = None
 
-    # Presentation exchange id used for connectionless exchanges
-    # context.presentation_exchange_id = "6f96b535-0afa-4fff-938a-9f9bd6aa2814"
-    context.presentation_exchange_id = None
+    # Credential offer didcomm message used for connectionless / OOB exchange
+    context.credential_offer = None
 
     # Loaded presentation data
     #
