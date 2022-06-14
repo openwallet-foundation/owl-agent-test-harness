@@ -3,7 +3,6 @@ import { BadRequest, NotFound } from '@tsed/exceptions'
 import {
   CredentialEventTypes,
   CredentialExchangeRecord,
-  CredentialProtocolVersion,
   CredentialState,
   CredentialStateChangedEvent,
   JsonTransformer,
@@ -66,18 +65,16 @@ export class IssueCredentialController extends BaseController {
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
     const credentialRecord = await this.agent.credentials.proposeCredential({
       connectionId: connection.id,
-      protocolVersion: CredentialProtocolVersion.V1,
+      protocolVersion: 'v1',
       credentialFormats: {
         indy: {
           attributes: preview.attributes,
-          payload: {
-            schemaIssuerDid: data.schema_issuer_did,
-            issuerDid: data.issuer_did,
-            schemaName: data.schema_name,
-            credentialDefinitionId: data.cred_def_id,
-            schemaVersion: data.schema_version,
-            schemaId: data.schema_id,
-          },
+          schemaIssuerDid: data.schema_issuer_did,
+          issuerDid: data.issuer_did,
+          schemaName: data.schema_name,
+          credentialDefinitionId: data.cred_def_id,
+          schemaVersion: data.schema_version,
+          schemaId: data.schema_id,
         },
       },
     })
@@ -99,15 +96,9 @@ export class IssueCredentialController extends BaseController {
 
     if (threadId) {
       await this.waitForState(threadId, CredentialState.ProposalReceived)
-      const { id, credentialAttributes } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
+      const { id } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
       credentialRecord = await this.agent.credentials.acceptProposal({
         credentialRecordId: id,
-        credentialFormats: {
-          indy: {
-            // FIXME: shouldn't be required
-            attributes: credentialAttributes!,
-          },
-        },
       })
       return this.mapCredential(credentialRecord)
     } else if (data) {
@@ -115,7 +106,7 @@ export class IssueCredentialController extends BaseController {
       const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
       credentialRecord = await this.agent.credentials.offerCredential({
         connectionId: connection.id,
-        protocolVersion: CredentialProtocolVersion.V1,
+        protocolVersion: 'v1',
         credentialFormats: {
           indy: {
             attributes: preview.attributes,
@@ -156,7 +147,7 @@ export class IssueCredentialController extends BaseController {
   async storeCredential(@BodyParams('id') threadId: string) {
     await this.waitForState(threadId, CredentialState.CredentialReceived)
     let { id } = await CredentialUtils.getCredentialByThreadId(this.agent, threadId)
-    const credentialRecord = await this.agent.credentials.acceptCredential(id)
+    const credentialRecord = await this.agent.credentials.acceptCredential({ credentialRecordId: id })
 
     return this.mapCredential(credentialRecord)
   }
