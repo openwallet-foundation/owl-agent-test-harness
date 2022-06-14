@@ -13,9 +13,10 @@ import {
 } from '@aries-framework/core'
 
 import { convertToNewInvitation } from '@aries-framework/core/build/modules/oob/helpers'
-import { ReplaySubject } from 'rxjs'
+import { filter, firstValueFrom, ReplaySubject, tap, timeout } from 'rxjs'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
+import { ConnectionUtils } from '../utils/ConnectionUtils'
 
 @Controller('/agent/command/connection')
 export class ConnectionController extends BaseController {
@@ -33,13 +34,11 @@ export class ConnectionController extends BaseController {
       .subscribe(this.subject)
   }
 
-  @Get('/:connectionId')
-  async getConnectionById(@PathParams('connectionId') connectionId: string) {
-    const connection = await this.agent.connections.findById(connectionId)
+  @Get('/:id')
+  async getConnectionById(@PathParams('id') id: string) {
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
 
-    if (!connection) {
-      throw new NotFound(`connection with connectionId "${connectionId}" not found.`)
-    }
+    if (!connection) throw new NotFound(`Connection with id ${id} not found`)
 
     return this.mapConnection(connection)
   }
@@ -92,7 +91,7 @@ export class ConnectionController extends BaseController {
       routing,
       // Needed to complete connection: https://github.com/hyperledger/aries-framework-javascript/issues/668
       autoAcceptConnection: true,
-      autoAcceptInvitation: false,
+      autoAcceptInvitation: true,
     })
 
     this.agent.config.logger.debug('ConnectionController.receiveInvitation: connectionRecord.id: ', connectionRecord)
@@ -105,25 +104,33 @@ export class ConnectionController extends BaseController {
   }
 
   @Post('/accept-invitation')
-  async acceptInvitation(@BodyParams('id') connectionId: string) {
-    const connection = await this.agent.connections.getById(connectionId)
+  async acceptInvitation(@BodyParams('id') id: string) {
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
+
     return this.mapConnection(connection)
   }
 
   @Post('/accept-request')
-  async acceptRequest(@BodyParams('id') connectionId: string) {
-    const connection = await this.agent.connections.getById(connectionId)
+  async acceptRequest(@BodyParams('id') id: string) {
+    // possible here that the request hasn't finished processing yet
+    await this.waitForState(id, DidExchangeState.RequestReceived)
+
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
+
     return this.mapConnection(connection)
   }
 
   @Post('/send-ping')
   async sendPing(
-    @BodyParams('id') connectionId: string,
+    @BodyParams('id') id: string,
     // For now we ignore data. This could contain a comment property,
     // AFJ doesn't support passing it for now
     @BodyParams('data') data: any
   ) {
-    const connection = await this.agent.connections.getById(connectionId)
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
+
+    if (!connection) throw new NotFound(`Connection with id ${id} not found`)
+
     return this.mapConnection(connection)
   }
 
@@ -134,6 +141,16 @@ export class ConnectionController extends BaseController {
     const mediator = await this.agent.mediationRecipient.findByConnectionId(mediatorConnectionId)
 
     return mediator?.id
+  }
+
+  private async waitForState(id: string, state: DidExchangeState) {
+    return await firstValueFrom(
+      this.subject.pipe(
+        filter((c) => c.payload.connectionRecord.id === id || c.payload.connectionRecord.outOfBandId === id),
+        filter((c) => c.payload.connectionRecord.state === state),
+        timeout(20000)
+      )
+    )
   }
 
   private mapConnection(connection: ConnectionRecord) {
