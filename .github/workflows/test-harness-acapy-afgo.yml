@@ -2,7 +2,7 @@ name: test-harness-acapy-afgo
 # RUNSET_NAME: "ACA-PY to AF-Go"
 # Scope: pre-AIP 2.0
 # Exceptions: None
-# 
+#
 # Summary
 #
 # This runset uses the current main branch of ACA-Py for all of the agents except Bob (holder),
@@ -10,7 +10,7 @@ name: test-harness-acapy-afgo
 # using RFC0023 (DID Exchange).
 #
 # Current
-# 
+#
 # All of the tests being executed in this runset are passing.
 #
 # *Status Note Updated: 2021.09.27*
@@ -49,7 +49,7 @@ jobs:
           BUILD_AGENTS: "-a acapy-main -a afgo-interop"
           TEST_AGENTS: "-d acapy-main -b afgo-interop"
           OTHER_PARAMS: "-v 20"
-          TEST_SCOPE: "-t @RFC0023,@RFC0453,@RFC0454,@RFC0025 -t ~@wip -t ~@CredFormat_Indy -t ~@Transport_NoHttpOutbound -t ~@Transport_Ws -t ~@RFC0160 -t ~@DidMethod_orb"
+          TEST_SCOPE: "-t @RFC0023,@RFC0453,@RFC0454,@RFC0025 -t ~@wip -t ~@CredFormat_Indy -t ~@Transport_NoHttpOutbound -t ~@Transport_Ws -t ~@RFC0160 -t ~@RFC0434 -t ~@DidMethod_orb"
           REPORT_PROJECT: acapy-b-afgo
         env:
           EMIT_NEW_DIDCOMM_PREFIX: true
@@ -59,6 +59,6 @@ jobs:
         if: ((github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness'))
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy-b-afgo 
+          REPORT_PROJECT: acapy-b-afgo
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
