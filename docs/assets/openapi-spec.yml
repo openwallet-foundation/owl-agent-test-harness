@@ -819,6 +819,27 @@ paths:
                       state:
                         example: done
 
+  /agent/command/issue-credential-v2/{credentialExchangeThreadId}:
+    get:
+      tags:
+        - Issue Credential V2
+      summary: Get credential exchange v2 record by thread id
+      operationId: IssueCredentialV2GetByThreadId
+      parameters:
+        - in: path
+          name: credentialExchangeThreadId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential Exchange v2
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueCredentialOperationResponse"
+        404:
+          description: Credential exchange record not found
   /agent/command/issue-credential-v2/prepare-json-ld:
     post:
       tags:
@@ -3054,36 +3075,19 @@ components:
         }
     IssueCredentialV2AttachFormatIndyCredFilter:
       type: object
-      example:
-        {
-          "credential":
-            {
-              "@context":
-                [
-                  "https://www.w3.org/2018/credentials/v1",
-                  "https://w3id.org/security/bbs/v1",
-                  {
-                    "dl": "http://example.com/drivers-license#",
-                    "AATHDriversLicense": "dl:AATHDriversLicense",
-                    "address": "dl:address",
-                    "DL_number": "dl:DL_number",
-                    "expiry": "dl:expiry",
-                    "age": "dl:age",
-                  },
-                ],
-              "type": ["VerifiableCredential", "AATHDriversLicense"],
-              "issuer": "did:key:z6MkfZfsiVsAy6CgQht7vQVk1dWBnztivjbhxRiKTtTi62PB",
-              "issuanceDate": "2010-01-01T19:73:24Z",
-              "credentialSubject":
-                {
-                  "address": "947 this street, Kingston Ontario Canada, K9O 3R5",
-                  "DL_number": "09385029529385",
-                  "expiry": "10/12/2022",
-                  "age": "30",
-                },
-            },
-          "options": { "proofType": "Ed25519Signature2018" },
-        }
+      properties:
+        schema_issuer_did:
+          $ref: "#/components/schemas/Did"
+        schema_id:
+          $ref: "#/components/schemas/SchemaId"
+        schema_name:
+          $ref: "#/components/schemas/SchemaName"
+        schema_version:
+          $ref: "#/components/schemas/SchemaVersion"
+        cred_def_id:
+          $ref: "#/components/schemas/CredentialDefinitionId"
+        issuer_did:
+          $ref: "#/components/schemas/Did"
     IssueCredentialV2CredentialProposalFilter:
       title: Issue Credential V2 Credential Proposal Filter
       properties:
