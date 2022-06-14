@@ -1,2 +1,2 @@
-aries-cloudagent[indy, bbs, askar]@git+https://github.com/TimoGlastra/aries-cloudagent-python@fix/oob-connectionless
+aries-cloudagent[indy, bbs, askar]@git+https://github.com/hyperledger/aries-cloudagent-python@main
 acapy-resolver-universal@git+https://github.com/sicpa-dlab/acapy-resolver-universal.git@main
