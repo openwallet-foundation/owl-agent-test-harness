@@ -6,14 +6,14 @@ name: test-harness-javascript-findy
 # Summary
 #
 # This runset uses the latest release of Aries Framework Javascript for all of the agents except Bob (holder),
-# which uses the current main branch of findy-agent. The runset covers all of the AIP 1.0 tests that 
+# which uses the current main branch of findy-agent. The runset covers all of the AIP 1.0 tests that
 # are known to work with findy as the holder. Excluded are those tests that involve Revocation.
 #
 # Current
-# 
-# All of the tests being executed in this runset are failing. There is an issue with afj sending the connection 
+#
+# All of the tests being executed in this runset are failing. There is an issue with afj sending the connection
 # response, and throws an error processing inbound message.
-# 
+#
 # *Status Note Updated: 2021.09.28*
 #
 # End

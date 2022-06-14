@@ -234,7 +234,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-key", self.wallet_key),
             "--monitor-revocation-notification",
             "--open-mediation",
-            "--enable-undelivered-queue"
+            "--enable-undelivered-queue",
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
@@ -660,14 +660,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # Check if schema id already exists
             schema_name = command.data.get("schema_name")
             schema_version = command.data.get("schema_version")
-            (resp_status, resp_text) = await self.admin_GET("/schemas/created", params={
-                "schema_version": schema_version,
-                "schema_name": schema_name
-            })
+            (resp_status, resp_text) = await self.admin_GET(
+                "/schemas/created",
+                params={"schema_version": schema_version, "schema_name": schema_name},
+            )
             resp_json = json.loads(resp_text)
             if len(resp_json["schema_ids"]) > 0:
                 schema_id = resp_json["schema_ids"][0]
-                return (200, json.dumps({"schema_id": schema_id }))
+                return (200, json.dumps({"schema_id": schema_id}))
 
             (resp_status, resp_text) = await self.admin_POST(
                 agent_operation, command.data
@@ -685,16 +685,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # Check if credential definition id already exists
             schema_id = command.data.get("schema_id")
             tag = command.data.get("tag")
-            (resp_status, resp_text) = await self.admin_GET("/credential-definitions/created", params={
-                "schema_id": schema_id,
-            })
+            (resp_status, resp_text) = await self.admin_GET(
+                "/credential-definitions/created",
+                params={
+                    "schema_id": schema_id,
+                },
+            )
             resp_json = json.loads(resp_text)
             if len(resp_json["credential_definition_ids"]) > 0:
                 # need to check the 'tag' value
                 for cred_def_id in resp_json["credential_definition_ids"]:
                     cred_def_id_parts = cred_def_id.split(":")
                     if tag == cred_def_id_parts[4]:
-                        return (200, json.dumps({"credential_definition_id": cred_def_id }))
+                        return (
+                            200,
+                            json.dumps({"credential_definition_id": cred_def_id}),
+                        )
 
             (resp_status, resp_text) = await self.admin_POST(
                 agent_operation, command.data
@@ -799,10 +805,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if operation == "create-offer":
                     resp_json = json.loads(resp_text)
-                    resp_text = json.dumps({
-                        "record": resp_json,
-                        "message": resp_json["credential_offer_dict"]
-                    })
+                    resp_text = json.dumps(
+                        {
+                            "record": resp_json,
+                            "message": resp_json["credential_offer_dict"],
+                        }
+                    )
                 return (resp_status, resp_text)
 
         # Handle issue credential v2 POST operations
@@ -924,10 +932,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if operation == "create-request":
                     resp_json = json.loads(resp_text)
-                    resp_text = json.dumps({
-                        "record": resp_json,
-                        "message": resp_json["presentation_request_dict"]
-                    })
+                    resp_text = json.dumps(
+                        {
+                            "record": resp_json,
+                            "message": resp_json["presentation_request_dict"],
+                        }
+                    )
                 return (resp_status, resp_text)
 
         # Handle out of band POST operations
@@ -974,7 +984,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             for attachment in attachments:
                 message_type = attachment["@type"]
-                thread_id = attachment.get("~thread", {}).get("thid") or attachment.get("@id")
+                thread_id = attachment.get("~thread", {}).get("thid") or attachment.get(
+                    "@id"
+                )
 
                 if message_type.endswith("/issue-credential/1.0/offer-credential"):
                     (_, resp_text) = await self.admin_GET(
@@ -1007,15 +1019,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 else:
                     return (500, f"Unsupported message type '{message_type}'")
 
-                formatted_attachments.append({
-                    "id": record_id,
-                    "type": record_type
-                })
+                formatted_attachments.append({"id": record_id, "type": record_type})
 
             # Add handshake protocols to message body
             data = {
                 "use_public_did": data.get("use_public_did", False),
-                "attachments": formatted_attachments
+                "attachments": formatted_attachments,
             }
 
             # If no handshake_protocols is provided and no formatted attachments we use didexchange handshake protocol
@@ -1056,7 +1065,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
-        # TODO: this now returns an oob record. If connection_id is present fetch the 
+        # TODO: this now returns an oob record. If connection_id is present fetch the
         # connection and return that. Otherwise return state "invitation-received"
         log_msg(resp_status, resp_text)
         if resp_status == 200 and operation == "receive-invitation":
@@ -1067,11 +1076,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             # If connection exists return the actual connection
             if connection_id:
-                (resp_status, resp_text) = await self.admin_GET(f"/connections/{connection_id}")
+                (resp_status, resp_text) = await self.admin_GET(
+                    f"/connections/{connection_id}"
+                )
                 resp_text = self.agent_state_translation(command.topic, resp_text)
             elif state == "prepare-response":
-              resp_json["state"] = "invitation-received"
-              resp_text = json.dumps(resp_json)
+                resp_json["state"] = "invitation-received"
+                resp_text = json.dumps(resp_json)
         elif resp_status == 200:
             resp_text = self.agent_state_translation(command.topic, resp_text)
         return (resp_status, resp_text)
@@ -1239,10 +1250,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             if operation == "create-offer":
                 resp_json = json.loads(resp_text)
-                resp_text = json.dumps({
-                    "record": resp_json,
-                    "message": resp_json["cred_offer"]
-                })
+                resp_text = json.dumps(
+                    {"record": resp_json, "message": resp_json["cred_offer"]}
+                )
             return (resp_status, resp_text)
 
     async def handle_proof_v2_POST(self, command: BackchannelCommand):
@@ -1306,10 +1316,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             if operation == "create-request":
                 resp_json = json.loads(resp_text)
-                resp_text = json.dumps({
-                    "record": resp_json,
-                    "message": resp_json["pres_request"]
-                })
+                resp_text = json.dumps(
+                    {"record": resp_json, "message": resp_json["pres_request"]}
+                )
 
             log_msg(resp_status, resp_text)
             resp_text = self.move_field_to_top_level(resp_text, "state")
@@ -1698,13 +1707,17 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif topic == "revocation-notification" and record_id:
-            revocation_notification = pop_resource(record_id, "revocation-notification-msg")
+            revocation_notification = pop_resource(
+                record_id, "revocation-notification-msg"
+            )
             i = 0
             while revocation_notification is None and i < MAX_TIMEOUT:
                 await asyncio.sleep(1)
-                revocation_notification = pop_resource(record_id, "revocation-notification-msg")
+                revocation_notification = pop_resource(
+                    record_id, "revocation-notification-msg"
+                )
                 i = i + 1
-            
+
             # Not sure why the status is 200 even if not found? That's quite confusing
             resp_status = 200
             if revocation_notification:
@@ -2151,7 +2164,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                             "rev_reg_id": data["rev_registry_id"],
                             "publish": str(data["publish_immediately"]).lower(),
                         }
-                    
+
                     # Revocation Notification
                     notify_connection_id = data.get("notify_connection_id")
                     if notify_connection_id:

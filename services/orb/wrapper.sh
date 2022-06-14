@@ -3,12 +3,18 @@
 SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 COMMAND=${1}
 
+# If multi-step composition becomes necessary again, set ALL_COMPOSES to a string of command-line parameters for
+# all of the docker-compose files, like this:
+# ALL_COMPOSES=" -f compose-1.yml -f compose-2.yml -f compose-3.yml "
+ALL_COMPOSES=" "
+
 startCommand() {
-	docker-compose -f compose-1.yml up -d
-	sleep 15
-	docker-compose -f compose-2.yml up -d
-	sleep 10
-	docker-compose -f compose-3.yml up -d
+	# docker-compose -f compose-1.yml up -d
+	# sleep 15
+	# docker-compose -f compose-2.yml up -d
+	# sleep 10
+	# docker-compose -f compose-3.yml up -d
+	docker-compose up -d
 }
 
 generateKeys() {
@@ -25,7 +31,20 @@ setupCLI() {
 	pushd .build > /dev/null
 
 	if [[ ! -f orb-cli ]]; then
-		curl -sL https://github.com/trustbloc/orb/releases/download/v0.1.3/orb-cli-linux-amd64.tar.gz | tar -x -z -O -f - > orb-cli
+		# curl -sL https://github.com/trustbloc/orb/releases/download/v1.0.0-rc.1/orb-cli-linux-amd64.tar.gz | tar -x -z -O -f - > orb-cli
+
+		if [[ ! -f orb-cli-linux-amd64.tar.gz ]]; then
+			if [[ ! -f orb-cli.zip ]]; then
+				wget https://nightly.link/trustbloc/orb/actions/artifacts/260114064.zip -O orb-cli.zip
+			fi
+
+			unzip -n orb-cli.zip orb-cli-linux-amd64.tar.gz
+		fi
+
+		tar -xzf orb-cli-linux-amd64.tar.gz
+
+		mv orb-cli-linux-amd64 orb-cli
+
 		chmod +x orb-cli
 	fi
 
@@ -34,10 +53,6 @@ setupCLI() {
 
 waitForReady() {
 	sleep 15
-}
-
-setupFollowers() {
-	($SCRIPT_HOME/cli-scripts/setup_followers.sh)
 }
 
 # getDockerHost; for details refer to https://github.com/bcgov/DITP-DevOps/tree/main/code/snippets#getdockerhost
@@ -72,7 +87,7 @@ createDID() {
 		-e "AGENT_NAME=${AGENT_NAME}" \
 		--network "aath_network" \
 		--entrypoint "/etc/orb-cli/cli-scripts/create_did.sh" \
-		"ubuntu:latest"
+		"ubuntu:20.04"
 
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-master.data
 	mkdir -p $SCRIPT_HOME/../../aries-backchannels/afgo/.build/afgo-interop.data
@@ -90,23 +105,23 @@ createDID() {
 stopService() {
 	arg=$1
 
-	docker-compose -f compose-1.yml -f compose-2.yml -f compose-3.yml stop
+	docker-compose ${ALL_COMPOSES} stop
 
 	if [[ $arg = "with-logs" ]]; then
-		if [[ -n "$(docker-compose -f compose-1.yml -f compose-2.yml -f compose-3.yml -p aath ps -q)" ]]; then
+		if [[ -n "$(docker-compose ${ALL_COMPOSES} -p aath ps -q)" ]]; then
 			echo writing logs...
-			docker-compose -f compose-1.yml -f compose-2.yml -f compose-3.yml logs > orb.log
+			docker-compose ${ALL_COMPOSES} logs > orb.log
 		fi
 	fi
 
-	docker-compose -f compose-1.yml -f compose-2.yml -f compose-3.yml down --volumes
+	docker-compose ${ALL_COMPOSES} down --volumes
 }
 
 pushd ${SCRIPT_HOME} > /dev/null
 
 case "${COMMAND}" in
 	clean)
-		docker-compose -f compose-1.yml -f compose-2.yml -f compose-3.yml down --volumes
+		docker-compose ${ALL_COMPOSES} down --volumes
 		rm -rf .build
 		;;
 	stop)
@@ -118,15 +133,15 @@ case "${COMMAND}" in
 		setupCLI
 		startCommand
 		waitForReady
-		setupFollowers
 		generateAgentServices
 		sleep 5
 		createDID
 		;;
 	logs)
-		docker-compose -f compose-1.yml -f compose-2.yml -f compose-3.yml logs -f -t
+		docker-compose ${ALL_COMPOSES} logs -f -t
 		;;
 	create)
+		setupCLI
 		generateAgentServices
 		echo $(createDID)
 		;;

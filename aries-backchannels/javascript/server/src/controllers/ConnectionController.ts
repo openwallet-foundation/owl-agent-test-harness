@@ -8,9 +8,11 @@ import {
   ConnectionEventTypes,
   ConnectionStateChangedEvent,
   ConnectionState,
+  AriesFrameworkError,
+  DidExchangeState,
 } from '@aries-framework/core'
 
-import { replaceNewDidCommPrefixWithLegacyDidSovOnMessage } from '@aries-framework/core/build/utils/messageType'
+import { convertToNewInvitation } from '@aries-framework/core/build/modules/oob/helpers'
 import { ReplaySubject } from 'rxjs'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
@@ -53,41 +55,53 @@ export class ConnectionController extends BaseController {
   async createInvitation(@BodyParams('data') data?: { mediator_connection_id?: string }) {
     const mediatorId = await this.mediatorIdFromMediatorConnectionId(data?.mediator_connection_id)
 
-    const { invitation, connectionRecord } = await this.agent.connections.createConnection({
+    const routing = await this.agent.mediationRecipient.getRouting({
       mediatorId,
+    })
+
+    const { invitation, outOfBandRecord } = await this.agent.oob.createLegacyInvitation({
+      routing,
       // Needed to complete connection: https://github.com/hyperledger/aries-framework-javascript/issues/668
       autoAcceptConnection: true,
     })
 
-    const invitationJson = invitation.toJSON()
-
     const config = this.agent.injectionContainer.resolve(AgentConfig)
-    if (config.useLegacyDidSovPrefix) {
-      replaceNewDidCommPrefixWithLegacyDidSovOnMessage(invitationJson)
-    }
+    const invitationJson = invitation.toJSON({ useLegacyDidSovPrefix: config.useLegacyDidSovPrefix })
 
     return {
-      ...this.mapConnection(connectionRecord),
+      state: ConnectionState.Invited,
+      // This should be the connection id. However, the connection id is not available until a request is received.
+      // We can just use the oob invitation I guess.
+      connection_id: outOfBandRecord.id,
       invitation: invitationJson,
     }
   }
 
   @Post('/receive-invitation')
   async receiveInvitation(@BodyParams('data') data: Record<string, unknown> & { mediator_connection_id?: string }) {
-    const { mediator_connection_id, ...invitation } = data
+    const { mediator_connection_id, ...invitationJson } = data
 
     const mediatorId = await this.mediatorIdFromMediatorConnectionId(mediator_connection_id)
 
-    const connection = await this.agent.connections.receiveInvitation(
-      JsonTransformer.fromJSON(invitation, ConnectionInvitationMessage),
-      {
-        mediatorId,
-        // Needed to complete connection: https://github.com/hyperledger/aries-framework-javascript/issues/668
-        autoAcceptConnection: true,
-      }
-    )
+    const routing = await this.agent.mediationRecipient.getRouting({
+      mediatorId,
+    })
 
-    return this.mapConnection(connection)
+    const oobInvitation = convertToNewInvitation(JsonTransformer.fromJSON(invitationJson, ConnectionInvitationMessage))
+    const { connectionRecord } = await this.agent.oob.receiveInvitation(oobInvitation, {
+      routing,
+      // Needed to complete connection: https://github.com/hyperledger/aries-framework-javascript/issues/668
+      autoAcceptConnection: true,
+      autoAcceptInvitation: false,
+    })
+
+    this.agent.config.logger.debug('ConnectionController.receiveInvitation: connectionRecord.id: ', connectionRecord)
+
+    if (!connectionRecord) {
+      throw new AriesFrameworkError('Processing invitation did not result in a connection record')
+    }
+
+    return this.mapConnection(connectionRecord)
   }
 
   @Post('/accept-invitation')
@@ -126,7 +140,7 @@ export class ConnectionController extends BaseController {
     return {
       // If we use auto accept, we can't include the state as we will move quicker than the calls in the test harness. This will
       // make verification fail. The test harness recognizes the 'N/A' state.
-      state: connection.state === ConnectionState.Complete ? connection.state : 'N/A',
+      state: connection.state === DidExchangeState.Completed ? connection.rfc0160State : 'N/A',
       connection_id: connection.id,
       connection,
     }

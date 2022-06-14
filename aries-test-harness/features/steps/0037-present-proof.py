@@ -363,11 +363,14 @@ def step_impl(context, verifier):
 @then('"{prover}" has the proof verified')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
+    # All flexibility in the expected state to include "presentation-sent"
+    #   as Aries frameworks do not send an Ack from the verifier after verification and
+    #   some Aries frameworks just leave the holder in that state.
     assert expected_agent_state(
         context.prover_url,
         "proof",
         context.presentation_thread_id,
-        "done",
+        ["done", "presentation-sent"],
         wait_time=10.0,
     )
 

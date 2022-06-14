@@ -7,6 +7,7 @@ defaults:
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: ((success() || failure()) && ((github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness')))
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v2

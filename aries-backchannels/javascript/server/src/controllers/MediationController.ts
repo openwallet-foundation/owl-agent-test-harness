@@ -4,7 +4,6 @@ import {
   MediationRecord,
   MediationState,
   MediationRole,
-  MediationRepository,
   RoutingEventTypes,
   MediationStateChangedEvent,
 } from '@aries-framework/core'
@@ -58,11 +57,6 @@ export class MediationController extends BaseController {
     }
 
     const mediationRecord = await this.agent.mediationRecipient.requestMediation(connection)
-
-    // FIXME: temporary until https://github.com/hyperledger/aries-framework-javascript/pull/661 is merged
-    mediationRecord.role = MediationRole.Recipient
-    const mediationRepository = this.agent.injectionContainer.resolve(MediationRepository)
-    await mediationRepository.update(mediationRecord)
 
     return this.mapMediationRecord(mediationRecord)
   }

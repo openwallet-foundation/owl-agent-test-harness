@@ -9,7 +9,8 @@ using Hyperledger.Aries.Features.IssueCredential;
 using Hyperledger.Aries.Storage;
 using Hyperledger.Aries.Agents;
 using Hyperledger.Aries.Utils;
-using Hyperledger.Aries.Features.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.DidExchange;
+using Hyperledger.Aries.Features.Handshakes.Connection;
 using Hyperledger.Aries.Models.Events;
 using Hyperledger.Aries.Contracts;
 

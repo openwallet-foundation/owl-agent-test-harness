@@ -1,13 +1,16 @@
-name: test-harness-verity-afj
-# RUNSET_NAME: "Verity to Javascript"
+name: test-harness-verity-dotnet
+# RUNSET_NAME: "Verity to DotNet"
 # Scope: Connections RFC0160
 # Exceptions: None
 # SKIP
 #
+# Currently skipped due to issues with the tests being
+#     canceled intermittently due to (seemingly)
+#     resource issues.
+#
 # Summary
 #
-# Initial implementation to get the tests running smoothly. Currently testing connection only.
-# This runset uses the current main branch of Javascript for all of the agents except Acme (Issuer),
+# This runset uses the current main branch of DotNet for all of the agents except Acme (Issuer),
 # which uses the dev branch of Evernym Verity. The runset covers all of the AIP 1.0 tests
 # under the connection protocol RFC0160.
 #
@@ -39,14 +42,14 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a javascript -a verity"
-          TEST_AGENTS: "-d javascript -a verity"
-          TEST_SCOPE: "-t @RFC0160 -t @AcceptanceTest -t ~@wip -t ~AIP20"
-          REPORT_PROJECT: javascript-a-verity
+          BUILD_AGENTS: "-a dotnet -a verity"
+          TEST_AGENTS: "-d dotnet -a verity"
+          TEST_SCOPE: "-t @RFC0160 -t @AcceptanceTest -t ~@wip -t ~@AIP20"
+          REPORT_PROJECT: dotnet-a-verity
       #   continue-on-error: true
       # - name: run-send-gen-test-results-secure
       #   uses: ./test-harness/actions/run-send-gen-test-results-secure
       #   with:
-      #     REPORT_PROJECT: javascript-a-verity
+      #     REPORT_PROJECT: dotnet-a-verity
       #     ADMIN_USER: ${{ secrets.AllureAdminUser }}
       #     ADMIN_PW: ${{ secrets.AllureAdminPW }}

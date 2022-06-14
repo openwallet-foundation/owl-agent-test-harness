@@ -43,6 +43,18 @@ runs:
       env:
         NO_TTY: "1"
       working-directory: test-harness
+    - name: Collect docker logs
+      if: ${{ always() }}
+      uses: jwalton/gh-docker-logs@v2.2.0
+      with:
+        dest: "./.logs/docker-logs"
+    - name: archive logs
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: container-logs
+        path: .logs
+        retention-days: 14
 branding:
   icon: "mic"
   color: "purple"
