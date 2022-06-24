@@ -1,2 +1,2 @@
 aries-cloudagent[indy, bbs, askar]@git+https://github.com/hyperledger/aries-cloudagent-python@main
-acapy-resolver-universal@git+https://github.com/sicpa-dlab/acapy-resolver-universal.git@260aab1fe5c1d709b927dfea8973ab2d859c8002
+acapy-resolver-universal@git+https://github.com/sicpa-dlab/acapy-resolver-universal.git@v0.1.0
