@@ -235,7 +235,7 @@ for file in ${workflows}; do
     if [ "${TOTAL_CASES[$count]}" -eq "0" ]; then
         PERCENT[$count]=0
     else
-        PERCENT[$count]=$((PASSED[$count]*100/TOTAL_CASES[$count]))
+        PERCENT[$count]=$((${PASSED[$count]}*100/${TOTAL_CASES[$count]}))
     fi
 
     # Figure out the date/time of the last test for the runset
@@ -250,14 +250,16 @@ for file in ${workflows}; do
         ALLURE_DATE[$count]=$( date -d@${epoch_seconds} )
     fi
 
-    # echo File: $file
+    echo File: $file
     # echo ALLURE_PROJECT: ${ALLURE_PROJECT[$count]}
     # echo ALLURE_LINK: ${ALLURE_LINK[$count]}
     # echo ALLURE_BEHAVIORS_LINK: ${ALLURE_BEHAVIORS_LINK[$count]}
     # echo ALLURE_SUMMARY: ${ALLURE_SUMMARY[$count]}
     # echo ALLURE_DATE: ${ALLURE_DATE[$count]}
     # echo ALLURE_ENVIRONMENT: ${ALLURE_ENVIRONMENT[$count]}
-    # echo TOTAL_CASES: ${TOTAL_CASES[$count]}
+    echo -n PASSED: ${PASSED[$count]} / 
+    echo -n TOTAL_CASES: ${TOTAL_CASES[$count]} = 
+    echo PERCENT: ${PERCENT[$count]}
 
     # echo ACME: ${ACME_VERSION[$count]}
     # echo BOB: ${BOB_VERSION[$count]}
