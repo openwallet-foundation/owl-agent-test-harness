@@ -5,7 +5,7 @@
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
 | [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>0.7.4 | aries-vcx<br>1.0.0 | acapy-main<br>0.7.4 | acapy-main<br>0.7.4 | AIP 1.0 | [**31 / 43<br>72%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>0.7.4 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**20 / 20<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>0.7.4 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**16 / 20<br>80%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [ariesvcx-ariesvcx](#runset-ariesvcx-ariesvcx) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**19 / 20<br>95%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
@@ -18,7 +18,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 31 out of 43 (72%)**
 
 
-*Last run: Fri Jul  1 03:04:01 UTC 2022*
+*Last run: Wed Jul 20 03:00:23 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -37,10 +37,10 @@ No test status note is available for this runset. Please update: .github/workflo
 Runset Name: aries-vcx to acapy
 
 ```tip
-**Latest results: 20 out of 20 (100%)**
+**Latest results: 16 out of 20 (80%)**
 
 
-*Last run: Sat Jul  2 03:49:25 UTC 2022*
+*Last run: Wed Jul 20 04:03:05 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -62,7 +62,7 @@ Runset Name: aries-vcx to aries-vcx
 **Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Sat Jul  2 03:42:51 UTC 2022*
+*Last run: Wed Jul 20 04:01:41 UTC 2022*
 ```
 
 #### Current Runset Status
