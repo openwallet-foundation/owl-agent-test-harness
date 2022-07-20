@@ -123,8 +123,9 @@ usage () {
 
   scenarios - synonym for tests, but longer and harder to spell
 
-  service [start|stop|logs|clean] service-name
+  service [build|start|stop|logs|clean] service-name
     Run the given service command on the given service. Commands:
+      - build: build the service (only needed for von-network).
       - start: start the service, creating the AATH docker network if necessary.
       - stop: stop the service, deleting the AATH docker network if it's now unused.
       - logs: print the scrolling logs of the service. Ctrl-C to exit.
