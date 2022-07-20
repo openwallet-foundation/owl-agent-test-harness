@@ -47,3 +47,7 @@ env/
 
 #JetBrains
 .idea
+
+# Eclipse
+.project
+.pydevproject

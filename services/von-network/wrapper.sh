@@ -37,6 +37,9 @@ case "${COMMAND}" in
 		checkStop
 		rm -rf .build
 		;;
+	build)
+		runVonCommand build
+		;;
 	start)
 		runVonCommand up
 		;;
