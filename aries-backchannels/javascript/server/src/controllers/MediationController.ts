@@ -10,6 +10,7 @@ import {
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { BaseController } from '../BaseController'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
+import { ConnectionUtils } from '../utils/ConnectionUtils'
 
 @Controller('/agent/command/mediation')
 export class MediationController extends BaseController {
@@ -39,7 +40,8 @@ export class MediationController extends BaseController {
 
   @Get('/:connectionId')
   async getMediationRecordByConnectionId(@PathParams('connectionId') connectionId: string) {
-    const mediationRecord = await this.agent.mediationRecipient.findByConnectionId(connectionId)
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, connectionId)
+    const mediationRecord = await this.agent.mediationRecipient.findByConnectionId(connection.id)
 
     if (!mediationRecord) {
       throw new NotFound(`mediation record for connectionId "${connectionId}" not found.`)
@@ -50,11 +52,7 @@ export class MediationController extends BaseController {
 
   @Post('/send-request')
   async sendMediationRequest(@BodyParams('id') connectionId: string) {
-    const connection = await this.agent.connections.findById(connectionId)
-
-    if (!connection) {
-      throw new NotFound(`connection record with id "${connectionId}" not found.`)
-    }
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, connectionId)
 
     const mediationRecord = await this.agent.mediationRecipient.requestMediation(connection)
 
@@ -63,9 +61,10 @@ export class MediationController extends BaseController {
 
   @Post('/send-grant')
   async sendMediationGrant(@BodyParams('id') connectionId: string) {
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, connectionId)
     let {
       payload: { mediationRecord },
-    } = await this.waitForState(connectionId, MediationState.Granted)
+    } = await this.waitForState(connection.id, MediationState.Granted)
 
     // Auto accept is enabled, so we're not granting the mediation explicitly
     return this.mapMediationRecord(mediationRecord)

@@ -100,7 +100,10 @@ export class PresentProofController extends BaseController {
       }
     }
   ) {
-    const proofRequest = JsonTransformer.fromJSON(data.presentation_request.proof_request.data, ProofRequest)
+    // Do not validate, we only need a few properties from the proof request
+    const proofRequest = JsonTransformer.fromJSON(data.presentation_request.proof_request.data, ProofRequest, {
+      validate: false,
+    })
 
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
 

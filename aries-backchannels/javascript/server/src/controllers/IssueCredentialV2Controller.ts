@@ -7,6 +7,7 @@ import {
   CredentialStateChangedEvent,
   JsonTransformer,
   V1CredentialPreview,
+  V2CredentialPreview,
 } from '@aries-framework/core'
 import { CredentialUtils } from '../utils/CredentialUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
@@ -68,7 +69,9 @@ export class IssueCredentialV2Controller extends BaseController {
       credential_preview: any
     }
   ) {
-    const preview = JsonTransformer.fromJSON(data.credential_preview, V1CredentialPreview)
+    // Disable validation. the @type sent by AATH is 'issue-credential/2.0/credential-preview'
+    // which is not a valid message type.
+    const preview = JsonTransformer.fromJSON(data.credential_preview, V2CredentialPreview, { validate: false })
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
     const credentialRecord = await this.agent.credentials.proposeCredential({
       connectionId: connection.id,
@@ -123,7 +126,9 @@ export class IssueCredentialV2Controller extends BaseController {
       })
       return this.mapCredential(credentialRecord)
     } else if (data) {
-      const preview = JsonTransformer.fromJSON(data.credential_preview, V1CredentialPreview)
+      // Disable validation. the @type sent by AATH is 'issue-credential/2.0/credential-preview'
+      // which is not a valid message type.
+      const preview = JsonTransformer.fromJSON(data.credential_preview, V2CredentialPreview, { validate: false })
       const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
 
       if (!data.filter.indy.cred_def_id) {
