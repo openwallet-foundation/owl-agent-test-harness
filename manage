@@ -6,7 +6,7 @@ export VALID_AGENTS=$(ls aries-backchannels/*/Dockerfile.* | sed "s/^.*file.//" 
 
 export MSYS_NO_PATHCONV=1
 # getDockerHost; for details refer to https://github.com/bcgov/DITP-DevOps/tree/main/code/snippets#getdockerhost
-. /dev/stdin <<<"$(cat <(curl -s --raw https://raw.githubusercontent.com/bcgov/DITP-DevOps/main/code/snippets/getDockerHost))" 
+. /dev/stdin <<<"$(cat <(curl -s --raw https://raw.githubusercontent.com/bcgov/DITP-DevOps/main/code/snippets/getDockerHost))"
 export DOCKERHOST=$(getDockerHost)
 
 SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
@@ -749,9 +749,9 @@ startHarness(){
     export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
     startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
   fi
-  
+
   echo
-  # Check if agents were successfully started. 
+  # Check if agents were successfully started.
   if [[ "$ACME" != "none" ]]; then
     waitForAgent Acme 9020
   fi
@@ -770,7 +770,7 @@ startHarness(){
 
   echo
   # Allure Reports environment.properties file handling
-  # Only do this if reporting parameter is passed. 
+  # Only do this if reporting parameter is passed.
   if [[ "${REPORT}" = "allure" ]]; then
     writeEnvProperties
   fi
@@ -843,6 +843,12 @@ stopIfExists(){
 }
 
 stopHarness(){
+
+  stop_option="all"
+  if [[ -n $1 ]]; then
+    stop_option=$1
+  fi
+
   echo "Cleanup:"
   echo "  - Shutting down all the agents ..."
   docker stop acme_agent bob_agent faber_agent mallory_agent > /dev/null
@@ -864,7 +870,8 @@ stopHarness(){
     fi
   fi
 
-  stopServices auto
+  printf "StopServices: ${stop_option}\n"
+  stopServices ${stop_option}
 
   cleanupNetwork
 
@@ -1068,7 +1075,7 @@ case "${COMMAND}" in
       echo ""
       runTests ${TAGS} ${@}
       echo ""
-      stopHarness
+      stopHarness auto
     ;;
   start)
       startHarness
