@@ -1,7 +1,7 @@
-@DIDComm-V2 @OobV2 @UsesCustomParameters
+@OobV2 @DIDComm-V2 @UsesCustomParameters
 Feature: DIDComm V2 Establishing Connections
 
-   @T001-OobV2
+   @T001-OobV2 @OobV2 @DIDComm-V2 
    Scenario: Establish a connection between two agents using DIDComm V2
       Given we have "2" agents
          | name | role     |

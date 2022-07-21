@@ -1,7 +1,7 @@
 @RFC0044 @AIP20 @UsesCustomParameters
 Feature: RFC0044 didcomm mime types
 
-   @T001-RFC0044
+   @T001-RFC0044 @RFC0044 @AIP20
    Scenario Outline: Perform DID Exchange between two agents that have the same default envelope media profile
       Given we have "2" agents
          | name | role      |
@@ -23,7 +23,7 @@ Feature: RFC0044 didcomm mime types
          | "didcomm/aip2;env=rfc19"  |
          | "didcomm/aip2;env=rfc587" |
 
-   @T002-RFC0044
+   @T002-RFC0044 @RFC0044 @AIP20
    Scenario Outline: Perform DID Exchange between two permissive agents that have different default envelope media profiles
       Given we have "2" agents
          | name | role      |
@@ -45,7 +45,7 @@ Feature: RFC0044 didcomm mime types
          | "didcomm/aip2;env=rfc19"  | "didcomm/aip2;env=rfc587" |
          | "didcomm/aip2;env=rfc587" | "didcomm/aip2;env=rfc19"  |
 
-   @T003-RFC0044 @ExceptionTest
+   @T003-RFC0044 @RFC0044 @AIP20 @ExceptionTest
    Scenario Outline: Fail DID Exchange between two agents with mismatching media profiles
       Given we have "2" agents
          | name | role      |
@@ -61,7 +61,7 @@ Feature: RFC0044 didcomm mime types
          | "didcomm/aip2;env=rfc19"  | "didcomm/aip2;env=rfc587" |
          | "didcomm/aip2;env=rfc587" | "didcomm/aip2;env=rfc19"  |
 
-   @T004-RFC0044
+   @T004-RFC0044 @RFC0044 @AIP20
    Scenario Outline: Perform DID Exchange with OOB media type handshake, with one accept parameter
       Given we have "2" agents
          | name | role      |
@@ -83,7 +83,7 @@ Feature: RFC0044 didcomm mime types
          | "didcomm/aip2;env=rfc19"  | "didcomm/aip2;env=rfc587" |
          | "didcomm/aip2;env=rfc587" | "didcomm/aip2;env=rfc19"  |
 
-   @T005-RFC0044
+   @T005-RFC0044 @RFC0044 @AIP20
    Scenario Outline: Perform DID Exchange with OOB media type handshake, with two accept parameters
       Given we have "2" agents
          | name | role      |
@@ -105,7 +105,7 @@ Feature: RFC0044 didcomm mime types
          | "didcomm/aip2;env=rfc19"  | "didcomm/aip2;env=rfc587" |
          | "didcomm/aip2;env=rfc587" | "didcomm/aip2;env=rfc19"  |
 
-   @T006-RFC0044 @ExceptionTest
+   @T006-RFC0044 @RFC0044 @AIP20 @ExceptionTest
    Scenario Outline: Fail DID Exchange between two agents with explicit oob accept parameter, with no matching profiles
       Given we have "2" agents
          | name | role      |

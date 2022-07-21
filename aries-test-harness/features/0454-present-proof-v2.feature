@@ -1,7 +1,7 @@
 @RFC0454 @AIP20
 Feature: RFC 0454 Aries agent present proof v2
 
-   @T001-RFC0454 @critical @AcceptanceTest @DIDExchangeConnection
+   @T001-RFC0454 @RFC0454 @AIP20 @critical @AcceptanceTest @DIDExchangeConnection
    Scenario Outline: Present Proof of specific types and proof is acknowledged with a Drivers License credential type with a DID Exchange Connection
       Given "2" agents
          | name  | role     |
@@ -46,7 +46,7 @@ Feature: RFC 0454 Aries agent present proof v2
          | Acme   | Data_DL_MaxValues | proof_request_DL_address_v2_dif_pe | presentation_DL_address_v2_dif_pe |
 
 
-   @T002-RFC0454 @RFC0510 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_Citizenship_Context @CredProposalStart
+   @T002-RFC0454 @RFC0454 @AIP20 @RFC0510 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_Citizenship_Context @CredProposalStart
    Scenario Outline: Present Proof of specific types and proof is acknowledged with a Citizenship credential type with a DID Exchange Connection
       Given "2" agents
          | name  | role     |

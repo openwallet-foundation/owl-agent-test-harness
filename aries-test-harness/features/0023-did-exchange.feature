@@ -5,7 +5,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
    I want to use DID Exchange(RFC0023) and Out of Band(RFC0434) protocols to accomplish this.
 
 
-   @T001-RFC0023 @critical @AcceptanceTest
+   @T001-RFC0023 @RFC0023 @AIP20 @critical @AcceptanceTest
    Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation
       Given we have "2" agents
          | name | role      |
@@ -23,7 +23,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
    #@T002-RFC0023 @critical @AcceptanceTest @Deprecated
    #Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with role reversal
 
-   @T003-RFC0023 @normal @AcceptanceTest
+   @T003-RFC0023 @RFC0023 @AIP20 @normal @AcceptanceTest
    Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with a public DID
       Given we have "2" agents
          | name | role      |
@@ -41,7 +41,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
    #@T004-RFC0023 @normal @AcceptanceTest @Deprecated
    #Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation with a public DID with role reversal
 
-   @T005-RFC0023 @critical @AcceptanceTest
+   @T005-RFC0023 @RFC0023 @AIP20 @critical @AcceptanceTest
    Scenario: Establish a connection with DID Exchange between two agents with an implicit invitation
       Given we have "2" agents
          | name | role      |
@@ -61,7 +61,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
 
    # This test will give an expected failure when running with Aca-py with the --auto-accept-requests & --auto-respond-messages options.
    # Do not run this test with those flags on. It may also fail for other agents that do auto_responding depending on how the backchannel is implmented.
-   @T007-RFC0023 @normal @AcceptanceTest @NegativeTest @ExceptionTest
+   @T007-RFC0023 @RFC0023 @AIP20 @normal @AcceptanceTest @NegativeTest @ExceptionTest
    Scenario: Establish a connection with DID Exchange between two agents with attempt to continue after protocol is completed
       Given we have "2" agents
          | name | role      |
@@ -77,7 +77,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Bob" sends a response to "Acme" which produces a problem_report
       Then "Acme" and "Bob" still have a completed connection
 
-   @T008-RFC0023 @normal @AcceptanceTest @ExceptionTest @wip
+   @T008-RFC0023 @RFC0023 @AIP20 @normal @AcceptanceTest @ExceptionTest @wip
    Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation but invitation is rejected and connection process restarted
       Given we have "2" agents
          | name | role      |
@@ -89,7 +89,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Acme" restarts the connection process
       Then a successful connection can be established between "Acme" and "Bob"
 
-   @T009-RFC0023 @normal @AcceptanceTest @ExceptionTest @wip
+   @T009-RFC0023 @RFC0023 @AIP20 @normal @AcceptanceTest @ExceptionTest @wip
    Scenario: Establish a connection with DID Exchange between two agents with an explicit invitation but invitation is rejected and connection process abandoned
       Given we have "2" agents
          | name | role      |
@@ -101,7 +101,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
       And "Acme" abandons the connection process
       Then a connection can be established between "Acme" and "Bob" given that invitation
 
-   @T010-RFC0023 @normal @AcceptanceTest @ExceptionTest @NegativeTest @wip
+   @T010-RFC0023 @RFC0023 @AIP20 @normal @AcceptanceTest @ExceptionTest @NegativeTest @wip
    Scenario Outline: Establish a connection with DID Exchange and responder rejects the request
       Given we have "2" agents
          | name | role      |
@@ -126,7 +126,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
          | Missing reference to invitation         |
          | unknown processing error                |
 
-   @T011-RFC0023 @normal @AcceptanceTest @ExceptionTest @NegativeTest @wip
+   @T011-RFC0023 @RFC0023 @AIP20 @normal @AcceptanceTest @ExceptionTest @NegativeTest @wip
    Scenario Outline: Establish a connection with DID Exchange and requester rejects the response
       Given we have "2" agents
          | name | role      |
@@ -153,7 +153,7 @@ Feature: RFC 0023 Establishing Connections with DID Exchange
          | Invalid signature                       |
          | unknown processing error                |
 
-   @T012-RFC0023 @normal @DerivedFunctionalTest @wip
+   @T012-RFC0023 @RFC0023 @AIP20 @normal @DerivedFunctionalTest @wip
    Scenario: Attempt to Establish a connection with DID Exchange between two agents with an explicit invitation with connection reuse
       Given we have "2" agents
          | name | role      |

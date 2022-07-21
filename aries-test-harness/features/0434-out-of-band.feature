@@ -5,7 +5,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
    I want to use Out of Band(RFC0434) protocols to accomplish this.
 
 
-   @T001-RFC0434 @RFC0036 @critical @AcceptanceTest
+   @T001-RFC0434 @RFC0434 @AIP20 @RFC0036 @critical @AcceptanceTest
    Scenario: Issue a v1 indy credential using connectionless out of band invitation
       Given we have "2" agents
          | name | role   |
@@ -21,7 +21,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
       Then "Bob" has the credential issued
 
 
-   @T002-RFC0434 @RFC0453 @critical @AcceptanceTest @Schema_DriversLicense_v2
+   @T002-RFC0434 @RFC0434 @AIP20 @RFC0453 @critical @AcceptanceTest @Schema_DriversLicense_v2
    Scenario Outline: Issue a v2 credential using connectionless out of band invitation
       Given we have "2" agents
          | name | role   |
@@ -46,7 +46,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
          | credential_data   |
          | Data_DL_MaxValues |
 
-   @T003-RFC0434 @RFC0037 @critical @AcceptanceTest
+   @T003-RFC0434 @RFC0434 @AIP20 @RFC0037 @critical @AcceptanceTest
    Scenario: Present a v1 indy proof using connectionless out of band invitation
       Given we have "2" agents
          | name  | role     |
@@ -60,7 +60,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
       And "Faber" acknowledges the proof
       Then "Bob" has the proof verified
 
-   @T004-RFC0434 @RFC0454 @critical @AcceptanceTest @Schema_DriversLicense_v2 @CredProposalStart
+   @T004-RFC0434 @RFC0434 @AIP20 @RFC0454 @critical @AcceptanceTest @Schema_DriversLicense_v2 @CredProposalStart
    Scenario Outline: Present a v2 proof using connectionless out of band invitation
       Given we have "2" agents
          | name  | role     |

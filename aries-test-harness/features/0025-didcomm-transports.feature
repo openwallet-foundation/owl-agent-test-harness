@@ -1,10 +1,10 @@
-@RFC0025 @UsesCustomParameters @AIP10 @AIP20
+@RFC0025 @AIP10 @AIP20 @UsesCustomParameters
 Feature: RFC 0025 DIDComm Transports
   In order to communicate with other agents,
   As an Agent
   I want to create connections using different transport protocols.
 
-  @T001-RFC0025 @AcceptanceTest @DIDExchangeConnection
+  @T001-RFC0025 @RFC0025 @AIP10 @AIP20 @AcceptanceTest @DIDExchangeConnection
   Scenario Outline: Create DIDExchange connection between two agents with overlapping transports
     Given we have "2" agents
       | name | role      |
@@ -46,7 +46,7 @@ Feature: RFC 0025 DIDComm Transports
       | ["http"]                | ["ws", "http"]           | ["ws"]                 | ["ws", "http"]          |
       | ["ws"]                  | ["ws", "http"]           | ["http"]               | ["ws", "http"]          |
 
-  @T002-RFC0025 @AcceptanceTest @RFC0160
+  @T002-RFC0025 @RFC0025 @AIP10 @AIP20 @AcceptanceTest @RFC0160
   Scenario Outline: Create 0160 connection between two agents with overlapping transports
     Given we have "2" agents
       | name | role    |
@@ -88,7 +88,7 @@ Feature: RFC 0025 DIDComm Transports
       | ["http"]                | ["ws", "http"]           | ["ws"]                 | ["ws", "http"]          |
       | ["ws"]                  | ["ws", "http"]           | ["http"]               | ["ws", "http"]          |
 
-  @T003-RFC0025 @ExceptionTest @minor @DIDExchangeConnection
+  @T003-RFC0025 @RFC0025 @AIP10 @AIP20 @ExceptionTest @minor @DIDExchangeConnection
   Scenario Outline: Fail creating a connection between two agents that have mismatching transports configured
     Given we have "2" agents
       | name | role      |

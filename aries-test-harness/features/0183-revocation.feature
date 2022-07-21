@@ -1,11 +1,11 @@
-@revocation @AIP20
+@RFC0183 @AIP20 @revocation
 Feature: RFC 0183 Aries agent credential revocation and revocation notification
 
    Background: create a schema and credential definition in order to issue a credential
       Given "Acme" has a public did
       And "Acme" is ready to issue a credential
 
-   @T001-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
+   @T001-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
    Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked
       Given "2" agents
          | name  | role     |
@@ -23,7 +23,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T001.1-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @DIDExchangeConnection @RFC0441
+   @T001.1-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @DIDExchangeConnection @RFC0441
    Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked with a DID Exchange connection
       Given "2" agents
          | name  | role     |
@@ -41,7 +41,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T001.2-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @MobileTest @RFC0441
+   @T001.2-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @MobileTest @RFC0441
    Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked
       Given "2" agents
          | name  | role     |
@@ -59,7 +59,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T002-HIPE0011 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
+   @T002-HIPE0011 @RFC0183 @AIP20 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
    Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential with timesstamp
       Given "2" agents
          | name  | role     |
@@ -78,7 +78,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | new_credential_data | timeframe | request_for_proof              | presentation                       |
          | Acme   | Data_DL_MinValues | Data_DL_MaxValues   | now:now   | proof_request_DL_revoc_address | presentation_DL_revoc_address_w_ts |
 
-   @T002.1-HIPE0011 @normal @wip @NegativeTest @AcceptanceTest @Schema_Health_Consent_Revoc @Indy
+   @T002.1-HIPE0011 @RFC0183 @AIP20 @normal @wip @NegativeTest @AcceptanceTest @Schema_Health_Consent_Revoc @Indy
    Scenario Outline: Credential revoked and replaced with a new updated credential, holder proves claims with the updated credential with no timestamp
       Given "2" agents
          | name  | role     |
@@ -97,7 +97,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data      | new_credential_data          | request_for_proof                         | presentation                             |
          | Acme   | Data_BI_HealthValues | Data_BI_HealthValues_Reissue | proof_request_health_consent_revoc_expiry | presentation_health_consent_revoc_expiry |
 
-   @T003-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
+   @T003-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
    Scenario Outline: Proof in process while Issuer revokes credential before presentation and the verifier doesn't care about revocation status
       Given "2" agents
          | name  | role     |
@@ -115,7 +115,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T004-HIPE0011 @normal @wip @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy @delete_cred_from_wallet
+   @T004-HIPE0011 @RFC0183 @AIP20 @normal @wip @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy @delete_cred_from_wallet
    Scenario Outline: Credential revoked and replaced with a new updated credential, get possible credentials from agent wallet
       Given "2" agents
          | name  | role     |
@@ -134,7 +134,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | new_credential_data | timeframe | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MinValues | Data_DL_MaxValues   | now:now   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T005-HIPE0011 @normal @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy
+   @T005-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential is revoked inside the non-revocation interval
       Given "2" agents
          | name  | role     |
@@ -154,7 +154,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MinValues | -604800:now     | proof_request_DL_revoc_address | presentation_DL_revoc_address |
          | Acme   | Data_DL_MinValues | -604800:+604800 | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T006-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
+   @T006-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
    Scenario Outline: Credential is revoked before the non-revocation instant
       Given "2" agents
          | name  | role     |
@@ -175,7 +175,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MinValues | +604800:+604800 | proof_request_DL_revoc_address | presentation_DL_revoc_address |
          | Acme   | Data_DL_MinValues | -1:-1           | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T006.1-HIPE0011 @normal @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy
+   @T006.1-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @ExceptionTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential is revoked before the non-revocation interval
       Given "2" agents
          | name  | role     |
@@ -194,7 +194,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MaxValues | 0:+86400   | proof_request_DL_revoc_address | presentation_DL_revoc_address |
          | Acme   | Data_DL_MinValues | -1:+604800 | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T006.2-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @MobileTest @RFC0441
+   @T006.2-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @MobileTest @RFC0441
    Scenario Outline: Credential is revoked before the non-revocation instant
       Given "2" agents
          | name  | role     |
@@ -216,7 +216,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MinValues | -1:-1           | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T007-HIPE0011 @normal @wip @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
+   @T007-HIPE0011 @RFC0183 @AIP20 @normal @wip @AcceptanceTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential is revoked after the non-revocation instant
       Given "2" agents
          | name  | role     |
@@ -236,7 +236,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MaxValues | -604800:-604800 | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T008-HIPE0011 @normal @wip @DerivedTest @Schema_DriversLicense_Revoc @Indy
+   @T008-HIPE0011 @RFC0183 @AIP20 @normal @wip @DerivedTest @Schema_DriversLicense_Revoc @Indy
    Scenario Outline: Credential is revoked during a timeframe with an open ended FROM or TO date
       Given "2" agents
          | name  | role     |
@@ -256,7 +256,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MinValues | now:      | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
 
-   @T009-HIPE0011 @wip @DerivedTest @NegativeTest @Schema_DriversLicense_Revoc @NeedsReview
+   @T009-HIPE0011 @RFC0183 @AIP20 @wip @DerivedTest @NegativeTest @Schema_DriversLicense_Revoc @NeedsReview
    Scenario Outline: Revoke attempt be done by the holder or a verifier
       Given "3" agents
          | name  | role     |
@@ -275,7 +275,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MaxValues | verifier | proof_request_DL_address | presentation_DL_address |
 
 
-   @T010-HIPE0011 @wip @DerivedTest @NegativeTest @Schema_DriversLicense @NeedsReview
+   @T010-HIPE0011 @RFC0183 @AIP20 @wip @DerivedTest @NegativeTest @Schema_DriversLicense @NeedsReview
    Scenario Outline: Attempt to revoke an unrevokable credential.
       Given "3" agents
          | name  | role     |
@@ -293,7 +293,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MinValues | proof_request_DL_address | presentation_DL_address |
 
 
-   @T011-HIPE0011 @wip @AcceptanceTest @Schema_DriversLicense_Revoc @NeedsReview
+   @T011-HIPE0011 @RFC0183 @AIP20 @wip @AcceptanceTest @Schema_DriversLicense_Revoc @NeedsReview
    Scenario Outline: Issuer revokes multiple credentials in the same transaction
       Given "3" agents
          | name  | role     |
@@ -312,7 +312,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof        | presentation            |
          | Acme   | Data_DL_MaxValues | proof_request_DL_address | presentation_DL_address |
 
-   @T012-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @RFC0441
+   @T012-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @RFC0441
    Scenario Outline: Revocable Credential not revoked and Holder attempts to prove without a non-revocation interval
       Given "2" agents
          | name  | role     |
@@ -329,7 +329,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T013-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense @Indy @RFC0441
+   @T013-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense @Indy @RFC0441
    Scenario Outline: Non-revocable Credential, not revoked, and holder proves claims with the credential with timesstamp
       Given "2" agents
          | name  | role     |
@@ -346,7 +346,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | timeframe | request_for_proof        | presentation                 |
          | Acme   | Data_DL_MinValues | now:now   | proof_request_DL_address | presentation_DL_address_w_ts |
 
-   @T014-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
+   @T014-HIPE0011 @RFC0183 @AIP20 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @Indy @RFC0441
    Scenario Outline: Revocable Credential, not revoked, and holder proves claims with the credential with timesstamp
       Given "2" agents
          | name  | role     |
@@ -364,7 +364,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Acme   | Data_DL_MinValues | now:now   | proof_request_DL_revoc_address | presentation_DL_revoc_address_w_ts |
 
 
-   @T001-RFC0183 @RFC0183 @HIPE0011 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @RFC0441
+   @T001-RFC0183 @RFC0183 @AIP20 @HIPE0011 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @RFC0441
    Scenario Outline: Issuer revokes a credential and sends a v1 revocation notification
       Given "2" agents
          | name  | role     |

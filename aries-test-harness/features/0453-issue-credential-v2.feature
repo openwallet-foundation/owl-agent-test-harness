@@ -1,7 +1,7 @@
 @RFC0453 @AIP20
 Feature: RFC 0453 Aries Agent Issue Credential v2
 
-  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @CredFormat_Indy @Schema_DriversLicense_v2
+  @T001-RFC0453 @RFC0453 @AIP20 @RFC0592 @critical @AcceptanceTest @CredFormat_Indy @Schema_DriversLicense_v2
   Scenario Outline: Issue a Indy credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
@@ -27,7 +27,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
+  @T001.1-RFC0453 @RFC0453 @AIP20 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
   Scenario Outline: Issue a JSON-LD credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
@@ -67,7 +67,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   |
       | Data_DL_MaxValues |
 
-  @T002-RFC0453 @normal @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
+  @T002-RFC0453 @RFC0453 @AIP20 @normal @wip @AcceptanceTest @DIDExchangeConnection @CredFormat_Indy @Schema_DriversLicense_v2
   Scenario Outline: Issue a credential with the Holder beginning with a proposal with negotiation
     Given "2" agents
       | name | role   |
@@ -89,7 +89,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_data   | updated_credential_data  |
       | Data_DL_MaxValues | Data_DL_NormalizedValues |
 
-  # @T003-RFC0453 @critical @wip @AcceptanceTest
+  # @T003-RFC0453 @RFC0453 @AIP20 @critical @wip @AcceptanceTest
   # Scenario: Issue a credential with the Issuer beginning with an offer
   #   Given "2" agents
   #     | name | role   |
@@ -102,7 +102,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
   #   And "Bob" acknowledges the credential issue
   #   Then "Bob" has the credential issued
 
-  # @T004-RFC0453 @normal @wip @AcceptanceTest
+  # @T004-RFC0453 @RFC0453 @AIP20 @normal @wip @AcceptanceTest
   # Scenario: Issue a credential with the Issuer beginning with an offer with negotiation
   #   Given "2" agents
   #     | name | role   |
@@ -117,7 +117,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
   #   And "Bob" acknowledges the credential issue
   #   Then "Bob" has the credential issued
 
-  # @T005-RFC0453 @minor @wip @AcceptanceTest
+  # @T005-RFC0453 @RFC0453 @AIP20 @minor @wip @AcceptanceTest
   # Scenario: Issue a credential with negotiation beginning from a credential request
   #   Given "2" agents
   #     | name | role   |
@@ -132,7 +132,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
   #   And "Bob" acknowledges the credential issue
   #   Then "Bob" has the credential issued
 
-  # @T006-RFC0453 @critical @wip @AcceptanceTest
+  # @T006-RFC0453 @RFC0453 @AIP20 @critical @wip @AcceptanceTest
   # Scenario: Issue a credential with the Holder beginning with a request and is accepted
   #   Given "2" agents
   #     | name | role   |

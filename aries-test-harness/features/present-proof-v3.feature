@@ -1,7 +1,7 @@
 @PresentProofV3 @DIDComm-V2 @UsesCustomParameters
 Feature: Aries agent present proof v3
 
-   @T001-PresentProofV3 @RFC0510 @WACI @CredFormat_JSON-LD @Schema_Citizenship_Context @CredProposalStart
+   @T001-PresentProofV3 @PresentProofV3 @DIDComm-V2 @RFC0510 @WACI @CredFormat_JSON-LD @Schema_Citizenship_Context @CredProposalStart
    Scenario Outline: Present Proof of specific types and proof is acknowledged with a Citizenship credential type with a DID Exchange Connection
       Given "2" agents
          | name  | role     |

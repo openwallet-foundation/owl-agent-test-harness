@@ -4,7 +4,7 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
   As a recipient,
   I want to use the Coordinate Mediation (RFC0211) protocol to accomplish this.
 
-  @T001-RFC0211 @critical @AcceptanceTest
+  @T001-RFC0211 @RFC0211 @AIP20 @critical @AcceptanceTest
   Scenario Outline: Request mediation with the mediator accepting the mediation request
     Given we have "2" agents
       | name | role      |
@@ -25,7 +25,7 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
       | connection |
       | 0160       |
 
-  @T002-RFC0211 @critical @AcceptanceTest
+  @T002-RFC0211 @RFC0211 @AIP20 @critical @AcceptanceTest
   Scenario Outline: Request mediation with the mediator accepting the mediation request and creating a connection using the mediator
     Given we have "2" agents
       | name  | role      |
@@ -52,7 +52,7 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
   # For agents without an endpoint to request mediation, the mediation needs to be automatically granted using return routing
   # Otherwise the mediator agent has no endpoint to send the mediation grant message to. However this means we can't test for
   # mediation deny, as the grant is automatically send. For now testing agents without inbound endpoint is more important
-  @T003-RFC0211 @critical @AcceptanceTest @wip
+  @T003-RFC0211 @RFC0211 @AIP20 @critical @AcceptanceTest @wip
   Scenario Outline: Request mediation with the mediator denying the mediation request
     Given we have "2" agents
       | name | role      |
@@ -73,7 +73,7 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
       | connection |
       | 0160       |
 
-  @T004-RFC0211 @UsesCustomParameters @RFC0025 @Transport_Http @Transport_Ws @normal @AcceptanceTest
+  @T004-RFC0211 @RFC0211 @AIP20 @UsesCustomParameters @RFC0025 @Transport_Http @Transport_Ws @normal @AcceptanceTest
   Scenario Outline: Two agents creating a connection using a mediator without having inbound transports
     Given we have "2" agents
       | name  | role      |
@@ -111,7 +111,7 @@ Feature: RFC 0211 Aries Agent Mediator Coordination
       | []                      | ["ws", "http"]           | ["ws", "http"]         | ["ws", "http"]          | []                       | ["ws", "http"]            |
 
   # Not all agents support being started without inbound transports. So this tests uses mediation, but with inbound transports
-  @T005-RFC0211 @UsesCustomParameters @RFC0025 @Transport_Http @Transport_Ws @critical @AcceptanceTest
+  @T005-RFC0211 @RFC0211 @AIP20 @UsesCustomParameters @RFC0025 @Transport_Http @Transport_Ws @critical @AcceptanceTest
   Scenario Outline: Two agents creating a connection using a mediator with overlapping transports
     Given we have "2" agents
       | name  | role      |
