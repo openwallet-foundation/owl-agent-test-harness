@@ -118,13 +118,10 @@ usage () {
   tests - Get a list of the test scenarios in the features, including the associated tags
 
   dry-run [ -i <ini file> ] [ -o <output file> ] [ -t tags ]*
-    Uses the Behave "dry-run" feature to get a lists of the Features, Scenarios, Tags and test steps
+    Uses the Behave "dry-run" feature to get a lists of the Features, Scenarios and Tags
     that would be run based on the provided the command line arguments. Useful for seeing what tests
     a combination of "-t" (tag) arguments will cause to be run.
     Accepts all the same parameters as 'run', but ignores -a/b/f/m/d/n/r/e/v
-    The following are some useful grep filters for processing the output:
-    - For a list of features and scenarios: ./manage dry-run <args> | grep "Feature\|Scenario"
-    - For a list of features, scenarios and tags: ./manage dry-run <args> | grep "Feature\|Scenario\|\@" | sed "/n(u/d"
 
   test [-r allure [-e comparison]] [ -i <ini file> ] [ -o <output file> ] [ -n ] [ -v <AIP level> ] [ -t tags ]*
     Run the tagged tests using the set of agents that were started with the 'start' command, using all the same parameters as 'run',
@@ -814,6 +811,9 @@ runTests() {
   if [[ "${REPORT}" = "allure" && "${COMMAND}" != "dry-run" ]]; then
       echo "Executing tests with Allure Reports."
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+  elif [[ "${COMMAND}" = "dry-run" ]]; then
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
+        grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
   else
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
@@ -1090,7 +1090,7 @@ case "${COMMAND}" in
       startHarness
     ;;
   dry-run)
-      runTests ${TAGS} ${@} --dry-run --no-summary
+      runTests ${TAGS} ${@} --dry-run --no-summary --no-source
     ;;
   test)
       runTests ${TAGS} ${@}
