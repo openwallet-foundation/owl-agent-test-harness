@@ -117,6 +117,12 @@ usage () {
 
   tests - Get a list of the test scenarios in the features, including the associated tags
 
+  dry-run [ -i <ini file> ] [ -o <output file> ] [ -t tags ]*
+    Uses the Behave "dry-run" feature to get a lists of the Features, Scenarios and Tags
+    that would be run based on the provided the command line arguments. Useful for seeing what tests
+    a combination of "-t" (tag) arguments will cause to be run.
+    Accepts all the same parameters as 'run', but ignores -a/b/f/m/d/n/r/e/v
+
   test [-r allure [-e comparison]] [ -i <ini file> ] [ -o <output file> ] [ -n ] [ -v <AIP level> ] [ -t tags ]*
     Run the tagged tests using the set of agents that were started with the 'start' command, using all the same parameters as 'run',
     except -a/b/f/m/d/n.
@@ -802,9 +808,12 @@ runTests() {
   export BEHAVE_INI_TMP="$(pwd)/behave.ini.tmp"
   cp ${BEHAVE_INI} ${BEHAVE_INI_TMP}
 
-  if [[ "${REPORT}" = "allure" ]]; then
+  if [[ "${REPORT}" = "allure" && "${COMMAND}" != "dry-run" ]]; then
       echo "Executing tests with Allure Reports."
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+  elif [[ "${COMMAND}" = "dry-run" ]]; then
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
+        grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
   else
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
@@ -812,7 +821,7 @@ runTests() {
   rm ${BEHAVE_INI_TMP}
 
   # Export agent logs
-  if [[ "${GITHUB_ACTIONS}" != "true" ]]; then
+  if [[ "${GITHUB_ACTIONS}" != "true" && ${COMMAND} != "dry-run" ]]; then
     echo ""
     echo "Exporting Agent logs."
     mkdir -p .logs
@@ -965,7 +974,7 @@ COMMAND=$(toLower ${1})
 shift
 
 # Handle run args
-if [[ "${COMMAND}" == "run" || "${COMMAND}" == "start" || "${COMMAND}" == "test" ]]; then
+if [[ "${COMMAND}" == "run" || "${COMMAND}" == "start" || "${COMMAND}" == "test" || "${COMMAND}" == "dry-run" ]]; then
   ACME="none"
   BOB="none"
   FABER="none"
@@ -1079,6 +1088,9 @@ case "${COMMAND}" in
     ;;
   start)
       startHarness
+    ;;
+  dry-run)
+      runTests ${TAGS} ${@} --dry-run --no-summary --no-source
     ;;
   test)
       runTests ${TAGS} ${@}
