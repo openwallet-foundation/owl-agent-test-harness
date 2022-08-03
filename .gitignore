@@ -52,5 +52,4 @@ env/
 .classpath
 .project
 .settings
-.pydevproject
 target/

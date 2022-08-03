@@ -115,7 +115,16 @@ usage () {
 
   tags - Get a list of the tags on the features tests
 
-  tests - Get a list of the test scenarios in the features, including the associated tags
+  tests -t <tags> [ -md ]
+    Display selected test scenarios/features filtered by associated tags.
+    A list of relevant tags can be given as comma seperated list (with no spaces)
+    Optionaly, the output can be displayed as --markdown table
+
+    Examples:
+    $0 tests -h
+    $0 tests -t AIP10,AIP20
+    $0 tests -t critical -md
+
 
   dry-run [ -i <ini file> ] [ -o <output file> ] [ -t tags ]*
     Uses the Behave "dry-run" feature to get a lists of the Features, Scenarios and Tags
@@ -1113,7 +1122,8 @@ case "${COMMAND}" in
     ;;
 
   tests|scenarios)
-      grep -h -B 1 Scenario aries-test-harness/features/*feature
+      # grep -h -B 1 Scenario aries-test-harness/features/*feature
+      python aries-test-harness/util/scenarios.py "$@"
     ;;
 
   dockerhost)
