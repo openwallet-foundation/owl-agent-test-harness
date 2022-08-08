@@ -49,5 +49,8 @@ env/
 .idea
 
 # Eclipse
+.classpath
 .project
+.settings
 .pydevproject
+target/

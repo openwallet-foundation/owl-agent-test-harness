@@ -803,6 +803,11 @@ runTests() {
       echo "No tags specified; all tests will be run."
   fi
 
+  if [[ "${GITHUB_ACTIONS}" != "true" ]]; then
+    mkdir -p .logs
+    echo "" > .logs/request.log
+  fi
+
   echo
   # Behave.ini file handling
   export BEHAVE_INI_TMP="$(pwd)/behave.ini.tmp"
@@ -815,7 +820,7 @@ runTests() {
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
         grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
   else
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
   local docker_result=$?
   rm ${BEHAVE_INI_TMP}
@@ -824,7 +829,6 @@ runTests() {
   if [[ "${GITHUB_ACTIONS}" != "true" && ${COMMAND} != "dry-run" ]]; then
     echo ""
     echo "Exporting Agent logs."
-    mkdir -p .logs
     docker logs acme_agent > .logs/acme_agent.log
     docker logs bob_agent > .logs/bob_agent.log
     docker logs faber_agent > .logs/faber_agent.log
