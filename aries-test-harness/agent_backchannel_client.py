@@ -56,7 +56,7 @@ async def make_agent_backchannel_request(
 
 def request_log(method, agent_url, resp_status, resp_text, payload=''):
     if os.path.isdir('/aries-test-harness/logs'):
-        def sorted_payload(val):
+        def sorted_payload(val, level=0):
             valdict = None
             if isinstance(val, str) and len(val) > 1 and (val[0]+val[-1]) == '{}':
                 valdict = dict(json.loads(val))
@@ -64,7 +64,8 @@ def request_log(method, agent_url, resp_status, resp_text, payload=''):
                 valdict = val
             if valdict:
                 valdict = dict(sorted(valdict.items()))
-                val = str({k:sorted_payload(v) for (k,v) in valdict.items()})
+                valdict = {k:sorted_payload(v, level+1) for (k,v) in valdict.items()}
+                val = level and valdict or json.dumps(valdict)
             return val
         with open('/aries-test-harness/logs/request.log', 'a') as fout:
             print(f'Req: {method} {agent_url} {sorted_payload(payload)}', file=fout)
