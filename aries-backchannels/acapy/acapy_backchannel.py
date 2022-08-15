@@ -233,6 +233,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
             "--monitor-revocation-notification",
+            "--notify-revocation",
             "--open-mediation",
             "--enable-undelivered-queue",
         ]

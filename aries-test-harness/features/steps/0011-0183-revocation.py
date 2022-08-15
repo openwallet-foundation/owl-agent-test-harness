@@ -38,9 +38,10 @@ def step_impl(context, issuer: str):
         "publish_immediately": True,
     }
 
-    if context.step.name.endswith("with a revocation notification"):
-        connection_id = context.connection_id_dict[issuer][context.holder_name]
-        credential_revocation["notify_connection_id"] = connection_id
+    # always do this regardless
+    # if context.step.name.endswith("with a revocation notification"):
+    connection_id = context.connection_id_dict[issuer][context.holder_name]
+    credential_revocation["notify_connection_id"] = connection_id
 
     (resp_status, resp_text) = agent_backchannel_POST(
         issuer_url + "/agent/command/",
