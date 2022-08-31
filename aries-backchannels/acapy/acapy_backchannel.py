@@ -219,7 +219,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--label", self.label),
             # "--auto-ping-connection",
             # "--auto-accept-invites",
-            "--auto-accept-requests",
+            # "--auto-accept-requests",
             # "--auto-respond-messages",
             # "--auto-respond-credential-proposal",
             # "--auto-respond-credential-offer",
@@ -233,6 +233,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             ("--wallet-name", self.wallet_name),
             ("--wallet-key", self.wallet_key),
             "--monitor-revocation-notification",
+            "--notify-revocation",
             "--open-mediation",
             "--enable-undelivered-queue",
         ]
