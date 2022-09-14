@@ -18,7 +18,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 31 out of 43 (72%)**
 
 
-*Last run: Fri Sep  9 01:21:29 UTC 2022*
+*Last run: Wed Sep 14 01:35:32 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -40,7 +40,7 @@ Runset Name: aries-vcx to acapy
 **Latest results: 20 out of 20 (100%)**
 
 
-*Last run: Fri Sep  9 02:21:35 UTC 2022*
+*Last run: Wed Sep 14 02:32:07 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -62,7 +62,7 @@ Runset Name: aries-vcx to aries-vcx
 **Latest results: 20 out of 20 (100%)**
 
 
-*Last run: Fri Sep  9 02:28:42 UTC 2022*
+*Last run: Wed Sep 14 02:35:20 UTC 2022*
 ```
 
 #### Current Runset Status
