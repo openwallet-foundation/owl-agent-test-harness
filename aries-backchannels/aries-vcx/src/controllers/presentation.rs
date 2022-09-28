@@ -10,12 +10,14 @@ use aries_vcx::messages::proof_presentation::presentation_request::PresentationR
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::status::Status;
 use aries_vcx::messages::proof_presentation::presentation_proposal::{PresentationProposalData, Attribute, Predicate};
-use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
-use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
+use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+use aries_vcx::handlers::proof_presentation::prover::Prover;
+use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::handlers::connection::connection::Connection;
-use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, PredicateInfo, NonRevokedInterval};
-use aries_vcx::libindy::proofs::proof_request::ProofRequestDataBuilder;
-use aries_vcx::libindy::utils::anoncreds;
+use aries_vcx::indy::proofs::proof_request_internal::{AttrInfo, PredicateInfo, NonRevokedInterval};
+use aries_vcx::indy::proofs::proof_request::ProofRequestDataBuilder;
+use aries_vcx::indy::anoncreds;
 use crate::soft_assert_eq;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -120,10 +122,10 @@ impl Agent {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&presentation_request.connection_id)
             .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
-        for (uid, message) in connection.get_messages().await?.into_iter() {
+        for (uid, message) in connection.get_messages(&self.config.agency_client).await?.into_iter() {
             match message {
                 A2AMessage::PresentationProposal(_) => {
-                    connection.update_message_status(&uid).await.ok();
+                    connection.update_message_status(&uid, &self.config.agency_client).await.ok();
                 }
                 _ => {}
             }
@@ -134,10 +136,10 @@ impl Agent {
             .requested_attributes(req_data.requested_attributes.unwrap_or_default())
             .requested_predicates(req_data.requested_predicates.unwrap_or_default())
             .non_revoked(req_data.non_revoked)
-            .nonce(anoncreds::generate_nonce()?)
+            .nonce(anoncreds::generate_nonce().await?)
             .build()?;
         let mut verifier = Verifier::create_from_request(id.to_string(), &presentation_request)?;
-        verifier.send_presentation_request(connection.send_message_closure()?).await?;
+        verifier.send_presentation_request(connection.send_message_closure(self.config.wallet_handle).await?).await?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
         let thread_id = verifier.get_thread_id()?;
         self.dbs.verifier.set(&thread_id, &verifier)?;
@@ -154,7 +156,7 @@ impl Agent {
             proposal_data = proposal_data.add_attribute(attr.clone());
         };
         let mut prover = Prover::create(&id)?;
-        prover.send_proposal(proposal_data, connection.send_message_closure()?).await?;
+        prover.send_proposal(self.config.wallet_handle, self.config.pool_handle, proposal_data, connection.send_message_closure(self.config.wallet_handle).await?).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         let thread_id = prover.get_thread_id()?;
         self.dbs.prover.set(&thread_id, &prover)?;
@@ -166,13 +168,13 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Prover with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
-        prover.update_state(&connection).await?;
+        prover.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
-        let credentials = prover.retrieve_credentials()?;
+        let credentials = prover.retrieve_credentials(self.config.wallet_handle).await?;
         let secondary_required = _secondary_proof_required(&prover)?;
         let credentials = _select_credentials(&credentials, secondary_required)?;
-        prover.generate_presentation(credentials, "{}".to_string()).await?;
-        prover.send_presentation(connection.send_message_closure()?).await?;
+        prover.generate_presentation(self.config.wallet_handle, self.config.pool_handle, credentials, "{}".to_string()).await?;
+        prover.send_presentation(self.config.wallet_handle, self.config.pool_handle, connection.send_message_closure(self.config.wallet_handle).await?).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationSent);
         let thread_id = prover.get_thread_id()?;
         self.dbs.prover.set(&thread_id, &prover)?;
@@ -185,12 +187,12 @@ impl Agent {
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
-        verifier.update_state(&connection).await?;
+        verifier.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
         if !vec![VerifierState::Finished, VerifierState::Failed].contains(&verifier.get_state()) {
             return Err(HarnessError::from_msg(HarnessErrorType::ProtocolError, "Presentation not received"));
         }
         self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
-        verifier.send_ack(connection.send_message_closure()?).await?;
+        verifier.send_ack(self.config.wallet_handle, self.config.pool_handle, connection.send_message_closure(self.config.wallet_handle).await?).await?;
         let verified = match Status::from_u32(verifier.get_presentation_status()) {
             Status::Success => {
                 soft_assert_eq!(verifier.get_state(), VerifierState::Finished);
@@ -207,7 +209,7 @@ impl Agent {
             Some(mut prover) => {
                let connection: Connection = self.dbs.connection.get(id)
                    .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                prover.update_state(&connection).await?;
+                prover.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
                 self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;
                 let state = _get_state_prover(&prover);
                 Ok(json!({ "state": state }).to_string())
@@ -219,10 +221,10 @@ impl Agent {
                         let connection = self.dbs.connection.get::<Connection>(&cid)
                             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                         let mut _presentation_requests = Vec::<VcxPresentationRequest>::new();
-                        for (uid, message) in connection.get_messages_noauth().await?.into_iter() {
+                        for (uid, message) in connection.get_messages_noauth(&self.config.agency_client).await?.into_iter() {
                             match message {
                                 A2AMessage::PresentationRequest(presentation_request) => {
-                                    connection.update_message_status(&uid).await.ok();
+                                    connection.update_message_status(&uid, &self.config.agency_client).await.ok();
                                     self.dbs.connection.set(&id, &connection)?;
                                     _presentation_requests.push(presentation_request);
                                 }
@@ -244,7 +246,7 @@ impl Agent {
                Some(mut verifier) => {
                    let connection: Connection = self.dbs.connection.get(id)
                        .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                    verifier.update_state(&connection).await?;
+                    verifier.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
                     self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
                     let state = _get_state_verifier(&verifier);
                     Ok(json!({ "state": state }).to_string())

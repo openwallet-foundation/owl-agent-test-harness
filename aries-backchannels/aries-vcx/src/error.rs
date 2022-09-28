@@ -2,8 +2,8 @@ use actix_web::{
     HttpResponseBuilder, error, http::StatusCode, HttpResponse,
 };
 use derive_more::{Display, Error};
-use aries_vcx::handlers::issuance::credential_def::{RevocationDetailsBuilderError, CredentialDefConfigBuilderError};
-use aries_vcx::libindy::proofs::proof_request::ProofRequestDataBuilderError;
+use aries_vcx::indy::primitives::credential_definition::{RevocationDetailsBuilderError, CredentialDefConfigBuilderError};
+use aries_vcx::indy::proofs::proof_request::ProofRequestDataBuilderError;
 
 pub type HarnessResult<T> = Result<T, HarnessError>;
 

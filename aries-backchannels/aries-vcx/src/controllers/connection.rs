@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use actix_web::http::header::{CacheControl, CacheDirective};
+use aries_vcx::agency_client::agency_client::AgencyClient;
+use aries_vcx::indy::ledger::transactions::into_did_doc;
 use uuid;
 use crate::{Agent, State};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
@@ -9,8 +11,8 @@ use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
 use aries_vcx::messages::connection::request::Request as VcxConnectionRequest;
 use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
-use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
+use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Default)]
@@ -43,8 +45,8 @@ fn _get_state(connection: &Connection) -> State {
     }
 }
 
-async fn get_requests(connection: &Connection) -> HarnessResult<Vec<VcxConnectionRequest>> {
-     Ok(connection.get_messages_noauth()
+async fn get_requests(connection: &Connection, agency_client: &AgencyClient) -> HarnessResult<Vec<VcxConnectionRequest>> {
+     Ok(connection.get_messages_noauth(agency_client)
         .await?
         .into_iter()
         .filter_map(|(_, message)| {
@@ -58,8 +60,8 @@ async fn get_requests(connection: &Connection) -> HarnessResult<Vec<VcxConnectio
 impl Agent {
     pub async fn create_invitation(&mut self) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create(&id, false).await?;
-        connection.connect().await?;
+        let mut connection = Connection::create(&id, self.config.wallet_handle, &self.config.agency_client, false).await?;
+        connection.connect(self.config.wallet_handle, &self.config.agency_client).await?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
         let thread_id = connection.get_thread_id();
@@ -70,7 +72,9 @@ impl Agent {
 
     pub async fn receive_invitation(&mut self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let connection = Connection::create_with_invite(&id, Invitation::Pairwise(invite), false).await?;
+        let invite = Invitation::Pairwise(invite);
+        let ddo = into_did_doc(self.config.pool_handle, &invite).await?;
+        let connection = Connection::create_with_invite(&id, self.config.wallet_handle, &self.config.agency_client, invite, ddo, false).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -80,8 +84,8 @@ impl Agent {
     pub async fn send_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.connect().await?;
-        connection.update_state().await?;
+        connection.connect(self.config.wallet_handle, &self.config.agency_client).await?;
+        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -91,12 +95,12 @@ impl Agent {
     pub async fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        let requests = get_requests(&connection).await?;
+        let requests = get_requests(&connection, &self.config.agency_client).await?;
         let curr_state = connection.get_state();
         if curr_state != ConnectionState::Inviter(InviterState::Invited) || requests.len() > 1 {
             return Err(HarnessError::from_msg(HarnessErrorType::RequestNotAcceptedError, &format!("Received state {:?}, expected requested state", curr_state)));
         }
-        connection.update_state().await?;
+        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -106,7 +110,7 @@ impl Agent {
     pub async fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.update_state().await?;
+        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -116,9 +120,7 @@ impl Agent {
     pub async fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        if connection.needs_message() {
-            connection.update_state().await?;
-        }
+        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
         let state = _get_state(&connection);
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;

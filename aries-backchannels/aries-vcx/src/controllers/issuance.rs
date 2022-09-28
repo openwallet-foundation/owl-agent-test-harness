@@ -1,9 +1,12 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use actix_web::http::header::{CacheControl, CacheDirective};
+use aries_vcx::agency_client::agency_client::AgencyClient;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
-use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
+use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::handlers::connection::connection::Connection;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::issuance::credential_offer::{CredentialOffer as VcxCredentialOffer, OfferInfo};
@@ -94,12 +97,12 @@ async fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash:
     Ok(())
 }
 
-async fn get_proposal(connection: &Connection) -> HarnessResult<VcxCredentialProposal> {
+async fn get_proposal(connection: &Connection, agency_client: &AgencyClient) -> HarnessResult<VcxCredentialProposal> {
     let mut proposals = Vec::<VcxCredentialProposal>::new();
-    for (uid, message) in connection.get_messages().await?.into_iter() {
+    for (uid, message) in connection.get_messages(agency_client).await?.into_iter() {
          match message {
              A2AMessage::CredentialProposal(proposal) => {
-                connection.update_message_status(&uid).await.ok();
+                connection.update_message_status(&uid, agency_client).await.ok();
                 proposals.push(proposal);
              }
              _ => {}
@@ -112,12 +115,12 @@ async fn get_proposal(connection: &Connection) -> HarnessResult<VcxCredentialPro
        )
 }
 
-async fn get_offer(connection: &Connection, thread_id: &str) -> HarnessResult<VcxCredentialOffer> {
+async fn get_offer(connection: &Connection, agency_client: &AgencyClient, thread_id: &str) -> HarnessResult<VcxCredentialOffer> {
     let mut offers = Vec::<VcxCredentialOffer>::new();
-    for (uid, message) in connection.get_messages().await?.into_iter() {
+    for (uid, message) in connection.get_messages(agency_client).await?.into_iter() {
          match message {
              A2AMessage::CredentialOffer(offer) if offer.get_thread_id() == thread_id.to_string() => {
-                connection.update_message_status(&uid).await.ok();
+                connection.update_message_status(&uid, agency_client).await.ok();
                 offers.push(offer);
              }
              _ => {}
@@ -144,7 +147,7 @@ impl Agent {
             let value = attr["value"].as_str().ok_or(HarnessError::from_msg(HarnessErrorType::InvalidJson, "No 'value' field in attributes"))?;
             proposal_data = proposal_data.add_credential_preview_data(&name, &value, MimeType::Plain);
         }
-        holder.send_proposal(proposal_data.clone(), connection.send_message_closure()?).await?;
+        holder.send_proposal(self.config.wallet_handle, self.config.pool_handle, proposal_data.clone(), connection.send_message_closure(self.config.wallet_handle).await?).await?;
         let thread_id = holder.get_thread_id()?;
         self.dbs.holder.set(&thread_id, &holder)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -156,7 +159,7 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        holder.send_request(connection.pairwise_info().pw_did.to_string(), connection.send_message_closure()?).await?;
+        holder.send_request(self.config.wallet_handle, self.config.pool_handle, connection.pairwise_info().pw_did.to_string(), connection.send_message_closure(self.config.wallet_handle).await?).await?;
         let thread_id = holder.get_thread_id()?;
         self.dbs.holder.set(&thread_id, &holder)?;
         Ok(json!({ "state": _get_state_holder(&holder), "thread_id": thread_id }).to_string())
@@ -182,23 +185,23 @@ impl Agent {
                     tails_file: cred_def.tails_file.clone()
                 };
                 let mut issuer = Issuer::create(&id)?;
-                issuer.build_credential_offer_msg(offer_info, None)?;
-                issuer.send_credential_offer(connection.send_message_closure()?).await?;
+                issuer.build_credential_offer_msg(self.config.wallet_handle, offer_info, None).await?;
+                issuer.send_credential_offer(connection.send_message_closure(self.config.wallet_handle).await?).await?;
                 issuer
             }
             false => {
-                let proposal = get_proposal(&connection).await?;
+                let proposal = get_proposal(&connection, &self.config.agency_client).await?;
                 let cred_def: CachedCredDef = self.dbs.cred_def.get(&proposal.cred_def_id)
                     .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Cred def with id {} not found", cred_offer.cred_def_id)))?;
                 let offer_info = OfferInfo {
-                    credential_json: proposal.credential_proposal.to_string()?,
+                    credential_json: proposal.credential_proposal.to_string().unwrap(),
                     cred_def_id: proposal.cred_def_id.clone(),
                     rev_reg_id: cred_def.rev_reg_id.clone(),
                     tails_file: cred_def.tails_file.clone()
                 };
                 let mut issuer = Issuer::create_from_proposal(&id, &proposal)?;
-                issuer.build_credential_offer_msg(offer_info, None)?;
-                issuer.send_credential_offer(connection.send_message_closure()?).await?;
+                issuer.build_credential_offer_msg(self.config.wallet_handle, offer_info, None).await?;
+                issuer.send_credential_offer(connection.send_message_closure(self.config.wallet_handle).await?).await?;
                 issuer
             }
         };
@@ -213,8 +216,8 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Issuer with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        issuer.update_state(&connection).await?;
-        issuer.send_credential(connection.send_message_closure()?).await?;
+        issuer.update_state(self.config.wallet_handle, &self.config.agency_client, &connection).await?;
+        issuer.send_credential(self.config.wallet_handle, connection.send_message_closure(self.config.wallet_handle).await?).await?;
         self.dbs.issuer.set(&id, &issuer)?;
         Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
     }
@@ -224,8 +227,8 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        holder.update_state(&connection).await?;
-        if holder.is_revokable()? {
+        holder.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
+        if holder.is_revokable(self.config.wallet_handle, self.config.pool_handle).await? {
             let rev_reg_id = holder.get_rev_reg_id()?;
             let tails_hash = holder.get_tails_hash()?;
             let tails_location = holder.get_tails_location()?;
@@ -240,7 +243,7 @@ impl Agent {
             .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
         match self.dbs.issuer.get::<Issuer>(id) {
             Some(mut issuer) => {
-                issuer.update_state(&connection).await?;
+                issuer.update_state(self.config.wallet_handle, &self.config.agency_client, &connection).await?;
                 self.dbs.issuer.set(&id, &issuer)?;
                 self.dbs.connection.set(&id, &issuer)?;
                 Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
@@ -248,13 +251,13 @@ impl Agent {
             None => {
                 match self.dbs.holder.get::<Holder>(id) {
                     Some(mut holder) => {
-                        holder.update_state(&connection).await?;
+                        holder.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
                         self.dbs.holder.set(&id, &holder)?;
                         self.dbs.connection.set(&id, &connection)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
                     }
                     None => {
-                        let offer = get_offer(&connection, id).await?;
+                        let offer = get_offer(&connection, &self.config.agency_client, id).await?;
                         let holder = Holder::create_from_offer(id, offer)?;
                         self.dbs.holder.set(&id, &holder)?;
                         self.dbs.connection.set(&id, &connection)?;
@@ -270,7 +273,7 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Holder with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        holder.update_state(&connection).await?;
+        holder.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
         let attach = holder.get_attachment()?;
         let attach: serde_json::Value = serde_json::from_str(&attach)?;
         let mut attach = attach.as_object().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to convert attach Value to Map"))?.clone();

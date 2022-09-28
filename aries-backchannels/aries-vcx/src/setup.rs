@@ -1,7 +1,11 @@
-use aries_vcx::init::{open_main_pool, PoolConfigBuilder, open_as_main_wallet, init_issuer_config};
-use aries_vcx::libindy::utils::wallet::{create_wallet, configure_issuer_wallet, close_main_wallet, WalletConfigBuilder};
-use aries_vcx::utils::provision::{provision_cloud_agent, AgentProvisionConfigBuilder};
-use aries_vcx::libindy::utils::pool;
+use aries_vcx::agency_client::agency_client::AgencyClient;
+use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig, close_wallet, create_wallet_with_master_secret, delete_wallet, open_wallet, wallet_configure_issuer};
+use aries_vcx::indy::ledger::pool::{create_pool_ledger_config, open_pool_ledger};
+use aries_vcx::indy::ledger::pool::PoolConfigBuilder;
+use aries_vcx::indy::wallet::WalletConfigBuilder;
+use aries_vcx::agency_client::configuration::AgentProvisionConfig;
+use aries_vcx::global::settings::init_issuer_config;
+use aries_vcx::utils::provision::provision_cloud_agent;
 use std::io::prelude::*;
 use crate::AgentConfig;
 use rand::{thread_rng, Rng};
@@ -68,37 +72,37 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
 pub async fn initialize() -> AgentConfig {
     info!("Initializing vcx");
     let genesis_path = download_genesis_file().await.expect("Failed to download the genesis file");
-    let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8000".to_string());
-    let pool_config = PoolConfigBuilder::default()
-        .genesis_path(genesis_path)
+    let agency_endpoint = std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8080".to_string());
+    let pool_config = serde_json::to_string(&PoolConfigBuilder::default()
+        .genesis_path(&genesis_path)
         .build()
-        .expect("Failed to build pool config");
-    let agency_config = AgentProvisionConfigBuilder::default()
-        .agency_endpoint(agency_endpoint)
-        .agency_did("VsKV7grR1BUE29mG2Fm2kX")
-        .agency_verkey("Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR")
-        .build()
-        .expect("Failed to build agency config");
+        .expect("Failed to build pool config")
+    ).unwrap();
+    let agency_config = AgentProvisionConfig {
+        agency_did: "VsKV7grR1BUE29mG2Fm2kX".to_string(),
+        agency_verkey: "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR".to_string(),
+        agency_endpoint,
+        agent_seed: None,
+    };
     let wallet_config = WalletConfigBuilder::default()
         .wallet_name(format!("rust_agent_{}", uuid::Uuid::new_v4()))
         .wallet_key("8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY")
         .wallet_key_derivation("RAW")
         .build()
         .expect("Failed to build wallet config");
-    
-    create_wallet(&wallet_config).expect("Failed to create wallet");
-    open_as_main_wallet(&wallet_config).expect("Failed to open the main wallet");
-    open_main_pool(&pool_config).expect("Failed to open the main pool");
+    create_wallet_with_master_secret(&wallet_config).await.expect("Failed to create wallet");
+    let wallet_handle = open_wallet(&wallet_config).await.expect("Failed to open wallet");
+    create_pool_ledger_config("aries-vcx-pool", &genesis_path).await.unwrap();
+    let pool_handle = open_pool_ledger("aries-vcx-pool", Some(&pool_config)).await.unwrap();
 
-    let issuer_config = configure_issuer_wallet(&get_trustee_seed().await).expect("Failed to configure the issuer wallet");
+    let issuer_config = wallet_configure_issuer(wallet_handle, &get_trustee_seed().await).await.expect("Failed to configure the issuer wallet");
     init_issuer_config(&issuer_config).expect("Failed to init issuer config");
-    provision_cloud_agent(&agency_config).await.expect("Failed to provision the cloud agent");
+    let mut agency_client = AgencyClient::new();
+    provision_cloud_agent(&mut agency_client, wallet_handle, &agency_config).await.expect("Failed to provision the cloud agent");
 
     debug!("Initialization finished");
-    AgentConfig { did: issuer_config.institution_did }
+    AgentConfig { did: issuer_config.institution_did, wallet_handle, pool_handle, agency_client }
 }
 
 pub fn shutdown() {
-    close_main_wallet().expect("Failed to close the main wallet");
-    pool::close().expect("Failed to close the main pool");
 }

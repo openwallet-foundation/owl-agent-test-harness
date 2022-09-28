@@ -8,7 +8,7 @@ use actix_web::{App, HttpServer, web, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 use crate::controllers::{general, connection, credential_definition, issuance, schema, presentation, revocation};
 use clap::Parser;
-use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::{agency_client::agency_client::AgencyClient, handlers::connection::connection::Connection, vdrtools_sys::{PoolHandle, WalletHandle}};
  
 extern crate serde;
 #[macro_use]
@@ -64,7 +64,10 @@ enum Status {
 
 #[derive(Clone, Serialize)]
 pub struct AgentConfig {
-    did: String
+    did: String,
+    agency_client: AgencyClient,
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle
 }
 
 struct Storage {
@@ -147,8 +150,8 @@ async fn main() -> std::io::Result<()> {
                     .configure(general::config)
             )
     })
-        .keep_alive(30)
-        .client_timeout(30000)
+        .keep_alive(std::time::Duration::from_secs(30))
+        .client_request_timeout(std::time::Duration::from_secs(30))
         .workers(1)
         .bind(format!("{}:{}", host, opts.port))?
         .run()

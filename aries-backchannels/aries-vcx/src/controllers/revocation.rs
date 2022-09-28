@@ -4,7 +4,7 @@ use actix_web::http::header::{CacheControl, CacheDirective};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::Agent;
 use crate::controllers::Request;
-use aries_vcx::handlers::issuance::issuer::issuer::Issuer;
+use aries_vcx::handlers::issuance::issuer::Issuer;
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct CredentialRevocationData {
@@ -14,10 +14,10 @@ pub struct CredentialRevocationData {
 }
 
 impl Agent {
-    pub fn revoke_credential(&mut self, revocation_data: &CredentialRevocationData) -> HarnessResult<String> {
+    pub async fn revoke_credential(&mut self, revocation_data: &CredentialRevocationData) -> HarnessResult<String> {
         let issuer: Issuer = self.dbs.issuer.get(&revocation_data.rev_registry_id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Issuer with id {} not found", &revocation_data.rev_registry_id)))?;
-        issuer.revoke_credential(revocation_data.publish_immediately)?;
+        issuer.revoke_credential_local(self.config.wallet_handle).await?;
         self.dbs.issuer.set(&issuer.get_source_id()?, &issuer)?;
         Ok("OK".to_string())
     }
@@ -34,6 +34,7 @@ impl Agent {
 #[post("/revoke")]
 pub async fn revoke_credential(agent: web::Data<Mutex<Agent>>, req: web::Json<Request<CredentialRevocationData>>) -> impl Responder {
     agent.lock().unwrap().revoke_credential(&req.data)
+        .await
         .customize()
         .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }

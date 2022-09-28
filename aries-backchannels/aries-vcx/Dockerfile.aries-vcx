@@ -1,4 +1,4 @@
-FROM ghcr.io/hyperledger/aries-vcx/libvcx:0.26.0-main-2610
+FROM ghcr.io/hyperledger/aries-vcx/libvcx:0.42.0
 
 USER root
 

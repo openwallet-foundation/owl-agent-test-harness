@@ -1,10 +1,12 @@
 use std::sync::Mutex;
 use actix_web::{web, Responder, post, get};
 use actix_web::http::header::{CacheControl, CacheDirective};
+use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
-use aries_vcx::handlers::issuance::schema::schema::Schema as VcxSchema;
-use aries_vcx::libindy::utils::anoncreds;
+use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
+use aries_vcx::indy::primitives::credential_schema;
+use aries_vcx::indy::anoncreds;
+ use aries_vcx::indy::primitives::credential_schema::Schema as VcxSchema;
 use uuid;
 use crate::Agent;
 use crate::controllers::Request;
@@ -22,12 +24,16 @@ pub struct CachedSchema {
     schema_json: String
 }
 
-fn create_and_publish_schema(source_id: &str,
-                             name: String,
-                             version: String,
-                             data: String) -> HarnessResult<(String, String)> {
-    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data)?;
-    anoncreds::publish_schema(&schema)?;
+async fn create_and_publish_schema(
+                            did: &str,
+                            wallet_handle: WalletHandle,
+                            pool_handle: PoolHandle,
+                            source_id: &str,
+                            name: String,
+                            version: String,
+                            data: String) -> HarnessResult<(String, String)> {
+    let (schema_id, schema) = credential_schema::create_schema(did, &name, &version, &data).await.map_err(|err| HarnessError::from(err))?;
+    credential_schema::publish_schema(did, wallet_handle, pool_handle, &schema).await.map_err(|err| HarnessError::from(err))?;
     let schema_json = VcxSchema {
         source_id: source_id.to_string(),
         name,
@@ -43,13 +49,13 @@ fn create_and_publish_schema(source_id: &str,
 }
 
 impl Agent {
-    pub fn create_schema(&mut self, schema: &Schema) -> HarnessResult<String> {
+    pub async fn create_schema(&mut self, schema: &Schema) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let attrs = serde_json::to_string(&schema.attributes).map_err(|err| HarnessError::from(err))?;
-        let (schema_id, schema_json) = match create_and_publish_schema(&id, schema.schema_name.to_string(), schema.schema_version.to_string(), attrs.to_string()) {
+        let (schema_id, schema_json) = match create_and_publish_schema(&self.config.did, self.config.wallet_handle, self.config.pool_handle,  &id, schema.schema_name.to_string(), schema.schema_version.to_string(), attrs.to_string()).await {
             Err(err) => {
                 warn!("Error: {:?}, schema probably exists on ledger, skipping schema publish", err);
-                anoncreds::create_schema(&schema.schema_name.to_string(), &schema.schema_version.to_string(), &attrs)?
+                credential_schema::create_schema(&self.config.did, &schema.schema_name.to_string(), &schema.schema_version.to_string(), &attrs).await?
             }
             Ok((schema_id, schema_json)) => (schema_id, schema_json)
         };
@@ -68,6 +74,7 @@ impl Agent {
 #[post("")]
 pub async fn create_schema(req: web::Json<Request<Schema>>, agent: web::Data<Mutex<Agent>>) -> impl Responder {
     agent.lock().unwrap().create_schema(&req.data)
+        .await
         .customize()
         .append_header(CacheControl(vec![CacheDirective::Private, CacheDirective::NoStore, CacheDirective::MustRevalidate]))
 }

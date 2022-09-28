@@ -1,10 +1,11 @@
 use std::sync::Mutex;
+use reqwest::multipart;
 use actix_web::{web, Responder, post, get};
 use actix_web::http::header::{CacheControl, CacheDirective};
+
+use aries_vcx::indy::primitives::revocation_registry::{RevocationRegistry, RevocationRegistryDefinition};
+use aries_vcx::indy::primitives::credential_definition::{CredentialDef, RevocationDetailsBuilder, CredentialDefConfigBuilder};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
-use reqwest::multipart;
-use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use uuid;
 use crate::Agent;
@@ -26,15 +27,8 @@ pub struct CachedCredDef {
     pub rev_reg_id: Option<String>
 }
 
-fn get_tails_hash(cred_def: &CredentialDef) -> HarnessResult<String> {
-    let err = HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to retrieve credential definition from credential definition");
-    let rev_reg_def: String = cred_def.get_rev_reg_def().map_err(|_| err.clone())?.ok_or(err)?;
-    let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)?;
-    Ok(rev_reg_def.value.tails_hash)
-}
-
 async fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<()> {
-    info!("Going to upload tails file");
+    info!("Going to upload tails file {} to {}", tails_file, tails_url);
     let client = reqwest::Client::new();
     let genesis_file = std::env::var("GENESIS_FILE").unwrap_or(
         std::env::current_dir().expect("Failed to obtain the current directory path").join("resource").join("genesis_file.txn").to_str()
@@ -56,42 +50,39 @@ impl Agent {
         let did = self.config.did.to_string();
         let tails_base_url = std::env::var("TAILS_SERVER_URL").unwrap_or("https://tails-server-test.pathfinder.gov.bc.ca".to_string());
         let tails_base_path = "/tmp".to_string();
-        let cred_def_id  = match self.dbs.cred_def.get::<CachedCredDef>(&cred_def.schema_id) {
+        let cred_def_id = match self.dbs.cred_def.get::<CachedCredDef>(&cred_def.schema_id) {
             None => {
                 let config = CredentialDefConfigBuilder::default()
-                    .issuer_did(did)
+                    .issuer_did(&did)
                     .schema_id(&cred_def.schema_id)
                     .tag(&id)
                     .build()?;
-                let revocation_details = if cred_def.support_revocation {
-                    RevocationDetailsBuilder::default()
-                        .support_revocation(cred_def.support_revocation)
-                        .tails_file(&tails_base_path)
-                        .max_creds(50 as u32)
-                        .build()?
-                } else {
-                    RevocationDetailsBuilder::default()
-                        .support_revocation(cred_def.support_revocation)
-                        .build()?
-                };
-                let cd = CredentialDef::create_and_store(id.to_string(), config, revocation_details)?;
-                let (rev_reg_id, tails_url) = match cred_def.support_revocation {
+                let cd = CredentialDef::create(self.config.wallet_handle, self.config.pool_handle, "1".to_string(), config, true)
+                    .await?
+                    .publish_cred_def(self.config.wallet_handle, self.config.pool_handle)
+                    .await?;
+                let (rev_reg_id, tails_file) = match cd.get_support_revocation() {
                     true => {
-                        let rev_reg_id = cd.get_rev_reg_id().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to retrieve revocation registry id from credential definition"))?;
+                        let mut rev_reg = RevocationRegistry::create(
+                            self.config.wallet_handle,
+                            &did,
+                            &cd.get_cred_def_id(),
+                            &tails_base_path,
+                            10,
+                            1,
+                        )
+                            .await?;
+                        let rev_reg_id = rev_reg.get_rev_reg_id();
                         let tails_url = format!("{}/{}", tails_base_url, rev_reg_id);
-                        (Some(rev_reg_id), Some(tails_url))
-                    }
-                    false => (None, None)
-                };
-                let cd = cd.publish(tails_url.as_deref())?;
-                let tails_file = match tails_url {
-                    Some(tails_url) => {
-                        let tails_hash = get_tails_hash(&cd)?;
+                        rev_reg
+                            .publish_revocation_primitives(self.config.wallet_handle, self.config.pool_handle, &tails_url)
+                            .await?;
+                        let tails_hash = rev_reg.get_rev_reg_def().value.tails_hash;
                         let tails_file = format!("{}/{}", tails_base_path, tails_hash);
                         upload_tails_file(&tails_url, &tails_file).await?;
-                        Some(tails_base_path)
+                        (Some(rev_reg_id), Some(tails_base_path))
                     }
-                    None => None
+                    false => (None, None)
                 };
                 let cred_def_id = cd.get_cred_def_id();
                 let cred_def_json: serde_json::Value = serde_json::from_str(&cd.to_string()?)?;
