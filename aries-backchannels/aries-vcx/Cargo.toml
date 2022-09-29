@@ -10,7 +10,7 @@ actix-web = "4.2.1"
 ctrlc = "3.1.6"
 derive_more = "0.99.14"
 derive_builder = "0.10.2"
-clap = "3.0.0-beta.5"
+clap = { version = "3.2.22", features = ["derive"] }
 reqwest = { version = "0.11.9", features = ["json", "multipart", "blocking"] }
 rand = "0.6.5"
 serde = "1.0.97"

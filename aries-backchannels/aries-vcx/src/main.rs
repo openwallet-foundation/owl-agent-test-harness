@@ -26,7 +26,6 @@ extern crate derive_builder;
 
 
 #[derive(Parser)]
-#[clap(version = "1.0")]
 struct Opts {
     #[clap(short, long, default_value = "9020")]
     port: u32,
