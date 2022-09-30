@@ -8,7 +8,7 @@ use actix_web::{App, HttpServer, web, middleware};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 use crate::controllers::{general, connection, credential_definition, issuance, schema, presentation, revocation};
 use clap::Parser;
-use aries_vcx::{agency_client::agency_client::AgencyClient, handlers::connection::connection::Connection, vdrtools_sys::{PoolHandle, WalletHandle}};
+use aries_vcx::{agency_client::configuration::AgencyClientConfig, handlers::connection::connection::Connection, vdrtools_sys::{PoolHandle, WalletHandle}};
  
 extern crate serde;
 #[macro_use]
@@ -64,7 +64,7 @@ enum Status {
 #[derive(Clone, Serialize)]
 pub struct AgentConfig {
     did: String,
-    agency_client: AgencyClient,
+    agency_client_config: AgencyClientConfig,
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle
 }

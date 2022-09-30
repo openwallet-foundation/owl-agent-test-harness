@@ -60,8 +60,9 @@ async fn get_requests(connection: &Connection, agency_client: &AgencyClient) -> 
 impl Agent {
     pub async fn create_invitation(&mut self) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let mut connection = Connection::create(&id, self.config.wallet_handle, &self.config.agency_client, false).await?;
-        connection.connect(self.config.wallet_handle, &self.config.agency_client).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut connection = Connection::create(&id, self.config.wallet_handle, &agency_client, false).await?;
+        connection.connect(self.config.wallet_handle, &agency_client).await?;
         let invite = connection.get_invite_details()
             .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to get invite details"))?;
         let thread_id = connection.get_thread_id();
@@ -74,7 +75,8 @@ impl Agent {
         let id = uuid::Uuid::new_v4().to_string();
         let invite = Invitation::Pairwise(invite);
         let ddo = into_did_doc(self.config.pool_handle, &invite).await?;
-        let connection = Connection::create_with_invite(&id, self.config.wallet_handle, &self.config.agency_client, invite, ddo, false).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let connection = Connection::create_with_invite(&id, self.config.wallet_handle, &agency_client, invite, ddo, false).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -84,8 +86,9 @@ impl Agent {
     pub async fn send_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.connect(self.config.wallet_handle, &self.config.agency_client).await?;
-        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        connection.connect(self.config.wallet_handle, &agency_client).await?;
+        connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -95,12 +98,13 @@ impl Agent {
     pub async fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        let requests = get_requests(&connection, &self.config.agency_client).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let requests = get_requests(&connection, &agency_client).await?;
         let curr_state = connection.get_state();
         if curr_state != ConnectionState::Inviter(InviterState::Invited) || requests.len() > 1 {
             return Err(HarnessError::from_msg(HarnessErrorType::RequestNotAcceptedError, &format!("Received state {:?}, expected requested state", curr_state)));
         }
-        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
+        connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -110,7 +114,8 @@ impl Agent {
     pub async fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
@@ -120,7 +125,8 @@ impl Agent {
     pub async fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
         let mut connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-        connection.find_message_and_update_state(self.config.wallet_handle, &self.config.agency_client).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let state = _get_state(&connection);
         let thread_id = connection.get_thread_id();
         self.dbs.connection.set(&id, &connection)?;

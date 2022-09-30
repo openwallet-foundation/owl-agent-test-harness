@@ -5,7 +5,6 @@ use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
 use aries_vcx::indy::primitives::credential_schema;
-use aries_vcx::indy::anoncreds;
  use aries_vcx::indy::primitives::credential_schema::Schema as VcxSchema;
 use uuid;
 use crate::Agent;

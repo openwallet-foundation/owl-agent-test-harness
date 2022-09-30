@@ -2,6 +2,7 @@ use std::sync::Mutex;
 use std::collections::HashMap;
 use actix_web::{web, Responder, post, get};
 use actix_web::http::header::{CacheControl, CacheDirective};
+use aries_vcx::agency_client::agency_client::AgencyClient;
 use uuid;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::{Agent, State};
@@ -122,10 +123,11 @@ impl Agent {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&presentation_request.connection_id)
             .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
-        for (uid, message) in connection.get_messages(&self.config.agency_client).await?.into_iter() {
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
             match message {
                 A2AMessage::PresentationProposal(_) => {
-                    connection.update_message_status(&uid, &self.config.agency_client).await.ok();
+                    connection.update_message_status(&uid, &agency_client).await.ok();
                 }
                 _ => {}
             }
@@ -168,7 +170,8 @@ impl Agent {
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Prover with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
             .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
-        prover.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        prover.update_state(self.config.wallet_handle, self.config.pool_handle, &agency_client, &connection).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let credentials = prover.retrieve_credentials(self.config.wallet_handle).await?;
         let secondary_required = _secondary_proof_required(&prover)?;
@@ -187,7 +190,8 @@ impl Agent {
         let connection: Connection = self.dbs.connection.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
-        verifier.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        verifier.update_state(self.config.wallet_handle, self.config.pool_handle, &agency_client, &connection).await?;
         if !vec![VerifierState::Finished, VerifierState::Failed].contains(&verifier.get_state()) {
             return Err(HarnessError::from_msg(HarnessErrorType::ProtocolError, "Presentation not received"));
         }
@@ -205,11 +209,12 @@ impl Agent {
 
     pub async fn get_proof(&mut self, id: &str) -> HarnessResult<String> {
         let connection_ids = self.dbs.connection.get_all();
+        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
         match self.dbs.prover.get::<Prover>(id) {
             Some(mut prover) => {
                let connection: Connection = self.dbs.connection.get(id)
                    .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                prover.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
+                prover.update_state(self.config.wallet_handle, self.config.pool_handle, &agency_client, &connection).await?;
                 self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;
                 let state = _get_state_prover(&prover);
                 Ok(json!({ "state": state }).to_string())
@@ -221,10 +226,10 @@ impl Agent {
                         let connection = self.dbs.connection.get::<Connection>(&cid)
                             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
                         let mut _presentation_requests = Vec::<VcxPresentationRequest>::new();
-                        for (uid, message) in connection.get_messages_noauth(&self.config.agency_client).await?.into_iter() {
+                        for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
                             match message {
                                 A2AMessage::PresentationRequest(presentation_request) => {
-                                    connection.update_message_status(&uid, &self.config.agency_client).await.ok();
+                                    connection.update_message_status(&uid, &agency_client).await.ok();
                                     self.dbs.connection.set(&id, &connection)?;
                                     _presentation_requests.push(presentation_request);
                                 }
@@ -246,7 +251,7 @@ impl Agent {
                Some(mut verifier) => {
                    let connection: Connection = self.dbs.connection.get(id)
                        .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", id)))?;
-                    verifier.update_state(self.config.wallet_handle, self.config.pool_handle, &self.config.agency_client, &connection).await?;
+                    verifier.update_state(self.config.wallet_handle, self.config.pool_handle, &agency_client, &connection).await?;
                     self.dbs.verifier.set(&verifier.get_thread_id()?, &verifier)?;
                     let state = _get_state_verifier(&verifier);
                     Ok(json!({ "state": state }).to_string())

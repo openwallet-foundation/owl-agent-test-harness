@@ -3,8 +3,8 @@ use reqwest::multipart;
 use actix_web::{web, Responder, post, get};
 use actix_web::http::header::{CacheControl, CacheDirective};
 
-use aries_vcx::indy::primitives::revocation_registry::{RevocationRegistry, RevocationRegistryDefinition};
-use aries_vcx::indy::primitives::credential_definition::{CredentialDef, RevocationDetailsBuilder, CredentialDefConfigBuilder};
+use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
+use aries_vcx::indy::primitives::credential_definition::{CredentialDef, CredentialDefConfigBuilder};
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 
 use uuid;

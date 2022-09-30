@@ -1,5 +1,5 @@
 use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig, close_wallet, create_wallet_with_master_secret, delete_wallet, open_wallet, wallet_configure_issuer};
+use aries_vcx::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
 use aries_vcx::indy::ledger::pool::{create_pool_ledger_config, open_pool_ledger};
 use aries_vcx::indy::ledger::pool::PoolConfigBuilder;
 use aries_vcx::indy::wallet::WalletConfigBuilder;
@@ -98,10 +98,10 @@ pub async fn initialize() -> AgentConfig {
     let issuer_config = wallet_configure_issuer(wallet_handle, &get_trustee_seed().await).await.expect("Failed to configure the issuer wallet");
     init_issuer_config(&issuer_config).expect("Failed to init issuer config");
     let mut agency_client = AgencyClient::new();
-    provision_cloud_agent(&mut agency_client, wallet_handle, &agency_config).await.expect("Failed to provision the cloud agent");
+    let agency_client_config = provision_cloud_agent(&mut agency_client, wallet_handle, &agency_config).await.expect("Failed to provision the cloud agent");
 
     debug!("Initialization finished");
-    AgentConfig { did: issuer_config.institution_did, wallet_handle, pool_handle, agency_client }
+    AgentConfig { did: issuer_config.institution_did, wallet_handle, pool_handle, agency_client_config }
 }
 
 pub fn shutdown() {

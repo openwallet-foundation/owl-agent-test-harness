@@ -63,6 +63,13 @@ impl std::convert::From<aries_vcx::error::VcxError> for HarnessError {
     }
 }
 
+impl std::convert::From<aries_vcx::agency_client::error::AgencyClientError> for HarnessError {
+    fn from(agency_client_error: aries_vcx::agency_client::error::AgencyClientError) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        HarnessError { message: agency_client_error.to_string(), kind }
+    }
+}
+
 impl std::convert::From<pickledb::error::Error> for HarnessError {
     fn from(pickle_err: pickledb::error::Error) -> HarnessError {
         let kind = HarnessErrorType::NotFoundError;
