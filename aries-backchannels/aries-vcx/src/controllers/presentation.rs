@@ -155,7 +155,8 @@ impl Agent {
                 HarnessErrorType::InternalServerError,
                 "No connection established",
             ))?);
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
             match message {
                 A2AMessage::PresentationProposal(_) => {
@@ -246,7 +247,8 @@ impl Agent {
                     HarnessErrorType::InternalServerError,
                     "No connection established",
                 ))?);
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         prover
             .update_state(
                 self.config.wallet_handle,
@@ -294,7 +296,8 @@ impl Agent {
             &format!("Connection with id {} not found", id),
         ))?;
         soft_assert_eq!(verifier.get_state(), VerifierState::PresentationRequestSent);
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         verifier
             .update_state(
                 self.config.wallet_handle,
@@ -333,7 +336,8 @@ impl Agent {
 
     pub async fn get_proof(&mut self, id: &str) -> HarnessResult<String> {
         let connection_ids = self.dbs.connection.get_all();
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         match self.dbs.prover.get::<Prover>(id) {
             Some(mut prover) => {
                 let connection: Connection =

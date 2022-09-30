@@ -63,7 +63,8 @@ async fn get_requests(
 impl Agent {
     pub async fn create_invitation(&mut self) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         let mut connection =
             Connection::create(&id, self.config.wallet_handle, &agency_client, false).await?;
         connection
@@ -88,7 +89,8 @@ impl Agent {
         let id = uuid::Uuid::new_v4().to_string();
         let invite = Invitation::Pairwise(invite);
         let ddo = into_did_doc(self.config.pool_handle, &invite).await?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         let connection = Connection::create_with_invite(
             &id,
             self.config.wallet_handle,
@@ -110,7 +112,8 @@ impl Agent {
                 HarnessErrorType::NotFoundError,
                 &format!("Connection with id {} not found", id),
             ))?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         connection
             .connect(self.config.wallet_handle, &agency_client)
             .await?;
@@ -129,7 +132,8 @@ impl Agent {
                 HarnessErrorType::NotFoundError,
                 &format!("Connection with id {} not found", id),
             ))?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         let requests = get_requests(&connection, &agency_client).await?;
         let curr_state = connection.get_state();
         if curr_state != ConnectionState::Inviter(InviterState::Invited) || requests.len() > 1 {
@@ -153,7 +157,8 @@ impl Agent {
                 HarnessErrorType::NotFoundError,
                 &format!("Connection with id {} not found", id),
             ))?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         connection
             .find_message_and_update_state(self.config.wallet_handle, &agency_client)
             .await?;
@@ -169,7 +174,8 @@ impl Agent {
                 HarnessErrorType::NotFoundError,
                 &format!("Connection with id {} not found", id),
             ))?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         connection
             .find_message_and_update_state(self.config.wallet_handle, &agency_client)
             .await?;

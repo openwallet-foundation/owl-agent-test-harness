@@ -299,8 +299,9 @@ impl Agent {
                 issuer
             }
             false => {
-                let agency_client =
+                let mut agency_client =
                     AgencyClient::new().configure(&self.config.agency_client_config)?;
+                agency_client.set_wallet_handle(self.config.wallet_handle);
                 let proposal = get_proposal(&connection, &agency_client).await?;
                 let cred_def: CachedCredDef =
                     self.dbs
@@ -349,7 +350,8 @@ impl Agent {
             HarnessErrorType::NotFoundError,
             &format!("Connection with id {} not found", id),
         ))?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         issuer
             .update_state(self.config.wallet_handle, &agency_client, &connection)
             .await?;
@@ -374,7 +376,8 @@ impl Agent {
             HarnessErrorType::NotFoundError,
             &format!("Connection with id {} not found", id),
         ))?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         holder
             .update_state(
                 self.config.wallet_handle,
@@ -405,7 +408,8 @@ impl Agent {
                     HarnessErrorType::InternalServerError,
                     "No connection established",
                 ))?);
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         match self.dbs.issuer.get::<Issuer>(id) {
             Some(mut issuer) => {
                 issuer
@@ -449,7 +453,8 @@ impl Agent {
             HarnessErrorType::NotFoundError,
             &format!("Connection with id {} not found", id),
         ))?;
-        let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
+        agency_client.set_wallet_handle(self.config.wallet_handle);
         holder
             .update_state(
                 self.config.wallet_handle,
