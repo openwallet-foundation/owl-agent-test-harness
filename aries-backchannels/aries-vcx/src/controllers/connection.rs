@@ -90,7 +90,7 @@ impl Agent {
         connection.connect(self.config.wallet_handle, &agency_client).await?;
         connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
@@ -106,7 +106,7 @@ impl Agent {
         }
         connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
@@ -117,7 +117,7 @@ impl Agent {
         let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
         connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string()) 
     }
@@ -129,7 +129,7 @@ impl Agent {
         connection.find_message_and_update_state(self.config.wallet_handle, &agency_client).await?;
         let state = _get_state(&connection);
         let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(&id, &connection)?;
+        self.dbs.connection.set(id, &connection)?;
         self.dbs.connection.set(&thread_id, &connection)?;
         self.last_connection = Some(connection);
         Ok(json!({ "state": state }).to_string())

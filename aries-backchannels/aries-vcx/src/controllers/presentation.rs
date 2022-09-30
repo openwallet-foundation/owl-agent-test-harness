@@ -102,14 +102,14 @@ fn _select_credentials(resolved_creds: &str, secondary_required: bool) -> Harnes
                         "credential": attr_cred_info.first().unwrap(),
                     })
                 };
-                if attr_cred_info.len() > 0 {
+                if !attr_cred_info.is_empty() {
                     selected_creds.get_mut("attrs").unwrap().insert(String::from(attr_name), to_insert);
                 }
             }
             _ => return Err(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Unexpected data, expected attr_cred_info to be an array, but got {:?}.", attr_cred_info)))
         }
     }
-    serde_json::to_string(&selected_creds).map_err(|err| HarnessError::from(err))
+    serde_json::to_string(&selected_creds).map_err(HarnessError::from)
 }
 
 fn _secondary_proof_required(prover: &Prover) -> HarnessResult<bool> {
@@ -122,7 +122,7 @@ impl Agent {
     pub async fn send_proof_request(&mut self, presentation_request: &PresentationRequestWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&presentation_request.connection_id)
-            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "No connection established"))?);
         let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
             match message {
@@ -152,7 +152,7 @@ impl Agent {
     pub async fn send_proof_proposal(&mut self, presentation_proposal: &PresentationProposalWrapper) -> HarnessResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let connection: Connection = self.dbs.connection.get(&presentation_proposal.connection_id)
-            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "No connection established"))?);
         let mut proposal_data = PresentationProposalData::create();
         for attr in presentation_proposal.presentation_proposal.attributes.clone().into_iter() {
             proposal_data = proposal_data.add_attribute(attr.clone());
@@ -169,7 +169,7 @@ impl Agent {
         let mut prover: Prover = self.dbs.prover.get(id)
             .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Prover with id {} not found", id)))?;
         let connection: Connection = self.dbs.connection.get(id)
-            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "No connection established"))?);
         let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
         prover.update_state(self.config.wallet_handle, self.config.pool_handle, &agency_client, &connection).await?;
         soft_assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
@@ -230,7 +230,7 @@ impl Agent {
                             match message {
                                 A2AMessage::PresentationRequest(presentation_request) => {
                                     connection.update_message_status(&uid, &agency_client).await.ok();
-                                    self.dbs.connection.set(&id, &connection)?;
+                                    self.dbs.connection.set(id, &connection)?;
                                     _presentation_requests.push(presentation_request);
                                 }
                                 _ => {}
@@ -241,7 +241,7 @@ impl Agent {
                     soft_assert_eq!(presentation_requests.len(), 1);
                     let presentation_request = presentation_requests.first()
                        .ok_or(
-                           HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
+                           HarnessError::from_msg(HarnessErrorType::InternalServerError, "Did not obtain presentation request message")
                        )?;
                     let prover = Prover::create_from_request(id, presentation_request.clone())?;
                     self.dbs.prover.set(&prover.get_thread_id()?, &prover)?;

@@ -82,7 +82,7 @@ fn _get_state_holder(holder: &Holder) -> State {
 
 async fn download_tails_file(tails_base_url: &str, rev_reg_id: &str, tails_hash: &str) -> HarnessResult<()> {
     info!("Downloading tails file to {:?}", tails_base_url);
-    let url = match tails_base_url.to_string().matches("/").count() {
+    let url = match tails_base_url.to_string().matches('/').count() {
         0 => format!("{}/{}", tails_base_url, rev_reg_id),
         1.. => tails_base_url.to_string(),
         _ => { return Err(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Negative count"))}
@@ -111,7 +111,7 @@ async fn get_proposal(connection: &Connection, agency_client: &AgencyClient) -> 
     soft_assert_eq!(proposals.len(), 1);
     proposals.pop()
        .ok_or(
-           HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
+           HarnessError::from_msg(HarnessErrorType::InternalServerError, "Did not obtain presentation request message")
        )
 }
 
@@ -119,7 +119,7 @@ async fn get_offer(connection: &Connection, agency_client: &AgencyClient, thread
     let mut offers = Vec::<VcxCredentialOffer>::new();
     for (uid, message) in connection.get_messages(agency_client).await?.into_iter() {
          match message {
-             A2AMessage::CredentialOffer(offer) if offer.get_thread_id() == thread_id.to_string() => {
+             A2AMessage::CredentialOffer(offer) if offer.get_thread_id() == *thread_id => {
                 connection.update_message_status(&uid, agency_client).await.ok();
                 offers.push(offer);
              }
@@ -129,7 +129,7 @@ async fn get_offer(connection: &Connection, agency_client: &AgencyClient, thread
     soft_assert_eq!(offers.len(), 1);
     offers.pop()
        .ok_or(
-           HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("Did not obtain presentation request message"))
+           HarnessError::from_msg(HarnessErrorType::InternalServerError, "Did not obtain presentation request message")
        )
 }
 
@@ -145,7 +145,7 @@ impl Agent {
         for attr in cred_proposal.credential_proposal.attributes.clone().into_iter() {
             let name = attr["name"].as_str().ok_or(HarnessError::from_msg(HarnessErrorType::InvalidJson, "No 'name' field in attributes"))?;
             let value = attr["value"].as_str().ok_or(HarnessError::from_msg(HarnessErrorType::InvalidJson, "No 'value' field in attributes"))?;
-            proposal_data = proposal_data.add_credential_preview_data(&name, &value, MimeType::Plain);
+            proposal_data = proposal_data.add_credential_preview_data(name, value, MimeType::Plain);
         }
         holder.send_proposal(self.config.wallet_handle, self.config.pool_handle, proposal_data.clone(), connection.send_message_closure(self.config.wallet_handle).await?).await?;
         let thread_id = holder.get_thread_id()?;
@@ -170,7 +170,7 @@ impl Agent {
             false => self.dbs.connection.get(&cred_offer.connection_id)
                         .ok_or(HarnessError::from_msg(HarnessErrorType::NotFoundError, &format!("Connection with id {} not found", cred_offer.connection_id)))?,
             true => self.last_connection.clone()
-                        .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?
+                        .ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "No connection established"))?
         };
         let issuer = match id.is_empty() {
             true => {
@@ -200,7 +200,7 @@ impl Agent {
                     rev_reg_id: cred_def.rev_reg_id.clone(),
                     tails_file: cred_def.tails_file.clone()
                 };
-                let mut issuer = Issuer::create_from_proposal(&id, &proposal)?;
+                let mut issuer = Issuer::create_from_proposal(id, &proposal)?;
                 issuer.build_credential_offer_msg(self.config.wallet_handle, offer_info, None).await?;
                 issuer.send_credential_offer(connection.send_message_closure(self.config.wallet_handle).await?).await?;
                 issuer
@@ -220,7 +220,7 @@ impl Agent {
         let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
         issuer.update_state(self.config.wallet_handle, &agency_client, &connection).await?;
         issuer.send_credential(self.config.wallet_handle, connection.send_message_closure(self.config.wallet_handle).await?).await?;
-        self.dbs.issuer.set(&id, &issuer)?;
+        self.dbs.issuer.set(id, &issuer)?;
         Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
     }
 
@@ -237,34 +237,34 @@ impl Agent {
             let tails_location = holder.get_tails_location()?;
             download_tails_file(&tails_location, &rev_reg_id, &tails_hash).await?;
         };
-        self.dbs.holder.set(&id, &holder)?;
+        self.dbs.holder.set(id, &holder)?;
         Ok(json!({ "state": _get_state_holder(&holder), "credential_id": id }).to_string())
     }
 
     pub async fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
         let connection: Connection = self.dbs.connection.get(id)
-            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, &format!("No connection established")))?);
+            .unwrap_or(self.last_connection.clone().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "No connection established"))?);
         let agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
         match self.dbs.issuer.get::<Issuer>(id) {
             Some(mut issuer) => {
                 issuer.update_state(self.config.wallet_handle, &agency_client, &connection).await?;
-                self.dbs.issuer.set(&id, &issuer)?;
-                self.dbs.connection.set(&id, &issuer)?;
+                self.dbs.issuer.set(id, &issuer)?;
+                self.dbs.connection.set(id, &issuer)?;
                 Ok(json!({ "state": _get_state_issuer(&issuer) }).to_string())
             }
             None => {
                 match self.dbs.holder.get::<Holder>(id) {
                     Some(mut holder) => {
                         holder.update_state(self.config.wallet_handle, self.config.pool_handle, &agency_client, &connection).await?;
-                        self.dbs.holder.set(&id, &holder)?;
-                        self.dbs.connection.set(&id, &connection)?;
+                        self.dbs.holder.set(id, &holder)?;
+                        self.dbs.connection.set(id, &connection)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
                     }
                     None => {
                         let offer = get_offer(&connection, &agency_client, id).await?;
                         let holder = Holder::create_from_offer(id, offer)?;
-                        self.dbs.holder.set(&id, &holder)?;
-                        self.dbs.connection.set(&id, &connection)?;
+                        self.dbs.holder.set(id, &holder)?;
+                        self.dbs.connection.set(id, &connection)?;
                         Ok(json!({ "state": _get_state_holder(&holder) }).to_string())
                     }
                 }

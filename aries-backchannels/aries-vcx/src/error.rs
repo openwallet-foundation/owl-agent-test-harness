@@ -76,7 +76,7 @@ impl std::convert::From<pickledb::error::Error> for HarnessError {
         let message = format!(
             "Failed to load / save object from memory; err: {:?}", pickle_err.to_string()
         );
-        HarnessError { message: message.to_string(), kind }
+        HarnessError { message, kind }
     }
 }
 
@@ -86,7 +86,7 @@ impl std::convert::From<serde_json::Error> for HarnessError {
         let message = format!(
             "(De)serialization failed; err: {:?}", serde_err.to_string()
         );
-        HarnessError { message: message.to_string(), kind }
+        HarnessError { message, kind }
     }
 }
 

@@ -9,7 +9,7 @@ use aries_vcx::utils::provision::provision_cloud_agent;
 use std::io::prelude::*;
 use crate::AgentConfig;
 use rand::{thread_rng, Rng};
-use uuid;
+
 
 #[derive(Debug, Deserialize)]
 struct SeedResponse {
@@ -17,7 +17,7 @@ struct SeedResponse {
 }
 
 async fn get_trustee_seed() -> String {
-    if let Some(ledger_url) = std::env::var("LEDGER_URL").ok() {
+    if let Ok(ledger_url) = std::env::var("LEDGER_URL") {
         let url = format!("{}/register", ledger_url);
         let mut rng = thread_rng();
         let client = reqwest::Client::new();

@@ -88,11 +88,11 @@ impl Agent {
                 let cred_def_json: serde_json::Value = serde_json::from_str(&cd.to_string()?)?;
                 let cred_def_json = cred_def_json["data"]["cred_def_json"].as_str().ok_or(HarnessError::from_msg(HarnessErrorType::InternalServerError, "Failed to convert cred def json Value to str"))?;
                 self.dbs.cred_def.set(&cred_def.schema_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file: tails_file.clone(), rev_reg_id: rev_reg_id.clone() })?;
-                self.dbs.cred_def.set(&cred_def_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file: tails_file.clone(), rev_reg_id: rev_reg_id.clone() })?;
+                self.dbs.cred_def.set(&cred_def_id, &CachedCredDef { cred_def_id: cred_def_id.to_string(), cred_def_json: cred_def_json.to_string(), tails_file, rev_reg_id })?;
                 cred_def_id
             }
             Some(cached_cred_def) => {
-                cached_cred_def.cred_def_id.to_string()
+                cached_cred_def.cred_def_id
             }
         };
         Ok(json!({ "credential_definition_id": cred_def_id }).to_string())
