@@ -113,6 +113,9 @@ usage () {
     $0 run -d acapy -t @SmokeTest -t @P1    - Run the tests tagged @SmokeTest and/or @P1 (priority 1) using all ACA-Py agents
     $0 run -d acapy -b mobile -n -t @MobileTest  - Run the mobile tests using ngrok endpoints
 
+  runset - Run the set of tests for a combination of Test Agents using the parameters in the daily, GitHub Action run "runsets".
+      To see full set of options for the "runset" command, execute "./manage runset -h"
+  
   tags - Get a list of the tags on the features tests
 
   tests -t <tags> [ -md ]
@@ -803,6 +806,89 @@ deleteAgent() {
     docker rm -f $agent || 1
 }
 
+runSetUsage() {
+  # =================================================================================================================
+  # runset Usage:
+  # -----------------------------------------------------------------------------------------------------------------
+  cat <<-EOF
+
+    Usage: $0 runset [run-set-name] [options]
+
+    Command: runset
+
+    Run the agents and tests for a named "runset", one of the test runs executed nightly via GitHub Actions.
+    
+    Options:
+
+      -b : run a "build" for the runset agents before the "run"
+      -r : run a "rebuild" for the runset agents before the "run"
+      -n : dry-run; don't run the commands, just print them
+
+    The run-set-name must be one from the following list, each associated with a GHA file in .github/workflows.
+    In most cases, the first named framework in the runset name runs Acme, Faber and Mallory, and the second, Bob.
+
+EOF
+    listRunSets | tr '\n' ' '
+    echo ""
+}
+
+listRunSets() {
+  for runset in .github/workflows/*test-harness-*.yml; do
+    echo $runset | sed "s/.*test-harness-//" | sed "s/.yml//"
+  done
+}
+
+runRunSet() {
+  runSets=$(listRunSets)
+  for i in $runSets; do
+    if [[ "${runSet}" == "$i" ]]; then
+      runSetFile=.github/workflows/*-harness-${runSet}.yml
+      break
+    fi
+  done
+  if [[ -z ${runSetFile} ]]; then
+     echo Error: AATH RunSet $1 not found, must be one of:
+     echo ""
+     listRunSets | tr '\n' ' '
+     echo ""
+     echo ""
+     echo For help, run \"./manage runset -h\"
+     exit 1
+  fi
+  buildAgents=$(grep BUILD_AGENTS $runSetFile | sed "s/.*: \"//" | sed "s/\"//" | head -1)
+  testAgents=$(grep TEST_AGENTS $runSetFile | sed "s/.*: \"//" | sed "s/\"//" | head -1)
+  otherParams=$(grep OTHER_PARAMS $runSetFile | sed "s/.*: \"//" | sed "s/\"//" | head -1)
+  testScope=$(grep TEST_SCOPE $runSetFile | sed "s/.*: \"//" | sed "s/\"//" | head -1)
+  reportProject=$(grep REPORT_PROJECT $runSetFile | sed "s/.*: //" | head -1)
+  env=$(grep env $runSetFile )
+  serviceCommand=$(grep SERVICE_COMMAND $runSetFile | sed "s/.*: \"//" | sed "s/\"//" | head -1)
+
+  if [[ "${runSetDryRun}" != "" ]]; then
+     echo Dry run -- nothing will be executed
+     echo ""
+  fi
+  echo Running runset: $runSet, using agents: $testAgents
+  echo Scope of tests: $testScope
+  if [[ "$otherParams" != "" ]]; then echo Other parameters: $otherParams; fi
+  echo ""
+  if [[ "$serviceCommand" != "" ]]; then echo WARNING: The runset assumes the service command \"$serviceCommand\" has been run; fi
+  if [[ "$env" != "" ]]; then
+    echo WARNING: The runset has environment variables that this run will not use.
+    echo ""
+    read  -n 1 -p "Hit Ctrl-C to stop, any other key to continue..." warning
+    echo ""
+    echo ""
+
+  fi
+
+  if [[ "$runSetBuild" == "1" ]]; then
+    ${runSetDryRun} ./manage ${runSetReBuild}build $buildAgents
+  fi
+
+  ${runSetDryRun} ./manage run $testAgents $otherParams $testScope
+  exit 0
+}
+
 runTests() {
   runArgs=${@}
 
@@ -1081,6 +1167,37 @@ if [[ "${COMMAND}" == "build" || "${COMMAND}" == "rebuild" ]]; then
   fi
 fi
 
+# Handle the runset arguments
+if [[ "${COMMAND}" == "runset" ]]; then
+
+  if [[ "$1" == "" || "$1" == "-h" || "$1" == "help" || "$1" == "--help" ]]; then
+      runSetUsage
+      exit 1
+  fi
+
+  runSet=$1
+  shift
+
+  while getopts "hbrn" FLAG; do
+    case $FLAG in
+        b ) runSetBuild=1
+            ;;
+        r ) runSetBuild=1
+            runSetReBuild=re
+            ;;
+        n ) runSetDryRun="echo Command to run: "
+            ;;
+        h ) runSetUsage
+            exit 1
+            ;;
+        \? ) #unrecognized option - show help
+            runSetUsage
+            exit 1
+            ;;
+    esac
+  done
+fi
+
 pushd ${SCRIPT_HOME} >/dev/null
 
 case "${COMMAND}" in
@@ -1098,6 +1215,9 @@ case "${COMMAND}" in
       runTests ${TAGS} ${@}
       echo ""
       stopHarness auto
+    ;;
+  runset)
+      runRunSet ${@}
     ;;
   start)
       startHarness
