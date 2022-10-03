@@ -848,8 +848,11 @@ runRunSet() {
   done
   if [[ -z ${runSetFile} ]]; then
      echo Error: AATH RunSet $1 not found, must be one of:
+     echo ""
      listRunSets | tr '\n' ' '
      echo ""
+     echo ""
+     echo For help, run \"./manage runset -h\"
      exit 1
   fi
   buildAgents=$(grep BUILD_AGENTS $runSetFile | sed "s/.*: \"//" | sed "s/\"//" | head -1)
@@ -1167,9 +1170,9 @@ fi
 # Handle the runset arguments
 if [[ "${COMMAND}" == "runset" ]]; then
 
-  if [[ "$1" == "" ]]; then
-    runSetUsage
-    exit 1
+  if [[ "$1" == "" || "$1" == "-h" || "$1" == "help" || "$1" == "--help" ]]; then
+      runSetUsage
+      exit 1
   fi
 
   runSet=$1
@@ -1184,9 +1187,13 @@ if [[ "${COMMAND}" == "runset" ]]; then
             ;;
         n ) runSetDryRun="echo Command to run: "
             ;;
-        h ) runSetUsage; exit 1 ;;
+        h ) runSetUsage
+            exit 1
+            ;;
         \? ) #unrecognized option - show help
-          runSetUsage; exit 1 ;;
+            runSetUsage
+            exit 1
+            ;;
     esac
   done
 fi
