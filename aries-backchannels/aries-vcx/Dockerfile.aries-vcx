@@ -27,12 +27,12 @@ USER indy
 
 RUN cargo new --bin aries-vcx-backchannel
 WORKDIR ./aries-vcx-backchannel
-COPY ./aries-vcx/Cargo.lock ./aries-vcx/Cargo.toml ./
+COPY --chown=indy:indy ./aries-vcx/Cargo.lock ./aries-vcx/Cargo.toml ./
 RUN cargo build
 RUN rm src/*.rs
 RUN rm ./target/debug/deps/aries_vcx_backchannel*
-COPY ./aries-vcx/src ./src
-COPY ./aries-vcx/resource ./resource
+COPY --chown=indy:indy  ./aries-vcx/src ./src
+COPY --chown=indy:indy  ./aries-vcx/resource ./resource
 RUN cargo build
 
 ENTRYPOINT ["./target/debug/aries-vcx-backchannel"]

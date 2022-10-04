@@ -16,22 +16,16 @@ use aries_vcx::messages::issuance::credential_offer::{
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal as VcxCredentialProposal;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::messages::mime_type::MimeType;
+use aries_vcx::messages::issuance::CredentialPreviewData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use std::sync::Mutex;
 use uuid;
 
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
-pub struct CredentialPreview {
-    #[serde(rename = "@type")]
-    msg_type: String,
-    attributes: Vec<serde_json::Value>,
-}
-
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CredentialOffer {
     cred_def_id: String,
-    credential_preview: CredentialPreview,
+    credential_preview: CredentialPreviewData,
     connection_id: String,
 }
 
@@ -42,14 +36,14 @@ pub struct CredentialProposal {
     schema_name: String,
     cred_def_id: String,
     schema_version: String,
-    credential_proposal: CredentialPreview,
+    credential_proposal: CredentialPreviewData,
     connection_id: String,
     schema_id: String,
 }
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Credential {
-    credential_preview: CredentialPreview,
+    credential_preview: CredentialPreviewData,
     #[serde(default)]
     comment: Option<String>,
 }
@@ -87,7 +81,6 @@ async fn download_tails_file(
     rev_reg_id: &str,
     tails_hash: &str,
 ) -> HarnessResult<()> {
-    info!("Downloading tails file to {:?}", tails_base_url);
     let url = match tails_base_url.to_string().matches('/').count() {
         0 => format!("{}/{}", tails_base_url, rev_reg_id),
         1.. => tails_base_url.to_string(),
@@ -199,15 +192,7 @@ impl Agent {
             .clone()
             .into_iter()
         {
-            let name = attr["name"].as_str().ok_or(HarnessError::from_msg(
-                HarnessErrorType::InvalidJson,
-                "No 'name' field in attributes",
-            ))?;
-            let value = attr["value"].as_str().ok_or(HarnessError::from_msg(
-                HarnessErrorType::InvalidJson,
-                "No 'value' field in attributes",
-            ))?;
-            proposal_data = proposal_data.add_credential_preview_data(name, value, MimeType::Plain);
+            proposal_data = proposal_data.add_credential_preview_data(&attr.name, &attr.value, MimeType::Plain);
         }
         holder
             .send_proposal(
@@ -226,14 +211,11 @@ impl Agent {
     }
 
     pub async fn send_credential_request(&mut self, id: &str) -> HarnessResult<String> {
-        let mut holder: Holder = self.dbs.holder.get(id).ok_or(HarnessError::from_msg(
-            HarnessErrorType::NotFoundError,
-            &format!("Holder with id {} not found", id),
-        ))?;
         let connection: Connection = self.dbs.connection.get(id).ok_or(HarnessError::from_msg(
             HarnessErrorType::NotFoundError,
             &format!("Connection with id {} not found", id),
         ))?;
+        let mut holder: Holder = self.dbs.holder.get(id).unwrap_or(Holder::create(&id)?);
         holder
             .send_request(
                 self.config.wallet_handle,
