@@ -54,11 +54,11 @@ jobs:
         env:
           EMIT_NEW_DIDCOMM_PREFIX: true
           EMIT_NEW_DIDCOMM_MIME_TYPE: true
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
-        if: ((github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness'))
+        if: (( always() && github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness' ))
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: acapy-b-afgo
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
+

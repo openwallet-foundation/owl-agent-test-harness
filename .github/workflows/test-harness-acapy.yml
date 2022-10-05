@@ -43,8 +43,8 @@ jobs:
           TEST_AGENTS: "-d acapy-main"
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@T004-RFC0211 -t ~@DidMethod_orb -t ~@Transport_NoHttpOutbound"
           REPORT_PROJECT: acapy
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: acapy 

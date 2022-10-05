@@ -37,6 +37,10 @@ runs:
       run: ./manage build ${{ inputs.BUILD_AGENTS }}
       shell: bash
       working-directory: test-harness
+    - name: generate environment file
+      if: ${{ failure() }}
+      run: ${{ github.action_path }}/store-failed-env.sh ${{ inputs.TEST_AGENTS }}
+      shell: bash
     - name: run-test-harness-acapy
       run: PROJECT_ID=${{inputs.REPORT_PROJECT}} ./manage run ${{ inputs.TEST_AGENTS }} ${{ inputs.REPORTING }} ${{ inputs.OTHER_PARAMS }} ${{ inputs.TEST_SCOPE }}
       shell: bash

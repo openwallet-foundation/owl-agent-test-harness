@@ -47,9 +47,8 @@ jobs:
           TEST_AGENTS: "-d javascript -b dotnet"
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@ProofProposal -t ~@RFC0025 -t ~@AIP20"
           REPORT_PROJECT: javascript-b-dotnet
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
-        if: ((github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness'))
+        if: (( always() && github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness'))
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: javascript-b-dotnet
