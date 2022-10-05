@@ -23,4 +23,4 @@ pickledb = "0.4.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 futures-util = "0.3.15"
 futures = "0.3.15"
-aries-vcx = { git = "https://github.com/hyperledger/aries-vcx", rev = "f12c68ec8a0f9556e909cea500d67797b4ddbc15" }
+aries-vcx = { git = "https://github.com/hyperledger/aries-vcx", rev = "80410e190f2c789b876b59de3e6067214031a98a" }
