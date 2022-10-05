@@ -68,6 +68,7 @@ impl Agent {
         let tails_base_path = "/tmp".to_string();
         let cred_def_id = match self.dbs.cred_def.get::<CachedCredDef>(&cred_def.schema_id) {
             None => {
+                std::thread::sleep(std::time::Duration::from_millis(1000));
                 let config = CredentialDefConfigBuilder::default()
                     .issuer_did(&did)
                     .schema_id(&cred_def.schema_id)

@@ -34,7 +34,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx"
           TEST_AGENTS: "-d aries-vcx"
-          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@RFC0183 -t ~@DIDExchangeConnection -t ~@T002-HIPE0011 -t ~@AIP20 -t ~@RFC0211 -t ~@RFC0453"
+          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@revocation -t ~@wip -t ~@RFC0183 -t ~@DIDExchangeConnection -t ~@AIP20 -t ~@RFC0211 -t ~@RFC0453"
           REPORT_PROJECT: aries-vcx
         continue-on-error: true
       - uses: actions/upload-artifact@v2
