@@ -90,7 +90,7 @@ impl Agent {
                             &did,
                             &cd.get_cred_def_id(),
                             &tails_base_path,
-                            10,
+                            50,
                             1,
                         )
                         .await?;
@@ -103,6 +103,7 @@ impl Agent {
                                 &tails_url,
                             )
                             .await?;
+                        self.dbs.rev_reg.set(&rev_reg_id, &rev_reg)?;
                         let tails_hash = rev_reg.get_rev_reg_def().value.tails_hash;
                         let tails_file = format!("{}/{}", tails_base_path, tails_hash);
                         upload_tails_file(&tails_url, &tails_file).await?;

@@ -4,6 +4,7 @@ use crate::Agent;
 use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{get, post, web, Responder};
 use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::indy::primitives::revocation_registry::publish_local_revocations;
 use std::sync::Mutex;
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
@@ -32,6 +33,7 @@ impl Agent {
         issuer
             .revoke_credential_local(self.config.wallet_handle)
             .await?;
+        publish_local_revocations(self.config.wallet_handle, self.config.pool_handle, &self.config.did, &revocation_data.rev_registry_id).await?;
         self.dbs.issuer.set(&issuer.get_source_id()?, &issuer)?;
         Ok("OK".to_string())
     }

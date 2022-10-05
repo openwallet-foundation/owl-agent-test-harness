@@ -82,6 +82,7 @@ struct Storage {
     issuer: PickleDb,
     verifier: PickleDb,
     prover: PickleDb,
+    rev_reg: PickleDb,
 }
 
 impl Storage {
@@ -119,6 +120,11 @@ impl Storage {
             ),
             prover: PickleDb::new(
                 "storage-prover.db",
+                PickleDbDumpPolicy::AutoDump,
+                SerializationMethod::Json,
+            ),
+            rev_reg: PickleDb::new(
+                "storage-rev-reg.db",
                 PickleDbDumpPolicy::AutoDump,
                 SerializationMethod::Json,
             ),
