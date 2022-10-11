@@ -3,9 +3,9 @@ use serde::Deserialize;
 pub mod connection;
 pub mod credential_definition;
 pub mod general;
-pub mod issuance;
-pub mod presentation;
-pub mod revocation;
+// pub mod issuance;
+// pub mod presentation;
+// pub mod revocation;
 pub mod schema;
 
 #[derive(Deserialize)]
