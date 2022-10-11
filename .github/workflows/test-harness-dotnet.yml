@@ -43,8 +43,8 @@ jobs:
           TEST_AGENTS: "-d dotnet"
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@revocation -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@RFC0025 -t ~@AIP20"
           REPORT_PROJECT: dotnet
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: dotnet 
