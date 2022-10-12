@@ -9,15 +9,19 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate log;
+extern crate aries_vcx_agent;
 extern crate clap;
 extern crate reqwest;
 extern crate uuid;
-extern crate aries_vcx_agent;
 
 use std::sync::Mutex;
 
 use crate::controllers::{
-    connection, general, schema, credential_definition, // issuance, presentation, revocation
+    connection,
+    credential_definition,
+    general,
+    issuance, // presentation, revocation
+    schema,
 };
 use actix_web::{middleware, web, App, HttpServer};
 use aries_vcx_agent::aries_vcx::{
@@ -68,7 +72,8 @@ enum Status {
 #[derive(Clone)]
 pub struct HarnessAgent {
     aries_agent: AriesAgent,
-    status: Status
+    status: Status,
+    last_connection_id: Option<String>,
 }
 
 #[macro_export]
@@ -107,13 +112,17 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::NormalizePath::new(
                 middleware::TrailingSlash::Trim,
             ))
-            .app_data(web::Data::new(Mutex::new(HarnessAgent { aries_agent: aries_agent.clone(), status: Status::Active })))
+            .app_data(web::Data::new(Mutex::new(HarnessAgent {
+                aries_agent: aries_agent.clone(),
+                status: Status::Active,
+                last_connection_id: None,
+            })))
             .service(
                 web::scope("/agent")
                     .configure(connection::config)
                     .configure(schema::config)
                     .configure(credential_definition::config)
-                    // .configure(issuance::config)
+                    .configure(issuance::config)
                     // .configure(revocation::config)
                     // .configure(presentation::config)
                     .configure(general::config),

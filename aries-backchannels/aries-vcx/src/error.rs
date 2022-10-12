@@ -4,9 +4,9 @@ use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::{
     CredentialDefConfigBuilderError, RevocationDetailsBuilderError,
 };
 use aries_vcx_agent::aries_vcx::indy::proofs::proof_request::ProofRequestDataBuilderError;
-use derive_more::{Display, Error};
-use aries_vcx_agent::AgentError;
 use aries_vcx_agent::aries_vcx::messages::error::MessagesError;
+use aries_vcx_agent::AgentError;
+use derive_more::{Display, Error};
 
 pub type HarnessResult<T> = Result<T, HarnessError>;
 
@@ -24,6 +24,8 @@ pub enum HarnessErrorType {
     InvalidJson,
     #[display(fmt = "Protocol error")]
     ProtocolError,
+    #[display(fmt = "Invalid state for requested operation")]
+    InvalidState,
     #[display(fmt = "Multiple credential definitions found")]
     MultipleCredDefinitions,
 }
@@ -43,9 +45,9 @@ impl error::ResponseError for HarnessError {
 
     fn status_code(&self) -> StatusCode {
         match self.kind {
-            HarnessErrorType::RequestNotAcceptedError | HarnessErrorType::RequestNotReceived | HarnessErrorType::InvalidJson => {
-                StatusCode::NOT_ACCEPTABLE
-            }
+            HarnessErrorType::RequestNotAcceptedError
+            | HarnessErrorType::RequestNotReceived
+            | HarnessErrorType::InvalidJson => StatusCode::NOT_ACCEPTABLE,
             HarnessErrorType::NotFoundError => StatusCode::NOT_FOUND,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }

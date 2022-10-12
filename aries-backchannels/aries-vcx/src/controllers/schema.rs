@@ -25,15 +25,33 @@ pub struct CachedSchema {
 
 impl HarnessAgent {
     pub async fn create_schema(&mut self, schema: &Schema) -> HarnessResult<String> {
-        let id = self.aries_agent.schemas().create_schema(&schema.schema_name, &schema.schema_version, &schema.attributes).await?;
-        if !self.aries_agent.schemas().exists_by_name_and_version(&schema.schema_name, &schema.schema_version).await? {
+        let ids = self
+            .aries_agent
+            .schemas()
+            .find_by_name_and_version(&schema.schema_name, &schema.schema_version)?;
+        let id = if let Some(id) = ids.get(0) {
+            id.to_string()
+        } else {
+            let id = self
+                .aries_agent
+                .schemas()
+                .create_schema(
+                    &schema.schema_name,
+                    &schema.schema_version,
+                    &schema.attributes,
+                )
+                .await?;
             self.aries_agent.schemas().publish_schema(&id).await?;
-        }
+            id
+        };
         Ok(json!({ "schema_id": id }).to_string())
     }
 
     pub async fn get_schema(&mut self, id: &str) -> HarnessResult<String> {
-        self.aries_agent.schemas().schema_json(&id).await
+        self.aries_agent
+            .schemas()
+            .schema_json(&id)
+            .await
             .map_err(|err| err.into())
     }
 }
@@ -43,20 +61,15 @@ pub async fn create_schema(
     req: web::Json<Request<Schema>>,
     agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .create_schema(&req.data)
-        .await
+    agent.lock().unwrap().create_schema(&req.data).await
 }
 
 #[get("/{schema_id}")]
-pub async fn get_schema(agent: web::Data<Mutex<HarnessAgent>>, path: web::Path<String>) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .get_schema(&path.into_inner())
-        .await
+pub async fn get_schema(
+    agent: web::Data<Mutex<HarnessAgent>>,
+    path: web::Path<String>,
+) -> impl Responder {
+    agent.lock().unwrap().get_schema(&path.into_inner()).await
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

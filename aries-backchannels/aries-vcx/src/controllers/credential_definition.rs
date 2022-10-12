@@ -60,7 +60,10 @@ impl HarnessAgent {
     ) -> HarnessResult<String> {
         let tails_base_url = std::env::var("TAILS_SERVER_URL")
             .unwrap_or("https://tails-server-test.pathfinder.gov.bc.ca".to_string());
-        let cred_def_ids = self.aries_agent.cred_defs().find_by_schema_id(&cred_def.schema_id)?;
+        let cred_def_ids = self
+            .aries_agent
+            .cred_defs()
+            .find_by_schema_id(&cred_def.schema_id)?;
         let cred_def_id = if cred_def_ids.is_empty() {
             let config = CredentialDefConfigBuilder::default()
                 .issuer_did(&self.aries_agent.issuer_did())
@@ -68,11 +71,21 @@ impl HarnessAgent {
                 .tag(&cred_def.tag)
                 .build()?;
             let cred_def_id = self.aries_agent.cred_defs().create_cred_def(config).await?;
-            self.aries_agent.cred_defs().publish_cred_def(&cred_def_id).await?;
+            self.aries_agent
+                .cred_defs()
+                .publish_cred_def(&cred_def_id)
+                .await?;
 
-            let rev_reg_id = self.aries_agent.rev_regs().create_rev_reg(&cred_def_id, 50).await?;
+            let rev_reg_id = self
+                .aries_agent
+                .rev_regs()
+                .create_rev_reg(&cred_def_id, 50)
+                .await?;
             let tails_url = format!("{}/{}", tails_base_url, rev_reg_id);
-            self.aries_agent.rev_regs().publish_rev_reg(&rev_reg_id, &tails_url).await?;
+            self.aries_agent
+                .rev_regs()
+                .publish_rev_reg(&rev_reg_id, &tails_url)
+                .await?;
 
             let tails_file = self.aries_agent.rev_regs().tails_file_path(&rev_reg_id)?;
             upload_tails_file(&tails_url, &tails_file).await?;
@@ -80,13 +93,18 @@ impl HarnessAgent {
         } else if cred_def_ids.len() == 1 {
             cred_def_ids.last().unwrap().clone()
         } else {
-            return Err(HarnessError::from_kind(HarnessErrorType::MultipleCredDefinitions))
+            return Err(HarnessError::from_kind(
+                HarnessErrorType::MultipleCredDefinitions,
+            ));
         };
         Ok(json!({ "credential_definition_id": cred_def_id }).to_string())
     }
 
     pub fn get_credential_definition(&self, id: &str) -> HarnessResult<String> {
-        self.aries_agent.cred_defs().cred_def_json(id).map_err(|err| err.into())
+        self.aries_agent
+            .cred_defs()
+            .cred_def_json(id)
+            .map_err(|err| err.into())
     }
 }
 

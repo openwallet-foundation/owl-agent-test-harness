@@ -1,6 +1,6 @@
 use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::{State, HarnessAgent};
+use crate::{HarnessAgent, State};
 use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::agency_client::agency_client::AgencyClient;
@@ -46,7 +46,7 @@ fn to_backchannel_state(state: ConnectionState) -> State {
 }
 
 impl HarnessAgent {
-    pub async fn create_invitation(&mut self) -> HarnessResult<String> {
+    pub async fn create_invitation(&self) -> HarnessResult<String> {
         let invitation = self.aries_agent.connections().create_invitation().await?;
         let id = invitation.get_id()?;
         Ok(json!({ "connection_id": id, "invitation": invitation }).to_string())
@@ -56,49 +56,60 @@ impl HarnessAgent {
         &mut self,
         invite: PairwiseInvitation,
     ) -> HarnessResult<String> {
-        let id = self.aries_agent.connections().receive_invitation(Invitation::Pairwise(invite)).await?;
+        let id = self
+            .aries_agent
+            .connections()
+            .receive_invitation(Invitation::Pairwise(invite))
+            .await?;
         Ok(json!({ "connection_id": id }).to_string())
-
     }
 
-    pub async fn send_request(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn send_request(&self, id: &str) -> HarnessResult<String> {
         self.aries_agent.connections().send_request(id).await?;
-        Ok(json!({ "connection_id": id }).to_string()) 
+        Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub async fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
-        let mut requests = self.aries_agent.connections().get_requests(id).await?;
-        if self.aries_agent.connections().get_state(id)? != ConnectionState::Inviter(InviterState::Invited) || requests.len() > 1 {
-            return Err(HarnessError::from_kind(HarnessErrorType::RequestNotReceived));
+    pub async fn accept_request(&self, id: &str) -> HarnessResult<String> {
+        let mut requests = self
+            .aries_agent
+            .connections()
+            .get_connection_requests(id)
+            .await?;
+        if self.aries_agent.connections().get_state(id)?
+            != ConnectionState::Inviter(InviterState::Invited)
+            || requests.len() != 1
+        {
+            return Err(HarnessError::from_kind(
+                HarnessErrorType::RequestNotReceived,
+            ));
         }
-        self.aries_agent.connections().accept_request(id, requests.pop().unwrap()).await?;
-        Ok(json!({ "connection_id": id }).to_string()) 
+        self.aries_agent
+            .connections()
+            .accept_request(id, requests.pop().unwrap())
+            .await?;
+        Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub async fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
-        // self.aries_agent.connections().send_ping(id).await?;
-        self.aries_agent.connections().update_state(id).await?;
-        Ok(json!({ "connection_id": id }).to_string()) 
+    pub async fn send_ping(&self, id: &str) -> HarnessResult<String> {
+        self.aries_agent.connections().send_ping(id).await?;
+        Ok(json!({ "connection_id": id }).to_string())
     }
 
     pub async fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
         let state = to_backchannel_state(self.aries_agent.connections().update_state(id).await?);
+        self.last_connection_id = Some(id.to_string());
         Ok(json!({ "state": state }).to_string())
     }
 
-    pub async fn get_connection(&mut self, id: &str) -> HarnessResult<String> {
-        self.aries_agent.connections().get_by_id(id)?;
-        Ok(json!({ "connection_id": id }).to_string()) 
+    pub async fn get_connection(&self, id: &str) -> HarnessResult<String> {
+        self.aries_agent.connections().update_state(id).await?;
+        Ok(json!({ "connection_id": id }).to_string())
     }
 }
 
 #[post("/create-invitation")]
 pub async fn create_invitation(agent: web::Data<Mutex<HarnessAgent>>) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .create_invitation()
-        .await
+    agent.lock().unwrap().create_invitation().await
 }
 
 #[post("/receive-invitation")]
@@ -118,11 +129,7 @@ pub async fn send_request(
     req: web::Json<Request<()>>,
     agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .send_request(&req.id)
-        .await
+    agent.lock().unwrap().send_request(&req.id).await
 }
 
 #[post("/accept-request")]
@@ -130,11 +137,7 @@ pub async fn accept_request(
     req: web::Json<Request<()>>,
     agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .accept_request(&req.id)
-        .await
+    agent.lock().unwrap().accept_request(&req.id).await
 }
 
 #[get("/{connection_id}")]
@@ -166,11 +169,7 @@ pub async fn send_ping(
     req: web::Json<Request<Comment>>,
     agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .send_ping(&req.id)
-        .await
+    agent.lock().unwrap().send_ping(&req.id).await
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
