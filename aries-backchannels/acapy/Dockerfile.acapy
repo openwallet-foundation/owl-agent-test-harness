@@ -10,6 +10,9 @@ RUN apt-get update \
 RUN mkdir -p /aries-backchannels
 WORKDIR /aries-backchannels
 
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+
 COPY python/requirements.txt python/
 COPY acapy/requirements-latest.txt acapy/
 RUN pip install -r acapy/requirements-latest.txt && pip install -r python/requirements.txt
@@ -28,4 +31,4 @@ ENV RUNMODE=docker
 
 RUN ./bin/aca-py --version > ./acapy-version.txt
 
-ENTRYPOINT ["python", "acapy/acapy_backchannel.py"]
+ENTRYPOINT ["bash", "acapy/ngrok-wait.sh"]
