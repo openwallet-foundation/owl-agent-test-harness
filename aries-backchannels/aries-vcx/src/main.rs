@@ -20,7 +20,7 @@ use crate::controllers::{
     connection,
     credential_definition,
     general,
-    issuance, // presentation, revocation
+    issuance, presentation, //revocation
     schema,
 };
 use actix_web::{middleware, web, App, HttpServer};
@@ -124,7 +124,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(credential_definition::config)
                     .configure(issuance::config)
                     // .configure(revocation::config)
-                    // .configure(presentation::config)
+                    .configure(presentation::config)
                     .configure(general::config),
             )
     })

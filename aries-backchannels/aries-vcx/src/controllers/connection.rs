@@ -1,6 +1,6 @@
 use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::{HarnessAgent, State};
+use crate::{HarnessAgent, State, soft_assert_eq};
 use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::agency_client::agency_client::AgencyClient;
@@ -75,6 +75,7 @@ impl HarnessAgent {
             .connections()
             .get_connection_requests(id)
             .await?;
+        soft_assert_eq!(requests.len(), 1);
         if self.aries_agent.connections().get_state(id)?
             != ConnectionState::Inviter(InviterState::Invited)
             || requests.len() != 1
@@ -91,6 +92,7 @@ impl HarnessAgent {
     }
 
     pub async fn send_ping(&self, id: &str) -> HarnessResult<String> {
+        self.aries_agent.connections().update_state(id).await?;
         self.aries_agent.connections().send_ping(id).await?;
         Ok(json!({ "connection_id": id }).to_string())
     }
