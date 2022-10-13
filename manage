@@ -371,7 +371,7 @@ pingCloudAgency(){
 pingUniresolver(){
 
   # ping uniresolver server
-  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:8080)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:8080/actuator/health)
   if (( ${rtnCd} == 200 )); then
     return 0
   else
