@@ -1,14 +1,8 @@
 use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::HarnessAgent;
-use actix_web::http::header::{CacheControl, CacheDirective};
+use crate::{HarnessAgent, soft_assert_eq};
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
-use aries_vcx_agent::aries_vcx::indy::primitives::credential_schema;
-use aries_vcx_agent::aries_vcx::indy::primitives::credential_schema::Schema as VcxSchema;
-use aries_vcx_agent::aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 use std::sync::Mutex;
-use uuid;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Schema {
@@ -17,32 +11,32 @@ pub struct Schema {
     attributes: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CachedSchema {
-    schema_id: String,
-    schema_json: String,
-}
-
 impl HarnessAgent {
+    fn schema_id(&self, schema: &Schema) -> String {
+        let did = self.aries_agent.issuer_did();
+        let &Schema { schema_name, schema_version, .. } = &schema;
+        format!("{}:2:{}:{}", did, schema_name, schema_version)
+    }
+
+    async fn schema_published(&self, id: &str) -> bool {
+        self.aries_agent.schemas().schema_json(id).await.is_ok()
+    }
+
     pub async fn create_schema(&mut self, schema: &Schema) -> HarnessResult<String> {
-        let ids = self
-            .aries_agent
-            .schemas()
-            .find_by_name_and_version(&schema.schema_name, &schema.schema_version)?;
-        let id = if let Some(id) = ids.get(0) {
-            id.to_string()
-        } else {
-            let id = self
-                .aries_agent
-                .schemas()
-                .create_schema(
-                    &schema.schema_name,
-                    &schema.schema_version,
-                    &schema.attributes,
-                )
-                .await?;
+        let id = self.schema_id(schema);
+        if !self.schema_published(&id).await {
+            soft_assert_eq!(
+                self
+                    .aries_agent
+                    .schemas()
+                    .create_schema(
+                        &schema.schema_name,
+                        &schema.schema_version,
+                        &schema.attributes,
+                    )
+                    .await?,
+                id);
             self.aries_agent.schemas().publish_schema(&id).await?;
-            id
         };
         Ok(json!({ "schema_id": id }).to_string())
     }

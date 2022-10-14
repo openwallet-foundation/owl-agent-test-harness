@@ -20,15 +20,11 @@ use crate::controllers::{
     connection,
     credential_definition,
     general,
-    issuance, presentation, //revocation
+    issuance,
+    presentation, //revocation
     schema,
 };
 use actix_web::{middleware, web, App, HttpServer};
-use aries_vcx_agent::aries_vcx::{
-    agency_client::configuration::AgencyClientConfig,
-    handlers::connection::connection::Connection,
-    vdrtools_sys::{PoolHandle, WalletHandle},
-};
 use clap::Parser;
 
 use aries_vcx_agent::Agent as AriesAgent;

@@ -285,17 +285,9 @@ impl HarnessAgent {
         Ok(json!({ "state": state }).to_string())
     }
 
-    pub async fn send_ack(&self, id: &str) -> HarnessResult<String> {
-        if self.aries_agent.holder().get_state(id)? != HolderState::RequestSent {
-            return Err(HarnessError::from_kind(HarnessErrorType::InvalidState));
-        }
+    pub async fn store_credential(&self, id: &str) -> HarnessResult<String> {
+        // To send ack if necessary
         let state = self.aries_agent.holder().update_state(id).await?;
-        if state != HolderState::Finished {
-            return Err(HarnessError::from_msg(
-                HarnessErrorType::ProtocolError,
-                "Failed to send ack",
-            ));
-        }
 
         if self.aries_agent.holder().is_revokable(id).await? {
             let rev_reg_id = self.aries_agent.holder().get_rev_reg_id(id).await?;
@@ -312,9 +304,16 @@ impl HarnessAgent {
         } else if self.aries_agent.holder().exists_by_id(&id) {
             to_backchannel_state_holder(self.aries_agent.holder().update_state(&id).await?)
         } else if let Some(connection_id) = &self.last_connection_id {
-            let mut offers = self.aries_agent.connections().get_credential_offers(connection_id).await?;
+            let mut offers = self
+                .aries_agent
+                .connections()
+                .get_credential_offers(connection_id)
+                .await?;
             soft_assert_eq!(offers.len(), 1);
-            let id = self.aries_agent.holder().create_from_offer(connection_id, offers.pop().unwrap())?;
+            let id = self
+                .aries_agent
+                .holder()
+                .create_from_offer(connection_id, offers.pop().unwrap())?;
             to_backchannel_state_holder(self.aries_agent.holder().get_state(&id)?)
         } else {
             return Err(HarnessError::from_kind(HarnessErrorType::NotFoundError));
@@ -384,11 +383,11 @@ pub async fn issue_credential(
 }
 
 #[post("/store")]
-pub async fn send_ack(
+pub async fn store_credential(
     req: web::Json<Request<CredentialId>>,
     agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().send_ack(&req.id).await
+    agent.lock().unwrap().store_credential(&req.id).await
 }
 
 #[get("/{cred_id}")]
@@ -411,7 +410,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .service(get_issuer_state)
             .service(send_credential_request)
             .service(issue_credential)
-            .service(send_ack),
+            .service(store_credential),
     )
     .service(web::scope("/command/credential").service(get_credential));
 }

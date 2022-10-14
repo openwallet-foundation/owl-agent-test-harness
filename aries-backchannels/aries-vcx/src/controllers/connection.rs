@@ -1,18 +1,12 @@
 use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::{HarnessAgent, State, soft_assert_eq};
-use actix_web::http::header::{CacheControl, CacheDirective};
+use crate::{soft_assert_eq, HarnessAgent, State};
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx_agent::aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-use aries_vcx_agent::aries_vcx::indy::ledger::transactions::into_did_doc;
-use aries_vcx_agent::aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx_agent::aries_vcx::handlers::connection::connection::ConnectionState;
 use aries_vcx_agent::aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
-use aries_vcx_agent::aries_vcx::messages::connection::request::Request as VcxConnectionRequest;
 use aries_vcx_agent::aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
 use aries_vcx_agent::aries_vcx::protocols::connection::inviter::state_machine::InviterState;
 use std::sync::Mutex;
-use uuid;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Default)]
@@ -75,7 +69,6 @@ impl HarnessAgent {
             .connections()
             .get_connection_requests(id)
             .await?;
-        soft_assert_eq!(requests.len(), 1);
         if self.aries_agent.connections().get_state(id)?
             != ConnectionState::Inviter(InviterState::Invited)
             || requests.len() != 1
@@ -92,8 +85,8 @@ impl HarnessAgent {
     }
 
     pub async fn send_ping(&self, id: &str) -> HarnessResult<String> {
-        self.aries_agent.connections().update_state(id).await?;
-        self.aries_agent.connections().send_ping(id).await?;
+        // TODO: Should be explicit
+        self.aries_agent.connections().update_state(id).await?; // Receive response and send ack
         Ok(json!({ "connection_id": id }).to_string())
     }
 
@@ -104,7 +97,7 @@ impl HarnessAgent {
     }
 
     pub async fn get_connection(&self, id: &str) -> HarnessResult<String> {
-        self.aries_agent.connections().update_state(id).await?;
+        soft_assert_eq!(self.aries_agent.connections().exists_by_id(id), true);
         Ok(json!({ "connection_id": id }).to_string())
     }
 }

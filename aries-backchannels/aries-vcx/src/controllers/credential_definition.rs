@@ -1,4 +1,3 @@
-use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{get, post, web, Responder};
 use reqwest::multipart;
 use std::sync::Mutex;
@@ -9,7 +8,6 @@ use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::Credent
 use crate::controllers::Request;
 use crate::soft_assert_eq;
 use crate::HarnessAgent;
-use uuid;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CredentialDefinition {
