@@ -99,5 +99,3 @@ pub async fn initialize() -> AriesAgent {
     };
     AriesAgent::initialize(init_config).await.unwrap()
 }
-
-pub fn shutdown() {}

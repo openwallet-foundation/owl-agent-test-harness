@@ -98,12 +98,6 @@ impl HarnessAgent {
             .non_revoked(req_data.non_revoked)
             .nonce(anoncreds::generate_nonce().await?)
             .build()?;
-        let mut proposals = self.aries_agent.connections().get_proof_proposals(&presentation_request.connection_id).await?;
-        let proposal = match proposals.len() {
-            0 => None,
-            1 => Some(proposals.pop().unwrap()),
-            _ => return Err(HarnessError::from_kind(HarnessErrorType::ProtocolError))
-        };
         let id = self
             .aries_agent
             .verifier()
@@ -159,12 +153,12 @@ impl HarnessAgent {
     }
 
     pub async fn get_proof_state(&mut self, id: &str) -> HarnessResult<String> {
-        let state = if self.aries_agent.verifier().exists_by_id(&id) {
-            to_backchannel_state_verifier(self.aries_agent.verifier().update_state(&id).await?)
-        } else if self.aries_agent.prover().exists_by_id(&id) {
-            to_backchannel_state_prover(self.aries_agent.prover().update_state(&id).await?)
-        } else if self.aries_agent.verifier().exists_by_id(&id) {
-            to_backchannel_state_verifier(self.aries_agent.verifier().update_state(&id).await?)
+        let state = if self.aries_agent.verifier().exists_by_id(id) {
+            to_backchannel_state_verifier(self.aries_agent.verifier().update_state(id).await?)
+        } else if self.aries_agent.prover().exists_by_id(id) {
+            to_backchannel_state_prover(self.aries_agent.prover().update_state(id).await?)
+        } else if self.aries_agent.verifier().exists_by_id(id) {
+            to_backchannel_state_verifier(self.aries_agent.verifier().update_state(id).await?)
         } else {
             let requests = self
                 .aries_agent

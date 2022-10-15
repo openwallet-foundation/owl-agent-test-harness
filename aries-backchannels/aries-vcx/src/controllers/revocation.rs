@@ -1,10 +1,9 @@
 use crate::controllers::Request;
-use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
+use crate::error::HarnessResult;
 use crate::HarnessAgent;
-use actix_web::http::header::{CacheControl, CacheDirective};
+
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx_agent::aries_vcx::indy::primitives::revocation_registry::publish_local_revocations;
+
 use std::sync::Mutex;
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
@@ -26,9 +25,9 @@ impl HarnessAgent {
             publish_immediately,
             ..
         } = revocation_data;
-        self.aries_agent.rev_regs().revoke_credential_locally(&rev_registry_id, &cred_rev_id).await?;
+        self.aries_agent.rev_regs().revoke_credential_locally(rev_registry_id, cred_rev_id).await?;
         if *publish_immediately {
-            self.aries_agent.rev_regs().publish_local_revocations(&rev_registry_id).await?;
+            self.aries_agent.rev_regs().publish_local_revocations(rev_registry_id).await?;
         };
         Ok("".to_string())
     }

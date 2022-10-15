@@ -3,13 +3,7 @@ use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::soft_assert_eq;
 use crate::{HarnessAgent, State};
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx_agent::aries_vcx::handlers::connection::connection::Connection;
-use aries_vcx_agent::aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx_agent::aries_vcx::messages::issuance::credential_offer::{
-    CredentialOffer as VcxCredentialOffer, OfferInfo,
-};
-use aries_vcx_agent::aries_vcx::messages::issuance::credential_proposal::CredentialProposal as VcxCredentialProposal;
+use aries_vcx_agent::aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx_agent::aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx_agent::aries_vcx::messages::issuance::CredentialPreviewData;
 use aries_vcx_agent::aries_vcx::messages::mime_type::MimeType;
@@ -111,55 +105,6 @@ async fn download_tails_file(
     Ok(())
 }
 
-async fn get_proposal(
-    connection: &Connection,
-    agency_client: &AgencyClient,
-) -> HarnessResult<VcxCredentialProposal> {
-    let mut proposals = Vec::<VcxCredentialProposal>::new();
-    for (uid, message) in connection.get_messages(agency_client).await?.into_iter() {
-        match message {
-            A2AMessage::CredentialProposal(proposal) => {
-                connection
-                    .update_message_status(&uid, agency_client)
-                    .await
-                    .ok();
-                proposals.push(proposal);
-            }
-            _ => {}
-        }
-    }
-    soft_assert_eq!(proposals.len(), 1);
-    proposals.pop().ok_or(HarnessError::from_msg(
-        HarnessErrorType::InternalServerError,
-        "Did not obtain presentation request message",
-    ))
-}
-
-async fn get_offer(
-    connection: &Connection,
-    agency_client: &AgencyClient,
-    thread_id: &str,
-) -> HarnessResult<VcxCredentialOffer> {
-    let mut offers = Vec::<VcxCredentialOffer>::new();
-    for (uid, message) in connection.get_messages(agency_client).await?.into_iter() {
-        match message {
-            A2AMessage::CredentialOffer(offer) if offer.get_thread_id() == *thread_id => {
-                connection
-                    .update_message_status(&uid, agency_client)
-                    .await
-                    .ok();
-                offers.push(offer);
-            }
-            _ => {}
-        }
-    }
-    soft_assert_eq!(offers.len(), 1);
-    offers.pop().ok_or(HarnessError::from_msg(
-        HarnessErrorType::InternalServerError,
-        "Did not obtain presentation request message",
-    ))
-}
-
 impl HarnessAgent {
     pub async fn send_credential_proposal(
         &mut self,
@@ -183,12 +128,6 @@ impl HarnessAgent {
             .send_credential_proposal(&cred_proposal.connection_id, proposal_data)
             .await?;
         let state = to_backchannel_state_holder(self.aries_agent.holder().get_state(&id)?);
-        let proposals_len = self
-            .aries_agent
-            .connections()
-            .get_credential_proposals(&cred_proposal.connection_id)
-            .await?
-            .len();
         Ok(json!({ "state": state, "thread_id": id }).to_string())
     }
 
@@ -294,10 +233,10 @@ impl HarnessAgent {
     }
 
     pub async fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
-        let state = if self.aries_agent.issuer().exists_by_id(&id) {
-            to_backchannel_state_issuer(self.aries_agent.issuer().update_state(&id).await?)
-        } else if self.aries_agent.holder().exists_by_id(&id) {
-            to_backchannel_state_holder(self.aries_agent.holder().update_state(&id).await?)
+        let state = if self.aries_agent.issuer().exists_by_id(id) {
+            to_backchannel_state_issuer(self.aries_agent.issuer().update_state(id).await?)
+        } else if self.aries_agent.holder().exists_by_id(id) {
+            to_backchannel_state_holder(self.aries_agent.holder().update_state(id).await?)
         } else if let Some(connection_id) = &self.last_connection_id {
             let mut offers = self
                 .aries_agent
