@@ -17,5 +17,4 @@ serde_derive = "1.0.97"
 log = "0.4.17"
 env_logger = "0.8.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
-futures = "0.3.15"
 aries-vcx-agent = { path = "/Users/ab006rh/Source/aries-vcx-agent" }

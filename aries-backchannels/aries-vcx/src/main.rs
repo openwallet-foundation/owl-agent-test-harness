@@ -21,7 +21,8 @@ use crate::controllers::{
     credential_definition,
     general,
     issuance,
-    presentation, //revocation
+    presentation,
+    revocation,
     schema,
 };
 use actix_web::{middleware, web, App, HttpServer};
@@ -33,11 +34,9 @@ use aries_vcx_agent::Agent as AriesAgent;
 struct Opts {
     #[clap(short, long, default_value = "9020")]
     port: u32,
-    #[clap(short, long, default_value = "false")]
-    interactive: String,
 }
 
-#[derive(Copy, Clone, Debug, Serialize)]
+#[derive(Copy, Clone, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum State {
     Initial,
@@ -119,7 +118,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(schema::config)
                     .configure(credential_definition::config)
                     .configure(issuance::config)
-                    // .configure(revocation::config)
+                    .configure(revocation::config)
                     .configure(presentation::config)
                     .configure(general::config),
             )
