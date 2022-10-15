@@ -16,14 +16,6 @@ pub struct CredentialDefinition {
     tag: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CachedCredDef {
-    cred_def_id: String,
-    cred_def_json: String,
-    pub tails_file: Option<String>,
-    pub rev_reg_id: Option<String>,
-}
-
 async fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<()> {
     info!("Going to upload tails file {} to {}", tails_file, tails_url);
     let client = reqwest::Client::new();

@@ -23,7 +23,14 @@ impl HarnessAgent {
     }
 
     pub async fn create_schema(&mut self, schema: &Schema) -> HarnessResult<String> {
-        let id = self.schema_id(schema);
+        let id = self.aries_agent
+                    .schemas()
+                    .create_schema(
+                        &schema.schema_name,
+                        &schema.schema_version,
+                        &schema.attributes,
+                    )
+                    .await?;
         if !self.schema_published(&id).await {
             soft_assert_eq!(
                 self

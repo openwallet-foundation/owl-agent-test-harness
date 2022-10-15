@@ -1,14 +1,10 @@
-use crate::controllers::credential_definition::CachedCredDef;
 use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::soft_assert_eq;
 use crate::{HarnessAgent, State};
-use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx_agent::aries_vcx::handlers::connection::connection::Connection;
-use aries_vcx_agent::aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx_agent::aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx_agent::aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx_agent::aries_vcx::messages::issuance::credential_offer::{
     CredentialOffer as VcxCredentialOffer, OfferInfo,
@@ -20,7 +16,6 @@ use aries_vcx_agent::aries_vcx::messages::mime_type::MimeType;
 use aries_vcx_agent::aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx_agent::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use std::sync::Mutex;
-use uuid;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CredentialOffer {

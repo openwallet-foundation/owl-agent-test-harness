@@ -29,11 +29,17 @@ pub struct PresentationProposalWrapper {
     presentation_proposal: PresentationProposal,
 }
 
+// TODO: Remove these structs
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub proof_request: ProofRequestDataWrapper,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+pub struct ProofRequestDataWrapper {
+    pub data: ProofRequestData,
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -49,11 +55,6 @@ pub struct ProofRequestData {
     pub requested_predicates: Option<HashMap<String, PredicateInfo>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub non_revoked: Option<NonRevokedInterval>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
-pub struct ProofRequestDataWrapper {
-    pub data: ProofRequestData,
 }
 
 fn to_backchannel_state_prover(state: ProverState) -> State {
@@ -97,12 +98,19 @@ impl HarnessAgent {
             .non_revoked(req_data.non_revoked)
             .nonce(anoncreds::generate_nonce().await?)
             .build()?;
+        let mut proposals = self.aries_agent.connections().get_proof_proposals(&presentation_request.connection_id).await?;
+        let proposal = match proposals.len() {
+            0 => None,
+            1 => Some(proposals.pop().unwrap()),
+            _ => return Err(HarnessError::from_kind(HarnessErrorType::ProtocolError))
+        };
         let id = self
             .aries_agent
             .verifier()
             .send_proof_request(
                 &presentation_request.connection_id,
                 presentation_request_data,
+                None
             )
             .await?;
         let state = self.aries_agent.verifier().get_state(&id)?;
