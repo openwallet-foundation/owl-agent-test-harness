@@ -34,6 +34,8 @@ use aries_vcx_agent::Agent as AriesAgent;
 struct Opts {
     #[clap(short, long, default_value = "9020")]
     port: u32,
+    #[clap(short, long, default_value = "false")]
+    interactive: String,
 }
 
 #[derive(Copy, Clone, Serialize)]
