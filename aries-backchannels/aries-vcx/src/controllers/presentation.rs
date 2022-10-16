@@ -146,8 +146,6 @@ impl HarnessAgent {
             self.aries_agent.verifier().get_state(id)?,
             VerifierState::PresentationRequestSent
         );
-        let state = self.aries_agent.verifier().update_state(id).await?;
-        soft_assert_eq!(state, VerifierState::Finished);
         let verified = self.aries_agent.verifier().verify_presentation(id)? == Status::Success;
         Ok(json!({ "state": State::Done, "verified": verified }).to_string())
     }
