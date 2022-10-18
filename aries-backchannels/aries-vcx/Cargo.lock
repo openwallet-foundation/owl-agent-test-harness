@@ -270,7 +270,7 @@ dependencies = [
  "android_logger",
  "async-std",
  "async-trait",
- "env_logger 0.9.1",
+ "env_logger",
  "failure",
  "futures",
  "lazy_static",
@@ -380,7 +380,7 @@ dependencies = [
  "base64 0.8.0",
  "chrono",
  "derive_builder 0.10.2",
- "env_logger 0.9.1",
+ "env_logger",
  "failure",
  "futures",
  "lazy_static",
@@ -430,9 +430,9 @@ dependencies = [
  "aries-vcx-agent",
  "clap",
  "derive_more",
- "env_logger 0.8.4",
+ "env_logger",
  "log",
- "rand 0.6.5",
+ "rand 0.8.5",
  "reqwest",
  "serde",
  "serde_derive",
@@ -1559,19 +1559,6 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a19187fea3ac7e84da7dacf48de0c45d63c6a76f9490dae389aead16c243fce3"
-dependencies = [
- "atty",
- "humantime",
- "log",
- "regex",
- "termcolor",
-]
-
-[[package]]
-name = "env_logger"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c90bf5f19754d10198ccb95b70664fc925bd1fc090a0fd9a6ebc54acc8cd6272"
@@ -2353,7 +2340,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "convert_case 0.3.2",
  "derivative",
- "env_logger 0.9.1",
+ "env_logger",
  "etcommon-rlp",
  "failure",
  "futures",
@@ -2491,7 +2478,7 @@ dependencies = [
  "base64 0.8.0",
  "chrono",
  "derive_builder 0.10.2",
- "env_logger 0.9.1",
+ "env_logger",
  "failure",
  "lazy_static",
  "log",

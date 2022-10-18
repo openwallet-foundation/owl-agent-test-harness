@@ -14,7 +14,7 @@ async fn get_trustee_seed() -> String {
         let client = reqwest::Client::new();
         let body = json!({
             "role": "TRUST_ANCHOR",
-            "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000, 1000000))
+            "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
         })
         .to_string();
         client

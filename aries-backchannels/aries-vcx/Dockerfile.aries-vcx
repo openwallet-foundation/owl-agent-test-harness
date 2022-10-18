@@ -5,8 +5,6 @@ USER root
 ARG UID=1001
 ARG GID=1001
 
-ENV RUST_LOG=warning
-
 RUN addgroup -g $GID indy && adduser -u $UID -D -G indy indy
 
 RUN apk update && apk upgrade && \

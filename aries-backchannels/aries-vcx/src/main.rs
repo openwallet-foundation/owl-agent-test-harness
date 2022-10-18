@@ -96,7 +96,7 @@ macro_rules! soft_assert_eq {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("trace"));
+    env_logger::init_from_env(env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"));
     let opts: Opts = Opts::parse();
 
     let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
