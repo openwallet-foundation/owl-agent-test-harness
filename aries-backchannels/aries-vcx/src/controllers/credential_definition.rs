@@ -66,19 +66,21 @@ impl HarnessAgent {
                 .publish_cred_def(&cred_def_id)
                 .await?;
 
-            let rev_reg_id = self
-                .aries_agent
-                .rev_regs()
-                .create_rev_reg(&cred_def_id, 50)
-                .await?;
-            let tails_url = format!("{}/{}", tails_base_url, rev_reg_id);
-            self.aries_agent
-                .rev_regs()
-                .publish_rev_reg(&rev_reg_id, &tails_url)
-                .await?;
+            if cred_def.support_revocation {
+                let rev_reg_id = self
+                    .aries_agent
+                    .rev_regs()
+                    .create_rev_reg(&cred_def_id, 50)
+                    .await?;
+                let tails_url = format!("{}/{}", tails_base_url, rev_reg_id);
+                self.aries_agent
+                    .rev_regs()
+                    .publish_rev_reg(&rev_reg_id, &tails_url)
+                    .await?;
 
-            let tails_file = self.aries_agent.rev_regs().tails_file_path(&rev_reg_id)?;
-            upload_tails_file(&tails_url, &tails_file).await?;
+                let tails_file = self.aries_agent.rev_regs().tails_file_path(&rev_reg_id)?;
+                upload_tails_file(&tails_url, &tails_file).await?;
+            }
             cred_def_id
         } else if cred_def_ids.len() == 1 {
             cred_def_ids.last().unwrap().clone()

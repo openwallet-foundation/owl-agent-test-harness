@@ -32,9 +32,10 @@ impl HarnessAgent {
         Ok("".to_string())
     }
 
-    pub fn get_revocation_registry(&mut self, id: &str) -> HarnessResult<String> {
+    pub fn get_rev_reg_info_for_credential(&mut self, id: &str) -> HarnessResult<String> {
         let rev_reg_id = self.aries_agent.issuer().get_rev_reg_id(id)?;
-        Ok(json!({ "revoc_reg_id": rev_reg_id }).to_string())
+        let rev_id = self.aries_agent.issuer().get_rev_id(id)?;
+        Ok(json!({ "revoc_reg_id": rev_reg_id, "revocation_id": rev_id }).to_string())
     }
 }
 
@@ -51,17 +52,17 @@ pub async fn revoke_credential(
 }
 
 #[get("/{cred_id}")]
-pub async fn get_revocation_registry(
+pub async fn get_rev_reg_info_for_credential(
     agent: web::Data<Mutex<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
         .lock()
         .unwrap()
-        .get_revocation_registry(&path.into_inner())
+        .get_rev_reg_info_for_credential(&path.into_inner())
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/response/revocation-registry").service(get_revocation_registry))
+    cfg.service(web::scope("/response/revocation-registry").service(get_rev_reg_info_for_credential))
         .service(web::scope("/command/revocation").service(revoke_credential));
 }

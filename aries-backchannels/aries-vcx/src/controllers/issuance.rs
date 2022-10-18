@@ -145,28 +145,28 @@ impl HarnessAgent {
         cred_offer: &CredentialOffer,
         id: &str,
     ) -> HarnessResult<String> {
+        let get_tails_rev_id = |cred_def_id: &str| -> HarnessResult<(Option<String>, Option<String>)> {
+            Ok(if let Some(rev_reg_id) = self
+                .aries_agent
+                .rev_regs()
+                .find_by_cred_def_id(cred_def_id)?
+                .pop() {
+                    (
+                        Some(self.aries_agent.rev_regs().get_tails_dir(&rev_reg_id)?),
+                        Some(rev_reg_id)
+                    )
+                } else { (None, None) })
+        };
+
         let connection_id = if cred_offer.connection_id.is_empty() {
             None
         } else {
             Some(cred_offer.connection_id.as_str())
         };
-        let (tails_file, rev_reg_id) = if !cred_offer.cred_def_id.is_empty() {
-            let rev_reg_id = self
-                .aries_agent
-                .rev_regs()
-                .find_by_cred_def_id(&cred_offer.cred_def_id)?
-                .pop()
-                .unwrap();
-            (
-                Some(self.aries_agent.rev_regs().get_tails_dir(&rev_reg_id)?),
-                Some(rev_reg_id),
-            )
-        } else {
-            (None, None)
-        };
         let (offer_info, id) = if id.is_empty() {
             let credential_preview =
                 serde_json::to_string(&cred_offer.credential_preview.attributes)?;
+            let (tails_file, rev_reg_id) = get_tails_rev_id(&cred_offer.cred_def_id)?;
             (
                 OfferInfo {
                     credential_json: credential_preview,
@@ -189,6 +189,7 @@ impl HarnessAgent {
                 .issuer()
                 .accept_proposal(connection_id, proposal)
                 .await?;
+            let (tails_file, rev_reg_id) = get_tails_rev_id(&proposal.cred_def_id)?;
             (
                 OfferInfo {
                     credential_json: proposal.credential_proposal.to_string().unwrap(),

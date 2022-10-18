@@ -17,4 +17,4 @@ serde_derive = "1.0.97"
 log = "0.4.17"
 env_logger = "0.8.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
-aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "d0b0d667" }
+aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "a2623a80b215212152b92909b4da06b3a906631d" }
