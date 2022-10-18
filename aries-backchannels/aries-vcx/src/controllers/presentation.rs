@@ -86,6 +86,9 @@ impl HarnessAgent {
         &mut self,
         presentation_request: &PresentationRequestWrapper,
     ) -> HarnessResult<String> {
+        // We may have received some proposals, but will use request given by harness
+        self.aries_agent.connections().get_proof_proposals(&presentation_request.connection_id).await?;
+
         let req_data = presentation_request
             .presentation_request
             .proof_request
@@ -151,6 +154,7 @@ impl HarnessAgent {
             self.aries_agent.verifier().get_state(id)?,
             VerifierState::PresentationRequestSent
         );
+        // TODO: Make explicit
         let state = self.aries_agent.verifier().update_state(id).await?;
         let verified = self.aries_agent.verifier().verify_presentation(id)? == Status::Success;
         Ok(json!({ "state": to_backchannel_state_verifier(state), "verified": verified }).to_string())

@@ -32,7 +32,7 @@ RUN cargo build
 RUN rm src/*.rs
 RUN rm ./target/debug/deps/aries_vcx_backchannel*
 COPY --chown=indy:indy  ./aries-vcx/src ./src
-COPY --chown=indy:indy  ./aries-vcx/resource ./resource
+RUN mkdir ./resource
 RUN cargo build
 
 ENTRYPOINT ["./target/debug/aries-vcx-backchannel"]
