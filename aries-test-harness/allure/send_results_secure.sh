@@ -194,6 +194,13 @@ echo "------------------EXTRACTING-CSRF-ACCESS-TOKEN------------------"
 CRSF_ACCESS_TOKEN_VALUE=$(cat cookiesFile | grep -o 'csrf_access_token.*' | cut -f2)
 echo "csrf_access_token value: $CRSF_ACCESS_TOKEN_VALUE"
 
+echo "------------------CREATE-PROJECT------------------"
+curl -X POST "$ALLURE_SERVER/allure-docker-service/projects" \
+  -H 'Content-Type: application/json' \
+  -H "X-CSRF-TOKEN: $CRSF_ACCESS_TOKEN_VALUE" \
+  -d "{
+    "\""id"\"": "\""$PROJECT_ID"\""
+}" -b cookiesFile -ik
 
 echo "------------------CLEANING-RESULTS------------------"
 curl -X GET "$ALLURE_SERVER/allure-docker-service/clean-results?project_id=$PROJECT_ID" -H  "accept: */*" -b cookiesFile -ik
