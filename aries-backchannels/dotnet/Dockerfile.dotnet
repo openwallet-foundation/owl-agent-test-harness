@@ -1,16 +1,49 @@
 # Final image needs indy
+# FROM streetcred/dotnet-indy:1.15.0 AS base
+# WORKDIR /app
+
+# FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+# WORKDIR /src
+# COPY dotnet/server/DotNet.Backchannel.csproj ./DotNet.Backchannel.csproj
+# RUN dotnet restore "DotNet.Backchannel.csproj"
+
+# COPY dotnet/server .
+# RUN dotnet publish "DotNet.Backchannel.csproj" -c Release -o /app/publish
+
+# FROM base AS final
+# WORKDIR /app
+# COPY --from=build /app/publish .
+# ENTRYPOINT ["dotnet", "DotNet.Backchannel.dll"]
+
+# Temporary fix 2022.05.13 -- "dotnet" build is not working.
+# Fix is to comment out the original dotnet Dockerfile above ^^^
+# with the "dotnet-master" Dockerfile below vvvv
+# That allows both "dotnet" and "dotnet-master" test agents to work -- they are the same. 
+# Both are pulling from the repo vs. from the published version.
+
+# Final image needs indy
 FROM streetcred/dotnet-indy:1.15.0 AS base
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+
+WORKDIR /
+RUN git clone https://github.com/hyperledger/aries-framework-dotnet.git
+
 WORKDIR /src
-COPY dotnet/server/DotNet.Backchannel.csproj ./DotNet.Backchannel.csproj
-RUN dotnet restore "DotNet.Backchannel.csproj"
+
+COPY dotnet/server/DotNet.Backchannel.Master.csproj ./DotNet.Backchannel.Master.csproj
+RUN dotnet restore "DotNet.Backchannel.Master.csproj"
 
 COPY dotnet/server .
-RUN dotnet publish "DotNet.Backchannel.csproj" -c Release -o /app/publish
+RUN dotnet publish "DotNet.Backchannel.Master.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "DotNet.Backchannel.dll"]
+
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+COPY ./dotnet/ngrok-wait.sh .
+
+ENTRYPOINT ["bash", "./ngrok-wait.sh"]

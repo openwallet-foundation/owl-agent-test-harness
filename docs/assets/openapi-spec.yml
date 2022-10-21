@@ -589,6 +589,83 @@ paths:
                   - properties:
                       state:
                         example: proposal-sent
+  /agent/command/issue-credential/create-offer:
+    post:
+      tags:
+        - Issue Credential
+      summary: Create credential offer.
+      description: >
+        Create an `offer-credential` message. The message can be used in a connection(less) out-of-band invitation.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#offer-credential
+      operationId: IssueCredentialCreateOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Create Offer to start credential issuance flow
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - credential_preview
+                        - cred_def_id
+                      properties:
+                        comment:
+                          $ref: "#/components/schemas/Comment"
+                        credential_preview:
+                          $ref: "#/components/schemas/CredentialPreview"
+                        cred_def_id:
+                          $ref: "#/components/schemas/CredentialDefinitionId"
+      responses:
+        200:
+          description: Credential offer created
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: object
+                    example:
+                      {
+                        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential",
+                        "@id": "be02fa0b-3177-4202-ba40-76f29e992541",
+                        "~thread": {},
+                        "offers~attach":
+                          [
+                            {
+                              "@id": "libindy-cred-offer-0",
+                              "mime-type": "application/json",
+                              "data":
+                                {
+                                  "base64": "eyJzY2hlbWFfaWQiOiAiV1ZxcHBVdjlYM1d5V0dyYm5zNVVpYToyOkV4YW1wbGU6MS4wIiwgImNyZWRfZGVmX2lkIjogIkVoeDNSWlNWMzhwbjNNWXZ4dEhoYlE6MzpDTDoyMTM3ODE6ZGVmYXVsdCIsICJrZXlfY29ycmVjdG5lc3NfcHJvb2YiOiB7ImMiOiAiMzQzMzE3Njc5MzU5MTI2MTAyNDU5Mzg4OTM5MzU4OTY1MzIzNzMxNTA1NDcyMjAyOTAzMjYzNjQzMjMwNzkwODUxMDY5MjI5MDMyMjEiLCAieHpfY2FwIjogIjY1ODkyMjE5MDg3Njc2NTIzMTI2NjY2MTExMTc5Njg2OTE4MDQ2NjI2MjAzNzcyNTU0NDYwOTYzMTI4NzYxMjU4OTI3MTYwNjI0MTY3NzE4ODgyMjYxMzEwNDA5NTc3OTAwMDU4OTc5NTk5NzcyODU5NTk2NzY0NTMwNjE3MzAxNzYzMDc1MDk1NTg1MjQ1MjQwMzI1MTIzNTE5ODUyNjU1Mjg4MDQ2MDQ0ODIwMzIwMjc5MjY4OTA4NTczMTc1ODAwODM2ODU3MTUzMjA0NjYyMDM5NTQwNTc5NjY4Nzk5MzY1OTczOTQ0MjYxOTg4NjY3OTM0MDQyODkzOTYyMDQyOTgyOTUwMjE3MTUxNTU0MDEzNTg3MjcwMzg4MTE3NDE1MDM5NzY4Mjk2NTYwNDU0NTk1MDc5NDEyNTg5MzY5NzAzNDIzNDE3NDE3OTEwMDI5MDM2MjE0MzA5OTMxODU2NjMwMzcxNTQzNzg2NTc5Njg3NTE4NTU0MDU2ODYwMjUxMTkxMjgyMjI1MDQ1NzU4MjQwNjIwMDMxMTAyMDI1NDc0MzE0MzY3NjUzOTI5ODg0Njk2MDQwMzQ0NTEyMDA4NzE1MzIxODYyMDc2NjIyMTYxNDM3Mzk1MDI4ODI4MzMxMzUwMDkxNDA5MTAyMDQ0ODg2ODcxMzE1NzkwNzYwOTMyMjE1OTg3MTg2MzMyNjg2MzcwNTU3MDgwOTk1MjU2NTgwMjA3NDE4MzgzNDcxMjI3ODE3MjkwNjE2MjUzOTA4ODA0NzIzODA2MDIxMjQ0Nzc0MTg1MzEwNzQzMjk4NDQ5MjAyNTIyMTczMDk5MDk5NDAxMDkzNTU1NzEyNDEzNDYwNDA2MzAzMjY2MDc0NDg3NTU0ODA5NzQ5NTg0MzMyMTQyNDM2NTUzMTE3MDI5NTA2MiIsICJ4cl9jYXAiOiBbWyJleGFtcGxlIiwgIjQ3OTQzOTIzNTUxMzk1Mjk0MDExOTEwNjExMDYxODM3OTEzNzU4MjAwODk2MzU0OTk3NDYxMjUzNjQxNDc3NjQzOTczNTcwNjY2OTgzMTkyNzg1Nzg5MzYzODEyMjk3NDY2MjA1ODE4NDQ0MTAzNzM3MjcwMzA0NjY3NjU3MTYxMjA2MzczODk2NDQ1OTUwMDcwMzcxNjQ3MjQ5MDIxNjk3NDA4MDkxNTc0MTQzODI1ODY2NzYyMzI5MDU4MDM2MzQ3Mjc1NjY1OTE1NjEwMTIxNDYxMDc2NTg3MDE4NTcwMTg5MTUzNzg4NTQ0NTM5NjY5NjY0NjAzODA5MTYzODYzNzMzODEwODI5NTQ0Njc1ODk1MDc2MTgyODA1NDc4MTMxMTMzMDg5NDEzMDU2MDgyNTUwMjE3Njk2ODMyNTg5Nzk2NzI1NzM0MTQ0OTg2MTI3OTc4NzEyMTQ5NDM4ODE1NzA2MDM0NzY4NTg2NzQ3MzM2MjMwMzk4NDAxMTU5NTA4NzgzMTQ5MDMyMDY5NTUzODQxMDE1NzE5NDk4MjE2OTEyNDAzMDcyMTMxNzgyMjg2MDE2MzIzMDY1ODMxMDUxMDU0MTIyNzMwODU0Njk1NzMyMzAyNzc0ODgwMTcyNTI0OTk3NTk0MjE1MjE1NzI2MTU1MjY5Mzk3MTUxMDg5NzE2MTc1MjQxMzg0NTEwMTI3MjI5NDI5OTcyNzU2NzMzMzIyODg5MjgxODUxNjMxNzcxNTAwOTA5ODkzNTgxNDA2MzQ4MTgxODc2NDk3NjQ2OTE5MTIzNDI1NzIwNTQ5MjE1MDE4NzE4Mzg1NjAxNTcwMzE5NzQ4MjAwMDgyMDk2MzQzMTIzMTE2NjU3NTU4ODMxODU1NjQ2NjU1NTQ2ODI5Mjk5NjQzMjM0OTYxODAwMTg4MiJdLCBbIm1hc3Rlcl9zZWNyZXQiLCAiMzg0NzYyNzI1ODkxMDM5MDIzNjUyNjUzMDU0MzAxNDUzOTk1MDk2NTAwMTQxNzQxNDQ5OTIyODY5OTEwNTc5NDU3OTE1MTAxNTU4NzgwODQ3MzU1NTMxMjgyOTI1MTQ5NTA1NzA3NDM4OTQyMDAyODk1NjQ4ODA5MTgyODAxOTc2ODgyMDMxMTcxNTMwNTYwODc5NDQ2ODczMjg3NzA2MTY5OTEzODA0MTY1Nzg4Njc2OTY4MDI3MTI4NTE4MDcyMjU2NTAxMjUxMzQ4Nzc4NzM3MzE4NzAyMTAxODE1NTU0NzE0ODQ4NjQ1NTA5MTczMjQ1NDYzOTE0NTM3MjYzODA5NzAwNDc2NjM2NzE2OTQ1NjgxNTMzMTA2MTM3MjY5MDc1MzY5MjEwOTExNTc5NDY5MTc3NjI5MjA0NDA0MjQ4MTA2MzExNzI5MjE1MTQ4ODM4MTc1NDcwMDg1ODE5OTk2MTk5MjQ0MDA5MTQ5ODg3NzMzMjQ0NjU1NzMxODYyNjYwODAwNzU1MTUxNTkwNDI0MDY0NjIwMTE5OTk5NjM3NjUyNTkxMTgwMDA3MDA2ODcyMTkzMTUzODM2OTg3MDQ5MjQyNzYyNDMwMjE3NTc2NDI2ODM1MzIyODQxNzIyMTE3ODY1Njg2MzMzOTE1NjYzMDgwODI5NTQ3MTY1NTYwMTY2ODMyODgzODgxNjc1MDY2MjUxOTM3NDA5Njk4NTE0NzkyMDYyNDgwMzQxMTUxMTkwMTk5MjcwOTkyMDgzOTgyNTIzMzI0MzU5OTUyNjUyMzQ5MDY5ODE5NTEyOTQwMzUwMzM2NDMwOTE4OTMwODQ2MjA4MTMxNzEzNDI0NTczNzY4NDQ0ODE2Njc4MTM4OTM2MTUyNzY1MzQwOTA4ODM5MTA2MjkyOTcyNTM2MjIzMjEyIl1dfSwgIm5vbmNlIjogIjE5MDU3NTc5MDc0ODIyODA1NTkzODA4MSJ9",
+                                },
+                            },
+                          ],
+                        "credential_preview":
+                          {
+                            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+                            "attributes":
+                              [
+                                {
+                                  "name": "example",
+                                  "mime-type": "image/jpeg",
+                                  "value": "martini",
+                                },
+                              ],
+                          },
+                      }
+                  record:
+                    allOf:
+                      - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                      - properties:
+                          state:
+                            example: offer-sent
   /agent/command/issue-credential/send-offer:
     post:
       tags:
@@ -742,6 +819,27 @@ paths:
                       state:
                         example: done
 
+  /agent/command/issue-credential-v2/{credentialExchangeThreadId}:
+    get:
+      tags:
+        - Issue Credential V2
+      summary: Get credential exchange v2 record by thread id
+      operationId: IssueCredentialV2GetByThreadId
+      parameters:
+        - in: path
+          name: credentialExchangeThreadId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential Exchange v2
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueCredentialOperationResponse"
+        404:
+          description: Credential exchange record not found
   /agent/command/issue-credential-v2/prepare-json-ld:
     post:
       tags:
@@ -873,6 +971,89 @@ paths:
                   - properties:
                       state:
                         example: offer-sent
+  /agent/command/issue-credential-v2/create-offer:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Create credential offer
+      description: >
+        Create an `offer-credential` message. The message can be used in a connection(less) out-of-band invitation.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#offer-credential
+      operationId: IssueCredentialV2CreateOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: Create Offer to start credential issuance flow
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - filter
+                  properties:
+                    credential_preview:
+                      allOf:
+                        - $ref: "#/components/schemas/CredentialPreview"
+                        - properties:
+                            "@type":
+                              example: "issue-credential/2.0/credential-preview"
+                    filter:
+                      $ref: "#/components/schemas/IssueCredentialV2CredentialProposalFilter"
+
+      responses:
+        200:
+          description: Credential offer created
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: object
+                    example:
+                      {
+                        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/2.0/offer-credential",
+                        "@id": "bfe69ea4-72d7-4be1-97d0-8a499b6eb526",
+                        "formats":
+                          [
+                            {
+                              "attach_id": "indy",
+                              "format": "hlindy/cred-abstract@v2.0",
+                            },
+                          ],
+                        "offers~attach":
+                          [
+                            {
+                              "@id": "indy",
+                              "mime-type": "application/json",
+                              "data":
+                                {
+                                  "base64": "eyJzY2hlbWFfaWQiOiAiV1ZxcHBVdjlYM1d5V0dyYm5zNVVpYToyOkV4YW1wbGU6MS4wIiwgImNyZWRfZGVmX2lkIjogIkVoeDNSWlNWMzhwbjNNWXZ4dEhoYlE6MzpDTDoyMTM3ODE6ZGVmYXVsdCIsICJrZXlfY29ycmVjdG5lc3NfcHJvb2YiOiB7ImMiOiAiMzQzMzE3Njc5MzU5MTI2MTAyNDU5Mzg4OTM5MzU4OTY1MzIzNzMxNTA1NDcyMjAyOTAzMjYzNjQzMjMwNzkwODUxMDY5MjI5MDMyMjEiLCAieHpfY2FwIjogIjY1ODkyMjE5MDg3Njc2NTIzMTI2NjY2MTExMTc5Njg2OTE4MDQ2NjI2MjAzNzcyNTU0NDYwOTYzMTI4NzYxMjU4OTI3MTYwNjI0MTY3NzE4ODgyMjYxMzEwNDA5NTc3OTAwMDU4OTc5NTk5NzcyODU5NTk2NzY0NTMwNjE3MzAxNzYzMDc1MDk1NTg1MjQ1MjQwMzI1MTIzNTE5ODUyNjU1Mjg4MDQ2MDQ0ODIwMzIwMjc5MjY4OTA4NTczMTc1ODAwODM2ODU3MTUzMjA0NjYyMDM5NTQwNTc5NjY4Nzk5MzY1OTczOTQ0MjYxOTg4NjY3OTM0MDQyODkzOTYyMDQyOTgyOTUwMjE3MTUxNTU0MDEzNTg3MjcwMzg4MTE3NDE1MDM5NzY4Mjk2NTYwNDU0NTk1MDc5NDEyNTg5MzY5NzAzNDIzNDE3NDE3OTEwMDI5MDM2MjE0MzA5OTMxODU2NjMwMzcxNTQzNzg2NTc5Njg3NTE4NTU0MDU2ODYwMjUxMTkxMjgyMjI1MDQ1NzU4MjQwNjIwMDMxMTAyMDI1NDc0MzE0MzY3NjUzOTI5ODg0Njk2MDQwMzQ0NTEyMDA4NzE1MzIxODYyMDc2NjIyMTYxNDM3Mzk1MDI4ODI4MzMxMzUwMDkxNDA5MTAyMDQ0ODg2ODcxMzE1NzkwNzYwOTMyMjE1OTg3MTg2MzMyNjg2MzcwNTU3MDgwOTk1MjU2NTgwMjA3NDE4MzgzNDcxMjI3ODE3MjkwNjE2MjUzOTA4ODA0NzIzODA2MDIxMjQ0Nzc0MTg1MzEwNzQzMjk4NDQ5MjAyNTIyMTczMDk5MDk5NDAxMDkzNTU1NzEyNDEzNDYwNDA2MzAzMjY2MDc0NDg3NTU0ODA5NzQ5NTg0MzMyMTQyNDM2NTUzMTE3MDI5NTA2MiIsICJ4cl9jYXAiOiBbWyJleGFtcGxlIiwgIjQ3OTQzOTIzNTUxMzk1Mjk0MDExOTEwNjExMDYxODM3OTEzNzU4MjAwODk2MzU0OTk3NDYxMjUzNjQxNDc3NjQzOTczNTcwNjY2OTgzMTkyNzg1Nzg5MzYzODEyMjk3NDY2MjA1ODE4NDQ0MTAzNzM3MjcwMzA0NjY3NjU3MTYxMjA2MzczODk2NDQ1OTUwMDcwMzcxNjQ3MjQ5MDIxNjk3NDA4MDkxNTc0MTQzODI1ODY2NzYyMzI5MDU4MDM2MzQ3Mjc1NjY1OTE1NjEwMTIxNDYxMDc2NTg3MDE4NTcwMTg5MTUzNzg4NTQ0NTM5NjY5NjY0NjAzODA5MTYzODYzNzMzODEwODI5NTQ0Njc1ODk1MDc2MTgyODA1NDc4MTMxMTMzMDg5NDEzMDU2MDgyNTUwMjE3Njk2ODMyNTg5Nzk2NzI1NzM0MTQ0OTg2MTI3OTc4NzEyMTQ5NDM4ODE1NzA2MDM0NzY4NTg2NzQ3MzM2MjMwMzk4NDAxMTU5NTA4NzgzMTQ5MDMyMDY5NTUzODQxMDE1NzE5NDk4MjE2OTEyNDAzMDcyMTMxNzgyMjg2MDE2MzIzMDY1ODMxMDUxMDU0MTIyNzMwODU0Njk1NzMyMzAyNzc0ODgwMTcyNTI0OTk3NTk0MjE1MjE1NzI2MTU1MjY5Mzk3MTUxMDg5NzE2MTc1MjQxMzg0NTEwMTI3MjI5NDI5OTcyNzU2NzMzMzIyODg5MjgxODUxNjMxNzcxNTAwOTA5ODkzNTgxNDA2MzQ4MTgxODc2NDk3NjQ2OTE5MTIzNDI1NzIwNTQ5MjE1MDE4NzE4Mzg1NjAxNTcwMzE5NzQ4MjAwMDgyMDk2MzQzMTIzMTE2NjU3NTU4ODMxODU1NjQ2NjU1NTQ2ODI5Mjk5NjQzMjM0OTYxODAwMTg4MiJdLCBbIm1hc3Rlcl9zZWNyZXQiLCAiMzg0NzYyNzI1ODkxMDM5MDIzNjUyNjUzMDU0MzAxNDUzOTk1MDk2NTAwMTQxNzQxNDQ5OTIyODY5OTEwNTc5NDU3OTE1MTAxNTU4NzgwODQ3MzU1NTMxMjgyOTI1MTQ5NTA1NzA3NDM4OTQyMDAyODk1NjQ4ODA5MTgyODAxOTc2ODgyMDMxMTcxNTMwNTYwODc5NDQ2ODczMjg3NzA2MTY5OTEzODA0MTY1Nzg4Njc2OTY4MDI3MTI4NTE4MDcyMjU2NTAxMjUxMzQ4Nzc4NzM3MzE4NzAyMTAxODE1NTU0NzE0ODQ4NjQ1NTA5MTczMjQ1NDYzOTE0NTM3MjYzODA5NzAwNDc2NjM2NzE2OTQ1NjgxNTMzMTA2MTM3MjY5MDc1MzY5MjEwOTExNTc5NDY5MTc3NjI5MjA0NDA0MjQ4MTA2MzExNzI5MjE1MTQ4ODM4MTc1NDcwMDg1ODE5OTk2MTk5MjQ0MDA5MTQ5ODg3NzMzMjQ0NjU1NzMxODYyNjYwODAwNzU1MTUxNTkwNDI0MDY0NjIwMTE5OTk5NjM3NjUyNTkxMTgwMDA3MDA2ODcyMTkzMTUzODM2OTg3MDQ5MjQyNzYyNDMwMjE3NTc2NDI2ODM1MzIyODQxNzIyMTE3ODY1Njg2MzMzOTE1NjYzMDgwODI5NTQ3MTY1NTYwMTY2ODMyODgzODgxNjc1MDY2MjUxOTM3NDA5Njk4NTE0NzkyMDYyNDgwMzQxMTUxMTkwMTk5MjcwOTkyMDgzOTgyNTIzMzI0MzU5OTUyNjUyMzQ5MDY5ODE5NTEyOTQwMzUwMzM2NDMwOTE4OTMwODQ2MjA4MTMxNzEzNDI0NTczNzY4NDQ0ODE2Njc4MTM4OTM2MTUyNzY1MzQwOTA4ODM5MTA2MjkyOTcyNTM2MjIzMjEyIl1dfSwgIm5vbmNlIjogIjE5MDU3NTc5MDc0ODIyODA1NTkzODA4MSJ9",
+                                },
+                            },
+                          ],
+                        "credential_preview":
+                          {
+                            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/2.0/credential-preview",
+                            "attributes":
+                              [
+                                {
+                                  "name": "example",
+                                  "mime-type": "image/jpeg",
+                                  "value": "martini",
+                                },
+                              ],
+                          },
+                      }
+                  record:
+                    allOf:
+                      - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                      - properties:
+                          state:
+                            example: offer-sent
   /agent/command/issue-credential-v2/send-request:
     post:
       tags:
@@ -982,6 +1163,250 @@ paths:
                           credential_id:
                             $ref: "#/components/schemas/CredentialId"
 
+  /agent/command/issue-credential-v3/send-proposal:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` and `pthid` in body.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#propose-credential
+      operationId: IssueCredentialV3SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - pthid
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    pthid:
+                      $ref: "#/components/schemas/pthid"
+
+      responses:
+        200:
+          description: Credential proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential-v3/retrieve-credential-proposal:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Propose Credential object received by the agent.
+      description: >
+        Retrieves the Propose Credential object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialProposal
+
+      responses:
+        200:
+          description: Propose Credential object
+  /agent/command/issue-credential-v3/send-offer:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#offer-credential
+      operationId: IssueCredentialV3SendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Credential offer sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential-v3/send-request:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#request-credential
+      operationId: IssueCredentialV3SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+
+      responses:
+        200:
+          description: Credential request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential-v3/retrieve-credential-application:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Credential Application object received by the agent.
+      description: >
+        Retrieves the Credential Application object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialApplication
+
+      responses:
+        200:
+          description: Credential Application object
+  /agent/command/issue-credential-v3/issue:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Issue credential
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#issue-credential
+      operationId: IssueCredentialV3Issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential-v3/store:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Store/accept credential
+      operationId: IssueCredentialV3Store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - required:
+                      - credential_id
+                    properties:
+                      state:
+                        example: done
+
+  /agent/command/revocation/revoke:
+    post:
+      tags:
+        - Revocation
+      summary: Revoke Credential
+      operationId: RevocationRevokeCredential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    cred_rev_id:
+                      $ref: "#/components/schemas/IndyCredentialRevocationId"
+                    rev_registry_id:
+                      $ref: "#/components/schemas/IndyRevocationRegistryId"
+                    publish_immediately:
+                      type: boolean
+                    notify_connection_id:
+                      description: Id of the connection to notify of the revocation. If not present, will not notify
+                      $ref: "#/components/schemas/ConnectionId"
+                  required:
+                    - cred_rev_id
+                    - rev_registry_id
+                    - publish_immediately
+
+      responses:
+        200:
+          description: Credential revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+  /agent/response/revocation-notification/{threadId}:
+    get:
+      tags:
+        - Revocation
+      summary: Get revocation notification message based on the revocation notification message `thread_id` property.
+      operationId: RevocationGetNotificationByThreadId
+      parameters:
+        - in: path
+          name: threadId
+          description: The value of the `threadId` property in the revocation notification message
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Revocation Notification
+          content:
+            application/json:
+              schema:
+                properties:
+                  thread_id:
+                    type: string
   /agent/command/credential/{credentialId}:
     get:
       tags:
@@ -1024,6 +1449,53 @@ paths:
                         $ref: "#/components/schemas/CredentialId"
                       credential:
                         $ref: "#/components/schemas/W3CCredential"
+        404:
+          description: Credential not found
+    delete:
+      tags:
+        - Credential
+      summary: Delete credential by id
+      operationId: CredentialDeleteById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+
+        404:
+          description: Credential not found
+  /agent/command/credential/revoked/{credentialId}:
+    get:
+      tags:
+        - Credential
+      summary: Get Credential Revocation Status
+      operationId: CredentialGetRevocationStatusById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential Revocation Status
+          content:
+            application/json:
+              schema:
+                required:
+                  - revoked
+                properties:
+                  revoked:
+                    type: boolean
         404:
           description: Credential not found
 
@@ -1613,6 +2085,8 @@ paths:
       tags:
         - Out of Band
       summary: Create a new out of band invitation
+      description: |
+        Create an out of band invitation. If both `handshake_protocols` and `attachments` are not provided, backchannel should default to `handshake_protocols` value `["https://didcomm.org/didexchange/1.0"]`. This is legacy behaviour.
       operationId: OutOfBandCreateInvitation
       requestBody:
         required: true
@@ -1625,13 +2099,24 @@ paths:
               properties:
                 data:
                   type: object
-                  required:
-                    - use_public_did
                   properties:
                     mediator_connection_id:
                       $ref: "#/components/schemas/ConnectionId"
                     use_public_did:
                       type: boolean
+                    attachments:
+                      type: array
+                      items:
+                        type: object
+                        example:
+                          {
+                            "@type": "https://didcomm.org/the-protocol/1.0/the-version",
+                          }
+                    handshake_protocols:
+                      type: array
+                      items:
+                        type: string
+                      example: ["https://didcomm.org/didexchange/1.0"]
       responses:
         200:
           description: Invitation created
@@ -1987,6 +2472,10 @@ components:
       title: Thread Id
       example: "e7280776-5315-4569-8cac-42cae108adfe"
       type: string
+    pthid:
+      title: pthid
+      example: "5a7f69cf-ee3c-4a75-9975-1aa3c28db122"
+      type: string
     MediatorId:
       title: Mediator Id
       example: "42cab98c-816c-4dec-8d8b-8da55dadaab9"
@@ -1998,6 +2487,14 @@ components:
     CredentialDefinitionId:
       title: Credential Definition Id
       example: "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default"
+      type: string
+    IndyRevocationRegistryId:
+      title: Indy Revocation Registry Id
+      example: "WgWxqztrNooG92RXvxSTWv:4:WgWxqztrNooG92RXvxSTWv:3:CL:20:tag:CL_ACCUM:0"
+      type: string
+    IndyCredentialRevocationId:
+      title: Indy Credential Revocation Id
+      example: "12345"
       type: string
     ConnectionState:
       title: Connection State
@@ -2052,10 +2549,7 @@ components:
           "id": "f3375429-b116-4224-b55f-563d7ef461f1",
           "type": "https://didcomm.org/out-of-band/2.0/invitation",
           "from": "did:orb:example.org:EiCRKRZKozDBAlxpZ0UI2UylXW6AmwSdQfguo0VGeyVKKg",
-          "body": {
-            "goal-code": "streamlined-vc",
-            "accept": ["didcomm/v2"]
-          }
+          "body": { "goal-code": "streamlined-vc", "accept": ["didcomm/v2"] },
         }
     GoalCode:
       title: DIDComm V2 Out of Band Invitation Goal Code
@@ -2581,36 +3075,19 @@ components:
         }
     IssueCredentialV2AttachFormatIndyCredFilter:
       type: object
-      example:
-        {
-          "credential":
-            {
-              "@context":
-                [
-                  "https://www.w3.org/2018/credentials/v1",
-                  "https://w3id.org/security/bbs/v1",
-                  {
-                    "dl": "http://example.com/drivers-license#",
-                    "AATHDriversLicense": "dl:AATHDriversLicense",
-                    "address": "dl:address",
-                    "DL_number": "dl:DL_number",
-                    "expiry": "dl:expiry",
-                    "age": "dl:age",
-                  },
-                ],
-              "type": ["VerifiableCredential", "AATHDriversLicense"],
-              "issuer": "did:key:z6MkfZfsiVsAy6CgQht7vQVk1dWBnztivjbhxRiKTtTi62PB",
-              "issuanceDate": "2010-01-01T19:73:24Z",
-              "credentialSubject":
-                {
-                  "address": "947 this street, Kingston Ontario Canada, K9O 3R5",
-                  "DL_number": "09385029529385",
-                  "expiry": "10/12/2022",
-                  "age": "30",
-                },
-            },
-          "options": { "proofType": "Ed25519Signature2018" },
-        }
+      properties:
+        schema_issuer_did:
+          $ref: "#/components/schemas/Did"
+        schema_id:
+          $ref: "#/components/schemas/SchemaId"
+        schema_name:
+          $ref: "#/components/schemas/SchemaName"
+        schema_version:
+          $ref: "#/components/schemas/SchemaVersion"
+        cred_def_id:
+          $ref: "#/components/schemas/CredentialDefinitionId"
+        issuer_did:
+          $ref: "#/components/schemas/Did"
     IssueCredentialV2CredentialProposalFilter:
       title: Issue Credential V2 Credential Proposal Filter
       properties:

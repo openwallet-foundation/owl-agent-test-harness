@@ -20,15 +20,12 @@ name: test-harness-findy-javascript-dotnet
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "20 0 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -44,12 +41,12 @@ jobs:
       - name: run-test-harness-wo-reports
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
-          BUILD_AGENTS: "-a findy -a javascript -a dotnet-master"
-          TEST_AGENTS: "-d findy -b javascript -f dotnet-master"
+          BUILD_AGENTS: "-a findy -a javascript -a dotnet"
+          TEST_AGENTS: "-d findy -b javascript -f dotnet"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
           REPORT_PROJECT: findy-b-javascript-f-dotnet
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: findy-b-javascript-f-dotnet 

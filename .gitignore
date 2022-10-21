@@ -44,3 +44,12 @@ env/
 
 # VSCode
 .vscode/settings.json
+
+#JetBrains
+.idea
+
+# Eclipse
+.classpath
+.project
+.settings
+target/

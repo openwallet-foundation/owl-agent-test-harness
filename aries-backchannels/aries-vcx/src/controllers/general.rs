@@ -1,7 +1,7 @@
-use std::sync::Mutex;
-use actix_web::{web, HttpResponse, Responder, get};
-use crate::Agent;
 use crate::error::HarnessResult;
+use crate::Agent;
+use actix_web::{get, web, HttpResponse, Responder};
+use std::sync::Mutex;
 
 impl Agent {
     pub fn get_status_json(&self) -> HarnessResult<String> {
@@ -15,10 +15,7 @@ impl Agent {
 
 #[get("/status")]
 pub async fn get_status(agent: web::Data<Mutex<Agent>>) -> impl Responder {
-    HttpResponse::Ok()
-        .body(
-            agent.lock().unwrap().get_status_json().unwrap()
-        )
+    HttpResponse::Ok().body(agent.lock().unwrap().get_status_json().unwrap())
 }
 
 #[get("/version")]
@@ -28,18 +25,14 @@ pub async fn get_version() -> impl Responder {
 
 #[get("/did")]
 pub async fn get_public_did(agent: web::Data<Mutex<Agent>>) -> impl Responder {
-    HttpResponse::Ok()
-        .body(
-            agent.lock().unwrap().get_public_did().unwrap()
-        )
+    HttpResponse::Ok().body(agent.lock().unwrap().get_public_did().unwrap())
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg
-        .service(
-            web::scope("/command")
-                .service(get_status)
-                .service(get_version)
-                .service(get_public_did)
-        );
+    cfg.service(
+        web::scope("/command")
+            .service(get_status)
+            .service(get_version)
+            .service(get_public_did),
+    );
 }

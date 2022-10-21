@@ -1,0 +1,20 @@
+# see: https://pypi.org/project/ConfigArgParse/ for file format overview
+# this runs aca-py with a set of parameters for auto responding.
+# the following are quivalent to:
+#    ./bin/aca-py start ... --auto-accept-requests --auto-respond-messages --auto-respond-credential-proposal --auto-respond-credential-offer --auto-respond-credential-request --auto-respond-presentation-proposal --auto-respond-presentation-request
+# run as:
+#    ./bin/aca-py start --arg-file ./demo/demo-args.yaml
+auto-ping-connection: true
+auto-accept-invites: true
+auto-accept-requests: true
+auto-respond-messages: true
+auto-respond-credential-proposal: true
+auto-respond-credential-offer: true
+auto-respond-credential-request: true
+auto-respond-presentation-proposal: true
+auto-respond-presentation-request: true
+auto-store-credential: true
+auto-verify-presentation: true
+auto-accept-intro-invitation-requests: true
+monitor-revocation-notification: true
+notify-revocation: true

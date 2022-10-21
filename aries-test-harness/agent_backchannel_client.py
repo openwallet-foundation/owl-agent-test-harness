@@ -8,8 +8,8 @@ from aiohttp import (
     ClientTimeout,
 )
 import json
+import os.path
 from time import sleep
-
 
 ######################################################################
 # coroutine utilities
@@ -54,6 +54,23 @@ async def make_agent_backchannel_request(
         await client_session.close()
         return (resp_status, resp_text)
 
+def request_log(method, agent_url, resp_status, resp_text, payload=''):
+    if os.path.isdir('/aries-test-harness/logs'):
+        def sorted_payload(val, level=0):
+            valdict = None
+            if isinstance(val, str) and len(val) > 1 and (val[0]+val[-1]) == '{}':
+                valdict = dict(json.loads(val))
+            elif isinstance(val, dict):
+                valdict = val
+            if valdict:
+                valdict = dict(sorted(valdict.items()))
+                valdict = {k:sorted_payload(v, level+1) for (k,v) in valdict.items()}
+                val = level and valdict or json.dumps(valdict)
+            return val
+        with open('/aries-test-harness/logs/request.log', 'a') as fout:
+            print(f'Req: {method} {agent_url} {sorted_payload(payload)}', file=fout)
+            print(f'Res: {resp_status} {sorted_payload(resp_text)}', file=fout)
+            print(f'-----', file=fout)
 
 def agent_backchannel_GET(url, topic, operation=None, id=None) -> (int, str):
     agent_url = url + topic + "/"
@@ -64,6 +81,7 @@ def agent_backchannel_GET(url, topic, operation=None, id=None) -> (int, str):
     (resp_status, resp_text) = run_coroutine_with_kwargs(
         make_agent_backchannel_request, "GET", agent_url
     )
+    request_log("GET", agent_url, resp_status, resp_text)
     return (resp_status, resp_text)
 
 
@@ -84,6 +102,7 @@ def agent_backchannel_POST(
     (resp_status, resp_text) = run_coroutine_with_kwargs(
         make_agent_backchannel_request, "POST", agent_url, data=payload
     )
+    request_log("POST", agent_url, resp_status, resp_text, payload)
     return (resp_status, resp_text)
 
 
@@ -94,6 +113,7 @@ def agent_backchannel_DELETE(url, topic, id=None, data=None) -> (int, str):
     (resp_status, resp_text) = run_coroutine_with_kwargs(
         make_agent_backchannel_request, "DELETE", agent_url
     )
+    request_log("DELETE", agent_url, resp_status, resp_text)
     return (resp_status, resp_text)
 
 

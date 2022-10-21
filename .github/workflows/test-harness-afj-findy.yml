@@ -6,28 +6,25 @@ name: test-harness-javascript-findy
 # Summary
 #
 # This runset uses the latest release of Aries Framework Javascript for all of the agents except Bob (holder),
-# which uses the current main branch of findy-agent. The runset covers all of the AIP 1.0 tests that 
+# which uses the current main branch of findy-agent. The runset covers all of the AIP 1.0 tests that
 # are known to work with findy as the holder. Excluded are those tests that involve Revocation.
 #
 # Current
-# 
-# All of the tests being executed in this runset are failing. There is an issue with afj sending the connection 
+#
+# All of the tests being executed in this runset are failing. There is an issue with afj sending the connection
 # response, and throws an error processing inbound message.
-# 
+#
 # *Status Note Updated: 2021.09.28*
 #
 # End
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "45 1 * * *"
 defaults:
   run:
     shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
@@ -47,8 +44,8 @@ jobs:
           TEST_AGENTS: "-d javascript -b findy"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
           REPORT_PROJECT: javascript-b-findy
-        continue-on-error: true
       - name: run-send-gen-test-results-secure
+        if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: javascript-b-findy

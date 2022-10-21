@@ -33,10 +33,10 @@ Put together, that gives us the following command to test a mobile wallet with A
 LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io ./manage run -d acapy-main -b mobile -n -t @MobileTest
 ```
 
-Want to test your mobile app with Aries Framework .NET? Make sure to build the `dotnet-master` Test Agent, and then run this command:
+Want to test your mobile app with Aries Framework .NET? Make sure to build the `dotnet` Test Agent, and then run this command:
 
 ```bash
-LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io ./manage run -d dotnet-master -b mobile -n -t @MobileTest
+LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io ./manage run -d dotnet -b mobile -n -t @MobileTest
 ```
 
 The mobile agent is in "proof-of-concept" status and some tests are not 100% reliable with all mobile agents. If things don't work, take a look at the

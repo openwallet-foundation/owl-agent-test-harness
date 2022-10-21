@@ -185,14 +185,6 @@ def step_impl(context, invitee):
         context.invitee_url = invitee_url
         context.invitee_name = invitee
 
-    # get connection and verify status
-    assert expected_agent_state(
-        invitee_url,
-        "connection",
-        context.connection_id_dict[invitee][context.inviter_name],
-        "invited",
-    )
-
 
 @when('"{inviter}" sends a connection response to "{invitee}"')
 @given('"{inviter}" sends a connection response to "{invitee}"')

@@ -154,25 +154,17 @@ def step_impl(context, verifier, prover):
         }
     }
 
-    if context.connectionless:
-        (resp_status, resp_text) = agent_backchannel_POST(
-            context.verifier_url + "/agent/command/",
-            "proof",
-            operation="create-send-connectionless-request",
-            data=presentation_request,
-        )
-    else:
-        presentation_request["connection_id"] = context.connection_id_dict[verifier][
-            prover
-        ]
+    presentation_request["connection_id"] = context.connection_id_dict[verifier][
+        prover
+    ]
 
-        # send presentation request
-        (resp_status, resp_text) = agent_backchannel_POST(
-            context.verifier_url + "/agent/command/",
-            "proof",
-            operation="send-request",
-            data=presentation_request,
-        )
+    # send presentation request
+    (resp_status, resp_text) = agent_backchannel_POST(
+        context.verifier_url + "/agent/command/",
+        "proof",
+        operation="send-request",
+        data=presentation_request,
+    )
 
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
     resp_json = json.loads(resp_text)
@@ -182,17 +174,57 @@ def step_impl(context, verifier, prover):
     # save off anything that is returned in the response to use later?
     context.presentation_thread_id = resp_json["thread_id"]
 
-    if context.connectionless:
-        # save off the presentation exchange id for use when the prover sends the presentation with a service decorator
-        context.presentation_exchange_id = resp_json["presentation_exchange_id"]
+    assert expected_agent_state(
+        context.prover_url,
+        "proof",
+        context.presentation_thread_id,
+        "request-received",
+    )
+
+@when('"{verifier}" creates a proof request')
+def step_impl(context, verifier: str):
+
+    # check for a schema template already loaded in the context. If it is, it was loaded from an external Schema, so use it.
+    if context.request_for_proof:
+        data = context.request_for_proof
+
+        if context.non_revoked_timeframe:
+            data["non_revoked"] = context.non_revoked_timeframe["non_revoked"]
     else:
-        # TODO Removing this line causes too many failures in Acapy-Dotnet Acapy-Afgo.
-        assert expected_agent_state(
-            context.prover_url,
+        data = {
+            "requested_attributes": {
+                "attr_1": {
+                    "name": "attr_1",
+                    "restrictions": [
+                        {
+                            "schema_name": "test_schema." + context.issuer_name,
+                            "schema_version": "1.0.0",
+                        }
+                    ],
+                }
+            }
+        }
+
+    presentation_request = {
+        "presentation_request": {
+            "comment": "This is a comment for the request for presentation.",
+            "proof_request": {"data": data},
+        }
+    }
+
+    (resp_status, resp_text) = agent_backchannel_POST(
+            context.verifier_url + "/agent/command/",
             "proof",
-            context.presentation_thread_id,
-            "request-received",
+            operation="create-request",
+            data=presentation_request,
         )
+
+    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+    resp_json = json.loads(resp_text)
+
+    assert "record" in resp_json
+    context.presentation_thread_id = resp_json["record"]["thread_id"]
+    context.proof_request = resp_json["message"]
 
 
 @when(
@@ -279,14 +311,6 @@ def step_impl(context, prover):
             },
         }
 
-    # if this is happening connectionless, then add the service decorator to the presentation
-    if context.connectionless:
-        presentation["~service"] = {
-            "recipientKeys": [context.presentation_exchange_id],
-            "routingKeys": None,
-            "serviceEndpoint": context.verifier_url,
-        }
-
     (resp_status, resp_text) = agent_backchannel_POST(
         prover_url + "/agent/command/",
         "proof",
@@ -339,23 +363,20 @@ def step_impl(context, verifier):
 @then('"{prover}" has the proof verified')
 def step_impl(context, prover):
     # check the state of the presentation from the prover's perspective
+    # All flexibility in the expected state to include "presentation-sent"
+    #   as Aries frameworks do not send an Ack from the verifier after verification and
+    #   some Aries frameworks just leave the holder in that state.
     assert expected_agent_state(
         context.prover_url,
         "proof",
         context.presentation_thread_id,
-        "done",
+        ["done", "presentation-sent"],
         wait_time=10.0,
     )
 
     if context.presentation_thread_id in context.credential_verification_dict:
         # Check the status of the verification in the verify-presentation call. Should be True
         assert context.credential_verification_dict[context.presentation_thread_id]
-
-
-@given('"{verifier}" and "{prover}" do not have a connection')
-def step_impl(context, verifier, prover):
-    context.connectionless = True
-
 
 @when(
     '"{prover}" doesn’t want to reveal what was requested so makes a presentation proposal'
@@ -388,10 +409,10 @@ def step_impl(context, prover):
         }
     }
 
-    if not context.connectionless:
-        presentation_proposal["connection_id"] = context.connection_id_dict[prover][
-            context.verifier_name
-        ]
+
+    presentation_proposal["connection_id"] = context.connection_id_dict[prover][
+        context.verifier_name
+    ]
 
     # send presentation proposal
     (resp_status, resp_text) = agent_backchannel_POST(

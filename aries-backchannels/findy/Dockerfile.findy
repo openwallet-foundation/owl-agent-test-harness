@@ -1,1 +1,1 @@
-FROM ghcr.io/findy-network/findy-agent-backchannel:findy-bc-bundle-latest
+FROM ghcr.io/findy-network/findy-agent-backchannel/findy-bc-bundle:latest
