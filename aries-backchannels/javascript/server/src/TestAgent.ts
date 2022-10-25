@@ -28,6 +28,7 @@ export async function createAgent({
     indyLedgers: [
       {
         id: 'main-pool',
+        indyNamespace: 'main-pool',
         isProduction: false,
         genesisPath,
       },
@@ -40,7 +41,7 @@ export async function createAgent({
     logger: new TsedLogger($log),
   }
 
-  const agent = new Agent(agentConfig, agentDependencies)
+  const agent = new Agent({ config: agentConfig, dependencies: agentDependencies })
 
   for (const it of transport.inboundTransports) {
     agent.registerInboundTransport(it)
