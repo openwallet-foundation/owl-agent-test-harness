@@ -5,12 +5,12 @@ import { IndyHolderService } from '@aries-framework/core/build/modules/indy/serv
 export class CredentialUtils {
   public static async getCredentialByThreadId(agent: Agent, threadId: string) {
     const credentialRepository = agent.injectionContainer.resolve(CredentialRepository)
-    return credentialRepository.getSingleByQuery({ threadId })
+    return credentialRepository.getSingleByQuery(agent.context, { threadId })
   }
 
   public static async getIndyCredentialById(agent: Agent, credentialId: string): Promise<Indy.IndyCredentialInfo> {
     const holderService = agent.injectionContainer.resolve(IndyHolderService)
-    const indyCredential = await holderService.getCredential(credentialId)
+    const indyCredential = await holderService.getCredential(agent.context, credentialId)
 
     return indyCredential
   }
