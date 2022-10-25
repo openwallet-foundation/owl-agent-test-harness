@@ -2,10 +2,8 @@ import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { NotFound } from '@tsed/exceptions'
 import {
   JsonTransformer,
-  PresentationPreview,
   ProofRequest,
-  RequestedCredentials,
-  ProofRecord,
+  ProofExchangeRecord,
   AgentConfig,
   Logger,
   ProofEventTypes,
@@ -20,7 +18,8 @@ import util from 'util'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { ConnectionUtils } from '../utils/ConnectionUtils'
-
+import { V1ProofService } from '@aries-framework/core/build/modules/proofs/protocol/v1/V1ProofService'
+import { PresentationPreview } from '@aries-framework/core/build/modules/proofs/protocol/v1/models/V1PresentationPreview'
 @Controller('/agent/command/proof')
 export class PresentProofController extends BaseController {
   private logger: Logger
@@ -46,14 +45,14 @@ export class PresentProofController extends BaseController {
       throw new NotFound(`proof record for thead id "${threadId}" not found.`)
     }
 
-    return this.mapProofRecord(proofRecord)
+    return this.mapProofExchangeRecord(proofRecord)
   }
 
   @Get('/')
   async getAllProofs() {
     const proofs = await this.agent.proofs.getAll()
 
-    return proofs.map((proof) => this.mapProofRecord(proof))
+    return proofs.map((proof) => this.mapProofExchangeRecord(proof))
   }
 
   @Post('/send-proposal')
@@ -68,22 +67,28 @@ export class PresentProofController extends BaseController {
       }
     }
   ) {
-    const { attributes, predicates, ...restProposal } = data.presentation_proposal
 
-    const newPresentationProposal = {
-      ...restProposal,
-      attributes: attributes,
-      predicates: predicates,
-    }
-    const presentationProposal = JsonTransformer.fromJSON(newPresentationProposal, PresentationPreview)
+    const presentationProposal = JsonTransformer.fromJSON(data.presentation_proposal, PresentationPreview)
+    const { attributes, predicates } = presentationProposal
 
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
 
-    const proofRecord = await this.agent.proofs.proposeProof(connection.id, presentationProposal, {
-      comment: data.presentation_proposal.comment,
+    const proofRecord = await this.agent.proofs.proposeProof({
+      connectionId: connection.id, 
+      protocolVersion: 'v1',
+      proofFormats: {
+        indy: {
+          name: 'proposeProof',
+          version: '1.0',
+          nonce: await this.agent.injectionContainer.resolve(V1ProofService).generateProofRequestNonce(),
+          attributes,
+          predicates,
+        },
+      },
+      comment: data.presentation_proposal.comment
     })
 
-    return this.mapProofRecord(proofRecord)
+    return this.mapProofExchangeRecord(proofRecord)
   }
 
   @Post('/send-request')
@@ -109,18 +114,22 @@ export class PresentProofController extends BaseController {
 
     // TODO: AFJ doesn't support to negotiate proposal yet
     // if thread id is present
-    const proofRecord = await this.agent.proofs.requestProof(
-      connection.id,
-      {
-        requestedAttributes: proofRequest.requestedAttributes,
-        requestedPredicates: proofRequest.requestedPredicates,
+    const proofRecord = await this.agent.proofs.requestProof({
+      connectionId: connection.id,
+      protocolVersion: 'v1',
+      proofFormats: {
+        indy: {
+          name: 'requestProof',
+          version: '1.0',
+          nonce: await this.agent.injectionContainer.resolve(V1ProofService).generateProofRequestNonce(),
+          requestedAttributes: proofRequest.requestedAttributes,
+          requestedPredicates: proofRequest.requestedPredicates,  
+        }
       },
-      {
-        comment: data.presentation_request.comment,
-      }
-    )
+      comment: data.presentation_request.comment,
+    })
 
-    return this.mapProofRecord(proofRecord)
+    return this.mapProofExchangeRecord(proofRecord)
   }
 
   @Post('/send-presentation')
@@ -137,44 +146,46 @@ export class PresentProofController extends BaseController {
     await this.waitForState(threadId, ProofState.RequestReceived)
     let proofRecord = await ProofUtils.getProofByThreadId(this.agent, threadId)
 
-    const requestedCredentials = JsonTransformer.fromJSON(
-      {
-        requested_attributes: data.requested_attributes ?? {},
-        requested_predicates: data.requested_predicates ?? {},
-        self_attested_attributes: data.self_attested_attributes ?? {},
-      },
-      RequestedCredentials
-    )
-
-    const retrievedCredentials = await this.agent.proofs.getRequestedCredentialsForProofRequest(proofRecord.id, {
+    const retrievedCredentials = await this.agent.proofs.getRequestedCredentialsForProofRequest({
+      proofRecordId: proofRecord.id, 
+      config: {
       filterByPresentationPreview: true,
       // Some tests include presenting a revoked credential, expecting the verification to fail
       // So not excluding those from the retrieved credentials.
       filterByNonRevocationRequirements: false,
-    })
+    }})
+
+    let requestedAttributes: Record<string, RequestedAttribute> = {}
+    let requestedPredicates: Record<string, RequestedPredicate> = {}
+    
+    if (data.requested_attributes) {
+      Object.keys(data.requested_attributes).forEach((key) => {
+        requestedAttributes[key] = retrievedCredentials.proofFormats.indy?.requestedAttributes[key]?.find(
+          (a) => a.credentialId === data.requested_attributes[key].cred_id
+        ) as RequestedAttribute
+      })
+    }
+    if (data.requested_predicates) {
+      Object.keys(data.requested_predicates).forEach((key) => {
+        requestedPredicates[key]  = retrievedCredentials.proofFormats.indy?.requestedPredicates[key].find(
+          (p) => p.credentialId ===  data.requested_predicates[key].cred_id
+        ) as RequestedPredicate
+      })
+    }
 
     this.logger.info('Created proof request', {
-      requestedCredentials: util.inspect(requestedCredentials, { showHidden: false, depth: null }),
+      requestedAttributes: util.inspect(requestedAttributes, { showHidden: false, depth: null }),
+      requestedPredicates: util.inspect(requestedPredicates, { showHidden: false, depth: null }),
       retrievedCredentials: util.inspect(retrievedCredentials, { showHidden: false, depth: null }),
     })
 
-    Object.keys(requestedCredentials.requestedAttributes).forEach((key) => {
-      requestedCredentials.requestedAttributes[key] = retrievedCredentials.requestedAttributes[key].find(
-        (a) => a.credentialId === requestedCredentials.requestedAttributes[key].credentialId
-      ) as RequestedAttribute
-    })
-
-    Object.keys(requestedCredentials.requestedPredicates).forEach((key) => {
-      requestedCredentials.requestedPredicates[key] = retrievedCredentials.requestedPredicates[key].find(
-        (p) => p.credentialId === requestedCredentials.requestedPredicates[key].credentialId
-      ) as RequestedPredicate
-    })
-
-    proofRecord = await this.agent.proofs.acceptRequest(proofRecord.id, requestedCredentials, {
+    proofRecord = await this.agent.proofs.acceptRequest({ 
+      proofRecordId: proofRecord.id, 
+      proofFormats: { indy: { requestedAttributes, requestedPredicates } },
       comment: data.comment,
     })
 
-    return this.mapProofRecord(proofRecord)
+    return this.mapProofExchangeRecord(proofRecord)
   }
 
   @Post('/verify-presentation')
@@ -183,7 +194,7 @@ export class PresentProofController extends BaseController {
 
     let proofRecord = await ProofUtils.getProofByThreadId(this.agent, threadId)
     if (proofRecord) {
-      return this.mapProofRecord(await this.agent.proofs.acceptPresentation(proofRecord.id))
+      return this.mapProofExchangeRecord(await this.agent.proofs.acceptPresentation(proofRecord.id))
     }
   }
 
@@ -197,10 +208,10 @@ export class PresentProofController extends BaseController {
     )
   }
 
-  private mapProofRecord(proofRecord: ProofRecord) {
+  private mapProofExchangeRecord(proofExchangeRecord: ProofExchangeRecord) {
     return {
-      state: proofRecord.state,
-      thread_id: proofRecord.threadId,
+      state: proofExchangeRecord.state,
+      thread_id: proofExchangeRecord.threadId,
     }
   }
 }

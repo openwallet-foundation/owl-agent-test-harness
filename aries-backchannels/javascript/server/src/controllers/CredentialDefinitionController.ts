@@ -1,6 +1,6 @@
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { InternalServerError, NotFound } from '@tsed/exceptions'
-import { Agent, IndySdkError } from '@aries-framework/core'
+import { IndyLedgerService, IndySdkError } from '@aries-framework/core'
 import { LedgerNotFoundError } from '@aries-framework/core/build/modules/ledger/error/LedgerNotFoundError'
 import type * as Indy from 'indy-sdk'
 import { isIndyError } from '@aries-framework/core/build/utils/indyError'
@@ -55,12 +55,16 @@ export class CredentialDefinitionController extends BaseController {
     try {
       const schema = await this.agent.ledger.getSchema(data.schema_id)
 
-      const credentialDefinition = await this.agent.ledger.registerCredentialDefinition({
+      // FIXME: Use Agent's Ledger API (cannot use as is because it throws an exception if the credential definition is already registered)
+      const ledgerService = this.agent.injectionContainer.resolve(IndyLedgerService)
+
+      const credentialDefinition = await ledgerService.registerCredentialDefinition(this.agent.context, this.agent.context.wallet.publicDid!.did, 
+        {
         schema,
         supportRevocation: data.support_revocation,
         tag: data.tag,
+        signatureType: 'CL',
       })
-
       return {
         credential_definition_id: credentialDefinition.id,
         credential_definition: credentialDefinition,
