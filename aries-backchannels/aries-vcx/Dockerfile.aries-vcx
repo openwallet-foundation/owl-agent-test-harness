@@ -29,7 +29,6 @@ RUN cargo build --release
 RUN rm src/*.rs
 RUN rm ./target/release/deps/aries_vcx_backchannel*
 COPY --chown=indy:indy  ./aries-vcx/src ./src
-RUN mkdir ./resource
 RUN cargo build --release
 
 FROM alpine:3.15.4
@@ -38,6 +37,11 @@ ARG UID=1000
 ARG GID=1000
 RUN addgroup -g $GID indy && adduser -u $UID -D -G indy indy
 
-COPY --from=builder /usr/lib/lib*.so /usr/lib/
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
+        openssl-dev \
+        zeromq-dev
+
+RUN mkdir /resource
 COPY --from=builder /home/indy/aries-vcx-backchannel/target/release/aries-vcx-backchannel .
 ENTRYPOINT ["./aries-vcx-backchannel"]
