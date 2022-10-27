@@ -227,9 +227,11 @@ for file in ${workflows}; do
     PASSED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"passed" : \([0-9]*\).*/\1/' )
     FAILED[$count]=$( echo ${ALLURE_SUMMARY[$count]} | sed  's/.*"failed" : \([0-9]*\).*/\1/' )
 
-    if [ ${#TOTAL_CASES[$count]} -gt 4 ]; then
+    if [[ ${#TOTAL_CASES[$count]} -gt 4 ]] || [[ ${#PASSED[$count]} -gt 4 ]] || [[ ${#FAILED[$count]} -gt 4 ]]; then
         # Special case: No results found for the runset
         TOTAL_CASES[$count]=0
+        PASSED[$count]=0
+        FAILED[$count]=0
     fi
 
     if [ "${TOTAL_CASES[$count]}" -eq "0" ]; then
