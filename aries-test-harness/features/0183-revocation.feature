@@ -47,9 +47,9 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | name  | role     |
          | Bob   | prover   |
          | Faber | verifier |
-      And "Faber" and "Bob" have an existing connection
       And "Bob" has an issued credential from <issuer> with <credential_data>
       When <issuer> revokes the credential
+      And "Faber" and "Bob" have an existing connection
       And "Faber" sends a <request_for_proof> presentation to "Bob"
       And "Bob" makes the <presentation> of the proof
       And "Faber" acknowledges the proof
@@ -200,9 +200,9 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | name  | role     |
          | Bob   | prover   |
          | Faber | verifier |
-      And "Faber" and "Bob" have an existing connection
       And "Bob" has an issued credential from <issuer> with <credential_data>
       And <issuer> has revoked the credential before <timeframe>
+      And "Faber" and "Bob" have an existing connection
       When "Faber" sends a <request_for_proof> presentation to "Bob" with credential validity before <timeframe>
       And "Bob" makes the <presentation> of the proof with the revoked credential
       And "Faber" acknowledges the proof

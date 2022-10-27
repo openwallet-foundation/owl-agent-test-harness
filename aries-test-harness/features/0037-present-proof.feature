@@ -97,8 +97,8 @@ Feature: RFC 0037 Aries agent present proof
          | name  | role     |
          | Faber | verifier |
          | Bob   | prover   |
-      And "Faber" and "Bob" have an existing connection
       And "Bob" has an issued credential from <issuer>
+      And "Faber" and "Bob" have an existing connection
       When "Faber" sends a request for proof presentation to "Bob"
       And "Bob" makes the presentation of the proof
       And "Faber" acknowledges the proof
