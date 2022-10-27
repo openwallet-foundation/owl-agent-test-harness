@@ -16,7 +16,7 @@ services:
 
   uni-resolver-web.local:
     container_name: uni-resolver-web.local
-    image: universalresolver/uni-resolver-web:0.3.0
+    image: universalresolver/uni-resolver-web:0.8.0-93c2f32
     ports:
       - "8080:8080"
     expose:
