@@ -1,32 +1,19 @@
-use actix_web::http::header::{CacheControl, CacheDirective};
 use actix_web::{get, post, web, Responder};
 use reqwest::multipart;
 use std::sync::Mutex;
 
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use aries_vcx::indy::primitives::credential_definition::{
-    CredentialDef, CredentialDefConfigBuilder,
-};
-use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
+use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
 
 use crate::controllers::Request;
 use crate::soft_assert_eq;
-use crate::Agent;
-use uuid;
+use crate::HarnessAgent;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CredentialDefinition {
     support_revocation: bool,
     schema_id: String,
     tag: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CachedCredDef {
-    cred_def_id: String,
-    cred_def_json: String,
-    pub tails_file: Option<String>,
-    pub rev_reg_id: Option<String>,
 }
 
 async fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<()> {
@@ -56,137 +43,84 @@ async fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<(
     Ok(())
 }
 
-impl Agent {
+impl HarnessAgent {
     pub async fn create_credential_definition(
         &mut self,
         cred_def: &CredentialDefinition,
     ) -> HarnessResult<String> {
-        let id = uuid::Uuid::new_v4().to_string();
-        let did = self.config.did.to_string();
         let tails_base_url = std::env::var("TAILS_SERVER_URL")
             .unwrap_or("https://tails-server-test.pathfinder.gov.bc.ca".to_string());
-        let tails_base_path = "/tmp".to_string();
-        let cred_def_id = match self.dbs.cred_def.get::<CachedCredDef>(&cred_def.schema_id) {
-            None => {
-                std::thread::sleep(std::time::Duration::from_millis(1000));
-                let config = CredentialDefConfigBuilder::default()
-                    .issuer_did(&did)
-                    .schema_id(&cred_def.schema_id)
-                    .tag(&id)
-                    .build()?;
-                let cd = CredentialDef::create(
-                    self.config.wallet_handle,
-                    self.config.pool_handle,
-                    "1".to_string(),
-                    config,
-                    true,
-                )
-                .await?
-                .publish_cred_def(self.config.wallet_handle, self.config.pool_handle)
+        let cred_def_ids = self
+            .aries_agent
+            .cred_defs()
+            .find_by_schema_id(&cred_def.schema_id)?;
+        let cred_def_id = if cred_def_ids.is_empty() {
+            let config = CredentialDefConfigBuilder::default()
+                .issuer_did(&self.aries_agent.issuer_did())
+                .schema_id(&cred_def.schema_id)
+                .tag(&cred_def.tag)
+                .build()?;
+            let cred_def_id = self.aries_agent.cred_defs().create_cred_def(config).await?;
+            self.aries_agent
+                .cred_defs()
+                .publish_cred_def(&cred_def_id)
                 .await?;
-                let (rev_reg_id, tails_file) = match cd.get_support_revocation() {
-                    true => {
-                        let mut rev_reg = RevocationRegistry::create(
-                            self.config.wallet_handle,
-                            &did,
-                            &cd.get_cred_def_id(),
-                            &tails_base_path,
-                            50,
-                            1,
-                        )
-                        .await?;
-                        let rev_reg_id = rev_reg.get_rev_reg_id();
-                        let tails_url = format!("{}/{}", tails_base_url, rev_reg_id);
-                        rev_reg
-                            .publish_revocation_primitives(
-                                self.config.wallet_handle,
-                                self.config.pool_handle,
-                                &tails_url,
-                            )
-                            .await?;
-                        self.dbs.rev_reg.set(&rev_reg_id, &rev_reg)?;
-                        let tails_hash = rev_reg.get_rev_reg_def().value.tails_hash;
-                        let tails_file = format!("{}/{}", tails_base_path, tails_hash);
-                        upload_tails_file(&tails_url, &tails_file).await?;
-                        (Some(rev_reg_id), Some(tails_base_path))
-                    }
-                    false => (None, None),
-                };
-                let cred_def_id = cd.get_cred_def_id();
-                let cred_def_json: serde_json::Value = serde_json::from_str(&cd.to_string()?)?;
-                let cred_def_json = cred_def_json["data"]["cred_def_json"].as_str().ok_or(
-                    HarnessError::from_msg(
-                        HarnessErrorType::InternalServerError,
-                        "Failed to convert cred def json Value to str",
-                    ),
-                )?;
-                self.dbs.cred_def.set(
-                    &cred_def.schema_id,
-                    &CachedCredDef {
-                        cred_def_id: cred_def_id.to_string(),
-                        cred_def_json: cred_def_json.to_string(),
-                        tails_file: tails_file.clone(),
-                        rev_reg_id: rev_reg_id.clone(),
-                    },
-                )?;
-                self.dbs.cred_def.set(
-                    &cred_def_id,
-                    &CachedCredDef {
-                        cred_def_id: cred_def_id.to_string(),
-                        cred_def_json: cred_def_json.to_string(),
-                        tails_file,
-                        rev_reg_id,
-                    },
-                )?;
-                cred_def_id
+
+            if cred_def.support_revocation {
+                let rev_reg_id = self
+                    .aries_agent
+                    .rev_regs()
+                    .create_rev_reg(&cred_def_id, 50)
+                    .await?;
+                let tails_url = format!("{}/{}", tails_base_url, rev_reg_id);
+                self.aries_agent
+                    .rev_regs()
+                    .publish_rev_reg(&rev_reg_id, &tails_url)
+                    .await?;
+
+                let tails_file = self.aries_agent.rev_regs().tails_file_path(&rev_reg_id)?;
+                upload_tails_file(&tails_url, &tails_file).await?;
             }
-            Some(cached_cred_def) => cached_cred_def.cred_def_id,
+            cred_def_id
+        } else if cred_def_ids.len() == 1 {
+            cred_def_ids.last().unwrap().clone()
+        } else {
+            return Err(HarnessError::from_kind(
+                HarnessErrorType::MultipleCredDefinitions,
+            ));
         };
         Ok(json!({ "credential_definition_id": cred_def_id }).to_string())
     }
 
     pub fn get_credential_definition(&self, id: &str) -> HarnessResult<String> {
-        let cred_def: CachedCredDef = self.dbs.cred_def.get(id).ok_or(HarnessError::from_msg(
-            HarnessErrorType::NotFoundError,
-            &format!("Credential definition with id {} not found", id),
-        ))?;
-        Ok(cred_def.cred_def_json)
+        self.aries_agent
+            .cred_defs()
+            .cred_def_json(id)
+            .map_err(|err| err.into())
     }
 }
 
 #[post("")]
 pub async fn create_credential_definition(
     req: web::Json<Request<CredentialDefinition>>,
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
     agent
         .lock()
         .unwrap()
         .create_credential_definition(&req.data)
         .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
 }
 
 #[get("/{cred_def_id}")]
 pub async fn get_credential_definition(
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
         .lock()
         .unwrap()
         .get_credential_definition(&path.into_inner())
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

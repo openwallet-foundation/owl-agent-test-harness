@@ -1,8 +1,11 @@
 use actix_web::{error, http::StatusCode, HttpResponse, HttpResponseBuilder};
-use aries_vcx::indy::primitives::credential_definition::{
+use aries_vcx_agent::aries_vcx;
+use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::{
     CredentialDefConfigBuilderError, RevocationDetailsBuilderError,
 };
-use aries_vcx::indy::proofs::proof_request::ProofRequestDataBuilderError;
+use aries_vcx_agent::aries_vcx::indy::proofs::proof_request::ProofRequestDataBuilderError;
+use aries_vcx_agent::aries_vcx::messages::error::MessagesError;
+use aries_vcx_agent::AgentError;
 use derive_more::{Display, Error};
 
 pub type HarnessResult<T> = Result<T, HarnessError>;
@@ -13,12 +16,18 @@ pub enum HarnessErrorType {
     InternalServerError,
     #[display(fmt = "Request not accepted")]
     RequestNotAcceptedError,
+    #[display(fmt = "Request not received")]
+    RequestNotReceived,
     #[display(fmt = "Not found")]
     NotFoundError,
     #[display(fmt = "Invalid JSON")]
     InvalidJson,
     #[display(fmt = "Protocol error")]
     ProtocolError,
+    #[display(fmt = "Invalid state for requested operation")]
+    InvalidState,
+    #[display(fmt = "Multiple credential definitions found")]
+    MultipleCredDefinitions,
 }
 
 #[derive(Debug, Display, Error, Clone)]
@@ -30,17 +39,17 @@ pub struct HarnessError {
 
 impl error::ResponseError for HarnessError {
     fn error_response(&self) -> HttpResponse {
+        error!("{}", self.to_string());
         HttpResponseBuilder::new(self.status_code()).body(self.to_string())
     }
 
     fn status_code(&self) -> StatusCode {
         match self.kind {
-            HarnessErrorType::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-            HarnessErrorType::RequestNotAcceptedError | HarnessErrorType::InvalidJson => {
-                StatusCode::NOT_ACCEPTABLE
-            }
+            HarnessErrorType::RequestNotAcceptedError
+            | HarnessErrorType::RequestNotReceived
+            | HarnessErrorType::InvalidJson => StatusCode::NOT_ACCEPTABLE,
             HarnessErrorType::NotFoundError => StatusCode::NOT_FOUND,
-            HarnessErrorType::ProtocolError => StatusCode::INTERNAL_SERVER_ERROR,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }
@@ -78,17 +87,6 @@ impl std::convert::From<aries_vcx::agency_client::error::AgencyClientError> for 
             message: agency_client_error.to_string(),
             kind,
         }
-    }
-}
-
-impl std::convert::From<pickledb::error::Error> for HarnessError {
-    fn from(pickle_err: pickledb::error::Error) -> HarnessError {
-        let kind = HarnessErrorType::NotFoundError;
-        let message = format!(
-            "Failed to load / save object from memory; err: {:?}",
-            pickle_err.to_string()
-        );
-        HarnessError { message, kind }
     }
 }
 
@@ -136,6 +134,22 @@ impl std::convert::From<ProofRequestDataBuilderError> for HarnessError {
     fn from(err: ProofRequestDataBuilderError) -> HarnessError {
         let kind = HarnessErrorType::InternalServerError;
         let message = format!("ProofRequestDataBuilderError: {:?}", err.to_string());
+        HarnessError { message, kind }
+    }
+}
+
+impl std::convert::From<AgentError> for HarnessError {
+    fn from(err: AgentError) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        let message = format!("AgentError: {:?}", err.to_string());
+        HarnessError { message, kind }
+    }
+}
+
+impl std::convert::From<MessagesError> for HarnessError {
+    fn from(err: MessagesError) -> HarnessError {
+        let kind = HarnessErrorType::InternalServerError;
+        let message = format!("MessagesError: {:?}", err.to_string());
         HarnessError { message, kind }
     }
 }

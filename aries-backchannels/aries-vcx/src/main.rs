@@ -2,20 +2,6 @@ mod controllers;
 mod error;
 mod setup;
 
-use std::sync::Mutex;
-
-use crate::controllers::{
-    connection, credential_definition, general, issuance, presentation, revocation, schema,
-};
-use actix_web::{middleware, web, App, HttpServer};
-use aries_vcx::{
-    agency_client::configuration::AgencyClientConfig,
-    handlers::connection::connection::Connection,
-    vdrtools_sys::{PoolHandle, WalletHandle},
-};
-use clap::Parser;
-use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
-
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -23,12 +9,26 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate log;
+extern crate aries_vcx_agent;
 extern crate clap;
-extern crate ctrlc;
-extern crate derive_builder;
-extern crate futures_util;
 extern crate reqwest;
 extern crate uuid;
+
+use std::sync::Mutex;
+
+use crate::controllers::{
+    connection,
+    credential_definition,
+    general,
+    issuance,
+    presentation,
+    revocation,
+    schema,
+};
+use actix_web::{middleware, web, App, HttpServer};
+use clap::Parser;
+
+use aries_vcx_agent::Agent as AriesAgent;
 
 #[derive(Parser)]
 struct Opts {
@@ -38,7 +38,7 @@ struct Opts {
     interactive: String,
 }
 
-#[derive(Copy, Clone, Debug, Serialize)]
+#[derive(Copy, Clone, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum State {
     Initial,
@@ -66,77 +66,11 @@ enum Status {
     Active,
 }
 
-#[derive(Clone, Serialize)]
-pub struct AgentConfig {
-    did: String,
-    agency_client_config: AgencyClientConfig,
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-}
-
-struct Storage {
-    schema: PickleDb,
-    cred_def: PickleDb,
-    connection: PickleDb,
-    holder: PickleDb,
-    issuer: PickleDb,
-    verifier: PickleDb,
-    prover: PickleDb,
-    rev_reg: PickleDb,
-}
-
-impl Storage {
-    pub fn new() -> Self {
-        Self {
-            schema: PickleDb::new(
-                "storage-schema.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-            cred_def: PickleDb::new(
-                "storage-cred-def.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-            connection: PickleDb::new(
-                "storage-connection.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-            holder: PickleDb::new(
-                "storage-holder.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-            issuer: PickleDb::new(
-                "storage-issuer.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-            verifier: PickleDb::new(
-                "storage-verifier.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-            prover: PickleDb::new(
-                "storage-prover.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-            rev_reg: PickleDb::new(
-                "storage-rev-reg.db",
-                PickleDbDumpPolicy::AutoDump,
-                SerializationMethod::Json,
-            ),
-        }
-    }
-}
-
-pub struct Agent {
-    dbs: Storage,
+#[derive(Clone)]
+pub struct HarnessAgent {
+    aries_agent: AriesAgent,
     status: Status,
-    config: AgentConfig,
-    last_connection: Option<Connection>,
+    last_connection_id: Option<String>,
 }
 
 #[macro_export]
@@ -162,17 +96,12 @@ macro_rules! soft_assert_eq {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("trace"));
+    env_logger::init_from_env(env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"));
     let opts: Opts = Opts::parse();
-
-    ctrlc::set_handler(move || {
-        setup::shutdown();
-    })
-    .expect("Error setting Ctrl-C handler");
 
     let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
 
-    let config = setup::initialize().await;
+    let aries_agent = setup::initialize().await;
 
     HttpServer::new(move || {
         App::new()
@@ -180,11 +109,10 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::NormalizePath::new(
                 middleware::TrailingSlash::Trim,
             ))
-            .app_data(web::Data::new(Mutex::new(Agent {
-                dbs: Storage::new(),
+            .app_data(web::Data::new(Mutex::new(HarnessAgent {
+                aries_agent: aries_agent.clone(),
                 status: Status::Active,
-                config: config.clone(),
-                last_connection: None,
+                last_connection_id: None,
             })))
             .service(
                 web::scope("/agent")

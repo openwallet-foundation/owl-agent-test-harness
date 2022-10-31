@@ -1,18 +1,12 @@
 use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::{Agent, State};
-use actix_web::http::header::{CacheControl, CacheDirective};
+use crate::{soft_assert_eq, HarnessAgent, State};
 use actix_web::{get, post, web, Responder};
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-use aries_vcx::indy::ledger::transactions::into_did_doc;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
-use aries_vcx::messages::connection::request::Request as VcxConnectionRequest;
-use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
-use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
+use aries_vcx_agent::aries_vcx::handlers::connection::connection::ConnectionState;
+use aries_vcx_agent::aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
+use aries_vcx_agent::aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
+use aries_vcx_agent::aries_vcx::protocols::connection::inviter::state_machine::InviterState;
 use std::sync::Mutex;
-use uuid;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Default)]
@@ -26,8 +20,8 @@ pub struct Comment {
     comment: String,
 }
 
-fn _get_state(connection: &Connection) -> State {
-    match connection.get_state() {
+fn to_backchannel_state(state: ConnectionState) -> State {
+    match state {
         ConnectionState::Invitee(state) => match state {
             InviteeState::Initial => State::Initial,
             InviteeState::Invited => State::Invited,
@@ -45,234 +39,105 @@ fn _get_state(connection: &Connection) -> State {
     }
 }
 
-async fn get_requests(
-    connection: &Connection,
-    agency_client: &AgencyClient,
-) -> HarnessResult<Vec<VcxConnectionRequest>> {
-    Ok(connection
-        .get_messages_noauth(agency_client)
-        .await?
-        .into_iter()
-        .filter_map(|(_, message)| match message {
-            A2AMessage::ConnectionRequest(request) => Some(request),
-            _ => None,
-        })
-        .collect())
-}
-
-impl Agent {
-    pub async fn create_invitation(&mut self) -> HarnessResult<String> {
-        let id = uuid::Uuid::new_v4().to_string();
-        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
-        agency_client.set_wallet_handle(self.config.wallet_handle);
-        let mut connection =
-            Connection::create(&id, self.config.wallet_handle, &agency_client, false).await?;
-        connection
-            .connect(self.config.wallet_handle, &agency_client)
-            .await?;
-        let invite = connection
-            .get_invite_details()
-            .ok_or(HarnessError::from_msg(
-                HarnessErrorType::InternalServerError,
-                "Failed to get invite details",
-            ))?;
-        let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(&id, &connection)?;
-        self.dbs.connection.set(&thread_id, &connection)?;
-        Ok(json!({ "connection_id": id, "invitation": invite }).to_string())
+impl HarnessAgent {
+    pub async fn create_invitation(&self) -> HarnessResult<String> {
+        let invitation = self.aries_agent.connections().create_invitation().await?;
+        let id = invitation.get_id()?;
+        Ok(json!({ "connection_id": id, "invitation": invitation }).to_string())
     }
 
     pub async fn receive_invitation(
         &mut self,
         invite: PairwiseInvitation,
     ) -> HarnessResult<String> {
-        let id = uuid::Uuid::new_v4().to_string();
-        let invite = Invitation::Pairwise(invite);
-        let ddo = into_did_doc(self.config.pool_handle, &invite).await?;
-        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
-        agency_client.set_wallet_handle(self.config.wallet_handle);
-        let connection = Connection::create_with_invite(
-            &id,
-            self.config.wallet_handle,
-            &agency_client,
-            invite,
-            ddo,
-            false,
-        )
-        .await?;
-        let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(&id, &connection)?;
-        self.dbs.connection.set(&thread_id, &connection)?;
+        let id = self
+            .aries_agent
+            .connections()
+            .receive_invitation(Invitation::Pairwise(invite))
+            .await?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub async fn send_request(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection =
-            self.dbs.connection.get(id).ok_or(HarnessError::from_msg(
-                HarnessErrorType::NotFoundError,
-                &format!("Connection with id {} not found", id),
-            ))?;
-        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
-        agency_client.set_wallet_handle(self.config.wallet_handle);
-        connection
-            .connect(self.config.wallet_handle, &agency_client)
-            .await?;
-        connection
-            .find_message_and_update_state(self.config.wallet_handle, &agency_client)
-            .await?;
-        let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(id, &connection)?;
-        self.dbs.connection.set(&thread_id, &connection)?;
+    pub async fn send_request(&self, id: &str) -> HarnessResult<String> {
+        self.aries_agent.connections().send_request(id).await?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub async fn accept_request(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection =
-            self.dbs.connection.get(id).ok_or(HarnessError::from_msg(
-                HarnessErrorType::NotFoundError,
-                &format!("Connection with id {} not found", id),
-            ))?;
-        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
-        agency_client.set_wallet_handle(self.config.wallet_handle);
-        let requests = get_requests(&connection, &agency_client).await?;
-        let curr_state = connection.get_state();
-        if curr_state != ConnectionState::Inviter(InviterState::Invited) || requests.len() > 1 {
-            return Err(HarnessError::from_msg(
-                HarnessErrorType::RequestNotAcceptedError,
-                &format!("Received state {:?}, expected requested state", curr_state),
+    pub async fn accept_request(&self, id: &str) -> HarnessResult<String> {
+        let mut requests = self
+            .aries_agent
+            .connections()
+            .get_connection_requests(id)
+            .await?;
+        if self.aries_agent.connections().get_state(id)?
+            != ConnectionState::Inviter(InviterState::Invited)
+            || requests.len() != 1
+        {
+            return Err(HarnessError::from_kind(
+                HarnessErrorType::RequestNotReceived,
             ));
         }
-        connection
-            .find_message_and_update_state(self.config.wallet_handle, &agency_client)
+        self.aries_agent
+            .connections()
+            .accept_request(id, requests.pop().unwrap())
             .await?;
-        let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(id, &connection)?;
-        self.dbs.connection.set(&thread_id, &connection)?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub async fn send_ping(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection =
-            self.dbs.connection.get(id).ok_or(HarnessError::from_msg(
-                HarnessErrorType::NotFoundError,
-                &format!("Connection with id {} not found", id),
-            ))?;
-        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
-        agency_client.set_wallet_handle(self.config.wallet_handle);
-        connection
-            .find_message_and_update_state(self.config.wallet_handle, &agency_client)
-            .await?;
-        let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(id, &connection)?;
-        self.dbs.connection.set(&thread_id, &connection)?;
+    pub async fn send_ping(&self, id: &str) -> HarnessResult<String> {
+        // TODO: Should be explicit
+        self.aries_agent.connections().update_state(id).await?; // Receive response and send ack
         Ok(json!({ "connection_id": id }).to_string())
     }
 
     pub async fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
-        let mut connection: Connection =
-            self.dbs.connection.get(id).ok_or(HarnessError::from_msg(
-                HarnessErrorType::NotFoundError,
-                &format!("Connection with id {} not found", id),
-            ))?;
-        let mut agency_client = AgencyClient::new().configure(&self.config.agency_client_config)?;
-        agency_client.set_wallet_handle(self.config.wallet_handle);
-        connection
-            .find_message_and_update_state(self.config.wallet_handle, &agency_client)
-            .await?;
-        let state = _get_state(&connection);
-        let thread_id = connection.get_thread_id();
-        self.dbs.connection.set(id, &connection)?;
-        self.dbs.connection.set(&thread_id, &connection)?;
-        self.last_connection = Some(connection);
+        let state = to_backchannel_state(self.aries_agent.connections().update_state(id).await?);
+        self.last_connection_id = Some(id.to_string());
         Ok(json!({ "state": state }).to_string())
     }
 
-    pub async fn get_connection(&mut self, thread_id: &str) -> HarnessResult<String> {
-        let connection: Connection =
-            self.dbs
-                .connection
-                .get(thread_id)
-                .ok_or(HarnessError::from_msg(
-                    HarnessErrorType::NotFoundError,
-                    &format!("Connection with thread id {} not found", thread_id),
-                ))?;
-        let connection_id = connection.get_source_id();
-        Ok(json!({ "connection_id": connection_id }).to_string())
+    pub async fn get_connection(&self, id: &str) -> HarnessResult<String> {
+        soft_assert_eq!(self.aries_agent.connections().exists_by_id(id), true);
+        Ok(json!({ "connection_id": id }).to_string())
     }
 }
 
 #[post("/create-invitation")]
-pub async fn create_invitation(agent: web::Data<Mutex<Agent>>) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .create_invitation()
-        .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
+pub async fn create_invitation(agent: web::Data<Mutex<HarnessAgent>>) -> impl Responder {
+    agent.lock().unwrap().create_invitation().await
 }
 
 #[post("/receive-invitation")]
 pub async fn receive_invitation(
     req: web::Json<Request<PairwiseInvitation>>,
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
     agent
         .lock()
         .unwrap()
         .receive_invitation(req.data.clone())
         .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
 }
 
 #[post("/accept-invitation")]
 pub async fn send_request(
     req: web::Json<Request<()>>,
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .send_request(&req.id)
-        .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
+    agent.lock().unwrap().send_request(&req.id).await
 }
 
 #[post("/accept-request")]
 pub async fn accept_request(
     req: web::Json<Request<()>>,
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .accept_request(&req.id)
-        .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
+    agent.lock().unwrap().accept_request(&req.id).await
 }
 
 #[get("/{connection_id}")]
 pub async fn get_connection_state(
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
@@ -280,17 +145,11 @@ pub async fn get_connection_state(
         .unwrap()
         .get_connection_state(&path.into_inner())
         .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
 }
 
 #[get("/{thread_id}")]
 pub async fn get_connection(
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
@@ -298,30 +157,14 @@ pub async fn get_connection(
         .unwrap()
         .get_connection(&path.into_inner())
         .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
 }
 
 #[post("/send-ping")]
 pub async fn send_ping(
     req: web::Json<Request<Comment>>,
-    agent: web::Data<Mutex<Agent>>,
+    agent: web::Data<Mutex<HarnessAgent>>,
 ) -> impl Responder {
-    agent
-        .lock()
-        .unwrap()
-        .send_ping(&req.id)
-        .await
-        .customize()
-        .append_header(CacheControl(vec![
-            CacheDirective::Private,
-            CacheDirective::NoStore,
-            CacheDirective::MustRevalidate,
-        ]))
+    agent.lock().unwrap().send_ping(&req.id).await
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

@@ -9,7 +9,7 @@ x-standard-logging:
 
 services:
   agency:
-    image: ghcr.io/absaoss/vcxagencynode/vcxagency-node:1.0.1-release102-675
+    image: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.3.0
     container_name: agency
     logging: *service-logging
     depends_on:

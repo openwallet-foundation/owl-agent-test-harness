@@ -13,7 +13,7 @@ Feature: RFC 0160 Aries agent connection functions
       And "Acme" receives the connection request
       And "Acme" sends a connection response to "Bob"
       And "Bob" receives the connection response
-      And "Acme" sends <message> to "Bob"
+      And "Bob" sends <message> to "Acme"
       Then "Acme" and "Bob" have a connection
 
       Examples:
@@ -38,7 +38,7 @@ Feature: RFC 0160 Aries agent connection functions
       And "Acme" receives the connection request
       And "Acme" sends a connection response to "Bob"
       And "Bob" receives the connection response
-      And "Acme" sends <message> to "Bob"
+      And "Bob" sends <message> to "Acme"
       Then "Acme" and "Bob" have a connection
 
       Examples:

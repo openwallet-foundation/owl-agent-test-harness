@@ -423,6 +423,13 @@ waitForUniresolver(){
 
 startCloudAgency(){
     docker-compose -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml up -d
+    if [[ $AUTO_CLEANUP ]]; then
+      export STARTED_CLOUD_AGENCY=true
+    fi
+}
+
+stopCloudAgency(){
+    docker-compose -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml down
 }
 
 dockerhost_url_templates() {
@@ -600,11 +607,10 @@ auxiliaryService() {
 
 startServices() {
   # sets if services this procedure starts should be stopped automatically
-  local AUTO_CLEANUP
   if [[ "auto" = $1 ]]; then
-    AUTO_CLEANUP=true
+    export AUTO_CLEANUP=true
   else
-    AUTO_CLEANUP=false
+    export AUTO_CLEANUP=false
   fi
 
   if [[ "all" = $1 ]]; then
@@ -673,11 +679,17 @@ stopServices() {
       echo "stopping local von-network..."
       auxiliaryService von-network stop
     fi
+
+    if [[ ${STARTED_CLOUD_AGENCY} ]]; then
+      echo "stopping local vcxagency..."
+      stopCloudAgency
+    fi
   elif [[ "all" = $1 ]]; then
     auxiliaryService uniresolver stop
     auxiliaryService orb stop
     auxiliaryService indy-tails stop
     auxiliaryService von-network stop
+    stopCloudAgency
   fi
 }
 
