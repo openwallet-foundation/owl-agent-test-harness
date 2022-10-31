@@ -607,11 +607,10 @@ auxiliaryService() {
 
 startServices() {
   # sets if services this procedure starts should be stopped automatically
-  local AUTO_CLEANUP
   if [[ "auto" = $1 ]]; then
-    AUTO_CLEANUP=true
+    export AUTO_CLEANUP=true
   else
-    AUTO_CLEANUP=false
+    export AUTO_CLEANUP=false
   fi
 
   if [[ "all" = $1 ]]; then
