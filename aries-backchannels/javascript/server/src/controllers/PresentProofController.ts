@@ -18,8 +18,7 @@ import util from 'util'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { ConnectionUtils } from '../utils/ConnectionUtils'
-import { V1ProofService } from '@aries-framework/core/build/modules/proofs/protocol/v1/V1ProofService'
-import { PresentationPreview } from '@aries-framework/core/build/modules/proofs/protocol/v1/models/V1PresentationPreview'
+import { PresentationPreview } from '@aries-framework/core'
 @Controller('/agent/command/proof')
 export class PresentProofController extends BaseController {
   private logger: Logger
@@ -78,9 +77,6 @@ export class PresentProofController extends BaseController {
       protocolVersion: 'v1',
       proofFormats: {
         indy: {
-          name: 'proposeProof',
-          version: '1.0',
-          nonce: await this.agent.injectionContainer.resolve(V1ProofService).generateProofRequestNonce(),
           attributes,
           predicates,
         },
@@ -119,9 +115,6 @@ export class PresentProofController extends BaseController {
       protocolVersion: 'v1',
       proofFormats: {
         indy: {
-          name: 'requestProof',
-          version: '1.0',
-          nonce: await this.agent.injectionContainer.resolve(V1ProofService).generateProofRequestNonce(),
           requestedAttributes: proofRequest.requestedAttributes,
           requestedPredicates: proofRequest.requestedPredicates,  
         }
