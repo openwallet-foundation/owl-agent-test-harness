@@ -9,7 +9,7 @@ Execute Allure Docker Service from this directory
 
 ```sh
 
-docker-compose up -d allure allure-ui
+docker compose up -d allure allure-ui
 
 ```
 

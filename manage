@@ -68,6 +68,19 @@ if [ "${PWD_HOST_FQDN}" != "" ]; then
   fi
 fi
 
+# ========================================================================================================
+# Check Docker Compose
+# --------------------------------------------------------------------------------------------------------
+
+# Default to deprecated V1 'docker-compose'.
+dockerCompose="docker-compose --log-level ERROR"
+
+# Prefer 'docker compose' V2 if available
+if [[ $(docker compose version 2> /dev/null) == 'Docker Compose'* ]]; then
+  dockerCompose="docker --log-level error compose"
+fi
+echo "Using: ${dockerCompose}"
+
 # =================================================================================================================
 # Usage:
 # -----------------------------------------------------------------------------------------------------------------
@@ -274,7 +287,7 @@ buildImages() {
       fi
     else
       echo "Unable to find Dockerfile to build agent: ${agent}"
-      echo "Must be one one of: ${VALID_AGENTS}"
+      echo "Must be one of: ${VALID_AGENTS}"
     fi
   done
 
@@ -422,14 +435,14 @@ waitForUniresolver(){
 }
 
 startCloudAgency(){
-    docker-compose -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml up -d
+    ${dockerCompose} -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml up -d
     if [[ $AUTO_CLEANUP ]]; then
       export STARTED_CLOUD_AGENCY=true
     fi
 }
 
 stopCloudAgency(){
-    docker-compose -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml down
+    ${dockerCompose} -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml down
 }
 
 dockerhost_url_templates() {

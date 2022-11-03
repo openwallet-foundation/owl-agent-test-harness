@@ -7,19 +7,32 @@ export COMPOSE_PROJECT_NAME=docker
 
 pushd ${SCRIPT_HOME} > /dev/null
 
+# ========================================================================================================
+# Check Docker Compose
+# --------------------------------------------------------------------------------------------------------
+
+# Default to deprecated V1 'docker-compose'.
+dockerCompose="docker-compose --log-level ERROR"
+
+# Prefer 'docker compose' V2 if available
+if [[ $(docker compose version 2> /dev/null) == 'Docker Compose'* ]]; then
+  dockerCompose="docker --log-level error compose"
+fi
+echo "Using: ${dockerCompose}"
+
 case "${COMMAND}" in
 	clean)
-		docker-compose down --volumes
+		${dockerCompose} down --volumes
 		rm -rf .build
 		;;
 	start)
-		docker-compose up -d
+		${dockerCompose} up -d
 		;;
 	stop)
-		docker-compose down
+		${dockerCompose} down
 		;;
 	logs)
-		docker-compose logs
+		${dockerCompose} logs
 		;;
 	*)
 		echo "indy-tails-server: valid commands are 'clean', 'start', 'stop', 'logs'"
