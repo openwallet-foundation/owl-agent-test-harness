@@ -4,17 +4,30 @@ SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 COMMAND=${1}
 
 # If multi-step composition becomes necessary again, set ALL_COMPOSES to a string of command-line parameters for
-# all of the docker-compose files, like this:
+# all of the docker compose files, like this:
 # ALL_COMPOSES=" -f compose-1.yml -f compose-2.yml -f compose-3.yml "
 ALL_COMPOSES=" "
 
+# ========================================================================================================
+# Check Docker Compose
+# --------------------------------------------------------------------------------------------------------
+
+# Default to deprecated V1 'docker-compose'.
+dockerCompose="docker-compose --log-level ERROR"
+
+# Prefer 'docker compose' V2 if available
+if [[ $(docker compose version 2> /dev/null) == 'Docker Compose'* ]]; then
+  dockerCompose="docker --log-level error compose"
+fi
+echo "Using: ${dockerCompose}"
+
 startCommand() {
-	# docker-compose -f compose-1.yml up -d
+	# ${dockerCompose} -f compose-1.yml up -d
 	# sleep 15
-	# docker-compose -f compose-2.yml up -d
+	# ${dockerCompose} -f compose-2.yml up -d
 	# sleep 10
-	# docker-compose -f compose-3.yml up -d
-	docker-compose up -d
+	# ${dockerCompose} -f compose-3.yml up -d
+	${dockerCompose} up -d
 }
 
 generateKeys() {
@@ -105,23 +118,23 @@ createDID() {
 stopService() {
 	arg=$1
 
-	docker-compose ${ALL_COMPOSES} stop
+	${dockerCompose} ${ALL_COMPOSES} stop
 
 	if [[ $arg = "with-logs" ]]; then
-		if [[ -n "$(docker-compose ${ALL_COMPOSES} -p aath ps -q)" ]]; then
+		if [[ -n "$(${dockerCompose} ${ALL_COMPOSES} -p aath ps -q)" ]]; then
 			echo writing logs...
-			docker-compose ${ALL_COMPOSES} logs > orb.log
+			${dockerCompose} ${ALL_COMPOSES} logs > orb.log
 		fi
 	fi
 
-	docker-compose ${ALL_COMPOSES} down --volumes
+	${dockerCompose} ${ALL_COMPOSES} down --volumes
 }
 
 pushd ${SCRIPT_HOME} > /dev/null
 
 case "${COMMAND}" in
 	clean)
-		docker-compose ${ALL_COMPOSES} down --volumes
+		${dockerCompose} ${ALL_COMPOSES} down --volumes
 		rm -rf .build
 		;;
 	stop)
@@ -138,7 +151,7 @@ case "${COMMAND}" in
 		createDID
 		;;
 	logs)
-		docker-compose ${ALL_COMPOSES} logs -f -t
+		${dockerCompose} ${ALL_COMPOSES} logs -f -t
 		;;
 	create)
 		setupCLI

@@ -5,13 +5,13 @@ This folder contains a docker script that run several Aries agents (currently 2 
 To run the agents, first make sure you are running a local von-network and tails server (same as if you were running the test harness), and then:
 
 ```bash
-docker-compose -f docker-compose-demo.yml up
+docker compose -f docker-compose-demo.yml up
 ```
 
 To stop the agents, `<CTRL-C>` in the above shell and then run:
 
 ```bash
-docker-compose -f docker-compose-demo.yml rm
+docker compose -f docker-compose-demo.yml rm
 ```
 
 When the agents are running you have access to the following URLs and ports:
