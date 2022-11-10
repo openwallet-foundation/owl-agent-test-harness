@@ -17,9 +17,6 @@ name: test-harness-acapy-afgo
 #
 # End
 on:
-  pull_request:
-    branches:
-    - main
   workflow_dispatch:
 defaults:
   run:
