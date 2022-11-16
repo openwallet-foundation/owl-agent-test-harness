@@ -14,7 +14,7 @@ extern crate clap;
 extern crate reqwest;
 extern crate uuid;
 
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 use crate::controllers::{
     connection,
@@ -24,6 +24,7 @@ use crate::controllers::{
     presentation,
     revocation,
     schema,
+    didcomm
 };
 use actix_web::{middleware, web, App, HttpServer};
 use clap::Parser;
@@ -70,7 +71,6 @@ enum Status {
 pub struct HarnessAgent {
     aries_agent: AriesAgent,
     status: Status,
-    last_connection_id: Option<String>,
 }
 
 #[macro_export]
@@ -101,7 +101,7 @@ async fn main() -> std::io::Result<()> {
 
     let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
 
-    let aries_agent = setup::initialize().await;
+    let aries_agent = setup::initialize(opts.port).await;
 
     HttpServer::new(move || {
         App::new()
@@ -109,10 +109,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::NormalizePath::new(
                 middleware::TrailingSlash::Trim,
             ))
-            .app_data(web::Data::new(Mutex::new(HarnessAgent {
+            .app_data(web::Data::new(RwLock::new(HarnessAgent {
                 aries_agent: aries_agent.clone(),
                 status: Status::Active,
-                last_connection_id: None,
             })))
             .service(
                 web::scope("/agent")
@@ -122,12 +121,15 @@ async fn main() -> std::io::Result<()> {
                     .configure(issuance::config)
                     .configure(revocation::config)
                     .configure(presentation::config)
-                    .configure(general::config),
+                    .configure(general::config)
+            )
+            .service(
+                web::scope("/didcomm").route("", web::post().to(didcomm::receive_message))
             )
     })
     .keep_alive(std::time::Duration::from_secs(30))
     .client_request_timeout(std::time::Duration::from_secs(30))
-    .workers(1)
+    .workers(2)
     .bind(format!("{}:{}", host, opts.port))?
     .run()
     .await

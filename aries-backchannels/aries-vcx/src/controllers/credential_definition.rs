@@ -1,6 +1,6 @@
 use actix_web::{get, post, web, Responder};
 use reqwest::multipart;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
@@ -45,7 +45,7 @@ async fn upload_tails_file(tails_url: &str, tails_file: &str) -> HarnessResult<(
 
 impl HarnessAgent {
     pub async fn create_credential_definition(
-        &mut self,
+        &self,
         cred_def: &CredentialDefinition,
     ) -> HarnessResult<String> {
         let tails_base_url = std::env::var("TAILS_SERVER_URL")
@@ -103,10 +103,10 @@ impl HarnessAgent {
 #[post("")]
 pub async fn create_credential_definition(
     req: web::Json<Request<CredentialDefinition>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .create_credential_definition(&req.data)
         .await
@@ -114,11 +114,11 @@ pub async fn create_credential_definition(
 
 #[get("/{cred_def_id}")]
 pub async fn get_credential_definition(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .get_credential_definition(&path.into_inner())
 }

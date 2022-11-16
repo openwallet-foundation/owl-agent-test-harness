@@ -2,7 +2,7 @@ use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::{HarnessAgent, soft_assert_eq};
 use actix_web::{get, post, web, Responder};
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Schema {
@@ -22,7 +22,7 @@ impl HarnessAgent {
         self.aries_agent.schemas().schema_json(id).await.is_ok()
     }
 
-    pub async fn create_schema(&mut self, schema: &Schema) -> HarnessResult<String> {
+    pub async fn create_schema(&self, schema: &Schema) -> HarnessResult<String> {
         let id = self.schema_id(schema);
         if !self.schema_published(&id).await {
             soft_assert_eq!(
@@ -41,7 +41,7 @@ impl HarnessAgent {
         Ok(json!({ "schema_id": id }).to_string())
     }
 
-    pub async fn get_schema(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_schema(&self, id: &str) -> HarnessResult<String> {
         self.aries_agent
             .schemas()
             .schema_json(id)
@@ -53,17 +53,17 @@ impl HarnessAgent {
 #[post("")]
 pub async fn create_schema(
     req: web::Json<Request<Schema>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().create_schema(&req.data).await
+    agent.read().unwrap().create_schema(&req.data).await
 }
 
 #[get("/{schema_id}")]
 pub async fn get_schema(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
-    agent.lock().unwrap().get_schema(&path.into_inner()).await
+    agent.read().unwrap().get_schema(&path.into_inner()).await
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

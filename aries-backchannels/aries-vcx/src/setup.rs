@@ -1,4 +1,4 @@
-use aries_vcx_agent::{Agent as AriesAgent, InitConfig};
+use aries_vcx_agent::{Agent as AriesAgent, InitConfig, PoolInitConfig, WalletInitConfig};
 use rand::{thread_rng, Rng};
 use std::io::prelude::*;
 
@@ -79,23 +79,26 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
     }
 }
 
-pub async fn initialize() -> AriesAgent {
+pub async fn initialize(port: u32) -> AriesAgent {
     let enterprise_seed = get_trustee_seed().await;
     let genesis_path = download_genesis_file()
         .await
         .expect("Failed to download the genesis file");
-    let agency_endpoint =
-        std::env::var("CLOUD_AGENCY_URL").unwrap_or("http://localhost:8080".to_string());
+    let dockerhost = std::env::var("DOCKERHOST").unwrap_or("localhost".to_string());
+    let service_endpoint = format!("http://{}:{}/didcomm", dockerhost, port);
     let init_config = InitConfig {
         enterprise_seed,
-        genesis_path,
-        pool_name: "pool_name".to_string(),
-        agency_endpoint,
-        agency_did: "VsKV7grR1BUE29mG2Fm2kX".to_string(),
-        agency_verkey: "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR".to_string(),
-        wallet_name: format!("rust_agent_{}", uuid::Uuid::new_v4()),
-        wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_string(),
-        wallet_kdf: "RAW".to_string(),
+        pool_config: PoolInitConfig {
+            genesis_path,
+            pool_name: "pool_name".to_string(),
+        },
+        wallet_config: WalletInitConfig {
+            wallet_name: format!("rust_agent_{}", uuid::Uuid::new_v4()),
+            wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_string(),
+            wallet_kdf: "RAW".to_string(),
+        },
+        agency_config: None,
+        service_endpoint
     };
     AriesAgent::initialize(init_config).await.unwrap()
 }

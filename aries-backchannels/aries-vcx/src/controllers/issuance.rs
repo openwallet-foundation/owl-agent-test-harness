@@ -9,7 +9,7 @@ use aries_vcx_agent::aries_vcx::messages::issuance::CredentialPreviewData;
 use aries_vcx_agent::aries_vcx::messages::mime_type::MimeType;
 use aries_vcx_agent::aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx_agent::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CredentialOffer {
@@ -107,7 +107,7 @@ async fn download_tails_file(
 
 impl HarnessAgent {
     pub async fn send_credential_proposal(
-        &mut self,
+        &self,
         cred_proposal: &CredentialProposal,
     ) -> HarnessResult<String> {
         let mut proposal_data = CredentialProposalData::create()
@@ -131,7 +131,7 @@ impl HarnessAgent {
         Ok(json!({ "state": state, "thread_id": id }).to_string())
     }
 
-    pub async fn send_credential_request(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn send_credential_request(&self, id: &str) -> HarnessResult<String> {
         self.aries_agent
             .holder()
             .send_credential_request(Some(id), None)
@@ -177,18 +177,7 @@ impl HarnessAgent {
                 None,
             )
         } else {
-            let connection_id = self.last_connection_id.as_ref().unwrap();
-            let proposals = self
-                .aries_agent
-                .connections()
-                .get_credential_proposals(connection_id)
-                .await?;
-            soft_assert_eq!(proposals.len(), 1);
-            let proposal = proposals.last().unwrap();
-            self.aries_agent
-                .issuer()
-                .accept_proposal(connection_id, proposal)
-                .await?;
+            let proposal = self.aries_agent.issuer().get_proposal(id)?;
             let (tails_file, rev_reg_id) = get_tails_rev_id(&proposal.cred_def_id)?;
             (
                 OfferInfo {
@@ -209,21 +198,18 @@ impl HarnessAgent {
         Ok(json!({ "state": state, "thread_id": id }).to_string())
     }
 
-    pub async fn issue_credetial(
+    pub async fn issue_credential(
         &self,
         id: &str,
         _credential: &Credential,
     ) -> HarnessResult<String> {
-        self.aries_agent.issuer().update_state(id).await?;
         self.aries_agent.issuer().send_credential(id).await?;
         let state = to_backchannel_state_issuer(self.aries_agent.issuer().get_state(id)?);
         Ok(json!({ "state": state }).to_string())
     }
 
     pub async fn store_credential(&self, id: &str) -> HarnessResult<String> {
-        // To send ack if necessary
-        let state = self.aries_agent.holder().update_state(id).await?;
-
+        let state = self.aries_agent.holder().get_state(id)?;
         if self.aries_agent.holder().is_revokable(id).await? {
             let rev_reg_id = self.aries_agent.holder().get_rev_reg_id(id).await?;
             let tails_hash = self.aries_agent.holder().get_tails_hash(id).await?;
@@ -233,30 +219,18 @@ impl HarnessAgent {
         Ok(json!({ "state": to_backchannel_state_holder(state), "credential_id": id }).to_string())
     }
 
-    pub async fn get_issuer_state(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_issuer_state(&self, id: &str) -> HarnessResult<String> {
         let state = if self.aries_agent.issuer().exists_by_id(id) {
-            to_backchannel_state_issuer(self.aries_agent.issuer().update_state(id).await?)
+            to_backchannel_state_issuer(self.aries_agent.issuer().get_state(id)?)
         } else if self.aries_agent.holder().exists_by_id(id) {
-            to_backchannel_state_holder(self.aries_agent.holder().update_state(id).await?)
-        } else if let Some(connection_id) = &self.last_connection_id {
-            let mut offers = self
-                .aries_agent
-                .connections()
-                .get_credential_offers(connection_id)
-                .await?;
-            soft_assert_eq!(offers.len(), 1);
-            let id = self
-                .aries_agent
-                .holder()
-                .create_from_offer(connection_id, offers.pop().unwrap())?;
-            to_backchannel_state_holder(self.aries_agent.holder().get_state(&id)?)
+            to_backchannel_state_holder(self.aries_agent.holder().get_state(id)?)
         } else {
             return Err(HarnessError::from_kind(HarnessErrorType::NotFoundError));
         };
         Ok(json!({ "state": state }).to_string())
     }
 
-    pub async fn get_credential(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_credential(&self, id: &str) -> HarnessResult<String> {
         Ok(json!({ "referent": id }).to_string())
     }
 }
@@ -264,10 +238,10 @@ impl HarnessAgent {
 #[post("/send-proposal")]
 pub async fn send_credential_proposal(
     req: web::Json<Request<CredentialProposal>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .send_credential_proposal(&req.data)
         .await
@@ -276,10 +250,10 @@ pub async fn send_credential_proposal(
 #[post("/send-offer")]
 pub async fn send_credential_offer(
     req: web::Json<Request<CredentialOffer>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .send_credential_offer(&req.data, &req.id)
         .await
@@ -288,18 +262,18 @@ pub async fn send_credential_offer(
 #[post("/send-request")]
 pub async fn send_credential_request(
     req: web::Json<Request<String>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().send_credential_request(&req.id).await
+    agent.read().unwrap().send_credential_request(&req.id).await
 }
 
 #[get("/{issuer_id}")]
 pub async fn get_issuer_state(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .get_issuer_state(&path.into_inner())
         .await
@@ -308,30 +282,30 @@ pub async fn get_issuer_state(
 #[post("/issue")]
 pub async fn issue_credential(
     req: web::Json<Request<Credential>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
-        .issue_credetial(&req.id, &req.data)
+        .issue_credential(&req.id, &req.data)
         .await
 }
 
 #[post("/store")]
 pub async fn store_credential(
     req: web::Json<Request<CredentialId>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().store_credential(&req.id).await
+    agent.read().unwrap().store_credential(&req.id).await
 }
 
 #[get("/{cred_id}")]
 pub async fn get_credential(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .get_credential(&path.into_inner())
         .await

@@ -3,16 +3,11 @@ use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::{soft_assert_eq, HarnessAgent, State};
 use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::handlers::connection::connection::ConnectionState;
+use aries_vcx_agent::aries_vcx::messages::ack::Ack;
 use aries_vcx_agent::aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
 use aries_vcx_agent::aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
 use aries_vcx_agent::aries_vcx::protocols::connection::inviter::state_machine::InviterState;
-use std::sync::Mutex;
-
-#[allow(dead_code)]
-#[derive(Deserialize, Default)]
-pub struct ConnectionRequest {
-    request: String,
-}
+use std::sync::RwLock;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Default)]
@@ -47,7 +42,7 @@ impl HarnessAgent {
     }
 
     pub async fn receive_invitation(
-        &mut self,
+        &self,
         invite: PairwiseInvitation,
     ) -> HarnessResult<String> {
         let id = self
@@ -64,35 +59,31 @@ impl HarnessAgent {
     }
 
     pub async fn accept_request(&self, id: &str) -> HarnessResult<String> {
-        let mut requests = self
-            .aries_agent
-            .connections()
-            .get_connection_requests(id)
-            .await?;
+        // TODO: Handle case of multiple requests received
         if self.aries_agent.connections().get_state(id)?
-            != ConnectionState::Inviter(InviterState::Invited)
-            || requests.len() != 1
+            != ConnectionState::Inviter(InviterState::Requested)
         {
             return Err(HarnessError::from_kind(
                 HarnessErrorType::RequestNotReceived,
             ));
         }
-        self.aries_agent
-            .connections()
-            .accept_request(id, requests.pop().unwrap())
-            .await?;
+        self.aries_agent.connections().send_response(id).await?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub async fn send_ping(&self, id: &str) -> HarnessResult<String> {
-        // TODO: Should be explicit
-        self.aries_agent.connections().update_state(id).await?; // Receive response and send ack
+    pub async fn send_ack(&self, id: &str) -> HarnessResult<String> {
+        self.aries_agent.connections().send_ack(id).await?;
         Ok(json!({ "connection_id": id }).to_string())
     }
 
-    pub async fn get_connection_state(&mut self, id: &str) -> HarnessResult<String> {
-        let state = to_backchannel_state(self.aries_agent.connections().update_state(id).await?);
-        self.last_connection_id = Some(id.to_string());
+    pub async fn process_ack(&self, ack: Ack) -> HarnessResult<String> {
+        let id = ack.get_thread_id();
+        self.aries_agent.connections().process_ack(&id, ack).await?;
+        Ok(json!({ "connection_id": id }).to_string())
+    }
+
+    pub async fn get_connection_state(&self, id: &str) -> HarnessResult<String> {
+        let state = to_backchannel_state(self.aries_agent.connections().get_state(id)?);
         Ok(json!({ "state": state }).to_string())
     }
 
@@ -103,17 +94,17 @@ impl HarnessAgent {
 }
 
 #[post("/create-invitation")]
-pub async fn create_invitation(agent: web::Data<Mutex<HarnessAgent>>) -> impl Responder {
-    agent.lock().unwrap().create_invitation().await
+pub async fn create_invitation(agent: web::Data<RwLock<HarnessAgent>>) -> impl Responder {
+    agent.read().unwrap().create_invitation().await
 }
 
 #[post("/receive-invitation")]
 pub async fn receive_invitation(
     req: web::Json<Request<PairwiseInvitation>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .receive_invitation(req.data.clone())
         .await
@@ -122,26 +113,26 @@ pub async fn receive_invitation(
 #[post("/accept-invitation")]
 pub async fn send_request(
     req: web::Json<Request<()>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().send_request(&req.id).await
+    agent.read().unwrap().send_request(&req.id).await
 }
 
 #[post("/accept-request")]
 pub async fn accept_request(
     req: web::Json<Request<()>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().accept_request(&req.id).await
+    agent.read().unwrap().accept_request(&req.id).await
 }
 
 #[get("/{connection_id}")]
 pub async fn get_connection_state(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .get_connection_state(&path.into_inner())
         .await
@@ -149,22 +140,22 @@ pub async fn get_connection_state(
 
 #[get("/{thread_id}")]
 pub async fn get_connection(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .get_connection(&path.into_inner())
         .await
 }
 
 #[post("/send-ping")]
-pub async fn send_ping(
+pub async fn send_ack(
     req: web::Json<Request<Comment>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().send_ping(&req.id).await
+    agent.read().unwrap().send_ack(&req.id).await
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -174,7 +165,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .service(receive_invitation)
             .service(send_request)
             .service(accept_request)
-            .service(send_ping)
+            .service(send_ack)
             .service(get_connection_state),
     )
     .service(web::scope("/response/connection").service(get_connection));

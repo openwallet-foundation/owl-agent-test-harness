@@ -23,12 +23,10 @@ LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
 LEDGER_URL_INTERNAL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
 TAILS_SERVER_URL_HOST="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
 TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
-CLOUD_AGENCY_URL="${CLOUD_AGENCY_URL:-http://localhost:8000}"
 # important: inside the internal URLs, we replace "://localhost:" with "://${DOCKERHOST}:"
 #   so it works inside docker.
 LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
-CLOUD_AGENCY_URL_INTERNAL="$(echo ${CLOUD_AGENCY_URL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
@@ -370,17 +368,6 @@ waitForTailsServer(){
   )
 }
 
-pingCloudAgency(){
-  cloud_agency_url=${1}
-
-  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${cloud_agency_url})
-  if (( ${rtnCd} == 200 )); then
-    return 0
-  else
-    return 1
-  fi
-}
-
 pingUniresolver(){
 
   # ping uniresolver server
@@ -390,27 +377,6 @@ pingUniresolver(){
   else
     return 1
   fi
-}
-
-waitForCloudAgency(){
-  (
-    # Wait for cloud agency to start ...
-    local startTime=${SECONDS}
-    local rtnCd=0
-    printf "waiting for cloud agency to start"
-    while ! pingCloudAgency "$CLOUD_AGENCY_URL"; do
-      printf "."
-      local duration=$(($SECONDS - $startTime))
-      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
-        echoRed "\nThe agency failed to start within ${duration} seconds.\n"
-        rtnCd=1
-        break
-      fi
-      sleep 1
-    done
-    echo
-    return ${rtnCd}
-  )
 }
 
 waitForUniresolver(){
@@ -432,17 +398,6 @@ waitForUniresolver(){
     echo
     return ${rtnCd}
   )
-}
-
-startCloudAgency(){
-    ${dockerCompose} -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml up -d
-    if [[ $AUTO_CLEANUP ]]; then
-      export STARTED_CLOUD_AGENCY=true
-    fi
-}
-
-stopCloudAgency(){
-    ${dockerCompose} -f ./aries-backchannels/aries-vcx/ci/docker-compose.yml down
 }
 
 dockerhost_url_templates() {
@@ -542,9 +497,9 @@ startAgent() {
     export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
     export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
     if [[ -z ${AGENT_CONFIG_FILE} ]]; then
-      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}"  -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     else
-      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "AGENT_CONFIG_FILE=${AGENT_CONFIG_FILE}" -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "CLOUD_AGENCY_URL=${CLOUD_AGENCY_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "AGENT_CONFIG_FILE=${AGENT_CONFIG_FILE}" -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
     fi
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
@@ -693,16 +648,11 @@ stopServices() {
       auxiliaryService von-network stop
     fi
 
-    if [[ ${STARTED_CLOUD_AGENCY} ]]; then
-      echo "stopping local vcxagency..."
-      stopCloudAgency
-    fi
   elif [[ "all" = $1 ]]; then
     auxiliaryService uniresolver stop
     auxiliaryService orb stop
     auxiliaryService indy-tails stop
     auxiliaryService von-network stop
-    stopCloudAgency
   fi
 }
 
@@ -760,16 +710,6 @@ startHarness(){
   createNetwork
 
   startServices auto
-
-  # Only start cloud agency if vcx is in the agent list to run.
-  if [[ "${ACME}" = "aries-vcx" ]] || [[ "${BOB}" = "aries-vcx" ]] || [[ "${MALLORY}" = "aries-vcx" ]] || [[ "${FABER}" = "aries-vcx" ]]; then
-    startCloudAgency
-
-    if ! waitForCloudAgency; then
-      echoRed "\nThe cloud agency not running.\n"
-      exit 1
-    fi
-  fi
 
   dockerhost_url_templates
 
