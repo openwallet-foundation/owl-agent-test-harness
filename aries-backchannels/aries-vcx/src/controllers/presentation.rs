@@ -15,7 +15,7 @@ use aries_vcx_agent::aries_vcx::messages::status::Status;
 use aries_vcx_agent::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx_agent::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct PresentationRequestWrapper {
@@ -83,12 +83,9 @@ fn to_backchannel_state_verifier(state: VerifierState) -> State {
 
 impl HarnessAgent {
     pub async fn send_proof_request(
-        &mut self,
+        &self,
         presentation_request: &PresentationRequestWrapper,
     ) -> HarnessResult<String> {
-        // We may have received some proposals, but will use request given by harness
-        self.aries_agent.connections().get_proof_proposals(&presentation_request.connection_id).await?;
-
         let req_data = presentation_request
             .presentation_request
             .proof_request
@@ -115,7 +112,7 @@ impl HarnessAgent {
     }
 
     pub async fn send_proof_proposal(
-        &mut self,
+        &self,
         presentation_proposal: &PresentationProposalWrapper,
     ) -> HarnessResult<String> {
         let mut proposal_data = PresentationProposalData::create();
@@ -136,8 +133,8 @@ impl HarnessAgent {
         Ok(json!({ "state": to_backchannel_state_prover(state), "thread_id": id }).to_string())
     }
 
-    pub async fn send_presentation(&mut self, id: &str) -> HarnessResult<String> {
-        let state = self.aries_agent.prover().update_state(id).await?;
+    pub async fn send_presentation(&self, id: &str) -> HarnessResult<String> {
+        let state = self.aries_agent.prover().get_state(id)?;
         soft_assert_eq!(state, ProverState::PresentationRequestReceived);
         let tails_dir = if self.aries_agent.prover().is_secondary_proof_requested(id)? {
             Some(std::env::current_dir().unwrap().join("resource").join("tails").to_str().unwrap().to_string())
@@ -149,36 +146,19 @@ impl HarnessAgent {
         Ok(json!({"state": to_backchannel_state_prover(state), "thread_id": id}).to_string())
     }
 
-    pub async fn verify_presentation(&mut self, id: &str) -> HarnessResult<String> {
-        soft_assert_eq!(
-            self.aries_agent.verifier().get_state(id)?,
-            VerifierState::PresentationRequestSent
-        );
-        // TODO: Make explicit
-        let state = self.aries_agent.verifier().update_state(id).await?;
-        let verified = self.aries_agent.verifier().verify_presentation(id)? == Status::Success;
+    pub async fn verify_presentation(&self, id: &str) -> HarnessResult<String> {
+        let verified = self.aries_agent.verifier().get_presentation_status(id)? == Status::Success;
+        let state = self.aries_agent.verifier().get_state(id)?;
         Ok(json!({ "state": to_backchannel_state_verifier(state), "verified": verified }).to_string())
     }
 
-    pub async fn get_proof_state(&mut self, id: &str) -> HarnessResult<String> {
+    pub async fn get_proof_state(&self, id: &str) -> HarnessResult<String> {
         let state = if self.aries_agent.verifier().exists_by_id(id) {
-            to_backchannel_state_verifier(self.aries_agent.verifier().update_state(id).await?)
+            to_backchannel_state_verifier(self.aries_agent.verifier().get_state(id)?)
         } else if self.aries_agent.prover().exists_by_id(id) {
-            to_backchannel_state_prover(self.aries_agent.prover().update_state(id).await?)
-        } else if self.aries_agent.verifier().exists_by_id(id) {
-            to_backchannel_state_verifier(self.aries_agent.verifier().update_state(id).await?)
+            to_backchannel_state_prover(self.aries_agent.prover().get_state(id)?)
         } else {
-            let requests = self
-                .aries_agent
-                .connections()
-                .get_all_proof_requests()
-                .await?;
-            soft_assert_eq!(requests.len(), 1);
-            let id = self
-                .aries_agent
-                .prover()
-                .create_from_request(&requests.last().unwrap().1, requests.last().unwrap().0.clone())?;
-            to_backchannel_state_prover(self.aries_agent.prover().get_state(&id)?)
+            return Err(HarnessError::from_kind(HarnessErrorType::NotFoundError));
         };
         Ok(json!({ "state": state }).to_string())
     }
@@ -187,42 +167,42 @@ impl HarnessAgent {
 #[post("/send-request")]
 pub async fn send_proof_request(
     req: web::Json<Request<PresentationRequestWrapper>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().send_proof_request(&req.data).await
+    agent.read().unwrap().send_proof_request(&req.data).await
 }
 
 #[post("/send-proposal")]
 pub async fn send_proof_proposal(
     req: web::Json<Request<PresentationProposalWrapper>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().send_proof_proposal(&req.data).await
+    agent.read().unwrap().send_proof_proposal(&req.data).await
 }
 
 #[post("/send-presentation")]
 pub async fn send_presentation(
     req: web::Json<Request<serde_json::Value>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().send_presentation(&req.id).await
+    agent.read().unwrap().send_presentation(&req.id).await
 }
 
 #[post("/verify-presentation")]
 pub async fn verify_presentation(
     req: web::Json<Request<serde_json::Value>>,
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
-    agent.lock().unwrap().verify_presentation(&req.id).await
+    agent.read().unwrap().verify_presentation(&req.id).await
 }
 
 #[get("/{proof_id}")]
 pub async fn get_proof_state(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .get_proof_state(&path.into_inner())
         .await

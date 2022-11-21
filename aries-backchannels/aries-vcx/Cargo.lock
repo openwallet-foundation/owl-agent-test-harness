@@ -264,8 +264,8 @@ dependencies = [
 
 [[package]]
 name = "agency_client"
-version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=20f9f7e59f8aae6f90e590bef3cffcffa9540d37#20f9f7e59f8aae6f90e590bef3cffcffa9540d37"
+version = "0.45.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=7a7c65d#7a7c65dc91ec3735448849687b43b939c45b4025"
 dependencies = [
  "android_logger",
  "env_logger",
@@ -368,8 +368,8 @@ checksum = "98161a4e3e2184da77bb14f02184cdd111e83bbbcc9979dfee3c44b9a85f5602"
 
 [[package]]
 name = "aries-vcx"
-version = "0.44.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=20f9f7e59f8aae6f90e590bef3cffcffa9540d37#20f9f7e59f8aae6f90e590bef3cffcffa9540d37"
+version = "0.45.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=7a7c65d#7a7c65dc91ec3735448849687b43b939c45b4025"
 dependencies = [
  "agency_client",
  "android_logger",
@@ -405,7 +405,7 @@ dependencies = [
 [[package]]
 name = "aries-vcx-agent"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=20f9f7e59f8aae6f90e590bef3cffcffa9540d37#20f9f7e59f8aae6f90e590bef3cffcffa9540d37"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=7a7c65d#7a7c65dc91ec3735448849687b43b939c45b4025"
 dependencies = [
  "aries-vcx",
  "derive_builder 0.11.2",
@@ -2446,8 +2446,8 @@ dependencies = [
 
 [[package]]
 name = "messages"
-version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=20f9f7e59f8aae6f90e590bef3cffcffa9540d37#20f9f7e59f8aae6f90e590bef3cffcffa9540d37"
+version = "0.45.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=7a7c65d#7a7c65dc91ec3735448849687b43b939c45b4025"
 dependencies = [
  "base64 0.10.1",
  "chrono",

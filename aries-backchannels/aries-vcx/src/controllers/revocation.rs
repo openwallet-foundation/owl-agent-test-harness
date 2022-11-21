@@ -4,7 +4,7 @@ use crate::HarnessAgent;
 
 use actix_web::{get, post, web, Responder};
 
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct CredentialRevocationData {
@@ -16,7 +16,7 @@ pub struct CredentialRevocationData {
 
 impl HarnessAgent {
     pub async fn revoke_credential(
-        &mut self,
+        &self,
         revocation_data: &CredentialRevocationData,
     ) -> HarnessResult<String> {
         let CredentialRevocationData {
@@ -32,7 +32,7 @@ impl HarnessAgent {
         Ok("".to_string())
     }
 
-    pub fn get_rev_reg_info_for_credential(&mut self, id: &str) -> HarnessResult<String> {
+    pub fn get_rev_reg_info_for_credential(&self, id: &str) -> HarnessResult<String> {
         let rev_reg_id = self.aries_agent.issuer().get_rev_reg_id(id)?;
         let rev_id = self.aries_agent.issuer().get_rev_id(id)?;
         Ok(json!({ "revoc_reg_id": rev_reg_id, "revocation_id": rev_id }).to_string())
@@ -41,11 +41,11 @@ impl HarnessAgent {
 
 #[post("/revoke")]
 pub async fn revoke_credential(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     req: web::Json<Request<CredentialRevocationData>>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .revoke_credential(&req.data)
         .await
@@ -53,11 +53,11 @@ pub async fn revoke_credential(
 
 #[get("/{cred_id}")]
 pub async fn get_rev_reg_info_for_credential(
-    agent: web::Data<Mutex<HarnessAgent>>,
+    agent: web::Data<RwLock<HarnessAgent>>,
     path: web::Path<String>,
 ) -> impl Responder {
     agent
-        .lock()
+        .read()
         .unwrap()
         .get_rev_reg_info_for_credential(&path.into_inner())
 }

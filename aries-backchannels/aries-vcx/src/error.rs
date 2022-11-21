@@ -26,6 +26,8 @@ pub enum HarnessErrorType {
     ProtocolError,
     #[display(fmt = "Invalid state for requested operation")]
     InvalidState,
+    #[display(fmt = "Encryption error")]
+    EncryptionError,
     #[display(fmt = "Multiple credential definitions found")]
     MultipleCredDefinitions,
 }
