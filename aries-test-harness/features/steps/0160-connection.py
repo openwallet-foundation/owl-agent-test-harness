@@ -382,6 +382,7 @@ def step_impl(context, sender, receiver):
         )
 
 
+@when('"{sender}" and "{receiver}" have an existing connection')
 @given('"{sender}" and "{receiver}" have an existing connection')
 def step_impl(context, sender, receiver):
     if "DIDExchangeConnection" in context.tags:
