@@ -1,7 +1,7 @@
 from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_POST, expected_agent_state
-from agent_test_utils import get_relative_timestamp_to_epoch
+from agent_test_utils import get_relative_timestamp_to_epoch, set_relative_timestamp
 from time import sleep
 
 
@@ -256,6 +256,15 @@ def step_impl(context, prover):
 
     if context.presentation:
         presentation = context.presentation
+
+        # Determine if there is a top level timestamp for revocation status applicable for all potential credentials in the presentation in the and set accordingly
+        presentation = set_relative_timestamp(presentation)
+        # if "timestamp" in presentation:
+        #     relative_timestamp = presentation["timestamp"]
+        #     presentation["timestamp"] = get_relative_timestamp_to_epoch(
+        #         relative_timestamp
+        #     )
+
         # Find the cred ids and add the actual cred id into the presentation
         # TODO: There is probably a better way to get access to the specific requested attributes and predicates. Revisit this later.
         try:
