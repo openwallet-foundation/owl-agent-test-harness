@@ -386,8 +386,8 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | name  | role     |
          | Bob   | prover   |
          | Faber | verifier |
-      And "Bob" has an issued credential from <issuer> with <credential_data>
-      And "Bob" has an issued credential from <issuer> with <2nd_credential_data>
+      And "Bob" has multiple issued credentials from <issuer> with <credential_data> for schema <credential_schema>
+      And "Bob" has multiple issued credentials from <issuer> with <2nd_credential_data> for schema <2nd_credential_schema>
       #When <issuer> revokes the credential
       And "Faber" and "Bob" have an existing connection
       When "Faber" sends a <request_for_proof> presentation to "Bob"
@@ -396,5 +396,5 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
       Then "Bob" has the proof verified
 
       Examples:
-         | issuer | credential_data   | 2nd_credential_data  | request_for_proof                                         | presentation                  |
-         | Acme   | Data_DL_MaxValues | Data_BI_HealthValues | proof_request_DL_revoc_addresspresentation_DL_Health_w_ts | presentation_DL_revoc_address |
+         | issuer | credential_schema           | credential_data   | 2nd_credential_schema       | 2nd_credential_data  | request_for_proof                                         | presentation                  |
+         | Acme   | Schema_DriversLicense_Revoc | Data_DL_MaxValues | Schema_Health_Consent_Revoc | Data_BI_HealthValues | proof_request_DL_revoc_addresspresentation_DL_Health_w_ts | presentation_DL_revoc_address |
