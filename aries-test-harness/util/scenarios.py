@@ -1,6 +1,6 @@
 import glob
 
-from typing import Any, Dict, Iterable, List, NewType, Optional, Sequence, Tuple, Union
+from typing import List
 
 class Scenario:
     def __init__(self, name, tags):
@@ -61,8 +61,9 @@ def show_features(features, markdown):
             jtags = joined_tags(s)
             prefix = markdown and '|        |' or ''
             if jtags:
-                print(f"{prefix}  {jtags}")
-            print(f"{prefix}  Scenario: {s.name}")
+                print(f"{prefix} {jtags} {s.name}")
+            else:
+                print(f"{prefix} {s.name}")
 
 def read_features() -> List[Feature]:
     features = []
@@ -119,4 +120,4 @@ if __name__ == "__main__":
         tags = args.tags.split(',')
         main(tags, args.markdown)
     except KeyboardInterrupt:
-        os.exit(1)
+        exit(1)
