@@ -380,7 +380,7 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | Data_DL_MinValues |
 
    # TODO How can we add multiple schemas where the schema is a tag? Right now it supports a single schema. Maybe just multiple @Schema_? Multiple might already be working
-   @T001-RFC0441 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Schema_Health_Consent_Revoc @MobileTest @RFC0441
+   @T001-RFC0441 @critical @AcceptanceTest @Schema_DriversLicense_Revoc @Schema_Health_Consent_Revoc @MobileTest @Indy @RFC0441
    Scenario Outline: Holder has 2 revokable credentials issued, both are not revoked, and receives a proof of non-revocation with interval for both credentials
       Given "2" agents
          | name  | role     |
@@ -396,5 +396,5 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
       Then "Bob" has the proof verified
 
       Examples:
-         | issuer | credential_schema           | credential_data   | 2nd_credential_schema       | 2nd_credential_data  | request_for_proof                                         | presentation                  |
-         | Acme   | Schema_DriversLicense_Revoc | Data_DL_MaxValues | Schema_Health_Consent_Revoc | Data_BI_HealthValues | proof_request_DL_revoc_addresspresentation_DL_Health_w_ts | presentation_DL_revoc_address |
+         | issuer | credential_schema           | credential_data   | 2nd_credential_schema       | 2nd_credential_data  | request_for_proof                    | presentation                  |
+         | Acme   | Schema_DriversLicense_Revoc | Data_DL_MaxValues | Schema_Health_Consent_Revoc | Data_BI_HealthValues | proof_request_DL_address_Health_w_ts | presentation_DL_revoc_address |

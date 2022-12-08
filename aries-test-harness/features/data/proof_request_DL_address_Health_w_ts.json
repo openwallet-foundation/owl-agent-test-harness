@@ -1,0 +1,27 @@
+{
+    "presentation_request": {
+        "name": "Health Consent Proof",
+        "requested_attributes": {
+             "address_attrs": {
+                "name": "address",
+                "restrictions": [
+                   {
+                      "schema_name": "Schema_DriversLicense",
+                      "schema_version": "1.0.1"
+                   }
+                ]
+             },
+            "consent_attrs": {
+                "name": "jti_id",
+                "restrictions": [
+                    {
+                        "schema_name": "Schema_Health_Consent",
+                        "schema_version": "0.2.0"
+                    }
+                ]
+            }
+        },
+        "requested_predicates": {},
+        "version": "0.1.0"
+    }
+}

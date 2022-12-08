@@ -333,7 +333,7 @@ def step_impl(context, verifier, request_for_proof, prover):
         context.request_for_proof = request_for_proof_json["presentation_request"]
 
     except FileNotFoundError:
-        print(FileNotFoundError + ": features/data/" + request_for_proof + ".json")
+        print((FileNotFoundError) + ": features/data/" + request_for_proof + ".json")
 
     # Call the step below to get send rhe request for presentation.
     context.execute_steps(
