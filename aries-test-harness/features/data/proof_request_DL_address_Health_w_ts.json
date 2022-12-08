@@ -6,8 +6,8 @@
                 "name": "address",
                 "restrictions": [
                    {
-                      "schema_name": "Schema_DriversLicense",
-                      "schema_version": "1.0.1"
+                      "schema_name": "Schema_DriversLicense_Revoc",
+                      "schema_version": "1.1.0"
                    }
                 ]
              },
@@ -15,8 +15,8 @@
                 "name": "jti_id",
                 "restrictions": [
                     {
-                        "schema_name": "Schema_Health_Consent",
-                        "schema_version": "0.2.0"
+                        "schema_name": "Schema_Health_Consent_Revoc",
+                        "schema_version": "1.2.0"
                     }
                 ]
             }
