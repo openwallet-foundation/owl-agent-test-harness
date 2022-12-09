@@ -5,8 +5,8 @@
       "requested_attributes": {
          "address_attrs": {
             "cred_type_name": "Schema_DriversLicense_Revoc",
-            "revealed": true,
-            "cred_id": "replace_me"
+            "cred_id": "replace_me",
+            "revealed": true
          },
          "consent_attrs": {
             "cred_type_name": "Schema_Health_Consent_Revoc",
