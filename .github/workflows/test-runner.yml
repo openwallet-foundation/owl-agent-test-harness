@@ -20,10 +20,10 @@ jobs:
         run: |
           repository="${{github.repository}}"
           name=$(echo ${repository##*/})
-          echo "::set-output name=name::${name}"
+          echo "name=${name}" >> $GITHUB_OUTPUT
 
       - name: Git checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Get File List
         id: get-file-list
@@ -61,7 +61,7 @@ jobs:
       - name: ${{ matrix.test-workflow }}
         timeout-minutes: 60
         if: success() || failure()
-        uses: convictional/trigger-workflow-and-wait@v1.6.0
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           workflow_file_name: ${{ matrix.test-workflow }}
           owner: ${{ github.repository_owner }}
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: generate-summary-results.yml
-        uses: convictional/trigger-workflow-and-wait@v1.6.0
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           workflow_file_name: generate-summary-results.yml
           owner: ${{ github.repository_owner }}
