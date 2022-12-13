@@ -22,22 +22,36 @@ def select_features(features, tags) -> List[Feature]:
         return features
 
     # Add the leading '@' when not already given
-    tags = [(t.startswith('@') and t or '@' + t) for t in tags]
+    def add_prefix(t):
+        if t[0] == '~' and t[1] != '@':
+            t = '~@' + t[1:]
+        elif t[0] != '~' and t[0] != '@':
+            t = '@' + t
+        return t
+    tags = [add_prefix(t) for t in tags]
     print(f'Selecting by: {tags}')
+
+    include_tags = [t for t in tags if t[0] != '~']
+    exclude_tags = [t[1:] for t in tags if t[0] == '~']
+    # print(f'Include={include_tags}, Exclude={exclude_tags}')
 
     result = []
     for f in features:
-        if set(tags) & set(f.tags):
+        # Check common include tags with feature tags
+        if set(include_tags) & set(f.tags):
             auxf = f
         else:
+            # Generate an auxilliary feature 
             auxf = Feature(f.name, f.tags)
             for s in f.scenarios:
-                if set(tags) & set(s.tags):
+                common_include_tags = set(include_tags) & set(s.tags)
+                common_exclude_tags = set(exclude_tags) & set(s.tags)
+                if common_include_tags and not common_exclude_tags:
                     auxf.scenarios.append(s)
-        auxf.tags = list(set(tags) & set(f.tags))
+        auxf.tags = list(set(include_tags) & set(f.tags))
         for s in auxf.scenarios:
             relevant_tags = list(filter(lambda x: x.startswith('@T'), s.tags))
-            relevant_tags.extend(set(tags) & set(s.tags))
+            relevant_tags.extend(set(include_tags) & set(s.tags))
             s.tags = relevant_tags
         if auxf.scenarios:
             result.append(auxf)
