@@ -902,6 +902,8 @@ runTests() {
       docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
     fi
   fi
+
+  return ${docker_result}
 }
 
 stopIfExists(){
@@ -1164,6 +1166,7 @@ if [[ "${COMMAND}" == "runset" ]]; then
 fi
 
 pushd ${SCRIPT_HOME} >/dev/null
+exit_status=0
 
 case "${COMMAND}" in
   build)
@@ -1192,6 +1195,7 @@ case "${COMMAND}" in
     ;;
   test)
       runTests ${TAGS} ${@}
+      exit_status=$?
     ;;
   stop)
       stopHarness
@@ -1207,7 +1211,7 @@ case "${COMMAND}" in
     ;;
 
   tests|scenarios)
-      # grep -h -B 1 Scenario aries-test-harness/features/*feature
+      # Basic impl: grep -h -B 1 Scenario aries-test-harness/features/*feature
       python aries-test-harness/util/scenarios.py "$@"
     ;;
 
@@ -1221,3 +1225,4 @@ case "${COMMAND}" in
 esac
 
 popd > /dev/null
+exit ${exit_status}
