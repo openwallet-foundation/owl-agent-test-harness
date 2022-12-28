@@ -49,7 +49,7 @@ runs:
       working-directory: test-harness
     - name: Collect docker logs
       if: ${{ always() }}
-      uses: jwalton/gh-docker-logs@v2.2.0
+      uses: jwalton/gh-docker-logs@v2
       with:
         dest: "./.logs/docker-logs"
     - name: archive logs
