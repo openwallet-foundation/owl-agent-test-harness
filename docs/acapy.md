@@ -14,7 +14,7 @@
 | [acapy-findy](#runset-acapy-findy) | acapy-main<br>1.0.0-rc1 | findy<br>0.30.44 | acapy-main<br>1.0.0-rc1 | acapy-main<br>1.0.0-rc1 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
 | [acapy-verity](#runset-acapy-verity) | verity<br>1.0 | acapy-main<br>1.0.0-rc1 | acapy-main<br>1.0.0-rc1 | acapy-main<br>1.0.0-rc1 | AIP 1.0 | [**0 / 2<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-verity/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>1.0.0-rc1 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**1 / 17<br>5%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>0.3.1-alpha.0 | acapy-main<br>1.0.0-rc1 | javascript<br>0.3.1-alpha.0 | javascript<br>0.3.1-alpha.0 | AIP 1.0 | [**26 / 28<br>92%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>0.3.1-alpha.0 | acapy-main<br>1.0.0-rc1 | javascript<br>0.3.1-alpha.0 | javascript<br>0.3.1-alpha.0 | AIP 1.0 | [**27 / 28<br>96%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>1.0.0-rc1 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**0 / 35<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [dotnet-acapy](#runset-dotnet-acapy) | dotnet<br> | acapy-main<br>1.0.0-rc1 | dotnet<br> | dotnet<br> | AIP 1.0 | [**12 / 12<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [findy-acapy](#runset-findy-acapy) | findy<br>0.30.44 | acapy-main<br>1.0.0-rc1 | findy<br>0.30.44 | findy<br>0.30.44 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
@@ -29,7 +29,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 3 out of 14 (21%)**
 
 
-*Last run: Thu Dec 29 00:33:53 UTC 2022*
+*Last run: Sat Dec 31 00:33:19 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -52,7 +52,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 38 out of 39 (97%)**
 
 
-*Last run: Thu Dec 29 00:57:43 UTC 2022*
+*Last run: Sat Dec 31 00:53:42 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -75,7 +75,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 35 out of 35 (100%)**
 
 
-*Last run: Thu Dec 29 00:47:13 UTC 2022*
+*Last run: Sat Dec 31 00:45:44 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -98,7 +98,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 61 out of 61 (100%)**
 
 
-*Last run: Thu Dec 29 00:58:25 UTC 2022*
+*Last run: Sat Dec 31 00:57:32 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -121,7 +121,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 11 out of 33 (33%)**
 
 
-*Last run: Thu Dec 29 01:22:36 UTC 2022*
+*Last run: Sat Dec 31 01:37:48 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -143,7 +143,7 @@ Runset Name: ACA-PY to AF-.NET to AFJ
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Dec 29 01:06:49 UTC 2022*
+*Last run: Sat Dec 31 01:12:07 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -168,7 +168,7 @@ Runset Name: ACA-PY to AF-.NET
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Dec 29 01:11:01 UTC 2022*
+*Last run: Sat Dec 31 01:08:29 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -193,7 +193,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Dec 29 01:14:16 UTC 2022*
+*Last run: Sat Dec 31 01:16:02 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -216,7 +216,7 @@ Runset Name: ACA-PY to Verity
 **Latest results: 0 out of 2 (0%)**
 
 
-*Last run: Thu Dec 29 01:13:17 UTC 2022*
+*Last run: Sat Dec 31 01:18:31 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -239,7 +239,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 1 out of 17 (5%)**
 
 
-*Last run: Thu Dec 29 01:29:40 UTC 2022*
+*Last run: Sat Dec 31 01:37:07 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -259,10 +259,10 @@ All of the tests being executed in this runset are passing.
 Runset Name: AFJ to ACA-PY
 
 ```tip
-**Latest results: 26 out of 28 (92%)**
+**Latest results: 27 out of 28 (96%)**
 
 
-*Last run: Thu Dec 29 01:43:39 UTC 2022*
+*Last run: Sat Dec 31 01:58:16 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -285,7 +285,7 @@ Runset Name: aries-vcx to acapy
 **Latest results: 0 out of 35 (0%)**
 
 
-*Last run: Thu Dec 29 02:15:51 UTC 2022*
+*Last run: Sat Dec 31 02:33:58 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -307,7 +307,7 @@ Runset Name: AF-.NET to ACA-PY
 **Latest results: 12 out of 12 (100%)**
 
 
-*Last run: Thu Dec 29 02:21:57 UTC 2022*
+*Last run: Sat Dec 31 02:35:31 UTC 2022*
 ```
 
 #### Current Runset Status
@@ -330,7 +330,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Thu Dec 29 02:50:04 UTC 2022*
+*Last run: Sat Dec 31 03:05:11 UTC 2022*
 ```
 
 #### Current Runset Status
