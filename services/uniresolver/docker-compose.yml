@@ -3,7 +3,7 @@ version: '2'
 services:
   driver-did-sov.local:
     container_name: driver-did-sov.local
-    image: universalresolver/driver-did-sov:0.1.0
+    image: universalresolver/driver-did-sov:0.6.0-eea2f48
     environment:
       - "uniresolver_driver_did_sov_poolConfigs=_;./local-pool/config.txt"
       - "uniresolver_driver_did_sov_poolVersions=_;2"

@@ -10,13 +10,13 @@ jobs:
     if: ((success() || failure()) && ((github.event_name != 'pull_request' && github.repository == 'hyperledger/aries-agent-test-harness')))
     steps:
       - name: checkout-test-harness
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: test-harness
       - name: generate-summary-results
         uses: ./test-harness/actions/run-summary-results
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
           path: test-harness
           committer: "Ian Costanzo <ian@anon-solutions.ca>"

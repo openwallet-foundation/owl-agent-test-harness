@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout-test-harness
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: test-harness
       - name: Docker Login
@@ -37,7 +37,7 @@ jobs:
           TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160 -t ~@T003-RFC0160 -t ~@T004-RFC0160 -t ~@revocation -t ~@RFC0025 -t ~@RFC0183 -t ~@RFC0211 -t ~@RFC0434 -t ~@RFC0453 -t ~@wip -t ~@DIDExchangeConnection"
           REPORT_PROJECT: javascript-b-aries-vcx
         continue-on-error: true
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: agent-logs
           path: ./test-harness/.logs/
