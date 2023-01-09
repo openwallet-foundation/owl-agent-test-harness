@@ -1,4 +1,4 @@
-@revocation @AIP20
+@revocation @RFC0183 @AIP20
 Feature: RFC 0183 Aries agent credential revocation and revocation notification
 
    Background: create a schema and credential definition in order to issue a credential
