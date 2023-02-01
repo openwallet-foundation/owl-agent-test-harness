@@ -611,7 +611,7 @@ startServices() {
 
   # if we're *not* using an external indy tails server, start the local one
   if [[ -z ${TAILS_SERVER_URL_CONFIG} ]]; then
-    if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]]; then
+    if [[ -z `docker ps -q --filter="name=docker_tails-server_1"` ]] && [[ -z $(docker ps -q --filter="name=docker-tails-server-1") ]]; then
       echo "starting local indy-tails-server..."
       auxiliaryService indy-tails start
       if [[ $AUTO_CLEANUP ]]; then
