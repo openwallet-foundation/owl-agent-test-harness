@@ -4,8 +4,8 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>1.0.0-rc1 | afgo-interop<br>unknown | acapy-main<br>1.0.0-rc1 | acapy-main<br>1.0.0-rc1 | pre-AIP 2.0 | [**3 / 14<br>21%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
-| [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>1.0.0-rc1 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**1 / 17<br>5%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.8.0-rc0 | afgo-interop<br>unknown | acapy-main<br>0.8.0-rc0 | acapy-main<br>0.8.0-rc0 | pre-AIP 2.0 | [**3 / 14<br>21%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
+| [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.8.0-rc0 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**1 / 17<br>5%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo](#runset-afgo) | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | AIP 2.0 | [**27 / 45<br>60%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
@@ -18,7 +18,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 3 out of 14 (21%)**
 
 
-*Last run: Tue Jan 31 00:34:00 UTC 2023*
+*Last run: Sun Feb 12 00:35:44 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -41,7 +41,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 1 out of 17 (5%)**
 
 
-*Last run: Tue Jan 31 01:28:21 UTC 2023*
+*Last run: Sun Feb 12 01:29:17 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -64,7 +64,7 @@ Runset Name: AF-Go to AF-Go
 **Latest results: 27 out of 45 (60%)**
 
 
-*Last run: Tue Jan 31 01:44:28 UTC 2023*
+*Last run: Sun Feb 12 01:47:35 UTC 2023*
 ```
 
 #### Current Runset Status
