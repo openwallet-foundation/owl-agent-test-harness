@@ -2,15 +2,13 @@ import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { NotFound } from '@tsed/exceptions'
 import {
   JsonTransformer,
-  ProofRequest,
   ProofExchangeRecord,
   AgentConfig,
   Logger,
   ProofEventTypes,
   ProofStateChangedEvent,
   ProofState,
-  RequestedAttribute,
-  RequestedPredicate,
+  V1PresentationPreview,
 } from '@aries-framework/core'
 import { ProofUtils } from '../utils/ProofUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
@@ -18,7 +16,7 @@ import util from 'util'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { ConnectionUtils } from '../utils/ConnectionUtils'
-import { PresentationPreview } from '@aries-framework/core'
+import { ProofRequest, RequestedAttribute, RequestedPredicate } from '@aries-framework/core/build/modules/proofs/formats/indy/models'
 @Controller('/agent/command/proof')
 export class PresentProofController extends BaseController {
   private logger: Logger
@@ -67,7 +65,7 @@ export class PresentProofController extends BaseController {
     }
   ) {
 
-    const presentationProposal = JsonTransformer.fromJSON(data.presentation_proposal, PresentationPreview)
+    const presentationProposal = JsonTransformer.fromJSON(data.presentation_proposal, V1PresentationPreview)
     const { attributes, predicates } = presentationProposal
 
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
@@ -101,6 +99,10 @@ export class PresentProofController extends BaseController {
       }
     }
   ) {
+
+    this.logger.info('Sending request', {
+      proofRequest: util.inspect(data.presentation_request.proof_request, { showHidden: false, depth: null }),
+    })
     // Do not validate, we only need a few properties from the proof request
     const proofRequest = JsonTransformer.fromJSON(data.presentation_request.proof_request.data, ProofRequest, {
       validate: false,
@@ -115,8 +117,11 @@ export class PresentProofController extends BaseController {
       protocolVersion: 'v1',
       proofFormats: {
         indy: {
-          requestedAttributes: proofRequest.requestedAttributes,
-          requestedPredicates: proofRequest.requestedPredicates,  
+          name: proofRequest.name ?? 'proof-request',
+          version: proofRequest.version ?? '1.0',
+          nonRevoked: proofRequest.nonRevoked,
+          requestedAttributes: proofRequest.requestedAttributes ? Object.fromEntries(proofRequest.requestedAttributes) : undefined,
+          requestedPredicates: proofRequest.requestedPredicates ? Object.fromEntries(proofRequest.requestedPredicates) : undefined,  
         }
       },
       comment: data.presentation_request.comment,
@@ -139,28 +144,26 @@ export class PresentProofController extends BaseController {
     await this.waitForState(threadId, ProofState.RequestReceived)
     let proofRecord = await ProofUtils.getProofByThreadId(this.agent, threadId)
 
-    const retrievedCredentials = await this.agent.proofs.getRequestedCredentialsForProofRequest({
+    const retrievedCredentials = await this.agent.proofs.getCredentialsForRequest({
       proofRecordId: proofRecord.id, 
-      config: {
-      filterByPresentationPreview: true,
       // Some tests include presenting a revoked credential, expecting the verification to fail
       // So not excluding those from the retrieved credentials.
-      filterByNonRevocationRequirements: false,
-    }})
+      proofFormats: {indy: {filterByNonRevocationRequirements: false }}
+    })
 
     let requestedAttributes: Record<string, RequestedAttribute> = {}
     let requestedPredicates: Record<string, RequestedPredicate> = {}
     
     if (data.requested_attributes) {
       Object.keys(data.requested_attributes).forEach((key) => {
-        requestedAttributes[key] = retrievedCredentials.proofFormats.indy?.requestedAttributes[key]?.find(
+        requestedAttributes[key] = retrievedCredentials.proofFormats.indy?.attributes[key]?.find(
           (a) => a.credentialId === data.requested_attributes[key].cred_id
         ) as RequestedAttribute
       })
     }
     if (data.requested_predicates) {
       Object.keys(data.requested_predicates).forEach((key) => {
-        requestedPredicates[key]  = retrievedCredentials.proofFormats.indy?.requestedPredicates[key].find(
+        requestedPredicates[key]  = retrievedCredentials.proofFormats.indy?.predicates[key].find(
           (p) => p.credentialId ===  data.requested_predicates[key].cred_id
         ) as RequestedPredicate
       })
@@ -187,7 +190,7 @@ export class PresentProofController extends BaseController {
 
     let proofRecord = await ProofUtils.getProofByThreadId(this.agent, threadId)
     if (proofRecord) {
-      return this.mapProofExchangeRecord(await this.agent.proofs.acceptPresentation(proofRecord.id))
+      return this.mapProofExchangeRecord(await this.agent.proofs.acceptPresentation({ proofRecordId: proofRecord.id }))
     }
   }
 
