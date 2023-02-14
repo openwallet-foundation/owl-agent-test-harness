@@ -43,7 +43,7 @@ export class TestHarnessConfig {
     this._controllers.push(controller)
   }
 
-  public get agent(): Agent<{}> {
+  public get agent(): Agent {
     if (!this._agent) {
       throw new Error('Agent not initialized')
     }
