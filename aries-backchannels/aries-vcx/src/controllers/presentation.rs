@@ -3,12 +3,11 @@ use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::soft_assert_eq;
 use crate::{HarnessAgent, State};
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::indy::anoncreds;
-use aries_vcx_agent::aries_vcx::indy::proofs::proof_request::ProofRequestDataBuilder;
-use aries_vcx_agent::aries_vcx::indy::proofs::proof_request_internal::{
+use aries_vcx_agent::aries_vcx::common::proofs::proof_request::ProofRequestDataBuilder;
+use aries_vcx_agent::aries_vcx::common::proofs::proof_request_internal::{
     AttrInfo, NonRevokedInterval, PredicateInfo,
 };
-use aries_vcx_agent::aries_vcx::messages::proof_presentation::presentation_proposal::{
+use aries_vcx_agent::aries_vcx::messages::protocols::proof_presentation::presentation_proposal::{
     Attribute, Predicate, PresentationProposalData,
 };
 use aries_vcx_agent::aries_vcx::messages::status::Status;
@@ -64,8 +63,8 @@ fn to_backchannel_state_prover(state: ProverState) -> State {
         ProverState::PresentationProposalSent => State::ProposalSent,
         ProverState::PresentationSent => State::PresentationSent,
         ProverState::PresentationPreparationFailed
-            | ProverState::Finished
-            | ProverState::Failed => State::Done,
+        | ProverState::Finished
+        | ProverState::Failed => State::Done,
         _ => State::Unknown,
     }
 }
@@ -76,8 +75,7 @@ fn to_backchannel_state_verifier(state: VerifierState) -> State {
         VerifierState::PresentationRequestSet => State::RequestSet,
         VerifierState::PresentationProposalReceived => State::ProposalReceived,
         VerifierState::PresentationRequestSent => State::RequestSent,
-        VerifierState::Finished
-            | VerifierState::Failed => State::Done,
+        VerifierState::Finished | VerifierState::Failed => State::Done,
     }
 }
 
@@ -96,7 +94,13 @@ impl HarnessAgent {
             .requested_attributes(req_data.requested_attributes.unwrap_or_default())
             .requested_predicates(req_data.requested_predicates.unwrap_or_default())
             .non_revoked(req_data.non_revoked)
-            .nonce(anoncreds::generate_nonce().await?)
+            .nonce(
+                self.aries_agent
+                    .profile()
+                    .inject_anoncreds()
+                    .generate_nonce()
+                    .await?,
+            )
             .build()?;
         let id = self
             .aries_agent
@@ -104,7 +108,7 @@ impl HarnessAgent {
             .send_proof_request(
                 &presentation_request.connection_id,
                 presentation_request_data,
-                None
+                None,
             )
             .await?;
         let state = self.aries_agent.verifier().get_state(&id)?;
@@ -137,11 +141,22 @@ impl HarnessAgent {
         let state = self.aries_agent.prover().get_state(id)?;
         soft_assert_eq!(state, ProverState::PresentationRequestReceived);
         let tails_dir = if self.aries_agent.prover().is_secondary_proof_requested(id)? {
-            Some(std::env::current_dir().unwrap().join("resource").join("tails").to_str().unwrap().to_string())
+            Some(
+                std::env::current_dir()
+                    .unwrap()
+                    .join("resource")
+                    .join("tails")
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+            )
         } else {
             None
         };
-        self.aries_agent.prover().send_proof_prentation(id, tails_dir.as_deref()).await?;
+        self.aries_agent
+            .prover()
+            .send_proof_prentation(id, tails_dir.as_deref())
+            .await?;
         let state = self.aries_agent.prover().get_state(id)?;
         Ok(json!({"state": to_backchannel_state_prover(state), "thread_id": id}).to_string())
     }
@@ -149,7 +164,10 @@ impl HarnessAgent {
     pub async fn verify_presentation(&self, id: &str) -> HarnessResult<String> {
         let verified = self.aries_agent.verifier().get_presentation_status(id)? == Status::Success;
         let state = self.aries_agent.verifier().get_state(id)?;
-        Ok(json!({ "state": to_backchannel_state_verifier(state), "verified": verified }).to_string())
+        Ok(
+            json!({ "state": to_backchannel_state_verifier(state), "verified": verified })
+                .to_string(),
+        )
     }
 
     pub async fn get_proof_state(&self, id: &str) -> HarnessResult<String> {
