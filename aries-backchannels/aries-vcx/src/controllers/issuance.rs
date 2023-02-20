@@ -3,10 +3,10 @@ use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::soft_assert_eq;
 use crate::{HarnessAgent, State};
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::messages::issuance::credential_offer::OfferInfo;
-use aries_vcx_agent::aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
-use aries_vcx_agent::aries_vcx::messages::issuance::CredentialPreviewData;
-use aries_vcx_agent::aries_vcx::messages::mime_type::MimeType;
+use aries_vcx_agent::aries_vcx::messages::concepts::mime_type::MimeType;
+use aries_vcx_agent::aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
+use aries_vcx_agent::aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposalData;
+use aries_vcx_agent::aries_vcx::messages::protocols::issuance::CredentialPreviewData;
 use aries_vcx_agent::aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx_agent::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use std::sync::RwLock;
@@ -145,18 +145,24 @@ impl HarnessAgent {
         cred_offer: &CredentialOffer,
         id: &str,
     ) -> HarnessResult<String> {
-        let get_tails_rev_id = |cred_def_id: &str| -> HarnessResult<(Option<String>, Option<String>)> {
-            Ok(if let Some(rev_reg_id) = self
-                .aries_agent
-                .rev_regs()
-                .find_by_cred_def_id(cred_def_id)?
-                .pop() {
-                    (
-                        Some(self.aries_agent.rev_regs().get_tails_dir(&rev_reg_id)?),
-                        Some(rev_reg_id)
-                    )
-                } else { (None, None) })
-        };
+        let get_tails_rev_id =
+            |cred_def_id: &str| -> HarnessResult<(Option<String>, Option<String>)> {
+                Ok(
+                    if let Some(rev_reg_id) = self
+                        .aries_agent
+                        .rev_regs()
+                        .find_by_cred_def_id(cred_def_id)?
+                        .pop()
+                    {
+                        (
+                            Some(self.aries_agent.rev_regs().get_tails_dir(&rev_reg_id)?),
+                            Some(rev_reg_id),
+                        )
+                    } else {
+                        (None, None)
+                    },
+                )
+            };
 
         let connection_id = if cred_offer.connection_id.is_empty() {
             None

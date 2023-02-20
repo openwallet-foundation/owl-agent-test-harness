@@ -2,11 +2,11 @@ use crate::controllers::Request;
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
 use crate::{soft_assert_eq, HarnessAgent, State};
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::handlers::connection::connection::ConnectionState;
-use aries_vcx_agent::aries_vcx::messages::ack::Ack;
-use aries_vcx_agent::aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
-use aries_vcx_agent::aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
-use aries_vcx_agent::aries_vcx::protocols::connection::inviter::state_machine::InviterState;
+use aries_vcx_agent::aries_vcx::messages::concepts::ack::Ack;
+use aries_vcx_agent::aries_vcx::messages::protocols::connection::invite::{
+    Invitation, PairwiseInvitation,
+};
+use aries_vcx_agent::aries_vcx::protocols::connection::{State as ConnectionState, ThinState};
 use std::sync::RwLock;
 
 #[allow(dead_code)]
@@ -15,36 +15,37 @@ pub struct Comment {
     comment: String,
 }
 
-fn to_backchannel_state(state: ConnectionState) -> State {
+fn to_backchannel_state(state: ThinState) -> State {
     match state {
-        ConnectionState::Invitee(state) => match state {
-            InviteeState::Initial => State::Initial,
-            InviteeState::Invited => State::Invited,
-            InviteeState::Requested => State::Requested,
-            InviteeState::Responded => State::Responded,
-            InviteeState::Completed => State::Complete,
+        ThinState::Invitee(state) => match state {
+            ConnectionState::Initial => State::Initial,
+            ConnectionState::Invited => State::Invited,
+            ConnectionState::Requested => State::Requested,
+            ConnectionState::Responded => State::Responded,
+            ConnectionState::Completed => State::Complete,
         },
-        ConnectionState::Inviter(state) => match state {
-            InviterState::Initial => State::Initial,
-            InviterState::Invited => State::Invited,
-            InviterState::Requested => State::Requested,
-            InviterState::Responded => State::Responded,
-            InviterState::Completed => State::Complete,
+        ThinState::Inviter(state) => match state {
+            ConnectionState::Initial => State::Initial,
+            ConnectionState::Invited => State::Invited,
+            ConnectionState::Requested => State::Requested,
+            ConnectionState::Responded => State::Responded,
+            ConnectionState::Completed => State::Complete,
         },
     }
 }
 
 impl HarnessAgent {
     pub async fn create_invitation(&self) -> HarnessResult<String> {
-        let invitation = self.aries_agent.connections().create_invitation().await?;
-        let id = invitation.get_id()?;
+        let invitation = self
+            .aries_agent
+            .connections()
+            .create_invitation(None)
+            .await?;
+        let id = invitation.get_id();
         Ok(json!({ "connection_id": id, "invitation": invitation }).to_string())
     }
 
-    pub async fn receive_invitation(
-        &self,
-        invite: PairwiseInvitation,
-    ) -> HarnessResult<String> {
+    pub async fn receive_invitation(&self, invite: PairwiseInvitation) -> HarnessResult<String> {
         let id = self
             .aries_agent
             .connections()
@@ -60,9 +61,10 @@ impl HarnessAgent {
 
     pub async fn accept_request(&self, id: &str) -> HarnessResult<String> {
         // TODO: Handle case of multiple requests received
-        if self.aries_agent.connections().get_state(id)?
-            != ConnectionState::Inviter(InviterState::Requested)
-        {
+        if !matches!(
+            self.aries_agent.connections().get_state(id)?,
+            ThinState::Inviter(ConnectionState::Requested)
+        ) {
             return Err(HarnessError::from_kind(
                 HarnessErrorType::RequestNotReceived,
             ));

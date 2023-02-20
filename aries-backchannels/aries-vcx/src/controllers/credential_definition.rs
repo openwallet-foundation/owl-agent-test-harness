@@ -3,7 +3,7 @@ use reqwest::multipart;
 use std::sync::RwLock;
 
 use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
+use aries_vcx_agent::aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
 
 use crate::controllers::Request;
 use crate::soft_assert_eq;

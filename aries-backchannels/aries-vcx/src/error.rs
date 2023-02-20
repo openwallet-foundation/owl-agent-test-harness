@@ -1,10 +1,10 @@
+use crate::error::aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilderError;
 use actix_web::{error, http::StatusCode, HttpResponse, HttpResponseBuilder};
-use aries_vcx_agent::aries_vcx;
-use aries_vcx_agent::aries_vcx::indy::primitives::credential_definition::{
-    CredentialDefConfigBuilderError, RevocationDetailsBuilderError,
+use aries_vcx_agent::aries_vcx::common::proofs::proof_request::ProofRequestDataBuilderError;
+use aries_vcx_agent::aries_vcx::messages::errors::error::MessagesError;
+use aries_vcx_agent::aries_vcx::{
+    self, common::primitives::credential_definition::RevocationDetailsBuilderError,
 };
-use aries_vcx_agent::aries_vcx::indy::proofs::proof_request::ProofRequestDataBuilderError;
-use aries_vcx_agent::aries_vcx::messages::error::MessagesError;
 use aries_vcx_agent::AgentError;
 use derive_more::{Display, Error};
 
@@ -70,8 +70,8 @@ impl HarnessError {
     }
 }
 
-impl std::convert::From<aries_vcx::error::VcxError> for HarnessError {
-    fn from(vcx_err: aries_vcx::error::VcxError) -> HarnessError {
+impl std::convert::From<aries_vcx::errors::error::AriesVcxError> for HarnessError {
+    fn from(vcx_err: aries_vcx::errors::error::AriesVcxError) -> HarnessError {
         let kind = HarnessErrorType::InternalServerError;
         HarnessError {
             message: vcx_err.to_string(),
@@ -80,9 +80,11 @@ impl std::convert::From<aries_vcx::error::VcxError> for HarnessError {
     }
 }
 
-impl std::convert::From<aries_vcx::agency_client::error::AgencyClientError> for HarnessError {
+impl std::convert::From<aries_vcx::agency_client::errors::error::AgencyClientError>
+    for HarnessError
+{
     fn from(
-        agency_client_error: aries_vcx::agency_client::error::AgencyClientError,
+        agency_client_error: aries_vcx::agency_client::errors::error::AgencyClientError,
     ) -> HarnessError {
         let kind = HarnessErrorType::InternalServerError;
         HarnessError {
