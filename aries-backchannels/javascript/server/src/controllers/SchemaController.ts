@@ -39,8 +39,8 @@ export class SchemaController extends BaseController {
   async createSchema(@BodyParams('data') data: any): Promise<{schema_id: string, schema: ReturnedSchema}> {
 
     const schemaRepository = this.agent.dependencyManager.resolve(AnonCredsSchemaRepository)
-
-    const [schemaRecord] = await schemaRepository.findByQuery(this.agent.context, { schemaName: data.name })
+    const [schemaRecord] = await schemaRepository.findByQuery(this.agent.context, { schemaName: data.schema_name, 
+      schemaVersion: data.schema_version })
     if (schemaRecord) {
 
       return {

@@ -7,20 +7,21 @@ export class CredentialUtils {
     return credentialRepository.getSingleByQuery(agent.context, { threadId })
   }
 
-  public static async getAnonCredsCredentialById(agent: Agent, credentialId: string): Promise<AnonCredsCredentialInfo> {
+  public static async getAnonCredsCredentialById(agent: Agent, credentialId: string): Promise<Record<string, unknown>> {
     const credentialRepository = agent.dependencyManager.resolve(AnonCredsCredentialRepository)
     const credentialRecord = await credentialRepository.getByCredentialId(agent.context, credentialId)
     const attributes: { [key: string]: string } = {}
     for (const attribute in credentialRecord.credential.values) {
       attributes[attribute] = credentialRecord.credential.values[attribute].raw
     }
+
     return {
-      attributes,
-      credentialDefinitionId: credentialRecord.credential.cred_def_id,
-      credentialId: credentialRecord.credentialId,
-      schemaId: credentialRecord.credential.schema_id,
-      credentialRevocationId: credentialRecord.credentialRevocationId,
-      revocationRegistryId: credentialRecord.credential.rev_reg_id,
+      attrs: attributes,
+      cred_def_id: credentialRecord.credential.cred_def_id,
+      referent: credentialRecord.credentialId,
+      schema_id: credentialRecord.credential.schema_id,
+      cred_rev_id: credentialRecord.credentialRevocationId,
+      rev_reg_id: credentialRecord.credential.rev_reg_id,
     }
   }
 }
