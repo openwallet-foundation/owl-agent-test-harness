@@ -16,14 +16,14 @@ export class SchemaController extends BaseController {
   }
 
   @Get('/:schemaId')
-  async getSchemaById(@PathParams('schemaId') schemaId: string): Promise<AnonCredsSchema> {
+  async getSchemaById(@PathParams('schemaId') schemaId: string): Promise<ReturnedSchema> {
     try {
       const { schema } = await this.agent.modules.anoncreds.getSchema(schemaId)
 
       if (!schema) {
         throw new NotFound(`schema with schemaId "${schemaId}" not found.`)
       }
-      return schema
+      return { ...schema, id: schemaId }
     } catch (error: any) {
       // Schema does not exist on ledger
       if (error instanceof NotFound) {
@@ -36,7 +36,7 @@ export class SchemaController extends BaseController {
   }
 
   @Post()
-  async createSchema(@BodyParams('data') data: any): Promise<{schema_id: string, schema: AnonCredsSchema}> {
+  async createSchema(@BodyParams('data') data: any): Promise<{schema_id: string, schema: ReturnedSchema}> {
 
     const schemaRepository = this.agent.dependencyManager.resolve(AnonCredsSchemaRepository)
 
@@ -45,7 +45,7 @@ export class SchemaController extends BaseController {
 
       return {
         schema_id: schemaRecord.schemaId,
-        schema: schemaRecord.schema,
+        schema: { ...schemaRecord.schema, id: schemaRecord.schemaId },
       }
     }
   
@@ -72,7 +72,11 @@ export class SchemaController extends BaseController {
 
     return {
       schema_id: schema.schemaState.schemaId,
-      schema: schema.schemaState.schema,
+      schema: { ...schema.schemaState.schema, id: schema.schemaState.schemaId },
     }
   }
+}
+
+interface ReturnedSchema extends AnonCredsSchema {
+  id: string
 }
