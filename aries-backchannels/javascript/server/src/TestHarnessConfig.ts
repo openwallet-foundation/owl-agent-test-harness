@@ -4,12 +4,16 @@ import {
   InboundTransport,
   OutboundTransport,
   Agent,
+  KeyType,
+  TypedArrayEncoder,
+  DidInfo,
 } from '@aries-framework/core'
 import { HttpInboundTransport, WsInboundTransport } from '@aries-framework/node'
 import { $log } from '@tsed/common'
 import { BaseController } from './BaseController'
 import { createAgent, getAskarAnonCredsIndyModules } from './TestAgent'
 import { getGenesisPath, getRandomSeed, registerPublicDid } from './utils/ledgerUtils'
+import { indyDidFromPublicKeyBase58 } from '@aries-framework/core/build/utils/did'
 
 export class TestHarnessConfig {
   private _createAgentArgs?: CreateAgentArguments
@@ -55,6 +59,15 @@ export class TestHarnessConfig {
     const agentArgs = await this.getAgentArgs(options)
 
     this._agent = await createAgent(agentArgs)
+
+    const key = await this._agent.context.wallet.createKey({keyType: KeyType.Ed25519, privateKey: TypedArrayEncoder.fromString(agentArgs.publicDidSeed)})
+
+    const didInfo: DidInfo = {
+      did: indyDidFromPublicKeyBase58(key.publicKeyBase58),
+      verkey: key.publicKeyBase58
+    }
+    await this.agent.genericRecords.save({ content: { didInfo }, id: 'PUBLIC_DID_INFO' })
+    
   }
 
   public async agentStartup() {

@@ -1,3 +1,4 @@
+import { DidInfo } from '@aries-framework/core'
 import { Controller, Get } from '@tsed/common'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
@@ -9,9 +10,8 @@ export class DidController extends BaseController {
   }
 
   @Get()
-  getPublicDid() {
-    const didInfo = this.agent.publicDid
-
-    return didInfo
+  async getPublicDid() {
+    const publicDidInfoRecord = await this.agent.genericRecords.findById('PUBLIC_DID_INFO')
+    return publicDidInfoRecord ? publicDidInfoRecord.content.didInfo : {}
   }
 }

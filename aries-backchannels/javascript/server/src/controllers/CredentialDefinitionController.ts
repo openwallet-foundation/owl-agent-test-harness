@@ -3,6 +3,7 @@ import { InternalServerError, NotFound } from '@tsed/exceptions'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { AnonCredsApi, AnonCredsCredentialDefinition } from '@aries-framework/anoncreds'
+import { DidInfo } from '@aries-framework/core'
 
 @Controller('/agent/command/credential-definition')
 export class CredentialDefinitionController extends BaseController {
@@ -54,15 +55,20 @@ export class CredentialDefinitionController extends BaseController {
 
       const schema = await anoncredsApi.getSchema(data.schema_id)
 
+      const publicDidInfoRecord = await this.agent.genericRecords.findById('PUBLIC_DID_INFO')
+    
+      if (!publicDidInfoRecord) {
+        throw new Error('Agent does not have any public did')
+      }
+  
+      const issuerId = (publicDidInfoRecord.content.didInfo as unknown as DidInfo).did
       
       const { credentialDefinitionState } = await anoncredsApi.registerCredentialDefinition({ 
         credentialDefinition: {
-          issuerId: this.agent.context.wallet.publicDid!.did, 
+          issuerId,
           schemaId: schema.schemaId,
           tag: data.tag,
-        }, options: {
-
-      }}) 
+        }, options: { didIndyNamespace: 'main-pool'}}) 
 
       if (!credentialDefinitionState.credentialDefinition || !credentialDefinitionState.credentialDefinitionId) {
         throw new Error()
