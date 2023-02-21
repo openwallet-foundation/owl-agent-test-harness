@@ -11,12 +11,13 @@
     "format": "prettier --ignore-path .gitignore '**/*.+(js|json|ts|md|yml|yaml)' --write"
   },
   "dependencies": {
-    "@aries-framework/anoncreds": "^0.4.0-alpha.41",
-    "@aries-framework/anoncreds-rs": "^0.4.0-alpha.41",
-    "@aries-framework/askar": "^0.4.0-alpha.41",
-    "@aries-framework/core": "^0.4.0-alpha.41",
-    "@aries-framework/indy-vdr": "^0.4.0-alpha.41",
-    "@aries-framework/node": "^0.4.0-alpha.41",
+    "@aries-framework/anoncreds": "alpha",
+    "@aries-framework/anoncreds-rs": "alpha",
+    "@aries-framework/askar": "alpha",
+    "@aries-framework/core": "alpha",
+    "@aries-framework/indy-vdr": "alpha",
+    "@aries-framework/indy-sdk": "alpha",
+    "@aries-framework/node": "alpha",
     "@hyperledger/anoncreds-nodejs": "^0.1.0-dev.8",
     "@hyperledger/aries-askar-nodejs": "^0.1.0-dev.3",
     "@hyperledger/indy-vdr-nodejs": "^0.1.0-dev.9",
@@ -29,6 +30,7 @@
     "body-parser": "1.19.0",
     "cross-env": "7.0.3",
     "express": "^4.17.1",
+    "indy-sdk": "^1.16.0-dev-1655",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.5",
     "rxjs": "^7.4.0"

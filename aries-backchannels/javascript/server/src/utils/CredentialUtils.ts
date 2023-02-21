@@ -1,5 +1,5 @@
 import { Agent, CredentialRepository } from '@aries-framework/core'
-import { AnonCredsCredentialInfo, AnonCredsCredentialRepository } from '@aries-framework/anoncreds'
+import { AnonCredsCredentialInfo, AnonCredsCredentialRepository, AnonCredsHolderService, AnonCredsHolderServiceSymbol } from '@aries-framework/anoncreds'
 
 export class CredentialUtils {
   public static async getCredentialByThreadId(agent: Agent, threadId: string) {
@@ -8,20 +8,16 @@ export class CredentialUtils {
   }
 
   public static async getAnonCredsCredentialById(agent: Agent, credentialId: string): Promise<Record<string, unknown>> {
-    const credentialRepository = agent.dependencyManager.resolve(AnonCredsCredentialRepository)
-    const credentialRecord = await credentialRepository.getByCredentialId(agent.context, credentialId)
-    const attributes: { [key: string]: string } = {}
-    for (const attribute in credentialRecord.credential.values) {
-      attributes[attribute] = credentialRecord.credential.values[attribute].raw
-    }
+    const holderService = agent.dependencyManager.resolve<AnonCredsHolderService>(AnonCredsHolderServiceSymbol)
+    const credentialInfo = await holderService.getCredential(agent.context, { credentialId })
 
     return {
-      attrs: attributes,
-      cred_def_id: credentialRecord.credential.cred_def_id,
-      referent: credentialRecord.credentialId,
-      schema_id: credentialRecord.credential.schema_id,
-      cred_rev_id: credentialRecord.credentialRevocationId,
-      rev_reg_id: credentialRecord.credential.rev_reg_id,
+      attrs: credentialInfo.attributes,
+      cred_def_id: credentialInfo.credentialDefinitionId,
+      referent: credentialInfo.credentialId,
+      schema_id: credentialInfo.schemaId,
+      cred_rev_id: credentialInfo.credentialRevocationId,
+      rev_reg_id: credentialInfo.revocationRegistryId,
     }
   }
 }
