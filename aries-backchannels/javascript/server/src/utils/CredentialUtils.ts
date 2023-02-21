@@ -1,17 +1,26 @@
 import { Agent, CredentialRepository } from '@aries-framework/core'
-import type * as Indy from 'indy-sdk'
-import { IndyHolderService } from '@aries-framework/core/build/modules/indy/services/IndyHolderService'
+import { AnonCredsCredentialInfo, AnonCredsCredentialRepository } from '@aries-framework/anoncreds'
 
 export class CredentialUtils {
   public static async getCredentialByThreadId(agent: Agent, threadId: string) {
-    const credentialRepository = agent.injectionContainer.resolve(CredentialRepository)
+    const credentialRepository = agent.dependencyManager.resolve(CredentialRepository)
     return credentialRepository.getSingleByQuery(agent.context, { threadId })
   }
 
-  public static async getIndyCredentialById(agent: Agent, credentialId: string): Promise<Indy.IndyCredentialInfo> {
-    const holderService = agent.injectionContainer.resolve(IndyHolderService)
-    const indyCredential = await holderService.getCredential(agent.context, credentialId)
-
-    return indyCredential
+  public static async getAnonCredsCredentialById(agent: Agent, credentialId: string): Promise<AnonCredsCredentialInfo> {
+    const credentialRepository = agent.dependencyManager.resolve(AnonCredsCredentialRepository)
+    const credentialRecord = await credentialRepository.getByCredentialId(agent.context, credentialId)
+    const attributes: { [key: string]: string } = {}
+    for (const attribute in credentialRecord.credential.values) {
+      attributes[attribute] = credentialRecord.credential.values[attribute].raw
+    }
+    return {
+      attributes,
+      credentialDefinitionId: credentialRecord.credential.cred_def_id,
+      credentialId: credentialRecord.credentialId,
+      schemaId: credentialRecord.credential.schema_id,
+      credentialRevocationId: credentialRecord.credentialRevocationId,
+      revocationRegistryId: credentialRecord.credential.rev_reg_id,
+    }
   }
 }
