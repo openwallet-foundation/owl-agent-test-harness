@@ -1,6 +1,5 @@
 import { $log, Logger, registerProvider } from '@tsed/common'
 import minimist from 'minimist'
-import indy from 'indy-sdk'
 
 import { TestHarnessConfig } from './TestHarnessConfig'
 import { PlatformExpress } from '@tsed/platform-express'

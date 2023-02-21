@@ -8,7 +8,7 @@ import {
 import { HttpInboundTransport, WsInboundTransport } from '@aries-framework/node'
 import { $log } from '@tsed/common'
 import { BaseController } from './BaseController'
-import { createAgent } from './TestAgent'
+import { createAgent, getAskarAnonCredsIndyModules } from './TestAgent'
 import { getGenesisPath, getRandomSeed, registerPublicDid } from './utils/ledgerUtils'
 
 export class TestHarnessConfig {
@@ -21,7 +21,7 @@ export class TestHarnessConfig {
   private dockerHost: string
   private runMode?: string
 
-  private _agent?: Agent
+  private _agent?: Agent<ReturnType<typeof getAskarAnonCredsIndyModules>>
 
   private _controllers: BaseController[] = []
 
@@ -43,7 +43,7 @@ export class TestHarnessConfig {
     this._controllers.push(controller)
   }
 
-  public get agent(): Agent {
+  public get agent(): Agent<ReturnType<typeof getAskarAnonCredsIndyModules>> {
     if (!this._agent) {
       throw new Error('Agent not initialized')
     }

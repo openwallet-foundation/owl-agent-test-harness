@@ -1,11 +1,8 @@
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { InternalServerError, NotFound } from '@tsed/exceptions'
-import { IndyLedgerService, IndySdkError } from '@aries-framework/core'
-import { LedgerNotFoundError } from '@aries-framework/core/build/modules/ledger/error/LedgerNotFoundError'
-import type * as Indy from 'indy-sdk'
-import { isIndyError } from '@aries-framework/core/build/utils/indyError'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
+import { AnonCredsApi, AnonCredsCredentialDefinition } from '@aries-framework/anoncreds'
 
 @Controller('/agent/command/credential-definition')
 export class CredentialDefinitionController extends BaseController {
@@ -16,20 +13,19 @@ export class CredentialDefinitionController extends BaseController {
   @Get('/:credentialDefinitionId')
   async getCredentialDefinitionById(
     @PathParams('credentialDefinitionId') credentialDefinitionId: string
-  ): Promise<Indy.CredDef> {
+  ): Promise<AnonCredsCredentialDefinition> {
     try {
-      const credentialDefinition = await this.agent.ledger.getCredentialDefinition(credentialDefinitionId)
+      const { credentialDefinition } = await this.agent.modules.anoncreds.getCredentialDefinition(credentialDefinitionId)
 
+      if (!credentialDefinition) {
+        throw new NotFound(`credential definition with credentialDefinitionId "${credentialDefinitionId}" not found.`)
+      }
       return credentialDefinition
     } catch (error) {
       // Credential definition does not exist on ledger
-      if (
-        error instanceof LedgerNotFoundError ||
-        (error instanceof IndySdkError && isIndyError(error.cause, 'LedgerNotFound'))
-      )
-        if (error.message === 'LedgerNotFound') {
-          throw new NotFound(`credential definition with credentialDefinitionId "${credentialDefinitionId}" not found.`)
-        }
+      if (error instanceof NotFound) {
+        throw error
+      }
 
       // All other errors
       throw new InternalServerError(
@@ -49,25 +45,32 @@ export class CredentialDefinitionController extends BaseController {
     }
   ): Promise<{
     credential_definition_id: string
-    credential_definition: Indy.CredDef
+    credential_definition: AnonCredsCredentialDefinition
   }> {
     // TODO: handle schema not found exception
     try {
-      const schema = await this.agent.ledger.getSchema(data.schema_id)
 
-      // FIXME: Use Agent's Ledger API (cannot use as is because it throws an exception if the credential definition is already registered)
-      const ledgerService = this.agent.injectionContainer.resolve(IndyLedgerService)
+      const anoncredsApi = this.agent.dependencyManager.resolve(AnonCredsApi)
 
-      const credentialDefinition = await ledgerService.registerCredentialDefinition(this.agent.context, this.agent.context.wallet.publicDid!.did, 
-        {
-        schema,
-        supportRevocation: data.support_revocation,
-        tag: data.tag,
-        signatureType: 'CL',
-      })
+      const schema = await anoncredsApi.getSchema(data.schema_id)
+
+      
+      const { credentialDefinitionState } = await anoncredsApi.registerCredentialDefinition({ 
+        credentialDefinition: {
+          issuerId: this.agent.context.wallet.publicDid!.did, 
+          schemaId: schema.schemaId,
+          tag: data.tag,
+        }, options: {
+
+      }}) 
+
+      if (!credentialDefinitionState.credentialDefinition || !credentialDefinitionState.credentialDefinitionId) {
+        throw new Error()
+      }
+      
       return {
-        credential_definition_id: credentialDefinition.id,
-        credential_definition: credentialDefinition,
+        credential_definition_id: credentialDefinitionState.credentialDefinitionId,
+        credential_definition: credentialDefinitionState.credentialDefinition,
       }
     } catch (error: any) {
       throw new InternalServerError(`Error registering credential definition: ${error.message}`, error)

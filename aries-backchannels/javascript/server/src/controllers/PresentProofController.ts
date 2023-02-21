@@ -8,7 +8,6 @@ import {
   ProofEventTypes,
   ProofStateChangedEvent,
   ProofState,
-  V1PresentationPreview,
 } from '@aries-framework/core'
 import { ProofUtils } from '../utils/ProofUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
@@ -16,7 +15,7 @@ import util from 'util'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { ConnectionUtils } from '../utils/ConnectionUtils'
-import { ProofRequest, RequestedAttribute, RequestedPredicate } from '@aries-framework/core/build/modules/proofs/formats/indy/models'
+import { V1PresentationPreview, AnonCredsProofRequest, AnonCredsRequestedAttributeMatch, AnonCredsRequestedPredicateMatch } from '@aries-framework/anoncreds'
 @Controller('/agent/command/proof')
 export class PresentProofController extends BaseController {
   private logger: Logger
@@ -104,9 +103,7 @@ export class PresentProofController extends BaseController {
       proofRequest: util.inspect(data.presentation_request.proof_request, { showHidden: false, depth: null }),
     })
     // Do not validate, we only need a few properties from the proof request
-    const proofRequest = JsonTransformer.fromJSON(data.presentation_request.proof_request.data, ProofRequest, {
-      validate: false,
-    })
+    const proofRequest = data.presentation_request.proof_request.data as AnonCredsProofRequest
 
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, data.connection_id)
 
@@ -119,9 +116,9 @@ export class PresentProofController extends BaseController {
         indy: {
           name: proofRequest.name ?? 'proof-request',
           version: proofRequest.version ?? '1.0',
-          nonRevoked: proofRequest.nonRevoked,
-          requestedAttributes: proofRequest.requestedAttributes ? Object.fromEntries(proofRequest.requestedAttributes) : undefined,
-          requestedPredicates: proofRequest.requestedPredicates ? Object.fromEntries(proofRequest.requestedPredicates) : undefined,  
+          non_revoked: proofRequest.non_revoked,
+          requested_attributes: proofRequest.requested_attributes,
+          requested_predicates: proofRequest.requested_predicates  
         }
       },
       comment: data.presentation_request.comment,
@@ -151,33 +148,33 @@ export class PresentProofController extends BaseController {
       proofFormats: {indy: {filterByNonRevocationRequirements: false }}
     })
 
-    let requestedAttributes: Record<string, RequestedAttribute> = {}
-    let requestedPredicates: Record<string, RequestedPredicate> = {}
+    let attributes: Record<string, AnonCredsRequestedAttributeMatch> = {}
+    let predicates: Record<string, AnonCredsRequestedPredicateMatch> = {}
     
     if (data.requested_attributes) {
       Object.keys(data.requested_attributes).forEach((key) => {
-        requestedAttributes[key] = retrievedCredentials.proofFormats.indy?.attributes[key]?.find(
+        attributes[key] = retrievedCredentials.proofFormats.indy?.attributes[key]?.find(
           (a) => a.credentialId === data.requested_attributes[key].cred_id
-        ) as RequestedAttribute
+        ) as AnonCredsRequestedAttributeMatch
       })
     }
     if (data.requested_predicates) {
       Object.keys(data.requested_predicates).forEach((key) => {
-        requestedPredicates[key]  = retrievedCredentials.proofFormats.indy?.predicates[key].find(
+        predicates[key]  = retrievedCredentials.proofFormats.indy?.predicates[key].find(
           (p) => p.credentialId ===  data.requested_predicates[key].cred_id
-        ) as RequestedPredicate
+        ) as AnonCredsRequestedPredicateMatch
       })
     }
 
     this.logger.info('Created proof request', {
-      requestedAttributes: util.inspect(requestedAttributes, { showHidden: false, depth: null }),
-      requestedPredicates: util.inspect(requestedPredicates, { showHidden: false, depth: null }),
+      attributes: util.inspect(attributes, { showHidden: false, depth: null }),
+      predicates: util.inspect(predicates, { showHidden: false, depth: null }),
       retrievedCredentials: util.inspect(retrievedCredentials, { showHidden: false, depth: null }),
     })
 
     proofRecord = await this.agent.proofs.acceptRequest({ 
       proofRecordId: proofRecord.id, 
-      proofFormats: { indy: { requestedAttributes, requestedPredicates } },
+      proofFormats: { indy: { attributes, predicates, selfAttestedAttributes: {} } },
       comment: data.comment,
     })
 

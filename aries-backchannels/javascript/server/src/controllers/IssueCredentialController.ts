@@ -6,13 +6,13 @@ import {
   CredentialState,
   CredentialStateChangedEvent,
   JsonTransformer,
-  V1CredentialPreview,
 } from '@aries-framework/core'
 import { CredentialUtils } from '../utils/CredentialUtils'
 import { filter, firstValueFrom, ReplaySubject, timeout } from 'rxjs'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { ConnectionUtils } from '../utils/ConnectionUtils'
+import { V1CredentialPreview } from '@aries-framework/anoncreds'
 
 @Controller('/agent/command/issue-credential')
 export class IssueCredentialController extends BaseController {

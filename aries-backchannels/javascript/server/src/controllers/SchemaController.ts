@@ -1,13 +1,13 @@
+import { AnonCredsSchema } from '@aries-framework/anoncreds'
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { InternalServerError, NotFound } from '@tsed/exceptions'
-import { Schema } from 'indy-sdk'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/schema')
 export class SchemaController extends BaseController {
   private createdSchemas: {
-    [schemaName: string]: Schema
+    [schemaName: string]: AnonCredsSchema
   } = {}
 
   public constructor(testHarnessConfig: TestHarnessConfig) {
@@ -15,15 +15,18 @@ export class SchemaController extends BaseController {
   }
 
   @Get('/:schemaId')
-  async getSchemaById(@PathParams('schemaId') schemaId: string): Promise<Schema> {
+  async getSchemaById(@PathParams('schemaId') schemaId: string): Promise<AnonCredsSchema> {
     try {
-      const schema = await this.agent.ledger.getSchema(schemaId)
+      const { schema } = await this.agent.modules.anoncreds.getSchema(schemaId)
 
+      if (!schema) {
+        throw new NotFound(`schema with schemaId "${schemaId}" not found.`)
+      }
       return schema
     } catch (error: any) {
       // Schema does not exist on ledger
-      if (error.message === 'LedgerNotFound') {
-        throw new NotFound(`schema with schemaId "${schemaId}" not found.`)
+      if (error instanceof NotFound) {
+        throw error
       }
 
       // All other errors
@@ -33,26 +36,35 @@ export class SchemaController extends BaseController {
 
   @Post()
   async createSchema(@BodyParams('data') data: any) {
+
+    // TODO: use SchemaRepository
     if (this.createdSchemas[data.schema_name]) {
       const schema = this.createdSchemas[data.schema_name]
 
       return {
-        schema_id: schema.id,
+        schema_id: schema.name, // FIXME
         schema,
       }
     }
 
-    const schema = await this.agent.ledger.registerSchema({
-      attributes: data.attributes,
-      name: data.schema_name,
-      version: data.schema_version,
+    const schema = await this.agent.modules.anoncreds.registerSchema({
+      schema: {
+        attrNames: data.attributes,
+        name: data.schema_name,
+        version: data.schema_version,
+        issuerId: this.agent.context.wallet.publicDid!.did,
+      },
+      options: {}
     })
 
-    this.createdSchemas[schema.name] = schema
+    if (!schema.schemaState.schema) {
+      throw new Error('Schema could not be registered') // TODO
+    }
+    this.createdSchemas[data.schema_name] = schema.schemaState.schema
 
     return {
-      schema_id: schema.id,
-      schema,
+      schema_id: schema.schemaState.schemaId,
+      schema: schema.schemaState.schema,
     }
   }
 }
