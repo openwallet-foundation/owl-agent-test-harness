@@ -1,4 +1,5 @@
-import { AnonCredsSchema } from '@aries-framework/anoncreds'
+import { AnonCredsSchema, AnonCredsSchemaRepository } from '@aries-framework/anoncreds'
+import { DidInfo } from '@aries-framework/core'
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { InternalServerError, NotFound } from '@tsed/exceptions'
 import { BaseController } from '../BaseController'
@@ -35,32 +36,39 @@ export class SchemaController extends BaseController {
   }
 
   @Post()
-  async createSchema(@BodyParams('data') data: any) {
+  async createSchema(@BodyParams('data') data: any): Promise<{schema_id: string, schema: AnonCredsSchema}> {
 
-    // TODO: use SchemaRepository
-    if (this.createdSchemas[data.schema_name]) {
-      const schema = this.createdSchemas[data.schema_name]
+    const schemaRepository = this.agent.dependencyManager.resolve(AnonCredsSchemaRepository)
+
+    const [schemaRecord] = await schemaRepository.findByQuery(this.agent.context, { schemaName: data.name })
+    if (schemaRecord) {
 
       return {
-        schema_id: schema.name, // FIXME
-        schema,
+        schema_id: schemaRecord.schemaId,
+        schema: schemaRecord.schema,
       }
     }
+  
+    const publicDidInfoRecord = await this.agent.genericRecords.findById('PUBLIC_DID_INFO')
+    
+    if (!publicDidInfoRecord) {
+      throw new Error('Agent does not have any public did')
+    }
 
+    const issuerId = (publicDidInfoRecord.content.didInfo as unknown as DidInfo).did
     const schema = await this.agent.modules.anoncreds.registerSchema({
       schema: {
         attrNames: data.attributes,
         name: data.schema_name,
         version: data.schema_version,
-        issuerId: this.agent.context.wallet.publicDid!.did,
+        issuerId,
       },
-      options: {}
+      options: { didIndyNamespace: 'main-pool'}
     })
 
-    if (!schema.schemaState.schema) {
-      throw new Error('Schema could not be registered') // TODO
+    if (!schema.schemaState.schema || !schema.schemaState.schemaId) {
+      throw new Error(`Schema could not be registered: ${JSON.stringify(schema.schemaState)}}`) // TODO
     }
-    this.createdSchemas[data.schema_name] = schema.schemaState.schema
 
     return {
       schema_id: schema.schemaState.schemaId,

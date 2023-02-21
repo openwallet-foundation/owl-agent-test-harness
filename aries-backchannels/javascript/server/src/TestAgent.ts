@@ -47,11 +47,6 @@ export async function createAgent({
     }),
   })
 
-  // If at least a link secret is found, we assume there is a default one
-  if ((await agent.modules.anoncreds.getLinkSecretIds()).length === 0) {
-    await agent.modules.anoncreds.createLinkSecret()
-  }
-
   for (const it of transport.inboundTransports) {
     agent.registerInboundTransport(it)
   }
@@ -61,6 +56,11 @@ export async function createAgent({
   }
 
   await agent.initialize()
+
+  // If at least a link secret is found, we assume there is a default one
+  if ((await agent.modules.anoncreds.getLinkSecretIds()).length === 0) {
+    await agent.modules.anoncreds.createLinkSecret()
+  }
 
   return agent
 }
