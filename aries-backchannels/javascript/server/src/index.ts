@@ -24,6 +24,8 @@ async function startup() {
 
   $log.level = 'debug'
 
+  /*
+  TODO: Set up native logger for anoncreds, askar and indy-vdr
   const $indyLogger = new Logger('Libindy')
 
   // @ts-ignore
@@ -44,7 +46,7 @@ async function startup() {
 
   // @ts-ignore
   indy.setRuntimeConfig({ collect_backtrace: true })
-
+*/
   await testHarnessConfig.startAgent({ inboundTransports: ['http'], outboundTransports: ['http'] })
 
   try {
