@@ -3,13 +3,17 @@ import {
   WsOutboundTransport,
   InboundTransport,
   OutboundTransport,
-  Agent,
+  KeyType,
+  TypedArrayEncoder,
+  DidInfo,
 } from '@aries-framework/core'
 import { HttpInboundTransport, WsInboundTransport } from '@aries-framework/node'
 import { $log } from '@tsed/common'
 import { BaseController } from './BaseController'
-import { createAgent } from './TestAgent'
+import { createAgent, TestAgent } from './TestAgent'
 import { getGenesisPath, getRandomSeed, registerPublicDid } from './utils/ledgerUtils'
+import { indyDidFromPublicKeyBase58 } from '@aries-framework/core/build/utils/did'
+import { generateKeyPairFromSeed } from '@stablelib/ed25519'
 
 export class TestHarnessConfig {
   private _createAgentArgs?: CreateAgentArguments
@@ -21,7 +25,7 @@ export class TestHarnessConfig {
   private dockerHost: string
   private runMode?: string
 
-  private _agent?: Agent
+  private _agent?: TestAgent
 
   private _controllers: BaseController[] = []
 
@@ -43,7 +47,7 @@ export class TestHarnessConfig {
     this._controllers.push(controller)
   }
 
-  public get agent(): Agent<{}> {
+  public get agent() {
     if (!this._agent) {
       throw new Error('Agent not initialized')
     }
@@ -55,6 +59,25 @@ export class TestHarnessConfig {
     const agentArgs = await this.getAgentArgs(options)
 
     this._agent = await createAgent(agentArgs)
+
+    try {
+      const key = await this._agent.context.wallet.createKey({keyType: KeyType.Ed25519, privateKey: TypedArrayEncoder.fromString(agentArgs.publicDidSeed)})
+
+      const didInfo: DidInfo = {
+        did: indyDidFromPublicKeyBase58(key.publicKeyBase58),
+        verkey: key.publicKeyBase58
+      }
+      await this.agent.genericRecords.save({ content: { didInfo }, id: 'PUBLIC_DID_INFO' })
+    } catch(error) {
+      // TODO: This error is thrown when indy-sdk is used. Should not happen as soon as afj PR #1325 is merged
+        const key = generateKeyPairFromSeed(TypedArrayEncoder.fromString(agentArgs.publicDidSeed))
+        await this.agent.genericRecords.save({ content: { 
+          didInfo: {
+            did: indyDidFromPublicKeyBase58(TypedArrayEncoder.toBase58(key.publicKey)),
+            verkey: TypedArrayEncoder.toBase58(key.publicKey)
+          }
+        }, id: 'PUBLIC_DID_INFO' })
+    }
   }
 
   public async agentStartup() {
@@ -73,6 +96,8 @@ export class TestHarnessConfig {
     if (!agentArgs) {
       const agentName = process.env.AGENT_NAME ? `AFJ ${process.env.AGENT_NAME}` : `AFJ Agent (${this.agentPorts.http})`
 
+      const useLegacyIndySdk = Boolean(process.env.USE_LEGACY_INDY_SDK || false)
+
       // There are multiple ways to retrieve the genesis file
       // we account for all of them
       const genesisFile = process.env.GENESIS_FILE
@@ -87,6 +112,7 @@ export class TestHarnessConfig {
 
       agentArgs = {
         agentName,
+        useLegacyIndySdk,
         publicDidSeed,
         genesisPath,
       }
@@ -143,6 +169,7 @@ export interface CreateAgentArguments {
   agentName: string
   publicDidSeed: string
   genesisPath: string
+  useLegacyIndySdk?: boolean
 }
 
 export interface AgentPorts {

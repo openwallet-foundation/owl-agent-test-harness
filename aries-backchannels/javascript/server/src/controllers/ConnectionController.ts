@@ -64,8 +64,8 @@ export class ConnectionController extends BaseController {
       autoAcceptConnection: true,
     })
 
-    const config = this.agent.injectionContainer.resolve(AgentConfig)
-    const invitationJson = invitation.toJSON({ useLegacyDidSovPrefix: config.useLegacyDidSovPrefix })
+    const config = this.agent.dependencyManager.resolve(AgentConfig)
+    const invitationJson = invitation.toJSON({ useDidSovPrefixWhereAllowed: config.useDidSovPrefixWhereAllowed })
 
     return {
       state: ConnectionState.Invited,

@@ -1,13 +1,14 @@
+import { AnonCredsSchema, AnonCredsSchemaRepository } from '@aries-framework/anoncreds'
+import { DidInfo } from '@aries-framework/core'
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { InternalServerError, NotFound } from '@tsed/exceptions'
-import { Schema } from 'indy-sdk'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 
 @Controller('/agent/command/schema')
 export class SchemaController extends BaseController {
   private createdSchemas: {
-    [schemaName: string]: Schema
+    [schemaName: string]: AnonCredsSchema
   } = {}
 
   public constructor(testHarnessConfig: TestHarnessConfig) {
@@ -15,15 +16,18 @@ export class SchemaController extends BaseController {
   }
 
   @Get('/:schemaId')
-  async getSchemaById(@PathParams('schemaId') schemaId: string): Promise<Schema> {
+  async getSchemaById(@PathParams('schemaId') schemaId: string): Promise<ReturnedSchema> {
     try {
-      const schema = await this.agent.ledger.getSchema(schemaId)
+      const { schema } = await this.agent.modules.anoncreds.getSchema(schemaId)
 
-      return schema
+      if (!schema) {
+        throw new NotFound(`schema with schemaId "${schemaId}" not found.`)
+      }
+      return { ...schema, id: schemaId }
     } catch (error: any) {
       // Schema does not exist on ledger
-      if (error.message === 'LedgerNotFound') {
-        throw new NotFound(`schema with schemaId "${schemaId}" not found.`)
+      if (error instanceof NotFound) {
+        throw error
       }
 
       // All other errors
@@ -32,27 +36,47 @@ export class SchemaController extends BaseController {
   }
 
   @Post()
-  async createSchema(@BodyParams('data') data: any) {
-    if (this.createdSchemas[data.schema_name]) {
-      const schema = this.createdSchemas[data.schema_name]
+  async createSchema(@BodyParams('data') data: any): Promise<{schema_id: string, schema: ReturnedSchema}> {
+
+    const schemaRepository = this.agent.dependencyManager.resolve(AnonCredsSchemaRepository)
+    const [schemaRecord] = await schemaRepository.findByQuery(this.agent.context, { schemaName: data.schema_name, 
+      schemaVersion: data.schema_version })
+    if (schemaRecord) {
 
       return {
-        schema_id: schema.id,
-        schema,
+        schema_id: schemaRecord.schemaId,
+        schema: { ...schemaRecord.schema, id: schemaRecord.schemaId },
       }
     }
+  
+    const publicDidInfoRecord = await this.agent.genericRecords.findById('PUBLIC_DID_INFO')
+    
+    if (!publicDidInfoRecord) {
+      throw new Error('Agent does not have any public did')
+    }
 
-    const schema = await this.agent.ledger.registerSchema({
-      attributes: data.attributes,
-      name: data.schema_name,
-      version: data.schema_version,
+    const issuerId = (publicDidInfoRecord.content.didInfo as unknown as DidInfo).did
+    const schema = await this.agent.modules.anoncreds.registerSchema({
+      schema: {
+        attrNames: data.attributes,
+        name: data.schema_name,
+        version: data.schema_version,
+        issuerId,
+      },
+      options: { didIndyNamespace: 'main-pool'}
     })
 
-    this.createdSchemas[schema.name] = schema
+    if (!schema.schemaState.schema || !schema.schemaState.schemaId) {
+      throw new Error(`Schema could not be registered: ${JSON.stringify(schema.schemaState)}}`) // TODO
+    }
 
     return {
-      schema_id: schema.id,
-      schema,
+      schema_id: schema.schemaState.schemaId,
+      schema: { ...schema.schemaState.schema, id: schema.schemaState.schemaId },
     }
   }
+}
+
+interface ReturnedSchema extends AnonCredsSchema {
+  id: string
 }
