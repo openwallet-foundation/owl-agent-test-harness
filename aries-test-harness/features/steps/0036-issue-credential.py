@@ -250,6 +250,9 @@ def step_impl(context, holder, issuer):
 def step_impl(context, issuer):
     issuer_url = context.config.userdata.get(issuer)
 
+    # Sometimes proposal arrives only after send-offer is called, hence the sleep
+    sleep(1)
+
     # If context has the credential thread id then the proposal was done.
     if context.cred_thread_id:
         (resp_status, resp_text) = agent_backchannel_POST(
