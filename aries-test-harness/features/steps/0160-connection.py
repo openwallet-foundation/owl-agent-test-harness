@@ -195,6 +195,9 @@ def step_impl(context, inviter, invitee):
     invitee_url = context.config.userdata.get(invitee)
     invitee_connection_id = context.connection_id_dict[invitee][inviter]
 
+    # Acapy sometimes sends connection requets only after accept-request is called,
+    # resulting in an error, hence the sleep
+    sleep(1)
     (resp_status, resp_text) = agent_backchannel_POST(
         inviter_url + "/agent/command/",
         "connection",
