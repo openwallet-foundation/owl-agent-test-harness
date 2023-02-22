@@ -31,7 +31,7 @@ virtualenv venv
 source ./venv/bin/activate
 # install the pre-requisites and then run the ledger browser
 pip install -r server/requirements.txt
-GENESIS_FILE=<your path>/aries-agent-test-harness/aries-backchannels/local-genesis.txt REGISTER_NEW_DIDS=true PORT=9000 python -m server.server
+GENESIS_FILE=<your path>/aries-agent-test-harness/aries-backchannels/data/local-genesis.txt REGISTER_NEW_DIDS=true PORT=9000 python -m server.server
 ```
 
 Open additional shells to run the agents.
