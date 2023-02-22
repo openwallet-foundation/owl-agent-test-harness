@@ -20,12 +20,39 @@ impl HarnessAgent {
         info!("Received message: {:?}", message);
         let connection_ids = self.aries_agent.connections().get_by_their_vk(&sender_vk)?;
         let connection_id = connection_ids.last();
+        // TODO: Perhaps always return 200
         match message {
             A2AMessage::ConnectionRequest(request) => {
+                // TODO: Do this better
+                let connection_id = match self
+                    .aries_agent
+                    .connections()
+                    .exists_by_id(&request.get_thread_id())
+                {
+                    true => request.get_thread_id(),
+                    false => {
+                        if let Some(thread) = &request.thread {
+                            if let Some(pthid) = &thread.pthid {
+                                pthid.clone()
+                            } else {
+                                return Err(HarnessError::from_msg(
+                                    HarnessErrorType::InvalidState,
+                                    "Connection request does not contain parent thread id",
+                                ));
+                            }
+                        } else {
+                            return Err(HarnessError::from_msg(
+                                HarnessErrorType::InvalidState,
+                                "Connection request does not contain thread info decorator",
+                            ));
+                        }
+                    }
+                };
                 self.aries_agent
                     .connections()
-                    .accept_request(&request.get_thread_id(), request)
-                    .await?;
+                    .accept_request(&connection_id, request)
+                    .await
+                    .ok();
             }
             A2AMessage::ConnectionResponse(response) => {
                 self.aries_agent
@@ -50,7 +77,7 @@ impl HarnessAgent {
                 if connection_ids.len() == 1 {
                     self.aries_agent
                         .holder()
-                        .create_from_offer(connection_id.unwrap(), offer)?;
+                        .create_from_offer(connection_id.unwrap(), offer.clone())?;
                 } else {
                     return Err(HarnessError::from_msg(
                         HarnessErrorType::InvalidState,
