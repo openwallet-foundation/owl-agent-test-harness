@@ -104,7 +104,7 @@ export class TestHarnessConfig {
       const genesisUrl = process.env.GENESIS_URL
       const ledgerUrl = process.env.LEDGER_URL ?? `http://${this.externalHost}:9000`
       const genesisPath = await getGenesisPath(genesisFile, genesisUrl, ledgerUrl, this.dockerHost)
-      
+
       // Register public did
       const publicDidSeed = getRandomSeed()
 
