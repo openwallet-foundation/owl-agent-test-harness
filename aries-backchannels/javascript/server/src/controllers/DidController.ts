@@ -1,4 +1,3 @@
-import { DidInfo } from '@aries-framework/core'
 import { Controller, Get } from '@tsed/common'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'

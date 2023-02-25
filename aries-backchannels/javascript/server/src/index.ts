@@ -4,6 +4,7 @@ import minimist from 'minimist'
 import { TestHarnessConfig } from './TestHarnessConfig'
 import { PlatformExpress } from '@tsed/platform-express'
 import { Server } from './Server'
+import * as indy from 'indy-sdk'
 
 async function startup() {
   const cliArguments = minimist(process.argv.slice(2), {
@@ -24,8 +25,8 @@ async function startup() {
 
   $log.level = 'debug'
 
-  /*
-  TODO: Set up native logger for anoncreds, askar and indy-vdr
+
+  // TODO: Set up native logger for anoncreds, askar and indy-vdr
   const $indyLogger = new Logger('Libindy')
 
   // @ts-ignore
@@ -46,7 +47,7 @@ async function startup() {
 
   // @ts-ignore
   indy.setRuntimeConfig({ collect_backtrace: true })
-*/
+
   await testHarnessConfig.startAgent({ inboundTransports: ['http'], outboundTransports: ['http'] })
 
   try {

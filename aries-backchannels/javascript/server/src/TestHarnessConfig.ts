@@ -5,7 +5,6 @@ import {
   OutboundTransport,
   KeyType,
   TypedArrayEncoder,
-  DidInfo,
 } from '@aries-framework/core'
 import { HttpInboundTransport, WsInboundTransport } from '@aries-framework/node'
 import { $log } from '@tsed/common'
@@ -13,7 +12,6 @@ import { BaseController } from './BaseController'
 import { createAgent, TestAgent } from './TestAgent'
 import { getGenesisPath, getRandomSeed, registerPublicDid } from './utils/ledgerUtils'
 import { indyDidFromPublicKeyBase58 } from '@aries-framework/core/build/utils/did'
-import { generateKeyPairFromSeed } from '@stablelib/ed25519'
 
 export class TestHarnessConfig {
   private _createAgentArgs?: CreateAgentArguments
@@ -60,24 +58,13 @@ export class TestHarnessConfig {
 
     this._agent = await createAgent(agentArgs)
 
-    try {
-      const key = await this._agent.context.wallet.createKey({keyType: KeyType.Ed25519, privateKey: TypedArrayEncoder.fromString(agentArgs.publicDidSeed)})
+    const key = await this._agent.context.wallet.createKey({keyType: KeyType.Ed25519, privateKey: TypedArrayEncoder.fromString(agentArgs.publicDidSeed)})
 
-      const didInfo: DidInfo = {
-        did: indyDidFromPublicKeyBase58(key.publicKeyBase58),
-        verkey: key.publicKeyBase58
-      }
-      await this.agent.genericRecords.save({ content: { didInfo }, id: 'PUBLIC_DID_INFO' })
-    } catch(error) {
-      // TODO: This error is thrown when indy-sdk is used. Should not happen as soon as afj PR #1325 is merged
-        const key = generateKeyPairFromSeed(TypedArrayEncoder.fromString(agentArgs.publicDidSeed))
-        await this.agent.genericRecords.save({ content: { 
-          didInfo: {
-            did: indyDidFromPublicKeyBase58(TypedArrayEncoder.toBase58(key.publicKey)),
-            verkey: TypedArrayEncoder.toBase58(key.publicKey)
-          }
-        }, id: 'PUBLIC_DID_INFO' })
+    const didInfo = {
+      did: indyDidFromPublicKeyBase58(key.publicKeyBase58),
+      verkey: key.publicKeyBase58
     }
+    await this.agent.genericRecords.save({ content: { didInfo }, id: 'PUBLIC_DID_INFO' })
   }
 
   public async agentStartup() {

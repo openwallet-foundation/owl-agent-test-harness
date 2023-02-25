@@ -24,7 +24,7 @@ export class PresentProofController extends BaseController {
   public constructor(testHarnessConfig: TestHarnessConfig) {
     super(testHarnessConfig)
 
-    this.logger = this.agent.injectionContainer.resolve(AgentConfig).logger
+    this.logger = this.agent.dependencyManager.resolve(AgentConfig).logger
   }
 
   public onStartup() {
