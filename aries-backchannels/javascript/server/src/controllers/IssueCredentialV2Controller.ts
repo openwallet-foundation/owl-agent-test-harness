@@ -16,6 +16,7 @@ import { ConnectionUtils } from '../utils/ConnectionUtils'
 
 const afjFormatToAathFormatMapping: Record<string, string> = {
   indy: 'indy',
+  anoncreds: 'indy',
 }
 
 @Controller('/agent/command/issue-credential-v2')
