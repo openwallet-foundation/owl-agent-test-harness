@@ -3,7 +3,7 @@ import { InternalServerError, NotFound } from '@tsed/exceptions'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { AnonCredsApi, AnonCredsCredentialDefinition, AnonCredsCredentialDefinitionRepository } from '@aries-framework/anoncreds'
-import { DidInfo } from '@aries-framework/core'
+import { DidInfo } from '../types'
 
 @Controller('/agent/command/credential-definition')
 export class CredentialDefinitionController extends BaseController {

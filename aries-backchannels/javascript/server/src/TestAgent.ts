@@ -1,27 +1,23 @@
 import { $log } from '@tsed/common'
-import { Agent, AutoAcceptCredential, AutoAcceptProof, CredentialsModule, DidsModule, InitConfig, ProofsModule, V2CredentialProtocol, V2ProofProtocol } from '@aries-framework/core'
+import { Agent, AgentEventTypes, AgentMessageProcessedEvent, AutoAcceptCredential, AutoAcceptProof, CredentialsModule, DidsModule, InitConfig, ProofsModule, V2CredentialProtocol, V2ProofProtocol } from '@aries-framework/core'
 import { agentDependencies } from '@aries-framework/node'
 import { AskarModule } from '@aries-framework/askar'
 import { AnonCredsModule, LegacyIndyCredentialFormatService, LegacyIndyProofFormatService,  V1CredentialProtocol, V1ProofProtocol } from '@aries-framework/anoncreds'
 import { AnonCredsRsModule } from '@aries-framework/anoncreds-rs'
-import { IndyVdrAnonCredsRegistry, IndyVdrModule, IndyVdrSovDidResolver } from '@aries-framework/indy-vdr'
-import { IndySdkAnonCredsRegistry, IndySdkModule, IndySdkSovDidResolver } from '@aries-framework/indy-sdk'
+import { IndyVdrAnonCredsRegistry, IndyVdrModule, IndyVdrSovDidResolver, IndyVdrPoolConfig } from '@aries-framework/indy-vdr'
+import { IndySdkAnonCredsRegistry, IndySdkModule, IndySdkSovDidResolver, IndySdkPoolConfig } from '@aries-framework/indy-sdk'
 import { TsedLogger } from './TsedLogger'
 import { TransportConfig } from './TestHarnessConfig'
-import { IndyVdrPoolConfig } from '@aries-framework/indy-vdr/build/pool'
 import indySdk from 'indy-sdk'
-import { IndySdkPoolConfig } from '@aries-framework/indy-sdk/build/ledger'
 
 export type TestAgent = Agent<ReturnType<typeof getLegacyIndySdkModules> | ReturnType<typeof getAskarAnonCredsIndyModules>>
 
 export async function createAgent({
-  publicDidSeed,
   genesisPath,
   agentName,
   transport,
   useLegacyIndySdk,
 }: {
-  publicDidSeed: string
   genesisPath: string
   agentName: string
   transport: TransportConfig
@@ -34,7 +30,6 @@ export async function createAgent({
       key: '00000000000000000000000000000Test01',
     },
     endpoints: transport.endpoints,
-    publicDidSeed,
     // Needed to accept mediation requests: https://github.com/hyperledger/aries-framework-javascript/issues/668
     autoAcceptMediationRequests: true,
     useDidSovPrefixWhereAllowed: true,
@@ -72,6 +67,11 @@ export async function createAgent({
   if ((await agent.modules.anoncreds.getLinkSecretIds()).length === 0) {
     await agent.modules.anoncreds.createLinkSecret()
   }
+
+
+  agent.events.on(AgentEventTypes.AgentMessageProcessed, (data: AgentMessageProcessedEvent) => {
+    agent.config.logger.debug(`Processed inbound message: ${JSON.stringify(data.payload.message.toJSON())}`)
+  })
 
   return agent
 }

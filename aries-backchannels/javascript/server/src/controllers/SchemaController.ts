@@ -1,5 +1,5 @@
 import { AnonCredsSchema, AnonCredsSchemaRepository } from '@aries-framework/anoncreds'
-import { DidInfo } from '@aries-framework/core'
+import { DidInfo } from '../types'
 import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { InternalServerError, NotFound } from '@tsed/exceptions'
 import { BaseController } from '../BaseController'
