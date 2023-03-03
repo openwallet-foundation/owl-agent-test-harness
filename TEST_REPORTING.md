@@ -1,12 +1,14 @@
 # Aries Agent Test Harness: Advanced Test Reporting 
 ## Contents<!-- omit in toc -->
--  [Default Reporting & Output](#default-reporting-&-output)
--  [Allure Integration](#allure-integration)
---  [Using Allure with manage Script](#using-allure-with-manage-script)
---  [Using Allure at the Command Line](#using-allure-at-the-command-line)
---  [Using Allure in CI](#using-allure-in-ci)
--  [Other Reporting Options](#other-reporting-options)
--  [References](#references)
+- [Aries Agent Test Harness: Advanced Test Reporting](#aries-agent-test-harness-advanced-test-reporting)
+  - [Default Reporting \& Output](#default-reporting--output)
+  - [Allure Integration](#allure-integration)
+    - [Using Allure with manage Script](#using-allure-with-manage-script)
+    - [Using Allure at the Command Line](#using-allure-at-the-command-line)
+    - [Using Allure with CI](#using-allure-with-ci)
+  - [Other Reporting Options](#other-reporting-options)
+    - [junit](#junit)
+  - [References](#references)
 
 ## Default Reporting & Output
 
@@ -62,7 +64,6 @@ The AATH is executed with varying configurations and Aries Agent types at pre-de
 - [JavaScript to Dotnet Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/javascript-b-dotnet/reports/latest)
 - [Acapy to AFGO Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-afgo/reports/latest)
 - [AFGO to AFGO Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/afgo/reports/latest)
-- [AFGO to Verity Agent Interop Testing](https://allure.vonx.io/allure-docker-service-ui/projects/acapy-b-verity/reports/latest)
 
 ## Other Reporting Options
 
