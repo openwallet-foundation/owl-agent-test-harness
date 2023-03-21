@@ -9,6 +9,9 @@ import { IndySdkAnonCredsRegistry, IndySdkModule, IndySdkSovDidResolver, IndySdk
 import { TsedLogger } from './TsedLogger'
 import { TransportConfig } from './TestHarnessConfig'
 import indySdk from 'indy-sdk'
+import { anoncreds } from '@hyperledger/anoncreds-nodejs'
+import { ariesAskar } from '@hyperledger/aries-askar-nodejs'
+import { indyVdr } from '@hyperledger/indy-vdr-nodejs'
 
 export type TestAgent = Agent<ReturnType<typeof getLegacyIndySdkModules> | ReturnType<typeof getAskarAnonCredsIndyModules>>
 
@@ -106,14 +109,15 @@ export function getAskarAnonCredsIndyModules(indyNetworkConfig: IndyVdrPoolConfi
     anoncreds: new AnonCredsModule({
       registries: [new IndyVdrAnonCredsRegistry()],
     }),
-    anoncredsRs: new AnonCredsRsModule(),
+    anoncredsRs: new AnonCredsRsModule({ anoncreds }),
     indyVdr: new IndyVdrModule({
+      indyVdr,
       networks: [indyNetworkConfig],
     }),
     dids: new DidsModule({
       resolvers: [new IndyVdrSovDidResolver()],
     }),
-    askar: new AskarModule(),
+    askar: new AskarModule({ ariesAskar }),
   } as const
 }
 
