@@ -1,5 +1,5 @@
 import { $log } from '@tsed/common'
-import { Agent, AgentEventTypes, AgentMessageProcessedEvent, AutoAcceptCredential, AutoAcceptProof, CredentialsModule, DidsModule, InitConfig, ProofsModule, V2CredentialProtocol, V2ProofProtocol } from '@aries-framework/core'
+import { Agent, AgentEventTypes, AgentMessageProcessedEvent, AutoAcceptCredential, AutoAcceptProof, CredentialsModule, DidsModule, InitConfig, MediatorModule, ProofsModule, V2CredentialProtocol, V2ProofProtocol } from '@aries-framework/core'
 import { agentDependencies } from '@aries-framework/node'
 import { AskarModule } from '@aries-framework/askar'
 import { AnonCredsModule, LegacyIndyCredentialFormatService, LegacyIndyProofFormatService,  V1CredentialProtocol, V1ProofProtocol } from '@aries-framework/anoncreds'
@@ -33,8 +33,6 @@ export async function createAgent({
       key: '00000000000000000000000000000Test01',
     },
     endpoints: transport.endpoints,
-    // Needed to accept mediation requests: https://github.com/hyperledger/aries-framework-javascript/issues/668
-    autoAcceptMediationRequests: true,
     useDidSovPrefixWhereAllowed: true,
     logger: new TsedLogger($log),
   }
@@ -84,6 +82,10 @@ export function getAskarAnonCredsIndyModules(indyNetworkConfig: IndyVdrPoolConfi
   const legacyIndyProofFormatService = new LegacyIndyProofFormatService()
 
   return {
+    mediator: new MediatorModule({
+    // Needed to accept mediation requests: https://github.com/hyperledger/aries-framework-javascript/issues/668
+    autoAcceptMediationRequests: true,
+    }),
     credentials: new CredentialsModule({
       autoAcceptCredentials: AutoAcceptCredential.Never,
       credentialProtocols: [
@@ -126,6 +128,10 @@ function getLegacyIndySdkModules(indyNetworkConfig: IndySdkPoolConfig) {
   const legacyIndyProofFormatService = new LegacyIndyProofFormatService()
 
   return {
+    mediator: new MediatorModule({
+      // Needed to accept mediation requests: https://github.com/hyperledger/aries-framework-javascript/issues/668
+      autoAcceptMediationRequests: true,
+      }),  
     credentials: new CredentialsModule({
       autoAcceptCredentials: AutoAcceptCredential.Never,
       credentialProtocols: [
