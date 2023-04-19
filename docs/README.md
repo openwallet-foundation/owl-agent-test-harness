@@ -27,12 +27,12 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 | Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | Findy | VCX | **All Tests** |
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | 95 / 96<br>98% | 4 / 31<br>12% | 0 / 67<br>0% | 0 / 0<br>0% | 34 / 34<br>100% | 36 / 38<br>94% | **169 / 266<br>63%** |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 85 / 96<br>88% | 4 / 31<br>12% | 49 / 67<br>73% | 0 / 0<br>0% | 34 / 34<br>100% | 36 / 38<br>94% | **208 / 266<br>78%** |
 | [AF-Go](afgo.md)| AIP 2 | None | 4 / 31<br>12% | 27 / 45<br>60% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **31 / 76<br>40%** |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 0 / 67<br>0% | 0 / 0<br>0% | 0 / 28<br>0% | 0 / 0<br>0% | 0 / 34<br>0% | 0 / 38<br>0% | **0 / 167<br>0%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 49 / 67<br>73% | 0 / 0<br>0% | 12 / 28<br>42% | 0 / 0<br>0% | 17 / 17<br>100% | 22 / 38<br>57% | **100 / 150<br>66%** |
 | [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **0 / 0<br>0%** |
-| [Findy](findy.md)| AIP 1 | Credential Exchange | 34 / 34<br>100% | 0 / 0<br>0% | 0 / 34<br>0% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | **51 / 85<br>60%** |
-| [VCX](aries-vcx.md)| AIP 1 | Revocation | 36 / 38<br>94% | 0 / 0<br>0% | 0 / 38<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 19 / 20<br>95% | **55 / 96<br>57%** |
+| [Findy](findy.md)| AIP 1 | Credential Exchange | 34 / 34<br>100% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | 17 / 17<br>100% | 0 / 0<br>0% | **68 / 68<br>100%** |
+| [VCX](aries-vcx.md)| AIP 1 | Revocation | 36 / 38<br>94% | 0 / 0<br>0% | 22 / 38<br>57% | 0 / 0<br>0% | 0 / 0<br>0% | 19 / 20<br>95% | **77 / 96<br>80%** |
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
 - The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
@@ -40,5 +40,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Wed Apr 12 03:07:20 UTC 2023*
+*Results last updated: Wed Apr 19 03:27:01 UTC 2023*
 
