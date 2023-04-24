@@ -25,7 +25,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 3 out of 14 (21%)**
 
 
-*Last run: Sat Apr 22 00:23:37 UTC 2023*
+*Last run: Mon Apr 24 00:21:29 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -48,7 +48,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 38 out of 39 (97%)**
 
 
-*Last run: Sat Apr 22 00:45:07 UTC 2023*
+*Last run: Mon Apr 24 00:46:13 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -71,7 +71,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 35 out of 35 (100%)**
 
 
-*Last run: Sat Apr 22 00:35:18 UTC 2023*
+*Last run: Mon Apr 24 00:35:15 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -94,7 +94,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 60 out of 61 (98%)**
 
 
-*Last run: Sat Apr 22 00:46:18 UTC 2023*
+*Last run: Mon Apr 24 00:45:24 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -117,7 +117,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 18 out of 18 (100%)**
 
 
-*Last run: Sat Apr 22 01:11:06 UTC 2023*
+*Last run: Mon Apr 24 01:14:11 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -139,7 +139,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Sat Apr 22 01:02:04 UTC 2023*
+*Last run: Mon Apr 24 01:04:16 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -162,7 +162,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 1 out of 17 (5%)**
 
 
-*Last run: Sat Apr 22 01:09:52 UTC 2023*
+*Last run: Mon Apr 24 01:03:22 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -185,7 +185,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 11 out of 28 (39%)**
 
 
-*Last run: Sat Apr 22 01:25:00 UTC 2023*
+*Last run: Mon Apr 24 01:19:19 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -208,7 +208,7 @@ Runset Name: aries-vcx to acapy
 **Latest results: 18 out of 20 (90%)**
 
 
-*Last run: Sat Apr 22 02:17:49 UTC 2023*
+*Last run: Mon Apr 24 02:15:35 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -230,7 +230,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Sat Apr 22 02:16:51 UTC 2023*
+*Last run: Mon Apr 24 02:16:32 UTC 2023*
 ```
 
 #### Current Runset Status
