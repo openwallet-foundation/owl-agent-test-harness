@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 as base
+FROM ubuntu:20.04 as base
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -8,10 +8,6 @@ RUN apt-get update -y && apt-get install -y \
     curl \
     # Only needed to build indy-sdk
     build-essential 
-
-# libssl1.1 (required by libindy)
-RUN curl http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.21_amd64.deb -o libssl1.1.deb
-RUN dpkg -i libssl1.1.deb
 
 # libindy
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88
