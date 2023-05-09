@@ -16,6 +16,7 @@ export LEDGER_TIMEOUT=60
 # these two can be overrode via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
+export REDIS_CLUSTER_URL_CONFIG="${REDIS_CLUSTER_URL_CONFIG}"
 export AGENT_CONFIG_FILE="${AGENT_CONFIG_FILE}"
 
 # these are derived from the above two
@@ -28,6 +29,7 @@ TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}
 LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 
+REDIS_CLUSTER_URL_HOST="${REDIS_CLUSTER_URL_CONFIG:-http://localhost:6377}"
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
   # Prefix interactive terminal commands ...
@@ -400,6 +402,39 @@ waitForUniresolver(){
   )
 }
 
+pingRedisCluster(){
+  redis_cluster_url_host=${1}
+  # ping tails server (ask for a non-existant registry and should return 404)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${redis_cluster_url_host})
+  if (( ${rtnCd} == 000 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForRedisCluster(){
+  (
+    # Wait for tails server to start ...
+    local startTime=${SECONDS}
+    local rtnCd=0
+    printf "waiting for redis-cluster to start"
+    # use tails server URL from host
+    while ! pingRedisCluster "$REDIS_CLUSTER_URL_HOST"; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nThe redis cluster failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
 dockerhost_url_templates() {
   # generate acapy plugin config file, writing $DOCKERHOST into URLs
   pushd ${SCRIPT_HOME}/aries-backchannels/acapy/ > /dev/null
@@ -620,6 +655,15 @@ startServices() {
     fi
   fi
 
+  # if [[ -z ${REDIS_CLUSTER_URL_HOST} ]]; then
+    # if [[ -z `docker ps -q --filter="name=redis-cluster_node1"` ]] && [[ -z $(docker ps -q --filter="name=redis-cluster_node1") ]]; then
+  echo "starting local redis-cluster..."
+  auxiliaryService redis-cluster start
+  if [[ $AUTO_CLEANUP ]]; then
+    export STARTED_REDIS_CLUSTER=true
+  fi
+  # fi
+
   if ! waitForTailsServer; then
     echoRed "\nThe Indy Tails Server is not running.\n"
     exit 1
@@ -627,6 +671,11 @@ startServices() {
 
   if ! waitForUniresolver; then
     echoRed "\nUniversal Resolver is not running.\n"
+    exit 1
+  fi
+
+  if ! waitForRedisCluster; then
+    echoRed "\nRedis Cluster is not running.\n"
     exit 1
   fi
 }
@@ -646,6 +695,11 @@ stopServices() {
     if [[ ${STARTED_LOCAL_LEDGER} ]]; then
       echo "stopping local von-network..."
       auxiliaryService von-network stop
+    fi
+
+    if [[ ${STARTED_REDIS_CLUSTER} ]]; then
+      echo "stopping local redis-cluster..."
+      auxiliaryService redis-cluster stop
     fi
 
   elif [[ "all" = $1 ]]; then
