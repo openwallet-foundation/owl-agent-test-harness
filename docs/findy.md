@@ -4,10 +4,10 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.8.1 | findy<br>0.30.68 | acapy-main<br>0.8.1 | acapy-main<br>0.8.1 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-findy](#runset-afj-findy) | javascript<br>0.4.0-alpha.119 | findy<br>0.30.68 | javascript<br>0.4.0-alpha.119 | javascript<br>0.4.0-alpha.119 | AIP 1.0 | [**2 / 17<br>11%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-acapy](#runset-findy-acapy) | findy<br>0.30.68 | acapy-main<br>0.8.1 | findy<br>0.30.68 | findy<br>0.30.68 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript](#runset-findy-javascript) | findy<br>0.30.68 | javascript<br>0.4.0-alpha.119 | findy<br>0.30.68 | findy<br>0.30.68 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.8.1 | findy<br>0.30.70 | acapy-main<br>0.8.1 | acapy-main<br>0.8.1 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-findy](#runset-afj-findy) | javascript<br>0.4.0-alpha.120 | findy<br>0.30.70 | javascript<br>0.4.0-alpha.120 | javascript<br>0.4.0-alpha.120 | AIP 1.0 | [**2 / 17<br>11%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-acapy](#runset-findy-acapy) | findy<br>0.30.70 | acapy-main<br>0.8.1 | findy<br>0.30.70 | findy<br>0.30.70 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript](#runset-findy-javascript) | findy<br>0.30.70 | javascript<br>0.4.0-alpha.120 | findy<br>0.30.70 | findy<br>0.30.70 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
 | [findy](#runset-findy) | findy<br>0.30.68 | findy<br>0.30.68 | findy<br>0.30.68 | findy<br>0.30.68 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
@@ -20,7 +20,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon May  8 01:04:14 UTC 2023*
+*Last run: Wed May 10 01:03:29 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -43,7 +43,7 @@ Runset Name: AFJ to findy
 **Latest results: 2 out of 17 (11%)**
 
 
-*Last run: Mon May  8 01:31:00 UTC 2023*
+*Last run: Wed May 10 01:28:36 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -67,7 +67,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon May  8 02:13:00 UTC 2023*
+*Last run: Wed May 10 02:20:25 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -90,7 +90,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon May  8 02:34:37 UTC 2023*
+*Last run: Wed May 10 02:44:46 UTC 2023*
 ```
 
 #### Current Runset Status
