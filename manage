@@ -20,8 +20,8 @@ export REDIS_CLUSTER_URL_CONFIG="${REDIS_CLUSTER_URL_CONFIG}"
 export AGENT_CONFIG_FILE="${AGENT_CONFIG_FILE}"
 
 # these are derived from the above two
-LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
-LEDGER_URL_INTERNAL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9000}"
+LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9001}"
+LEDGER_URL_INTERNAL="${LEDGER_URL_CONFIG:-http://${DOCKERHOST}:9001}"
 TAILS_SERVER_URL_HOST="${TAILS_SERVER_URL_CONFIG:-http://localhost:6543}"
 TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}"
 # important: inside the internal URLs, we replace "://localhost:" with "://${DOCKERHOST}:"
@@ -30,6 +30,8 @@ LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\
 TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 
 REDIS_CLUSTER_URL_HOST="${REDIS_CLUSTER_URL_CONFIG:-http://localhost:6377}"
+
+
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
   # Prefix interactive terminal commands ...
@@ -52,7 +54,7 @@ if [ "${PWD_HOST_FQDN}" != "" ]; then
   fi
   myhost=`ifconfig ${ETH_CONFIG} | grep inet | cut -d':' -f2 | cut -d' ' -f1 | sed 's/\./\-/g'`
   if [ "${GENESIS_URL}" == "" ]; then
-    export GENESIS_URL="http://ip${myhost}-${SESSION_ID}-9000.direct.${PWD_HOST_FQDN}/genesis"
+    export GENESIS_URL="http://ip${myhost}-${SESSION_ID}-9001.direct.${PWD_HOST_FQDN}/genesis"
   fi
   # Check if von-network is running
   # Should this be moved out of the Play with Docker section?
@@ -655,14 +657,15 @@ startServices() {
     fi
   fi
 
-  # if [[ -z ${REDIS_CLUSTER_URL_HOST} ]]; then
-    # if [[ -z `docker ps -q --filter="name=redis-cluster_node1"` ]] && [[ -z $(docker ps -q --filter="name=redis-cluster_node1") ]]; then
-  echo "starting local redis-cluster..."
-  auxiliaryService redis-cluster start
-  if [[ $AUTO_CLEANUP ]]; then
-    export STARTED_REDIS_CLUSTER=true
+  if [[ -z ${REDIS_CLUSTER_URL_CONFIG} ]]; then
+    if [[ -z `docker ps -q --filter="name=redis-cluster_node1"` ]] && [[ -z $(docker ps -q --filter="name=redis-cluster_node1") ]]; then
+      echo "starting local redis-cluster..."
+      auxiliaryService redis-cluster start
+      if [[ $AUTO_CLEANUP ]]; then
+        export STARTED_REDIS_CLUSTER=true
+      fi
+    fi
   fi
-  # fi
 
   if ! waitForTailsServer; then
     echoRed "\nThe Indy Tails Server is not running.\n"
@@ -707,6 +710,8 @@ stopServices() {
     auxiliaryService orb stop
     auxiliaryService indy-tails stop
     auxiliaryService von-network stop
+    auxiliaryService redis-cluster stop
+
   fi
 }
 
