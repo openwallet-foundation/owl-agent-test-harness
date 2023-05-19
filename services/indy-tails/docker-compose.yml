@@ -1,12 +1,12 @@
 version: "3"
 services:
   ngrok-tails-server:
-    image: wernight/ngrok
+    image: ngrok/ngrok
     networks:
       - tails-server
     ports:
       - 4044:4040
-    command: ngrok http tails-server:6543 --log stdout
+    command: http tails-server:6543 --log stdout
   tails-server:
     image: ghcr.io/bcgov/tails-server:1.0.0
     ports:
