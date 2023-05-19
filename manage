@@ -520,9 +520,9 @@ startAgent() {
     if [[ "${USE_NGROK}" = "true" ]]; then
       echo "Starting ngrok for ${NAME} Agent ..."
       if [[ "${IMAGE_NAME}" = "dotnet-agent-backchannel" ]]; then
-        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
+        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" ngrok/ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
       else
-        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
+        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" ngrok/ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
       fi
       sleep 1
       export NGROK_NAME="${CONTAINER_NAME}-ngrok"
