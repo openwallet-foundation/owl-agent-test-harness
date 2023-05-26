@@ -620,6 +620,7 @@ startServices() {
 
   if [[ "all" = $1 ]]; then
     auxiliaryService orb start
+    auxiliaryService redis-cluster start
   fi
 
   # if we're *not* using an external VON ledger, start the local one
@@ -657,16 +658,6 @@ startServices() {
     fi
   fi
 
-  if [[ -z ${REDIS_CLUSTER_URL_CONFIG} ]]; then
-    if [[ -z `docker ps -q --filter="name=redis-cluster_node1"` ]] && [[ -z $(docker ps -q --filter="name=redis-cluster_node1") ]]; then
-      echo "starting local redis-cluster..."
-      auxiliaryService redis-cluster start
-      if [[ $AUTO_CLEANUP ]]; then
-        export STARTED_REDIS_CLUSTER=true
-      fi
-    fi
-  fi
-
   if ! waitForTailsServer; then
     echoRed "\nThe Indy Tails Server is not running.\n"
     exit 1
@@ -677,10 +668,6 @@ startServices() {
     exit 1
   fi
 
-  if ! waitForRedisCluster; then
-    echoRed "\nRedis Cluster is not running.\n"
-    exit 1
-  fi
 }
 
 stopServices() {
@@ -698,11 +685,6 @@ stopServices() {
     if [[ ${STARTED_LOCAL_LEDGER} ]]; then
       echo "stopping local von-network..."
       auxiliaryService von-network stop
-    fi
-
-    if [[ ${STARTED_REDIS_CLUSTER} ]]; then
-      echo "stopping local redis-cluster..."
-      auxiliaryService redis-cluster stop
     fi
 
   elif [[ "all" = $1 ]]; then
