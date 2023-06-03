@@ -4,11 +4,11 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.8.1 | findy<br>0.31.2 | acapy-main<br>0.8.1 | acapy-main<br>0.8.1 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-findy](#runset-afj-findy) | javascript<br>0.4.0-alpha.128 | findy<br>0.31.2 | javascript<br>0.4.0-alpha.128 | javascript<br>0.4.0-alpha.128 | AIP 1.0 | [**2 / 17<br>11%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-acapy](#runset-findy-acapy) | findy<br>0.31.2 | acapy-main<br>0.8.1 | findy<br>0.31.2 | findy<br>0.31.2 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript](#runset-findy-javascript) | findy<br>0.31.2 | javascript<br>0.4.0-alpha.128 | findy<br>0.31.2 | findy<br>0.31.2 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [findy](#runset-findy) | findy<br>0.31.2 | findy<br>0.31.2 | findy<br>0.31.2 | findy<br>0.31.2 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.8.1 | findy<br>0.31.3 | acapy-main<br>0.8.1 | acapy-main<br>0.8.1 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-findy](#runset-afj-findy) | javascript<br>0.4.0-alpha.130 | findy<br>0.31.3 | javascript<br>0.4.0-alpha.130 | javascript<br>0.4.0-alpha.130 | AIP 1.0 | [**2 / 17<br>11%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-acapy](#runset-findy-acapy) | findy<br>0.31.3 | acapy-main<br>0.8.1 | findy<br>0.31.3 | findy<br>0.31.3 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript](#runset-findy-javascript) | findy<br>0.31.3 | javascript<br>0.4.0-alpha.130 | findy<br>0.31.3 | findy<br>0.31.3 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [findy](#runset-findy) | findy<br>0.31.3 | findy<br>0.31.3 | findy<br>0.31.3 | findy<br>0.31.3 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -20,7 +20,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon May 29 01:04:00 UTC 2023*
+*Last run: Sat Jun  3 01:07:22 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -43,7 +43,7 @@ Runset Name: AFJ to findy
 **Latest results: 2 out of 17 (11%)**
 
 
-*Last run: Mon May 29 01:32:23 UTC 2023*
+*Last run: Sat Jun  3 01:29:37 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -67,7 +67,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon May 29 02:20:38 UTC 2023*
+*Last run: Sat Jun  3 02:16:40 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -90,7 +90,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon May 29 02:37:45 UTC 2023*
+*Last run: Sat Jun  3 02:39:49 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -113,7 +113,7 @@ Runset Name: findy to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Mon May 29 02:35:12 UTC 2023*
+*Last run: Sat Jun  3 02:35:36 UTC 2023*
 ```
 
 #### Current Runset Status
