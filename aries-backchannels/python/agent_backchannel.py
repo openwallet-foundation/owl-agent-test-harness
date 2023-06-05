@@ -72,7 +72,6 @@ async def default_genesis_txns():
         elif RUN_MODE == "docker":
             async with ClientSession() as session:
                 ledger_url = get_ledger_url()
-                print("From ledger_url:", f"{ledger_url}/genesis")
                 async with session.get(f"{ledger_url}/genesis") as resp:
                     genesis = await resp.text()
         else:
