@@ -354,7 +354,7 @@ def step_impl(context, holder):
             "issue-credential",
             operation="send-request",
             id=context.connection_id_dict[holder][context.issuer_name],
-        ) 
+        )
 
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
     resp_json = json.loads(resp_text)
