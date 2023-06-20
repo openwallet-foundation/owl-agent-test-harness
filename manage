@@ -13,11 +13,13 @@ SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
 export AGENT_TIMEOUT=30
 export LEDGER_TIMEOUT=60
-# these two can be overrode via env vars
+# these can be overridden via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
 export REDIS_CLUSTER_URL_CONFIG="${REDIS_CLUSTER_URL_CONFIG}"
 export AGENT_CONFIG_FILE="${AGENT_CONFIG_FILE}"
+export GENESIS_URL="${GENESIS_URL}"
+export GENESIS_FILE="${GENESIS_FILE}"
 
 # these are derived from the above two
 LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
@@ -248,6 +250,29 @@ function initEnv() {
   export RUST_LOG=${RUST_LOG:-warning}
 }
 
+# setup the docker environment variables to be passed to containers
+setDockerEnv() {
+    # set variables that have a different name to what is being set for the container
+  DOCKER_ENV="-e AGENT_NAME=${NAME}"
+  if  [[ -n "$BACKCHANNEL_EXTRA_ARGS" ]]; then
+    DOCKER_ENV="${DOCKER_ENV} -e EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}"
+  fi
+  if  [[ -n "$LEDGER_URL_INTERNAL" ]]; then
+    DOCKER_ENV="${DOCKER_ENV} -e LEDGER_URL=${LEDGER_URL_INTERNAL}"
+  fi
+  if  [[ -n "$TAILS_SERVER_URL_INTERNAL" ]]; then
+    DOCKER_ENV="${DOCKER_ENV} -e TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}"
+  fi
+
+  # variables that have the same variable name as what is being set for the container
+  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE")
+  for var in "${GENERAL_VARIABLES[@]}"; do
+    if [[ -n "${!var}" ]]; then
+      DOCKER_ENV+=" -e ${var}=${!var}"
+    fi
+  done
+}
+
 # TODO: set up image builds so you don't need to use `./manage rebuild` to refresh remote source repo
 # - image Dockerfile has an ARG for the commit hash,
 # - build script grabs the HEAD commit hash from the agent's github repo
@@ -308,7 +333,7 @@ pingLedger(){
   ledger_url=${1}
 
   # ping ledger web browser for genesis txns
-  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${ledger_url}/genesis)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${ledger_url})
   if (( ${rtnCd} == 200 )); then
     return 0
   else
@@ -318,12 +343,21 @@ pingLedger(){
 
 waitForLedger(){
   (
-    # Wait for ledger server to start ...
+    # Wait for ledger server to start or if remote wait for it to respond  ...
     local startTime=${SECONDS}
     local rtnCd=0
-    printf "waiting for ledger to start"
+
+    # Determine the ping URL based on the ledger variables
+    local pingUrl=""
+    if [[ -n "${GENESIS_URL}" ]]; then
+      pingUrl="${GENESIS_URL}"
+    else
+      pingUrl="${LEDGER_URL_HOST}/genesis"
+    fi
+
+    printf "waiting for ledger to start/respond"
     # use ledger URL from host
-    while ! pingLedger "$LEDGER_URL_HOST"; do
+    while ! pingLedger "${pingUrl}"; do
       printf "."
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
@@ -530,14 +564,16 @@ startAgent() {
     else
       export NGROK_NAME=
     fi
+
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
     export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
-    if [[ -z ${AGENT_CONFIG_FILE} ]]; then
-      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --network aath_network --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}"  -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
-    else
-      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --network aath_network --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "AGENT_CONFIG_FILE=${AGENT_CONFIG_FILE}" -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
-    fi
+
+    # set the docker environment that needs to be passed to the test container
+    setDockerEnv
+
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --network aath_network --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} $DOCKER_ENV "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"
@@ -624,7 +660,7 @@ startServices() {
   fi
 
   # if we're *not* using an external VON ledger, start the local one
-  if [[ -z ${LEDGER_URL_CONFIG} ]]; then
+  if [[ -z ${LEDGER_URL_CONFIG} && -z ${GENESIS_URL} && -z ${GENESIS_FILE} ]]; then
     if [[ -z `docker ps -q --filter="name=von_webserver_1"` ]] && [[ -z $(docker ps -q --filter="name=von-webserver-1") ]]; then
       echo "starting local von-network..."
       auxiliaryService von-network start
