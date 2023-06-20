@@ -12,12 +12,12 @@ services:
   redis-cluster:
     image: redis:7
     container_name: cluster
-    command: redis-cli --cluster create 172.28.0.101:6377 172.28.0.102:6378 172.28.0.103:6379 172.28.0.104:6380 172.28.0.105:6381 172.28.0.106:6382 --cluster-replicas 1 --cluster-yes
+    command: redis-cli --cluster create 172.96.0.101:6377 172.96.0.102:6378 172.96.0.103:6379 172.96.0.104:6380 172.96.0.105:6381 172.96.0.106:6382 --cluster-replicas 1 --cluster-yes
     environment:
       - REDISCLI_AUTH=${REDIS_PASSWORD}
     networks:
         aath_network:
-          ipv4_address: 172.28.0.107
+          ipv4_address: 172.96.0.107
     depends_on:
       - redis-node-1
       - redis-node-2
@@ -37,7 +37,7 @@ services:
         - ./redis.conf:/conf/redis.conf
       networks:
         aath_network:
-          ipv4_address: 172.28.0.101
+          ipv4_address: 172.96.0.101
   redis-node-2:
       image: redis:7
       container_name: node2
@@ -50,7 +50,7 @@ services:
         - ./redis.conf:/conf/redis.conf
       networks:
         aath_network:
-          ipv4_address: 172.28.0.102
+          ipv4_address: 172.96.0.102
   redis-node-3:
       image: redis:7
       container_name: node3
@@ -63,7 +63,7 @@ services:
         - ./redis.conf:/conf/redis.conf
       networks:
         aath_network:
-          ipv4_address: 172.28.0.103
+          ipv4_address: 172.96.0.103
   redis-node-4:
       image: redis:7
       container_name: node4
@@ -76,7 +76,7 @@ services:
         - ./redis.conf:/conf/redis.conf
       networks:
         aath_network:
-          ipv4_address: 172.28.0.104
+          ipv4_address: 172.96.0.104
   redis-node-5:
       image: redis:7
       container_name: node5
@@ -89,7 +89,7 @@ services:
         - ./redis.conf:/conf/redis.conf
       networks:
         aath_network:
-          ipv4_address: 172.28.0.105
+          ipv4_address: 172.96.0.105
   redis-node-6:
       image: redis:7
       container_name: node6
@@ -102,7 +102,7 @@ services:
         - ./redis.conf:/conf/redis.conf
       networks:
         aath_network:
-          ipv4_address: 172.28.0.106
+          ipv4_address: 172.96.0.106
 
 
 networks:

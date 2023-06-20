@@ -623,7 +623,7 @@ getAgentVersion(){
 
 createNetwork() {
   if [[ -z `docker network ls -q --filter "name=aath_network"` ]]; then
-    docker network create aath_network --subnet=172.28.0.0/24 > /dev/null
+    docker network create aath_network --subnet=174.96.0.0/24 > /dev/null
   fi
 }
 
@@ -656,7 +656,7 @@ startServices() {
 
   if [[ "all" = $1 ]]; then
     auxiliaryService orb start
-    auxiliaryService redis-cluster start
+    # auxiliaryService redis-cluster start
   fi
 
   # if we're *not* using an external VON ledger, start the local one
