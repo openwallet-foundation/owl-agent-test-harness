@@ -623,7 +623,7 @@ getAgentVersion(){
 
 createNetwork() {
   if [[ -z `docker network ls -q --filter "name=aath_network"` ]]; then
-    docker network create aath_network --subnet=174.96.0.0/24 > /dev/null
+    docker network create aath_network --subnet=174.96.0.0/16 > /dev/null
   fi
 }
 
