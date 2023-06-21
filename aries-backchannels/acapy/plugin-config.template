@@ -9,7 +9,7 @@ http_uniresolver:
 
 redis_queue:
   connection: 
-    connection_url: "redis://default:test1234@172.96.0.103:6379"
+    connection_url: "redis://default:test1234@174.96.0.103:6379"
 
   ### For Inbound ###
   inbound:

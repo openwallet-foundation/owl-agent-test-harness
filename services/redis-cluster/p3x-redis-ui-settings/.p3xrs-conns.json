@@ -11,42 +11,42 @@
             "cluster": true,
             "nodes": [
                 {
-                    "host": "172.96.0.101",
+                    "host": "174.96.0.101",
                     "port": 6377,
                     "username": "default",
                     "id": "P3Xid20d74bde781010008b206560be4eea",
                     "password": "test1234"
                 },
                 {
-                    "host": "172.96.0.102",
+                    "host": "174.96.0.102",
                     "port": 6378,
                     "username": "default",
                     "id": "P3Xidd35f4bde78101000c53bc81d0bfb87",
                     "password": "test1234"
                 },
                 {
-                    "host": "172.96.0.103",
+                    "host": "174.96.0.103",
                     "port": 6379,
                     "username": "default",
                     "id": "P3Xidfde96bde78101000c6709645f01b63",
                     "password": "test1234"
                 },
                 {
-                    "host": "172.96.0.104",
+                    "host": "174.96.0.104",
                     "port": 6380,
                     "username": "default",
                     "id": "P3Xid3eaf6bde781010003ab9e3fddffe21",
                     "password": "test1234"
                 },
                 {
-                    "host": "172.96.0.105",
+                    "host": "174.96.0.105",
                     "port": 6381,
                     "id": "P3Xidccb57bde78101000057f8e126a6b4b",
                     "password": "test1234",
                     "username": "default"
                 },
                 {
-                    "host": "172.96.0.106",
+                    "host": "174.96.0.106",
                     "port": 6382,
                     "id": "P3Xid059c7bde7810100001a2032bc7e3e6",
                     "password": "test1234",
