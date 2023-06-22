@@ -301,6 +301,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         result.append(("--plugin", "universal_resolver"))
         result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
 
+        result.append(("--plugin", "redis_queue.v1_0.events"))
+        result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
+        
         # This code for log level is included here because aca-py does not support the env var directly yet.
         # when it does (and there is talk of supporting YAML) then this code can be removed.
         if os.getenv("LOG_LEVEL") is not None:

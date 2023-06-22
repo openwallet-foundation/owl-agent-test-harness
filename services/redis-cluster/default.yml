@@ -1,0 +1,21 @@
+label: Aries Cloud Agent + Redis Events
+
+# Admin
+admin: [0.0.0.0, 3001]
+admin-insecure-mode: true
+
+# Load toolbox plugin
+plugin:
+  - redis_queue
+
+plugin-config: plugins-config.yml
+
+# Transport
+inbound-transport:
+  - [http, 0.0.0.0, 3000]
+outbound-transport: http
+endpoint:
+  - http://localhost:3000
+
+# Ledger
+no-ledger: true

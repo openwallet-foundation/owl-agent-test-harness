@@ -16,6 +16,7 @@ export LEDGER_TIMEOUT=60
 # these can be overridden via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
+export REDIS_CLUSTER_URL_CONFIG="${REDIS_CLUSTER_URL_CONFIG}"
 export AGENT_CONFIG_FILE="${AGENT_CONFIG_FILE}"
 export GENESIS_URL="${GENESIS_URL}"
 export GENESIS_FILE="${GENESIS_FILE}"
@@ -29,6 +30,9 @@ TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}
 #   so it works inside docker.
 LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
+
+REDIS_CLUSTER_URL_HOST="${REDIS_CLUSTER_URL_CONFIG:-http://localhost:6377}"
+
 
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
@@ -434,6 +438,39 @@ waitForUniresolver(){
   )
 }
 
+pingRedisCluster(){
+  redis_cluster_url_host=${1}
+  # ping tails server (ask for a non-existant registry and should return 404)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${redis_cluster_url_host})
+  if (( ${rtnCd} == 000 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForRedisCluster(){
+  (
+    # Wait for tails server to start ...
+    local startTime=${SECONDS}
+    local rtnCd=0
+    printf "waiting for redis-cluster to start"
+    # use tails server URL from host
+    while ! pingRedisCluster "$REDIS_CLUSTER_URL_HOST"; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nThe redis cluster failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
 dockerhost_url_templates() {
   # generate acapy plugin config file, writing $DOCKERHOST into URLs
   pushd ${SCRIPT_HOME}/aries-backchannels/acapy/ > /dev/null
@@ -535,7 +572,7 @@ startAgent() {
     # set the docker environment that needs to be passed to the test container
     setDockerEnv
 
-    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} $DOCKER_ENV "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --network aath_network --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} $DOCKER_ENV "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
 
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
@@ -586,7 +623,7 @@ getAgentVersion(){
 
 createNetwork() {
   if [[ -z `docker network ls -q --filter "name=aath_network"` ]]; then
-    docker network create aath_network > /dev/null
+    docker network create aath_network --subnet=174.96.0.0/16 > /dev/null
   fi
 }
 
@@ -619,6 +656,7 @@ startServices() {
 
   if [[ "all" = $1 ]]; then
     auxiliaryService orb start
+    # auxiliaryService redis-cluster start
   fi
 
   # if we're *not* using an external VON ledger, start the local one
@@ -665,6 +703,7 @@ startServices() {
     echoRed "\nUniversal Resolver is not running.\n"
     exit 1
   fi
+
 }
 
 stopServices() {
@@ -689,6 +728,8 @@ stopServices() {
     auxiliaryService orb stop
     auxiliaryService indy-tails stop
     auxiliaryService von-network stop
+    auxiliaryService redis-cluster stop
+
   fi
 }
 

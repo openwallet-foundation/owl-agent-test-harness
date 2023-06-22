@@ -1,12 +1,3 @@
-version: '2'
-
-http_uniresolver:
-  endpoint:
-    http://REPLACE_WITH_DOCKERHOST:8080/1.0/identifiers
-  methods:
-    # - sov
-    - orb
-
 redis_queue:
   connection: 
     connection_url: "redis://default:test1234@174.96.0.103:6379"
