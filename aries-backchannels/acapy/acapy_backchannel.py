@@ -2292,7 +2292,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
                     break
         else:
             print("Press Ctrl-C to exit ...")
-            remaining_tasks = asyncio.Task.all_tasks()
+            remaining_tasks = asyncio.all_tasks()
             await asyncio.gather(*remaining_tasks)
 
     finally:
