@@ -22,7 +22,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 38 out of 39 (97%)**
 
 
-*Last run: Wed Jul 12 00:49:23 UTC 2023*
+*Last run: Mon Jul 17 00:52:02 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -45,7 +45,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 11 out of 28 (39%)**
 
 
-*Last run: Wed Jul 12 01:29:31 UTC 2023*
+*Last run: Mon Jul 17 01:26:10 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -68,7 +68,7 @@ Runset Name: AFJ to findy
 **Latest results: 2 out of 17 (11%)**
 
 
-*Last run: Wed Jul 12 01:36:15 UTC 2023*
+*Last run: Mon Jul 17 01:33:10 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -92,7 +92,7 @@ Runset Name: AFJ to AFJ
 **Latest results: 12 out of 28 (42%)**
 
 
-*Last run: Wed Jul 12 01:46:53 UTC 2023*
+*Last run: Mon Jul 17 01:43:34 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -115,7 +115,7 @@ Runset Name: aries-vcx to javascript
 **Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Wed Jul 12 02:29:09 UTC 2023*
+*Last run: Mon Jul 17 02:34:18 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -137,7 +137,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Jul 12 02:45:05 UTC 2023*
+*Last run: Mon Jul 17 02:38:52 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -160,7 +160,7 @@ Runset Name: javascript to aries-vcx
 **Latest results: 3 out of 18 (16%)**
 
 
-*Last run: Wed Jul 12 03:14:40 UTC 2023*
+*Last run: Mon Jul 17 03:06:11 UTC 2023*
 ```
 
 #### Current Runset Status
