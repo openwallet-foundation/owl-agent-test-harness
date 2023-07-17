@@ -20,7 +20,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Jul 12 01:07:23 UTC 2023*
+*Last run: Mon Jul 17 01:08:40 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -43,7 +43,7 @@ Runset Name: AFJ to findy
 **Latest results: 2 out of 17 (11%)**
 
 
-*Last run: Wed Jul 12 01:36:15 UTC 2023*
+*Last run: Mon Jul 17 01:33:10 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -67,7 +67,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Jul 12 02:24:27 UTC 2023*
+*Last run: Mon Jul 17 02:17:50 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -90,7 +90,7 @@ Runset Name: findy to AFJ
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Jul 12 02:45:05 UTC 2023*
+*Last run: Mon Jul 17 02:38:52 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -113,7 +113,7 @@ Runset Name: findy to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Jul 12 02:43:05 UTC 2023*
+*Last run: Mon Jul 17 02:37:13 UTC 2023*
 ```
 
 #### Current Runset Status
