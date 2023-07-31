@@ -237,6 +237,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "--notify-revocation",
             "--open-mediation",
             "--enable-undelivered-queue",
+            "--preserve-exchange-records", # For AATH purposes, exchange records must be retained -- not typical in production
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
