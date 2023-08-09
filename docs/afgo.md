@@ -18,7 +18,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 3 out of 14 (21%)**
 
 
-*Last run: Wed Aug  2 00:24:06 UTC 2023*
+*Last run: Wed Aug  9 00:23:27 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -41,7 +41,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 1 out of 17 (5%)**
 
 
-*Last run: Wed Aug  2 01:12:38 UTC 2023*
+*Last run: Wed Aug  9 01:08:27 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -64,7 +64,7 @@ Runset Name: AF-Go to AF-Go
 **Latest results: 27 out of 45 (60%)**
 
 
-*Last run: Wed Aug  2 01:34:58 UTC 2023*
+*Last run: Wed Aug  9 01:34:18 UTC 2023*
 ```
 
 #### Current Runset Status
