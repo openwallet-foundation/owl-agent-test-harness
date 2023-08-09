@@ -4,14 +4,13 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.9.0 | findy<br>0.31.11 | acapy-main<br>0.9.0 | acapy-main<br>0.9.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-findy](#runset-afj-findy) | javascript<br>0.4.1-alpha.20 | findy<br>0.31.11 | javascript<br>0.4.1-alpha.20 | javascript<br>0.4.1-alpha.20 | AIP 1.0 | [**2 / 17<br>11%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [dotnet-findy](#runset-dotnet-findy) | dotnet<br> | findy<br>0.31.11 | dotnet<br> | dotnet<br> | AIP 1.0 | [**0 / 10<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-findy/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-acapy](#runset-findy-acapy) | findy<br>0.31.11 | acapy-main<br>0.9.0 | findy<br>0.31.11 | findy<br>0.31.11 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-dotnet](#runset-findy-dotnet) | findy<br>0.31.11 | dotnet<br> | findy<br>0.31.11 | findy<br>0.31.11 | AIP 1.0 | [**0 / 12<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | findy<br>0.31.11 | javascript<br>0.4.1-alpha.20 | dotnet<br> | findy<br>0.31.11 | AIP 1.0 | [**6 / 17<br>35%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
-| [findy-javascript](#runset-findy-javascript) | findy<br>0.31.11 | javascript<br>0.4.1-alpha.20 | findy<br>0.31.11 | findy<br>0.31.11 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [findy](#runset-findy) | findy<br>0.31.11 | findy<br>0.31.11 | findy<br>0.31.11 | findy<br>0.31.11 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-findy](#runset-acapy-findy) | acapy-main<br>0.9.0 | findy<br>0.31.13 | acapy-main<br>0.9.0 | acapy-main<br>0.9.0 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-findy](#runset-afj-findy) | javascript<br>0.4.1-alpha.22 | findy<br>0.31.13 | javascript<br>0.4.1-alpha.22 | javascript<br>0.4.1-alpha.22 | AIP 1.0 | [**2 / 17<br>11%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [dotnet-findy](#runset-dotnet-findy) | dotnet<br> | findy<br>0.31.13 | dotnet<br> | dotnet<br> | AIP 1.0 | [**0 / 10<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/dotnet-b-findy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-acapy](#runset-findy-acapy) | findy<br>0.31.13 | acapy-main<br>0.9.0 | findy<br>0.31.13 | findy<br>0.31.13 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-dotnet](#runset-findy-dotnet) | findy<br>0.31.13 | dotnet<br> | findy<br>0.31.13 | findy<br>0.31.13 | AIP 1.0 | [**0 / 12<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [findy-javascript-dotnet](#runset-findy-javascript-dotnet) | findy<br>0.31.13 | javascript<br>0.4.1-alpha.22 | dotnet<br> | findy<br>0.31.13 | AIP 1.0 | [**6 / 17<br>35%**](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript-f-dotnet/reports/latest/index.html?redirect=false#behaviors) |
+| [findy](#runset-findy) | findy<br>0.31.14 | findy<br>0.31.14 | findy<br>0.31.14 | findy<br>0.31.14 | AIP 1.0 | [**17 / 17<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/findy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -23,7 +22,7 @@ Runset Name: ACA-PY to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Aug  2 01:05:56 UTC 2023*
+*Last run: Wed Aug  9 01:06:58 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -46,7 +45,7 @@ Runset Name: AFJ to findy
 **Latest results: 2 out of 17 (11%)**
 
 
-*Last run: Wed Aug  2 01:39:42 UTC 2023*
+*Last run: Wed Aug  9 01:26:38 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -70,7 +69,7 @@ Runset Name: dotnet to findy
 **Latest results: 0 out of 10 (0%)**
 
 
-*Last run: Wed Aug  2 02:02:12 UTC 2023*
+*Last run: Wed Aug  9 01:56:56 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -95,7 +94,7 @@ Runset Name: findy to ACA-PY
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Aug  2 02:39:16 UTC 2023*
+*Last run: Wed Aug  9 02:29:37 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -118,7 +117,7 @@ Runset Name: findy to dotnet
 **Latest results: 0 out of 12 (0%)**
 
 
-*Last run: Wed Aug  2 02:28:39 UTC 2023*
+*Last run: Wed Aug  9 02:20:31 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -141,7 +140,7 @@ Runset Name: findy to AFJ to AF-.NET
 **Latest results: 6 out of 17 (35%)**
 
 
-*Last run: Wed Aug  2 02:35:26 UTC 2023*
+*Last run: Wed Aug  9 02:25:35 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -156,29 +155,6 @@ All of the tests being executed in this runset are passing.
 - [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/findy-b-javascript-f-dotnet/reports/latest)
 
 
-### Runset **findy-javascript**
-
-Runset Name: findy to AFJ
-
-```tip
-**Latest results: 17 out of 17 (100%)**
-
-
-*Last run: Wed Aug  2 02:48:34 UTC 2023*
-```
-
-#### Current Runset Status
-
-All of the tests being executed in this runset are passing. 
-
-*Status Note Updated: 2021.10.15*
-
-#### Runset Details
-
-- [Results by executed Aries RFCs](https://allure.vonx.io/api/allure-docker-service/projects/findy-b-javascript/reports/latest/index.html?redirect=false#behaviors)
-- [Test execution history](https://allure.vonx.io/allure-docker-service-ui/projects/findy-b-javascript/reports/latest)
-
-
 ### Runset **findy**
 
 Runset Name: findy to findy
@@ -187,7 +163,7 @@ Runset Name: findy to findy
 **Latest results: 17 out of 17 (100%)**
 
 
-*Last run: Wed Aug  2 02:49:18 UTC 2023*
+*Last run: Wed Aug  9 02:39:58 UTC 2023*
 ```
 
 #### Current Runset Status
