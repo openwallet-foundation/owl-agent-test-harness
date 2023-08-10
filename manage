@@ -13,10 +13,13 @@ SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
 export AGENT_TIMEOUT=30
 export LEDGER_TIMEOUT=60
-# these two can be overrode via env vars
+# these can be overridden via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
+export REDIS_CLUSTER_URL_CONFIG="${REDIS_CLUSTER_URL_CONFIG}"
 export AGENT_CONFIG_FILE="${AGENT_CONFIG_FILE}"
+export GENESIS_URL="${GENESIS_URL}"
+export GENESIS_FILE="${GENESIS_FILE}"
 
 # these are derived from the above two
 LEDGER_URL_HOST="${LEDGER_URL_CONFIG:-http://localhost:9000}"
@@ -27,6 +30,9 @@ TAILS_SERVER_URL_INTERNAL="${TAILS_SERVER_URL_CONFIG:-http://${DOCKERHOST}:6543}
 #   so it works inside docker.
 LEDGER_URL_INTERNAL="$(echo ${LEDGER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
 TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/localhost:/:\/\/${DOCKERHOST}:/" )"
+
+REDIS_CLUSTER_URL_HOST="${REDIS_CLUSTER_URL_CONFIG:-http://localhost:6377}"
+
 
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
@@ -244,6 +250,29 @@ function initEnv() {
   export RUST_LOG=${RUST_LOG:-warning}
 }
 
+# setup the docker environment variables to be passed to containers
+setDockerEnv() {
+    # set variables that have a different name to what is being set for the container
+  DOCKER_ENV="-e AGENT_NAME=${NAME}"
+  if  [[ -n "$BACKCHANNEL_EXTRA_ARGS" ]]; then
+    DOCKER_ENV="${DOCKER_ENV} -e EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}"
+  fi
+  if  [[ -n "$LEDGER_URL_INTERNAL" ]]; then
+    DOCKER_ENV="${DOCKER_ENV} -e LEDGER_URL=${LEDGER_URL_INTERNAL}"
+  fi
+  if  [[ -n "$TAILS_SERVER_URL_INTERNAL" ]]; then
+    DOCKER_ENV="${DOCKER_ENV} -e TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}"
+  fi
+
+  # variables that have the same variable name as what is being set for the container
+  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE")
+  for var in "${GENERAL_VARIABLES[@]}"; do
+    if [[ -n "${!var}" ]]; then
+      DOCKER_ENV+=" -e ${var}=${!var}"
+    fi
+  done
+}
+
 # TODO: set up image builds so you don't need to use `./manage rebuild` to refresh remote source repo
 # - image Dockerfile has an ARG for the commit hash,
 # - build script grabs the HEAD commit hash from the agent's github repo
@@ -304,7 +333,7 @@ pingLedger(){
   ledger_url=${1}
 
   # ping ledger web browser for genesis txns
-  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${ledger_url}/genesis)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${ledger_url})
   if (( ${rtnCd} == 200 )); then
     return 0
   else
@@ -314,12 +343,21 @@ pingLedger(){
 
 waitForLedger(){
   (
-    # Wait for ledger server to start ...
+    # Wait for ledger server to start or if remote wait for it to respond  ...
     local startTime=${SECONDS}
     local rtnCd=0
-    printf "waiting for ledger to start"
+
+    # Determine the ping URL based on the ledger variables
+    local pingUrl=""
+    if [[ -n "${GENESIS_URL}" ]]; then
+      pingUrl="${GENESIS_URL}"
+    else
+      pingUrl="${LEDGER_URL_HOST}/genesis"
+    fi
+
+    printf "waiting for ledger to start/respond"
     # use ledger URL from host
-    while ! pingLedger "$LEDGER_URL_HOST"; do
+    while ! pingLedger "${pingUrl}"; do
       printf "."
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
@@ -390,6 +428,39 @@ waitForUniresolver(){
       local duration=$(($SECONDS - $startTime))
       if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
         echoRed "\nUniversal Resolver failed to start within ${duration} seconds.\n"
+        rtnCd=1
+        break
+      fi
+      sleep 1
+    done
+    echo
+    return ${rtnCd}
+  )
+}
+
+pingRedisCluster(){
+  redis_cluster_url_host=${1}
+  # ping tails server (ask for a non-existant registry and should return 404)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${redis_cluster_url_host})
+  if (( ${rtnCd} == 000 )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+waitForRedisCluster(){
+  (
+    # Wait for tails server to start ...
+    local startTime=${SECONDS}
+    local rtnCd=0
+    printf "waiting for redis-cluster to start"
+    # use tails server URL from host
+    while ! pingRedisCluster "$REDIS_CLUSTER_URL_HOST"; do
+      printf "."
+      local duration=$(($SECONDS - $startTime))
+      if (( ${duration} >= ${LEDGER_TIMEOUT} )); then
+        echoRed "\nThe redis cluster failed to start within ${duration} seconds.\n"
         rtnCd=1
         break
       fi
@@ -483,9 +554,9 @@ startAgent() {
     if [[ "${USE_NGROK}" = "true" ]]; then
       echo "Starting ngrok for ${NAME} Agent ..."
       if [[ "${IMAGE_NAME}" = "dotnet-agent-backchannel" ]]; then
-        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
+        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" ngrok/ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
       else
-        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" wernight/ngrok ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
+        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" ngrok/ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
       fi
       sleep 1
       export NGROK_NAME="${CONTAINER_NAME}-ngrok"
@@ -493,14 +564,16 @@ startAgent() {
     else
       export NGROK_NAME=
     fi
+
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
     export BACKCHANNEL_EXTRA_ARGS_NAME="BACKCHANNEL_EXTRA_${AGENT_NAME//-/_}"
     export BACKCHANNEL_EXTRA_ARGS=`echo ${!BACKCHANNEL_EXTRA_ARGS_NAME}`
-    if [[ -z ${AGENT_CONFIG_FILE} ]]; then
-      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}"  -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
-    else
-      local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} -e "AGENT_CONFIG_FILE=${AGENT_CONFIG_FILE}" -e "NGROK_NAME=${NGROK_NAME}" -e "EXTRA_ARGS=${BACKCHANNEL_EXTRA_ARGS}" -e "DOCKERHOST=${DOCKERHOST}" -e "AGENT_NAME=${NAME}" -e "LEDGER_URL=${LEDGER_URL_INTERNAL}" -e "TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}" -e "AIP_CONFIG=${AIP_CONFIG}" "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
-    fi
+
+    # set the docker environment that needs to be passed to the test container
+    setDockerEnv
+
+    local container_id=$(docker run -dt --name "${CONTAINER_NAME}" --network aath_network --expose "${PORT_RANGE}" -p "${PORT_RANGE}:${PORT_RANGE}" ${DATA_VOLUME_ARG} ${ENV_FILE_ARG} $DOCKER_ENV "${IMAGE_NAME}" -p "${BACKCHANNEL_PORT}" -i false)
+
     sleep 1
     if [[ "${USE_NGROK}" = "true" ]]; then
       docker network connect aath_network "${CONTAINER_NAME}"
@@ -550,7 +623,7 @@ getAgentVersion(){
 
 createNetwork() {
   if [[ -z `docker network ls -q --filter "name=aath_network"` ]]; then
-    docker network create aath_network > /dev/null
+    docker network create aath_network --subnet=174.96.0.0/16 > /dev/null
   fi
 }
 
@@ -583,10 +656,11 @@ startServices() {
 
   if [[ "all" = $1 ]]; then
     auxiliaryService orb start
+    # auxiliaryService redis-cluster start
   fi
 
   # if we're *not* using an external VON ledger, start the local one
-  if [[ -z ${LEDGER_URL_CONFIG} ]]; then
+  if [[ -z ${LEDGER_URL_CONFIG} && -z ${GENESIS_URL} && -z ${GENESIS_FILE} ]]; then
     if [[ -z `docker ps -q --filter="name=von_webserver_1"` ]] && [[ -z $(docker ps -q --filter="name=von-webserver-1") ]]; then
       echo "starting local von-network..."
       auxiliaryService von-network start
@@ -629,6 +703,7 @@ startServices() {
     echoRed "\nUniversal Resolver is not running.\n"
     exit 1
   fi
+
 }
 
 stopServices() {
@@ -653,6 +728,8 @@ stopServices() {
     auxiliaryService orb stop
     auxiliaryService indy-tails stop
     auxiliaryService von-network stop
+    auxiliaryService redis-cluster stop
+
   fi
 }
 

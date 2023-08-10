@@ -9,15 +9,15 @@ Want to see the Aries Agent Test Harness in action? Give it a try using a git, d
 ```bash
 git clone https://github.com/hyperledger/aries-agent-test-harness
 cd aries-agent-test-harness
-./manage build -a acapy -a dotnet
-./manage run -d acapy -b dotnet -t @AcceptanceTest -t ~@wip
+./manage build -a acapy -a javascript
+./manage run -d acapy -b javascript -t @AcceptanceTest -t ~@wip
 
 ```
 
 The commands take a while to run (you know...building modern apps always means downloading half the internet...), so while you wait, here's what's happening:
 
-- The AATH `./manage build` command builds Test Agent docker images for the ACA-Py and .NET agent frameworks and the test harness.
-- The AATH `./manage run` command executes a set of tests (those tagged "AcceptanceTest" but not tagged "@wip") with the ACA-Py test agent playing most of the roles&mdash;Acme, Faber and Mallory, while the .NET test agent plays the role of Bob.
+- The AATH `./manage build` command builds Test Agent docker images for the Aries Cloud Agent Python (ACA-Py) and Aries Framework JavaScript (AFJ) agent frameworks and the test harness.
+- The AATH `./manage run` command executes a set of tests (those tagged "AcceptanceTest" but not tagged "@wip") with the ACA-Py test agent playing most of the roles&mdash;Acme, Faber and Mallory, while the AFJ test agent plays the role of Bob.
 
 It's that last part makes the AATH powerful. On every run, different AATH-enabled components can be assigned any role (Acme, Bob, Faber, Mallory). For some initial pain (AATH-enabling a component), interoperability testing becomes routine, and we can make hit our goal: to make interoperability boring.
 

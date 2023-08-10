@@ -237,6 +237,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "--notify-revocation",
             "--open-mediation",
             "--enable-undelivered-queue",
+            "--preserve-exchange-records", # For AATH purposes, exchange records must be retained -- not typical in production
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
@@ -301,6 +302,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         result.append(("--plugin", "universal_resolver"))
         result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
 
+        result.append(("--plugin", "redis_queue.v1_0.events"))
+        result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
+        
         # This code for log level is included here because aca-py does not support the env var directly yet.
         # when it does (and there is talk of supporting YAML) then this code can be removed.
         if os.getenv("LOG_LEVEL") is not None:
@@ -946,12 +950,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if operation == "create-request":
                     resp_json = json.loads(resp_text)
-                    resp_text = json.dumps(
-                        {
-                            "record": resp_json,
-                            "message": resp_json["presentation_request_dict"],
-                        }
-                    )
+                    if resp_status == 200:
+                        resp_text = json.dumps(
+                            {
+                                "record": resp_json,
+                                "message": resp_json["presentation_request_dict"],
+                            }
+                        )
                 return (resp_status, resp_text)
 
         # Handle out of band POST operations
@@ -1001,7 +1006,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 thread_id = attachment.get("~thread", {}).get("thid") or attachment.get(
                     "@id"
                 )
-
                 if message_type.endswith("/issue-credential/1.0/offer-credential"):
                     (_, resp_text) = await self.admin_GET(
                         "/issue-credential/records", params={"thread_id": thread_id}
@@ -1074,7 +1078,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         log_msg(
             f"Data translated by backchannel to send to agent for operation: {agent_operation}",
-            data,
+            json.dumps(data, indent=4)
         )
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
@@ -2264,7 +2268,20 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
 
         # start aca-py agent sub-process and listen for web hooks
         await agent.listen_webhooks(start_port + 3)
-        await agent.register_did()
+
+        # Check if "read-only-ledger" is true in the config file. If true, skip registering DID.
+        if "read-only-ledger" not in agent.get_agent_args() or "read-only-ledger" not in extra_args:
+            # Check if there is an AGENT_CONFIG_FILE and if "read-only-ledger" is present in the file.
+            agent_config_file = os.getenv("AGENT_CONFIG_FILE")
+            if agent_config_file is not None:
+                with open(agent_config_file) as  agent_config_file:
+                    #print the content of the opened text file
+                    agent_config_text_file = agent_config_file.read()
+                    print(agent_config_text_file)
+                    if "read-only-ledger" not in agent_config_text_file:
+                        await agent.register_did()
+            else:
+                await agent.register_did()
 
         await agent.start_process()
         agent.activate()
@@ -2276,7 +2293,7 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
                     break
         else:
             print("Press Ctrl-C to exit ...")
-            remaining_tasks = asyncio.Task.all_tasks()
+            remaining_tasks = asyncio.all_tasks()
             await asyncio.gather(*remaining_tasks)
 
     finally:

@@ -263,6 +263,8 @@ def step_impl(context, issuer):
         )
         assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
         resp_json = json.loads(resp_text)
+        if "thread_id" in resp_json:
+            context.cred_thread_id = resp_json["thread_id"]
 
     # if context does not have the credential thread id then the proposal was not the starting point for the protocol.
     else:

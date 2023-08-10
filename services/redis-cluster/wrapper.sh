@@ -3,13 +3,6 @@
 SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 COMMAND=${1}
 
-# SOV_NETWORK should be set to one of LEDGER_URL_CONFIG or GENESIS_URL.
-# if neither is set, default to localhost:9000
-# if not GENESIS_URL then SOV_NETWORK should be ammended to include /genesis at the end
-SOV_NETWORK="${GENESIS_URL:-${LEDGER_URL_CONFIG:-http://localhost:9000}}"
-if [[ -z "${GENESIS_URL}" ]]; then
-	SOV_NETWORK="${SOV_NETWORK}/genesis"
-fi
 
 # ========================================================================================================
 # Check Docker Compose
@@ -25,10 +18,6 @@ fi
 echo "Using: ${dockerCompose}"
 
 startCommand() {
-	mkdir -p .build/sov-pool-config
-	rm -f .build/sov-pool-config/config.txt
-	curl $SOV_NETWORK --output .build/sov-pool-config/config.txt
-
 	${dockerCompose} up -d
 }
 
@@ -41,7 +30,7 @@ case "${COMMAND}" in
 		;;
 	stop)
 		${dockerCompose} stop
-		${dockerCompose} logs > uniresolver.log
+		${dockerCompose} logs > redis-cluster.log
 		${dockerCompose} down --volumes
 		;;
 	start)
@@ -51,7 +40,7 @@ case "${COMMAND}" in
 		${dockerCompose} logs -f -t
 		;;
 	*)
-		echo "uniresolver: valid commands are 'clean', 'start', 'stop', 'logs'"
+		echo "redis-cluster: valid commands are 'clean', 'start', 'stop', 'logs'"
 		;;
 esac
 
