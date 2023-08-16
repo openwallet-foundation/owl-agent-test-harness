@@ -20,7 +20,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 18 out of 18 (100%)**
 
 
-*Last run: Sat Aug 12 01:08:06 UTC 2023*
+*Last run: Wed Aug 16 01:31:07 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -42,7 +42,7 @@ Runset Name: aries-vcx to acapy
 **Latest results: 18 out of 20 (90%)**
 
 
-*Last run: Sat Aug 12 02:21:12 UTC 2023*
+*Last run: Wed Aug 16 02:39:11 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -64,7 +64,7 @@ Runset Name: aries-vcx to aries-vcx
 **Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Sat Aug 12 02:09:18 UTC 2023*
+*Last run: Wed Aug 16 02:15:22 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -86,7 +86,7 @@ Runset Name: aries-vcx to javascript
 **Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Sat Aug 12 02:28:25 UTC 2023*
+*Last run: Wed Aug 16 02:31:00 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -108,7 +108,7 @@ Runset Name: javascript to aries-vcx
 **Latest results: 3 out of 18 (16%)**
 
 
-*Last run: Sat Aug 12 03:01:52 UTC 2023*
+*Last run: Wed Aug 16 03:18:44 UTC 2023*
 ```
 
 #### Current Runset Status
