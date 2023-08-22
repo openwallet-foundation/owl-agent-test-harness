@@ -263,6 +263,9 @@ setDockerEnv() {
   if  [[ -n "$TAILS_SERVER_URL_INTERNAL" ]]; then
     DOCKER_ENV="${DOCKER_ENV} -e TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}"
   fi
+  if ! [ -z "$TEST_RETRY_ATTEMPTS_OVERRIDE" ]; then
+    DOCKER_ENV="${DOCKER_ENV} -e TEST_RETRY_ATTEMPTS_OVERRIDE=${TEST_RETRY_ATTEMPTS_OVERRIDE}"
+  fi
 
   # variables that have the same variable name as what is being set for the container
   declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE")
@@ -952,12 +955,12 @@ runTests() {
 
   if [[ "${REPORT}" = "allure" && "${COMMAND}" != "dry-run" ]]; then
       echo "Executing tests with Allure Reports."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" $DOCKER_ENV aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   elif [[ "${COMMAND}" = "dry-run" ]]; then
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini $DOCKER_ENV aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
         grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
   else
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" $DOCKER_ENV aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
   local docker_result=$?
   rm ${BEHAVE_INI_TMP}
