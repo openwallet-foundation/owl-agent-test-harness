@@ -5,10 +5,12 @@
 # https://behave.readthedocs.io/en/latest/tutorial.html#environmental-controls
 #
 # -----------------------------------------------------------
+import os
 import json
 from collections import defaultdict
 from behave.runner import Context
 from behave.model import Scenario, Feature
+from behave.contrib.scenario_autoretry import patch_scenario_with_autoretry
 
 def before_step(context: Context, step):
     context.step = step
@@ -440,6 +442,22 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # }
     context.mediator_dict = {}
 
+def before_feature(context, feature):
+    # retry failed tests 
+    test_retry_attempts = None
+
+    if os.environ.get('TEST_RETRY_ATTEMPTS_OVERRIDE'):
+        test_retry_attempts = int(os.environ.get('TEST_RETRY_ATTEMPTS_OVERRIDE'))
+    elif 'test_retry_attempts' in context.config.userdata:
+        test_retry_attempts = int(eval(context.config.userdata['test_retry_attempts']))
+    
+    # Re-try only if test_retry_attempts value is set
+    if test_retry_attempts:
+        print(
+                f"NOTE: Re-try attempts set to {test_retry_attempts}."
+            )
+        for scenario in feature.scenarios:
+            patch_scenario_with_autoretry(scenario, max_attempts=test_retry_attempts)
 
 def after_feature(context: Context, feature: Feature):
     if "UsesCustomParameters" in feature.tags:
