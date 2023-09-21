@@ -24,9 +24,11 @@ COPY python python
 COPY acapy acapy
 COPY data ./
 
-# aca-py is in /usr/local/bin. The Backchannel is looking for it in ./bin, create a link to it in ./bin
+# aca-py is no longer in /usr/local/bin. 
+# The Backchannel is looking for it in ./bin, copy file and create a link to it in ./bin
 RUN mkdir -p ./bin
-RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
+COPY acapy/bin/aca-py ./bin/aca-py
+RUN chmod +x ./bin/aca-py
 
 ENV PYTHONPATH=/aries-backchannels
 ENV RUNMODE=docker
