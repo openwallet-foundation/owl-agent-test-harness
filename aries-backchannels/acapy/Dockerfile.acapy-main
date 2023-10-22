@@ -22,11 +22,13 @@ COPY python python
 COPY acapy acapy
 COPY data ./
 
-# aca-py is no longer in /usr/local/bin. 
-# The Backchannel is looking for it in ./bin, copy file and create a link to it in ./bin
+# Poetry installation install and build to create aca-py bin file
+RUN pip install --no-cache-dir poetry
+RUN poetry build
+
+# The Backchannel expects the bin file in ./bin, create a link to it
 RUN mkdir -p ./bin
-COPY acapy/bin/aca-py ./bin/aca-py
-RUN chmod +x ./bin/aca-py
+RUN ln -s /usr/local/bin/aca-py ./bin/aca-py
 
 ENV PYTHONPATH=/aries-backchannels
 ENV RUNMODE=docker
