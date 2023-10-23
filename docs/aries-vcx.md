@@ -5,10 +5,10 @@
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
 | [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>0.10.1 | aries-vcx<br>1.0.0 | acapy-main<br>0.10.1 | acapy-main<br>0.10.1 | AIP 1.0 | [**18 / 18<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>0.10.1 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**18 / 20<br>90%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>0.10.1 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**19 / 20<br>95%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [ariesvcx-ariesvcx](#runset-ariesvcx-ariesvcx) | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**19 / 20<br>95%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-javascript](#runset-ariesvcx-javascript) | aries-vcx<br>1.0.0 | javascript<br>0.4.1-alpha.55 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**19 / 20<br>95%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [javascript-ariesvcx](#runset-javascript-ariesvcx) | javascript<br>0.4.1-alpha.55 | aries-vcx<br>1.0.0 | javascript<br>0.4.1-alpha.55 | javascript<br>0.4.1-alpha.55 | AIP 1.0 | [**3 / 18<br>16%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-javascript](#runset-ariesvcx-javascript) | aries-vcx<br>1.0.0 | javascript<br>0.4.1-alpha.56 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**19 / 20<br>95%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [javascript-ariesvcx](#runset-javascript-ariesvcx) | javascript<br>0.4.1-alpha.56 | aries-vcx<br>1.0.0 | javascript<br>0.4.1-alpha.56 | javascript<br>0.4.1-alpha.56 | AIP 1.0 | [**3 / 18<br>16%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -20,7 +20,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 18 out of 18 (100%)**
 
 
-*Last run: Wed Oct 18 01:12:40 UTC 2023*
+*Last run: Mon Oct 23 01:12:36 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -39,10 +39,10 @@ No test status note is available for this runset. Please update: .github/workflo
 Runset Name: aries-vcx to acapy
 
 ```tip
-**Latest results: 18 out of 20 (90%)**
+**Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Wed Oct 18 02:32:23 UTC 2023*
+*Last run: Mon Oct 23 02:42:45 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -64,7 +64,7 @@ Runset Name: aries-vcx to aries-vcx
 **Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Wed Oct 18 02:24:43 UTC 2023*
+*Last run: Mon Oct 23 02:18:34 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -86,7 +86,7 @@ Runset Name: aries-vcx to javascript
 **Latest results: 19 out of 20 (95%)**
 
 
-*Last run: Wed Oct 18 02:29:09 UTC 2023*
+*Last run: Mon Oct 23 02:26:04 UTC 2023*
 ```
 
 #### Current Runset Status
@@ -108,7 +108,7 @@ Runset Name: javascript to aries-vcx
 **Latest results: 3 out of 18 (16%)**
 
 
-*Last run: Wed Oct 18 03:16:58 UTC 2023*
+*Last run: Mon Oct 23 03:23:15 UTC 2023*
 ```
 
 #### Current Runset Status
