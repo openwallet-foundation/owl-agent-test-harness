@@ -1,10 +1,2 @@
-#!/bin/sh
-
-if [ -z "$PYTHON" ]; then
-    PYTHON=`command -v python3`
-    if [ -z "$PYTHON" ]; then
-        PYTHON=python
-    fi
-fi
-
-$PYTHON -m aries_cloudagent "$@"
+#!/bin/bash
+/usr/local/bin/aca-py "$@"

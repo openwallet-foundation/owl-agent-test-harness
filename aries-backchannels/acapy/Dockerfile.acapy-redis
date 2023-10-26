@@ -24,8 +24,7 @@ COPY python python
 COPY acapy acapy
 COPY data ./
 
-# aca-py is no longer in /usr/local/bin. 
-# The Backchannel is looking for it in ./bin, copy file and create a link to it in ./bin
+# The Backchannel is looking for it in ./bin, copy a file that invokes the ACA-Py installed script in /usr/local/bin
 RUN mkdir -p ./bin
 COPY acapy/bin/aca-py ./bin/aca-py
 RUN chmod +x ./bin/aca-py
