@@ -196,23 +196,26 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # if it ends in alpha or RC (or "-<anything>"), change it to .1 or 1
         # strip all dots
         # Does that work if I'm testing 0.5.5.1 hot fix? Just strip off the .1 since there won't be a major change here.
+        #
+        # Update Nov 1, 2023: Acapy Versioning will no longer have a - in the rc version so 0.11.0-rc1 will come in as 0.11.0rc1, so we need to handle that.
 
         if not self.acapy_version or 0 == len(self.acapy_version):
             return 0.0
 
-        descriptiveTrailer = "-"
         comparibleVersion = self.acapy_version
         if comparibleVersion.startswith("0"):
-            comparibleVersion = comparibleVersion[len("0") :]
+            comparibleVersion = comparibleVersion[1:]
         if "." in comparibleVersion:
-            stringParts = comparibleVersion.split(".")
-            comparibleVersion = "".join(stringParts)
-        if descriptiveTrailer in comparibleVersion:
-            # This means its not an offical release and came from Master/Main
-            # replace with a .1 so that the number is higher than an offical release
-            comparibleVersion = comparibleVersion.split(descriptiveTrailer)[0] + ".1"
+            comparibleVersion = comparibleVersion.replace(".", "")
+        if "rc" in comparibleVersion:
+            # This means its not an official release and came from Master/Main
+            # replace with a .1 so that the number is higher than an official release
+            comparibleVersion = comparibleVersion.split("rc")[0] + ".1"
+        elif "-" in comparibleVersion:
+            # This means its not an official release and came from Master/Main from an verson of the acapy repo before poetry.
+            # replace with a .1 so that the number is higher than an official release
+            comparibleVersion = comparibleVersion.split("-")[0] + ".1"
 
-        #  Make it a number. At this point "0.5.5-RC" should be 55.1. "0.5.4" should be 54.
         return float(comparibleVersion)
 
     def get_agent_args(self):
