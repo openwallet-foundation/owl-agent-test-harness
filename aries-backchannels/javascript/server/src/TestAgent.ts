@@ -5,21 +5,18 @@ import { AskarModule } from '@aries-framework/askar'
 import { AnonCredsModule, LegacyIndyCredentialFormatService, LegacyIndyProofFormatService,  V1CredentialProtocol, V1ProofProtocol } from '@aries-framework/anoncreds'
 import { AnonCredsRsModule } from '@aries-framework/anoncreds-rs'
 import { IndyVdrAnonCredsRegistry, IndyVdrModule, IndyVdrSovDidResolver, IndyVdrPoolConfig } from '@aries-framework/indy-vdr'
-import { IndySdkAnonCredsRegistry, IndySdkModule, IndySdkSovDidResolver, IndySdkPoolConfig } from '@aries-framework/indy-sdk'
 import { TsedLogger } from './TsedLogger'
 import { TransportConfig } from './TestHarnessConfig'
-import indySdk from 'indy-sdk'
 import { anoncreds } from '@hyperledger/anoncreds-nodejs'
 import { ariesAskar } from '@hyperledger/aries-askar-nodejs'
 import { indyVdr } from '@hyperledger/indy-vdr-nodejs'
 
-export type TestAgent = Agent<ReturnType<typeof getLegacyIndySdkModules> | ReturnType<typeof getAskarAnonCredsIndyModules>>
+export type TestAgent = Agent<ReturnType<typeof getAskarAnonCredsIndyModules>>
 
 export async function createAgent({
   genesisPath,
   agentName,
   transport,
-  useLegacyIndySdk,
 }: {
   genesisPath: string
   agentName: string
@@ -39,12 +36,7 @@ export async function createAgent({
 
   const genesisTransactions = await new agentDependencies.FileSystem().read(genesisPath)
 
-  const modules = useLegacyIndySdk ? getLegacyIndySdkModules({
-    indyNamespace: 'main-pool',
-    isProduction: false,
-    genesisTransactions,
-  }) : 
-  getAskarAnonCredsIndyModules({
+  const modules = getAskarAnonCredsIndyModules({
     indyNamespace: 'main-pool',
     isProduction: false,
     genesisTransactions,
@@ -120,49 +112,5 @@ export function getAskarAnonCredsIndyModules(indyNetworkConfig: IndyVdrPoolConfi
       resolvers: [new IndyVdrSovDidResolver()],
     }),
     askar: new AskarModule({ ariesAskar }),
-  } as const
-}
-
-function getLegacyIndySdkModules(indyNetworkConfig: IndySdkPoolConfig) {
-  const legacyIndyCredentialFormatService = new LegacyIndyCredentialFormatService()
-  const legacyIndyProofFormatService = new LegacyIndyProofFormatService()
-
-  return {
-    mediator: new MediatorModule({
-      // Needed to accept mediation requests: https://github.com/hyperledger/aries-framework-javascript/issues/668
-      autoAcceptMediationRequests: true,
-      }),  
-    credentials: new CredentialsModule({
-      autoAcceptCredentials: AutoAcceptCredential.Never,
-      credentialProtocols: [
-        new V1CredentialProtocol({
-          indyCredentialFormat: legacyIndyCredentialFormatService,
-        }),
-        new V2CredentialProtocol({
-          credentialFormats: [legacyIndyCredentialFormatService],
-        }),
-      ],
-    }),
-    proofs: new ProofsModule({
-      autoAcceptProofs: AutoAcceptProof.Never,
-      proofProtocols: [
-        new V1ProofProtocol({
-          indyProofFormat: legacyIndyProofFormatService,
-        }),
-        new V2ProofProtocol({
-          proofFormats: [legacyIndyProofFormatService],
-        }),
-      ],
-    }),
-    anoncreds: new AnonCredsModule({
-      registries: [new IndySdkAnonCredsRegistry()],
-    }),
-    indySdk: new IndySdkModule({
-      indySdk,
-      networks: [indyNetworkConfig],
-    }),
-    dids: new DidsModule({
-      resolvers: [new IndySdkSovDidResolver()],
-    }),
   } as const
 }

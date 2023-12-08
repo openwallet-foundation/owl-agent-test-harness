@@ -83,8 +83,6 @@ export class TestHarnessConfig {
     if (!agentArgs) {
       const agentName = process.env.AGENT_NAME ? `AFJ ${process.env.AGENT_NAME}` : `AFJ Agent (${this.agentPorts.http})`
 
-      const useLegacyIndySdk = Boolean(process.env.USE_LEGACY_INDY_SDK || false)
-
       // There are multiple ways to retrieve the genesis file
       // we account for all of them
       const genesisFile = process.env.GENESIS_FILE
@@ -99,7 +97,6 @@ export class TestHarnessConfig {
 
       agentArgs = {
         agentName,
-        useLegacyIndySdk,
         publicDidSeed,
         genesisPath,
       }

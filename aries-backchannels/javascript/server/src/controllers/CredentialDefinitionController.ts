@@ -80,7 +80,7 @@ export class CredentialDefinitionController extends BaseController {
           issuerId,
           schemaId: schema.schemaId,
           tag: data.tag,
-        }, options: { didIndyNamespace: 'main-pool'}}) 
+        }, options: { supportRevocation: false, didIndyNamespace: 'main-pool'}}) 
 
       if (!credentialDefinitionState.credentialDefinition || !credentialDefinitionState.credentialDefinitionId) {
         throw new Error()
