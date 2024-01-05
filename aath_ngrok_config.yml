@@ -1,0 +1,20 @@
+version: 2
+web_addr: agents-ngrok:4040
+
+tunnels:
+  acme_agent_ngrok:
+    addr: acme_agent:9021
+    proto: http  
+
+  bob_agent_ngrok:
+    addr: bob_agent:9031
+    proto: http  
+
+  faber_agent_ngrok:
+    addr: faber_agent:9041
+    proto: http  
+
+  # free version of ngrok only allows 3 tunnels at a time.
+  # malory_agent_ngrok:
+  #   addr: malory_agent:9051
+  #   proto: http  

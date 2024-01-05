@@ -14,7 +14,7 @@ Remember to build any other Test Agents you are going to run with the mobile tes
 
 There are several options to the `./manage run` script that must be used when testing a mobile wallet:
 
-- use the `-n` option tells the `./manage` script to start ngrok services for each agent (issuer, verifier) to provide the mobile app an Internet accessible endpoint for each of those agents
+- use the `-n` option tells the `./manage` script to start ngrok services for each agent (issuer, verifier) to provide the mobile app an Internet accessible endpoint for each of those agents. You will need to provide an ngrok AuthToken, either free or paid to use this feature. Pass it as an environment variable when calling `manage` like `NGROK_AUTHTOKEN=YourAuthTokenHere ./manage ...` 
 - use the `-b mobile` option to use the mobile Test Agent for the `Bob` role (the only one that makes sense for a mobile app)
 - use the `-t @MobileTest` option to run only the tests that have been tagged as "working" with the mobile test agent
   - as new test scenarios are found to (or made to) work with the mobile Test Agent, the `@MobileTest` tag should be added to those test scenarios
@@ -30,7 +30,7 @@ and if necessary, you must use the wallet app settings to use the "BCovrin Test"
 Put together, that gives us the following command to test a mobile wallet with Aries Cloud Agent Python (main branch) running in all other roles.
 
 ```bash
-LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io ./manage run -d acapy-main -b mobile -n -t @MobileTest
+NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io ./manage run -d acapy-main -b mobile -n -t @MobileTest
 ```
 
 The mobile agent is in "proof-of-concept" status and some tests are not 100% reliable with all mobile agents. If things don't work, take a look at the
