@@ -1,8 +1,9 @@
-from behave import *
 import json
-from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST
-from agent_test_utils import format_cred_proposal_by_aip_version
 from time import sleep
+
+from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST
+from agent_test_utils import format_cred_proposal_by_aip_version, get_schema_name
+from behave import given, then, when
 
 CRED_FORMAT_INDY = "indy"
 CRED_FORMAT_JSON_LD = "json-ld"
@@ -35,7 +36,6 @@ def setup_schemas_for_issuance(context, credential_data):
             ]
             context.filters = context.filters_dict[schema]
 
-
 @given('"{issuer}" is ready to issue a "{cred_format}" credential')
 def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
     if cred_format == CRED_FORMAT_INDY:
@@ -64,7 +64,7 @@ def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
         resp_json = json.loads(resp_text)
 
         # TODO: it would be nice to not depend on the schema name for the issuer did dict
-        context.issuer_did_dict[context.schema["schema_name"]] = resp_json["did"]
+        context.issuer_did_dict[get_schema_name(context)] = resp_json["did"]
     else:
         raise Exception(f"Unknown credential format {cred_format}")
 
@@ -250,7 +250,7 @@ def step_impl(context, holder, cred_format):
 
     # FIXME: the return value of this is very ACA-Py specific, should just be credential_id
     credential_id = resp_json[cred_format]["credential_id"]
-    context.credential_id_dict[context.schema["schema_name"]].append(credential_id)
+    context.credential_id_dict[get_schema_name(context)].append(credential_id)
 
     # Verify issuer status
     # TODO This is returning none instead of Done. Should this be the case. Needs investigation.
@@ -274,11 +274,12 @@ def step_impl(context, holder, cred_format):
 def step_impl(context, holder, cred_format):
     holder_url = context.config.userdata.get(holder)
 
+    cred_id = context.credential_id_dict[get_schema_name(context)][-1]
     # get the credential from the holders wallet
     (resp_status, resp_text) = agent_backchannel_GET(
         holder_url + "/agent/command/",
         "credential",
-        id=context.credential_id_dict[context.schema["schema_name"]][-1],
+        id=cred_id,
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
     resp_json = json.loads(resp_text)
@@ -287,14 +288,12 @@ def step_impl(context, holder, cred_format):
         # assert resp_json["schema_id"] == context.issuer_schema_id_dict[context.schema["schema_name"]]
         # assert resp_json["cred_def_id"] == context.credential_definition_id_dict[context.schema["schema_name"]]
         assert (
-            resp_json["referent"]
-            == context.credential_id_dict[context.schema["schema_name"]][-1]
+            resp_json["referent"] == cred_id
         )
     elif cred_format == CRED_FORMAT_JSON_LD:
         # TODO: do not use schema name for credential_id_dict
         assert (
-            resp_json["credential_id"]
-            == context.credential_id_dict[context.schema["schema_name"]][-1]
+            resp_json["credential_id"] == cred_id
         )
 
 

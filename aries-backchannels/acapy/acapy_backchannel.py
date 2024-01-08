@@ -6,40 +6,21 @@ import os
 import signal
 import subprocess
 import sys
-
 from timeit import default_timer
-from typing_extensions import Literal
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
-from aiohttp import (
-    web,
-    ClientSession,
-    ClientRequest,
-    ClientError,
-    ClientTimeout,
-)
-
-from python.agent_backchannel import (
-    AgentBackchannel,
-    AgentPorts,
-    BackchannelCommand,
-    default_genesis_txns,
-    RUN_MODE,
-    START_TIMEOUT,
-)
-from python.utils import flatten, log_msg, output_reader, prompt_loop
-from python.storage import (
-    get_resource,
-    push_resource,
-    pop_resource,
-    pop_resource_latest,
-)
-
 from acapy.routes.agent_routes import routes as agent_routes
-from acapy.routes.mediation_routes import (
-    routes as mediation_routes,
-    get_mediation_record_by_connection_id,
-)
+from acapy.routes.mediation_routes import get_mediation_record_by_connection_id
+from acapy.routes.mediation_routes import routes as mediation_routes
+from aiohttp import (ClientError, ClientRequest, ClientSession, ClientTimeout,
+                     web)
+from python.agent_backchannel import (RUN_MODE, START_TIMEOUT,
+                                      AgentBackchannel, AgentPorts,
+                                      BackchannelCommand, default_genesis_txns)
+from python.storage import (get_resource, pop_resource, pop_resource_latest,
+                            push_resource)
+from python.utils import flatten, log_msg, output_reader, prompt_loop
+from typing_extensions import Literal
 
 # from helpers.jsonmapper.json_mapper import JsonMapper
 
@@ -630,7 +611,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_operation += f"?mediation_id={mediation_id}"
 
                 (resp_status, resp_text) = await self.admin_POST(
-                    agent_operation, data=command.data
+                    agent_operation, data=data
                 )
                 if resp_status == 200:
                     resp_text = self.agent_state_translation(command.topic, resp_text)
@@ -651,10 +632,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         if not await self.expected_agent_state(
                             f"/connections/{connection_id}", "request", wait_time=60.0
                         ):
-                            raise Exception(f"Expected state request but not received")
+                            raise Exception("Expected state request but not received")
 
                 agent_operation = f"/connections/{connection_id}/{operation}"
-                log_msg("POST Request: ", agent_operation, command.data)
+                log_msg("POST Request: ", agent_operation, data)
 
                 if self.auto_accept_requests and operation == "accept-request":
                     resp_status = 200
@@ -676,14 +657,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "schema":
             # POST operation is to create a new schema
-            agent_operation = "/schemas"
-            log_msg(agent_operation, command.data)
+            if command.anoncreds:
+                schema_name = data['schema'].get("name")
+                schema_version = data['schema'].get("version")
+                schema_get_endpoint = '/anoncreds/schemas'
+                schema_post_endpoint = '/anoncreds/schema'
+            else:
+                schema_name = data.get("schema_name")
+                schema_version = data.get("schema_version")
+                schema_get_endpoint = '/schemas/created'
+                schema_post_endpoint = '/schemas'
 
             # Check if schema id already exists
-            schema_name = command.data.get("schema_name")
-            schema_version = command.data.get("schema_version")
+            log_msg(schema_post_endpoint, data)
+
             (resp_status, resp_text) = await self.admin_GET(
-                "/schemas/created",
+                schema_get_endpoint,
                 params={"schema_version": schema_version, "schema_name": schema_name},
             )
             resp_json = json.loads(resp_text)
@@ -692,7 +681,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 return (200, json.dumps({"schema_id": schema_id}))
 
             (resp_status, resp_text) = await self.admin_POST(
-                agent_operation, command.data
+                schema_post_endpoint, data
             )
 
             log_msg(resp_status, resp_text)
@@ -701,14 +690,23 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "credential-definition":
             # POST operation is to create a new cred def
+            if command.anoncreds:
+                schema_id = data['credential_definition'].get("schemaId")
+                tag = data['credential_definition'].get("tag")
+                cred_defs_get_endpoint = '/anoncreds/credential-definitions'
+                cred_defs_post_endpoint = '/anoncreds/credential-definition'
+            else:
+                tag = data.get("tag")
+                schema_id = data.get("schema_id")
+                cred_defs_get_endpoint = '/credential-definitions/created'
+                cred_defs_post_endpoint = '/credential-definitions'
+
             agent_operation = "/credential-definitions"
-            log_msg(agent_operation, command.data)
+            log_msg(cred_defs_post_endpoint, data)
 
             # Check if credential definition id already exists
-            schema_id = command.data.get("schema_id")
-            tag = command.data.get("tag")
             (resp_status, resp_text) = await self.admin_GET(
-                "/credential-definitions/created",
+                cred_defs_get_endpoint,
                 params={
                     "schema_id": schema_id,
                 },
@@ -725,7 +723,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         )
 
             (resp_status, resp_text) = await self.admin_POST(
-                agent_operation, command.data
+                cred_defs_post_endpoint, data
             )
 
             log_msg(resp_status, resp_text)
@@ -788,7 +786,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                                 wait_time=60.0,
                             ):
                                 raise Exception(
-                                    f"Expected state request-received but not received"
+                                    "Expected state request-received but not received"
                                 )
 
                     # Make Special provisions for revoke since it is passing multiple query params not just one id.
@@ -928,7 +926,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                                 wait_time=60.0,
                             ):
                                 raise Exception(
-                                    f"Expected state presentation-received but not received"
+                                    "Expected state presentation-received but not received"
                                 )
 
                     else:
@@ -1452,7 +1450,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "schema":
             schema_id = record_id
-            agent_operation = f"/schemas/{schema_id}"
+            if command.anoncreds:
+                agent_operation = f"/anoncreds/schema/{schema_id}"
+            else:
+                agent_operation = f"/schemas/{schema_id}"
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:
@@ -1461,12 +1462,20 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             resp_json = json.loads(resp_text)
             schema = resp_json["schema"]
 
+            # If anoncreds, add the id to the schema to use existing framework
+            if command.anoncreds:
+                schema["id"] = resp_json["schema_id"]
+
             resp_text = json.dumps(schema)
             return (resp_status, resp_text)
 
         elif command.topic == "credential-definition":
             cred_def_id = record_id
-            agent_operation = f"/credential-definitions/{cred_def_id}"
+
+            if command.anoncreds:
+                agent_operation = f"/anoncreds/credential-definition/{cred_def_id}"
+            else:
+                agent_operation = f"/credential-definitions/{cred_def_id}"
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:
@@ -1474,6 +1483,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             resp_json = json.loads(resp_text)
             credential_definition = resp_json["credential_definition"]
+
+            # If anoncreds, add the id to the credential definition to use existing framework
+            if command.anoncreds:
+                credential_definition["id"] = resp_json["credential_definition_id"]
 
             resp_text = json.dumps(credential_definition)
             return (resp_status, resp_text)
@@ -1836,8 +1849,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         agent_args = self.get_process_args(bin_path) + args
 
         # start agent sub-process
-        self.log(f"Starting agent sub-process ...")
-        self.log(f"agent starting with params: ")
+        self.log("Starting agent sub-process ...")
+        self.log("agent starting with params: ")
         self.log(agent_args)
         self.log("and environment:")
         self.log(my_env)
@@ -1863,8 +1876,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         )
 
         # start agent sub-process
-        self.log(f"Starting agent sub-process ...")
-        self.log(f"agent starting with params: ")
+        self.log("Starting agent sub-process ...")
+        self.log("agent starting with params: ")
         self.log(agent_args)
         loop = asyncio.get_event_loop()
         self.proc = await loop.run_in_executor(

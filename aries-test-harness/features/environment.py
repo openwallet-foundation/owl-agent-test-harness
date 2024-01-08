@@ -5,12 +5,14 @@
 # https://behave.readthedocs.io/en/latest/tutorial.html#environmental-controls
 #
 # -----------------------------------------------------------
-import os
 import json
+import os
 from collections import defaultdict
-from behave.runner import Context
-from behave.model import Scenario, Feature
+
 from behave.contrib.scenario_autoretry import patch_scenario_with_autoretry
+from behave.model import Feature, Scenario
+from behave.runner import Context
+
 
 def before_step(context: Context, step):
     context.step = step
@@ -61,6 +63,8 @@ def before_scenario(context: Context, scenario: Scenario):
                 context.did_method = tag.split("DidMethod_")[1]
             if "Schema_" in tag:
                 # Get and assign the schema to the context
+                if context.anoncreds:
+                    tag = tag.replace("Schema_", "Anoncreds_Schema_")
                 try:
                     schema_json_file = open("features/data/" + tag.lower() + ".json")
                     schema_json = json.load(schema_json_file)
@@ -441,6 +445,17 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     #   "Faber": "Acme"
     # }
     context.mediator_dict = {}
+
+    def is_anoncreds():
+        try: 
+            return json.loads(os.environ["EXTRA_ARGS"])['wallet-type'] == "askar-anoncreds"
+        except Exception:
+            return False
+
+    # Feature run with askar-anoncreds wallet
+    #
+    # context.anoncreds = True
+    context.anoncreds = is_anoncreds()
 
 def before_feature(context, feature):
     # retry failed tests 
