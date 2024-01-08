@@ -1,16 +1,15 @@
 import json
 import logging
 import os
-import traceback
 import random
-
-from typing_extensions import TypedDict, Literal
-from typing import Any, Optional, Tuple
+import traceback
 from dataclasses import dataclass
+from typing import Any, Optional, Tuple
 
-from aiohttp import web, ClientSession
-from aiohttp.typedefs import Handler
 import ptvsd
+from aiohttp import ClientSession, web
+from aiohttp.typedefs import Handler
+from typing_extensions import Literal, TypedDict
 
 from .utils import log_msg
 
@@ -59,6 +58,7 @@ class BackchannelCommand:
     operation: Optional[str]
     record_id: Optional[str]
     data: Optional[Any]
+    anoncreds: Optional[bool] = False
 
 
 async def default_genesis_txns():
@@ -225,6 +225,11 @@ class AgentBackchannel:
         record_id = request.match_info.get("id", None)
         operation = request.match_info.get("operation", None)
         topic = request.match_info.get("topic", None)
+        anoncreds = request.query.get("anoncreds", False)
+        
+        if anoncreds == 'True':
+            anoncreds = True
+            
         method = request.method
 
         if not topic:
@@ -248,6 +253,7 @@ class AgentBackchannel:
             topic=topic,
             method=method,
             data=data,
+            anoncreds=anoncreds
         )
 
     def not_found_response(self, data: Any):
