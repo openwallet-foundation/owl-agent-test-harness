@@ -1,8 +1,11 @@
-FROM python:3.7-buster
+FROM python:3.9-slim-bullseye
+
 RUN mkdir -p /aries-backchannels
 WORKDIR /aries-backchannels
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
+RUN apt-get update \
+   && apt-get install -y git gnupg2 software-properties-common curl \
+   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
    && apt-get update \
    && apt-get install -y software-properties-common \
    && apt-get update
