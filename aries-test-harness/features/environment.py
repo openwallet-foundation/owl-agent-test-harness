@@ -477,7 +477,12 @@ def before_feature(context, feature):
 def after_feature(context: Context, feature: Feature):
     if "UsesCustomParameters" in feature.tags:
         # after a feature that uses custom parameters, clear all custom parameters in each agent
-        for agent in ["Acme", "Bob", "Faber", "Mallory"]:
+        # if context.agents_to_reset exists then used the names in that list otherwise use all agents
+        if hasattr(feature, "agents_to_reset"):
+            agents = feature.agents_to_reset
+        else:
+            agents = ["Acme", "Bob", "Faber", "Mallory"]
+        for agent in agents:
             context.execute_steps(
                 f'Given "{agent}" is running with parameters ' + '"{}"'
             )

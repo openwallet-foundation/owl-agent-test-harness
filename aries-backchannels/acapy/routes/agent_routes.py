@@ -32,6 +32,12 @@ async def get_mediation_record(request: web.Request):
         outbound_transports=outbound,
     )
 
+    # add the remaining data from parameters to the args
+    args = args + [item for key, value in parameters.items() if key != "data" and key != "flags" for item in [f"--{key}", str(value)]]
+    if "flags" in parameters:
+        args = args + [f"--{flag}" for flag in parameters["flags"]]
+
+
     await backchannel.kill_agent()
     await backchannel.start_process_with_extra_args(args=args)
 

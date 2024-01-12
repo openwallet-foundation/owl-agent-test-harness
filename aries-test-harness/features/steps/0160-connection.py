@@ -89,6 +89,24 @@ def step_impl(context, n):
                 f"Data table in step contains an unrecognized role '{role}', must be inviter, invitee, inviteinterceptor, issuer, holder, verifier, prover, requester, responder, mediator, and recipient"
             )
 
+    # Iterate over the context.table again and if start_parameters exist for one or more agents, call the start agent step definition.
+    # You can find examples of usage of this in 0793-peer-did.feature
+    for row in context.table:
+        if row["start_parameters"]:
+            if row['start_parameters'] != 'use_running_agent':
+                context.execute_steps(
+                    f"""
+                    Given "{row['name']}" is running with parameters "{row['start_parameters']}"
+                """
+                )
+                # Add the name of the agent to a list of agent that are using start_parameters to context.
+                # This is used in the after_scenario to reset the agent to the original parameters for preceeding tests.
+                if not hasattr(context.feature, "agents_to_reset"):
+                    context.feature.agents_to_reset = []
+                # add the agent name to the list of agents to reset if it doesn't already exist
+                if row['name'] not in context.feature.agents_to_reset:
+                    context.feature.agents_to_reset.append(row['name'])
+                
 
 @when('"{inviter}" generates a connection invitation')
 def step_impl(context, inviter):
