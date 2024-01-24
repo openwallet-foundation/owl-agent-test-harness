@@ -1,6 +1,6 @@
 # https://github.com/hyperledger/aries-rfcs/tree/main/features/0793-unqualfied-dids-transition
 
-@QualifiedDIDs @RFC0793 @UsesCustomParameters
+@QualifiedDIDs @RFC0793 @UsesCustomParameters @Anoncreds
 Feature: Qualified DID - Unqualified DID Transition
    In order to more effectivley interoperate with other Aries Agents
    as an Aries Framework
@@ -50,9 +50,21 @@ Feature: Qualified DID - Unqualified DID Transition
       And "Acme" sends complete to "Bob"
       Then "Acme" and "Bob" have a connection
 
+      # These Sceanrio Examples can onlu be used if we run the these did:peer tests in its own runset.
+      # This will rely on the wallet type being used on the ./manage start command. 
+      # For example the EXTRA_ARGS environment variable or passing an ACA-Py config file like issuer_anoncreds.yaml with the AGENT_CONFIG_FILE environment variable.
+      # Examples:
+      #    | peer_did_method | start_parameters                                               |
+      #    | did:peer:1      | {"flags":["emit-did-peer-1"]} |
+      #    | did:peer:2      | {"flags":["emit-did-peer-2"]} |
+      #    | did:peer:3      | {"flags":["emit-did-peer-3"]} |
+      #    | did:peer:4      | {"flags":["emit-did-peer-4"]} |
+
+      # These Sceanrio Examples can be used if we run the these did:peer tests in the same runset as the unqualified did:peer tests.
+      # This will restart acapy with a different wallet type. 
       Examples:
          | peer_did_method | start_parameters                                               |
-         #| did:peer:1      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-1"]} |
+         | did:peer:1      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-1"]} |
          | did:peer:2      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-2"]} |
-         #| did:peer:3      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-3"]} |
+         | did:peer:3      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-3"]} |
          | did:peer:4      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-4"]} |

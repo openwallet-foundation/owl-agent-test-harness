@@ -1,0 +1,7 @@
+# see: https://pypi.org/project/ConfigArgParse/ for file format overview
+# this runs aca-py with a set of parameters for auto responding.
+# the following are quivalent to:
+#    ./bin/aca-py start ... --auto-accept-requests --auto-respond-messages --auto-respond-credential-proposal --auto-respond-credential-offer --auto-respond-credential-request --auto-respond-presentation-proposal --auto-respond-presentation-request
+# run as:
+#    ./bin/aca-py start --arg-file ./demo/demo-args.yaml
+wallet-type: askar-anoncreds

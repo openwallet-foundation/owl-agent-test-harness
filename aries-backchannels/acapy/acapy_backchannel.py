@@ -6,6 +6,7 @@ import os
 import signal
 import subprocess
 import sys
+import yaml
 from timeit import default_timer
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
@@ -299,6 +300,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if os.getenv("AGENT_CONFIG_FILE") is not None:
             # if the env var is set then use that.
             print(os.getenv("AGENT_CONFIG_FILE"))
+
+            # Itterate over all of the items in the AGENT_CONFIG_FILE yaml, and if they already exist in the result list, then remove them.
+            # Since commandline args take pressidence over config file args so this is to prevent the expectations of config file passed 
+            # being overridded by the default args that the AATH ACA-Py Backchannel may setup.
+            with open(os.getenv("AGENT_CONFIG_FILE"), 'r') as stream:
+                try:
+                    data = yaml.safe_load(stream)
+                    for key, value in data.items():
+                        item = "--" + key
+                        # Check if item is in any tuple in result
+                        if any(item in tup for tup in result if isinstance(tup, tuple)):
+                            # Remove tuples containing the item
+                            result = [tup for tup in result if item not in tup]
+                except yaml.YAMLError as exc:
+                    print(exc)
+                
             result.append(("--arg-file", os.getenv("AGENT_CONFIG_FILE")))
 
         # result.append(("--trace", "--trace-target", "log", "--trace-tag", "acapy.events", "--trace-label", "acapy",))
