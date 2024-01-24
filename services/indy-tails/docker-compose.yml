@@ -8,7 +8,7 @@ services:
       - 4044:4040
     command: http tails-server:6543 --log stdout
   tails-server:
-    image: ghcr.io/bcgov/tails-server:1.0.0
+    image: ghcr.io/bcgov/tails-server:1.1.0
     ports:
       - 6543:6543
     networks:

@@ -139,7 +139,7 @@ You may have the need to utilize the agents and their controller/backchannels se
 ```
 The command above will only start Acme as ACA-py. No other agents (Bob, Faber, etc.) will be started. 
 ```
-LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a afgo-interop -b acapy-main -n
+NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a afgo-interop -b acapy-main -n
 ```
 The second command above, will start Acme as AFGO, and Bob as ACA-py, utilizing an external Ledger and Tails Server, with a custom configuration to start ACA-py with. It will also start ngrok which is usually needed for mobile testing in AMTH. 
 
@@ -168,19 +168,19 @@ The URLs for issuer and verifier are pointers to the backchannel controllers for
 You can pass backchannel-specific parameters as follows:
 
 ```bash
-BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar\"}" ./manage run -d acapy-main -t @AcceptanceTest -t ~@wip
+BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"indy\"}" ./manage run -d acapy-main -t @AcceptanceTest -t ~@wip
 ```
 
 The environment variable name is of the format `-<agent_name>`, where `<agent_name>` is the name of the agent (e.g. `acapy-main`) with hyphens replaced with underscores (i.e. `acapy_main`).
 
 The contents of the environment variable are backchannel-specific. For aca-py it is a JSON structure containing parameters to use for agent startup.
 
-The above example runs all the tests using the `askar` wallet type (vs `indy`, which is the default).
+The above example runs all the tests using the `indy` wallet type (vs `askar`, which is the default).
 
 ## Custom Configurations for Agents
   Alternatively to the Extra Backchannel-Specific Parameters above, you can also pass a configuration file through to your agent when it starts (only works if your agent is started by your backchannel). The AATH tests have a predefined set of options needed for the test flow to function properly so, adding this configuration to AATH test execution may have side effects causing the interop tests to fail. However, this is helpful when using the agents as services outside of AATH tests like with Mobile Wallet tests in Aries Mobile Test Harness, where the agents usually will benefit from having auto options turned on. You can pass through your config file using the environment variable AGENT_CONFIG_FILE as follows:
   ```
-  LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -b acapy-main -n
+  NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -b acapy-main -n
   ```
 The config file should live in the `aries-backchannels/<agent>` folder so it gets copied into the agent container automatically. Currently only the acapy backchannel supports this custom configuration in this manner. 
 
@@ -189,7 +189,7 @@ The config file should live in the `aries-backchannels/<agent>` folder so it get
 When using AATH agents as a service for AMTH, these agent services will need to be started with differet or extra parameters on the agents than AATH starts them with by default. Mobile test issuers and verifiers may need the auto parameters turned on, like `--auto-accept-requests`, `--auto-respond-credential-proposal`, etc. The only way to do this when using the AATH agents is through using this configuration file handling. There is an existing file in `aries-backchannels/acapy` called auto_isser_config.yaml that is there to support this requirement for the BC wallet. This works in BC Wallet as follows;
 From within aries-agent-test-harness
 ```
-LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a acapy-main -b acapy-main -n
+NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a acapy-main -b acapy-main -n
 ```
 From within aries-mobile-test-harness
 ```

@@ -1,5 +1,5 @@
-import time
 import datetime
+import time
 from typing import Optional
 
 
@@ -73,45 +73,44 @@ def format_cred_proposal_by_aip_version(
 
     return credential_proposal
 
+def get_schema_name(context):
+    if context.anoncreds:
+        return context.schema["schema"]["name"]
+    else:
+        return context.schema["schema_name"]
+
 
 def amend_filters_with_runtime_data(context, filters):
+    schema_name = get_schema_name(context)
     # This method will need comdification as new types of filters are used. Intially "indy" is used.
     if "indy" in filters:
         if (
             "schema_issuer_did" in filters["indy"]
             and filters["indy"]["schema_issuer_did"] == "replace_me"
         ):
-            filters["indy"]["schema_issuer_did"] = context.issuer_did_dict[
-                context.schema["schema_name"]
-            ]
+            filters["indy"]["schema_issuer_did"] = context.issuer_did_dict[schema_name]
         if (
             "issuer_did" in filters["indy"]
             and filters["indy"]["issuer_did"] == "replace_me"
         ):
-            filters["indy"]["issuer_did"] = context.issuer_did_dict[
-                context.schema["schema_name"]
-            ]
+            filters["indy"]["issuer_did"] = context.issuer_did_dict[schema_name]
         if (
             "cred_def_id" in filters["indy"]
             and filters["indy"]["cred_def_id"] == "replace_me"
         ):
-            filters["indy"]["cred_def_id"] = context.issuer_credential_definition_dict[
-                context.schema["schema_name"]
-            ]["id"]
+            filters["indy"]["cred_def_id"] = context.issuer_credential_definition_dict[schema_name]["id"]
         if (
             "schema_id" in filters["indy"]
             and filters["indy"]["schema_id"] == "replace_me"
         ):
-            filters["indy"]["schema_id"] = context.issuer_schema_dict[
-                context.schema["schema_name"]
-            ]["id"]
+            filters["indy"]["schema_id"] = context.issuer_schema_dict[schema_name]["id"]
 
     if "json-ld" in filters:
         json_ld = filters.get("json-ld")
         credential = json_ld.get("credential")
         options = json_ld.get("options")
 
-        issuer = context.issuer_did_dict[context.schema["schema_name"]]
+        issuer = context.issuer_did_dict[schema_name]
 
         if "issuer" in credential:
             # "issuer": "replace_me"

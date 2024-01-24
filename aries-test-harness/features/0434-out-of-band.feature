@@ -21,7 +21,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
       Then "Bob" has the credential issued
 
 
-   @T002-RFC0434 @RFC0453 @critical @AcceptanceTest @Schema_DriversLicense_v2
+   @T002-RFC0434 @RFC0453 @critical @AcceptanceTest @Schema_DriversLicense_v2 
    Scenario Outline: Issue a v2 credential using connectionless out of band invitation
       Given we have "2" agents
          | name | role   |
@@ -36,7 +36,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
       And "Bob" acknowledges the "indy" credential issue
       Then "Bob" has the "indy" credential issued
 
-      @CredFormat_Indy @RFC0592
+      @CredFormat_Indy @RFC0592 @Anoncreds
       Examples:
          | credential_data   |
          | Data_DL_MaxValues |
@@ -74,7 +74,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
       And "Faber" acknowledges the proof with formats
       Then "Bob" has the proof with formats verified
 
-      @CredFormat_Indy @RFC0592
+      @CredFormat_Indy @RFC0592 @Anoncreds
       Examples:
          | credential_data   | request_for_proof           | presentation               |
          | Data_DL_MaxValues | proof_request_DL_address_v2 | presentation_DL_address_v2 |

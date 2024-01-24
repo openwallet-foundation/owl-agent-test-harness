@@ -1,15 +1,9 @@
 import asyncio
-from aiohttp import (
-    web,
-    ClientSession,
-    ClientRequest,
-    ClientResponse,
-    ClientError,
-    ClientTimeout,
-)
 import json
 import os.path
 from time import sleep
+
+from aiohttp import ClientSession
 
 ######################################################################
 # coroutine utilities
@@ -70,26 +64,30 @@ def request_log(method, agent_url, resp_status, resp_text, payload=''):
         with open('/aries-test-harness/logs/request.log', 'a') as fout:
             print(f'Req: {method} {agent_url} {sorted_payload(payload)}', file=fout)
             print(f'Res: {resp_status} {sorted_payload(resp_text)}', file=fout)
-            print(f'-----', file=fout)
+            print('-----', file=fout)
 
-def agent_backchannel_GET(url, topic, operation=None, id=None) -> (int, str):
+def agent_backchannel_GET(url, topic, operation=None, id=None, anoncreds=False) -> (int, str):
     agent_url = url + topic + "/"
+    params = {}
     if operation:
         agent_url = agent_url + operation + "/"
     if id:
         agent_url = agent_url + id
+    if (anoncreds):
+        params["anoncreds"] = 'True'
     (resp_status, resp_text) = run_coroutine_with_kwargs(
-        make_agent_backchannel_request, "GET", agent_url
+        make_agent_backchannel_request, "GET", agent_url, params=params
     )
     request_log("GET", agent_url, resp_status, resp_text)
     return (resp_status, resp_text)
 
 
 def agent_backchannel_POST(
-    url, topic, operation=None, id=None, data=None
+    url, topic, operation=None, id=None, data=None, anoncreds=False
 ) -> (int, str):
     agent_url = url + topic + "/"
     payload = {}
+    params = {}
     if data:
         payload["data"] = data
     if operation:
@@ -99,8 +97,10 @@ def agent_backchannel_POST(
             payload["cred_ex_id"] = id
         else:
             payload["id"] = id
+    if anoncreds:
+        params["anoncreds"] = 'True'
     (resp_status, resp_text) = run_coroutine_with_kwargs(
-        make_agent_backchannel_request, "POST", agent_url, data=payload
+        make_agent_backchannel_request, "POST", agent_url, data=payload, params=params
     )
     request_log("POST", agent_url, resp_status, resp_text, payload)
     return (resp_status, resp_text)

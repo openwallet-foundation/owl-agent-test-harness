@@ -263,9 +263,12 @@ setDockerEnv() {
   if  [[ -n "$TAILS_SERVER_URL_INTERNAL" ]]; then
     DOCKER_ENV="${DOCKER_ENV} -e TAILS_SERVER_URL=${TAILS_SERVER_URL_INTERNAL}"
   fi
+  if ! [ -z "$TEST_RETRY_ATTEMPTS_OVERRIDE" ]; then
+    DOCKER_ENV="${DOCKER_ENV} -e TEST_RETRY_ATTEMPTS_OVERRIDE=${TEST_RETRY_ATTEMPTS_OVERRIDE}"
+  fi
 
   # variables that have the same variable name as what is being set for the container
-  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE")
+  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "CONTAINER_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE")
   for var in "${GENERAL_VARIABLES[@]}"; do
     if [[ -n "${!var}" ]]; then
       DOCKER_ENV+=" -e ${var}=${!var}"
@@ -552,17 +555,16 @@ startAgent() {
 
   if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     if [[ "${USE_NGROK}" = "true" ]]; then
-      echo "Starting ngrok for ${NAME} Agent ..."
-      if [[ "${IMAGE_NAME}" = "dotnet-agent-backchannel" ]]; then
-        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" ngrok/ngrok http "${CONTAINER_NAME}:${BACKCHANNEL_PORT}" --log stdout > /dev/null
-      else
-        docker run -d --rm --name "${CONTAINER_NAME}-ngrok" ngrok/ngrok http "${CONTAINER_NAME}:${AGENT_ENDPOINT_PORT}" --log stdout > /dev/null
-      fi
-      sleep 1
-      export NGROK_NAME="${CONTAINER_NAME}-ngrok"
-      docker network connect aath_network "${CONTAINER_NAME}-ngrok"
-    else
-      export NGROK_NAME=
+      # Turning off the starting of each ngrok tunnel for each agent. All tunnels are started when the ngrok service starts.
+      # There was an attempt to just start the service and then only start the tunnels when the agent was started, but 
+      # That is not working. When we call start below, we get an error on the web_addr port in the config file. 
+      # If this can be solved in the future we can re-enable this code, and make sure the ngrok service starts with the --none flag.
+      # echo "Starting ngrok for ${NAME} Agent ... on port ${AGENT_ENDPOINT_PORT}"
+      # # call the ngrok container to start the tunnel for the agent
+      # docker exec "${NGROK_NAME}" ngrok start --config /etc/ngrok.yml "${CONTAINER_NAME}_ngrok"
+
+      # if we are using ngrok we will have to export the CONTAINER_NAME to be used by the ngrok_wait script
+      export CONTAINER_NAME="${CONTAINER_NAME}"
     fi
 
     echo "Starting ${NAME} Agent using ${IMAGE_NAME} ..."
@@ -792,6 +794,25 @@ startHarness(){
 
   export AIP_CONFIG=${AIP_CONFIG:-10}
 
+  # Standup the ngrok container if we are using ngrok
+  if [[ "${USE_NGROK}" = "true" ]]; then
+    echo "Starting ngrok service for test harness ..."
+    if  [[ -n "$NGROK_AUTHTOKEN" ]]; then
+      NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}"
+    else
+      NGROK_AUTHTOKEN="harness_${NGROK_AUTHTOKEN}"
+    fi
+    # start the ngrok container but don't start the tunnels in the config yml file. We will start them later as needed for each agent.
+    docker run -d --rm -v $(pwd)/aath_ngrok_config.yml:/etc/ngrok.yml -e NGROK_CONFIG=/etc/ngrok.yml -e NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}" --name agents-ngrok --network aath_network -p 4040:4040 ngrok/ngrok start --all
+    
+    export NGROK_NAME="agents-ngrok"
+  else
+    # if NGROK_NAME is populated then don't export it to null.
+    if [[ -z "$NGROK_NAME" ]]; then
+      export NGROK_NAME=
+    fi
+  fi
+
   # Only start agents that are asked for in the ./manage start command
   if [[ "$ACME" != "none" ]]; then
     export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
@@ -952,12 +973,12 @@ runTests() {
 
   if [[ "${REPORT}" = "allure" && "${COMMAND}" != "dry-run" ]]; then
       echo "Executing tests with Allure Reports."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" $DOCKER_ENV aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   elif [[ "${COMMAND}" = "dry-run" ]]; then
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini $DOCKER_ENV aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
         grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
   else
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" $DOCKER_ENV aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   fi
   local docker_result=$?
   rm ${BEHAVE_INI_TMP}
@@ -1024,6 +1045,8 @@ stopHarness(){
 
   printf "StopServices: ${stop_option}\n"
   stopServices ${stop_option}
+
+  stopIfExists agents-ngrok
 
   cleanupNetwork
 

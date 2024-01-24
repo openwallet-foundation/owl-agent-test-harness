@@ -6,9 +6,13 @@
 #
 # -----------------------------------------------------------
 import json
+import os
 from collections import defaultdict
+
+from behave.contrib.scenario_autoretry import patch_scenario_with_autoretry
+from behave.model import Feature, Scenario
 from behave.runner import Context
-from behave.model import Scenario, Feature
+
 
 def before_step(context: Context, step):
     context.step = step
@@ -59,6 +63,8 @@ def before_scenario(context: Context, scenario: Scenario):
                 context.did_method = tag.split("DidMethod_")[1]
             if "Schema_" in tag:
                 # Get and assign the schema to the context
+                if context.anoncreds:
+                    tag = tag.replace("Schema_", "Anoncreds_Schema_")
                 try:
                     schema_json_file = open("features/data/" + tag.lower() + ".json")
                     schema_json = json.load(schema_json_file)
@@ -440,6 +446,33 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # }
     context.mediator_dict = {}
 
+    def is_anoncreds():
+        try: 
+            return json.loads(os.environ["EXTRA_ARGS"])['wallet-type'] == "askar-anoncreds"
+        except Exception:
+            return False
+
+    # Feature run with askar-anoncreds wallet
+    #
+    # context.anoncreds = True
+    context.anoncreds = is_anoncreds()
+
+def before_feature(context, feature):
+    # retry failed tests 
+    test_retry_attempts = None
+
+    if os.environ.get('TEST_RETRY_ATTEMPTS_OVERRIDE'):
+        test_retry_attempts = int(os.environ.get('TEST_RETRY_ATTEMPTS_OVERRIDE'))
+    elif 'test_retry_attempts' in context.config.userdata:
+        test_retry_attempts = int(eval(context.config.userdata['test_retry_attempts']))
+    
+    # Re-try only if test_retry_attempts value is set
+    if test_retry_attempts:
+        print(
+                f"NOTE: Re-try attempts set to {test_retry_attempts}."
+            )
+        for scenario in feature.scenarios:
+            patch_scenario_with_autoretry(scenario, max_attempts=test_retry_attempts)
 
 def after_feature(context: Context, feature: Feature):
     if "UsesCustomParameters" in feature.tags:
