@@ -378,10 +378,10 @@ def step_impl(context, responder: str, requester: str):
         resp_json = json.loads(resp_text)
         assert (
             resp_json["my_did"].startswith(context.peer_did_method)
-        ), f"my_did {resp_json['my_did']} does not start with {context.peer_did_method}"
+        ), f"my_did {resp_json['my_did']} for {responder} does not start with {context.peer_did_method}"
         assert (
             resp_json["their_did"].startswith(context.peer_did_method)
-        ), f"their_did {resp_json['their_did']} does not start with {context.peer_did_method}"
+        ), f"their_did {resp_json['their_did']} for {requester} does not start with {context.peer_did_method}"
         
 
 
