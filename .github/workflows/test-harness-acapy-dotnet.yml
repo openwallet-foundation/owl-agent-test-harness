@@ -44,7 +44,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a dotnet"
           TEST_AGENTS: "-d acapy-main -b dotnet"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@AIP20 -t ~@RFC0025"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@ProofProposal -t ~@RFC0023 -t ~@DIDExchangeConnection -t ~@AIP20 -t ~@RFC0025 -t ~@QualifiedDIDs"
           REPORT_PROJECT: acapy-b-dotnet
       - name: run-send-gen-test-results-secure
         if: ${{ always() }}

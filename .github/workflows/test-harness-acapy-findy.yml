@@ -41,7 +41,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main -a findy"
           TEST_AGENTS: "-d acapy-main -b findy"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025 -t ~@QualifiedDIDs"
           REPORT_PROJECT: acapy-b-findy
       - name: run-send-gen-test-results-secure
         if: ${{ always() }}

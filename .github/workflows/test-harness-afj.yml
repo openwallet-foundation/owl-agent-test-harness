@@ -40,7 +40,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a javascript"
           TEST_AGENTS: "-d javascript"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211 -t ~@DIDExchangeConnection"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211 -t ~@DIDExchangeConnection -t ~@QualifiedDIDs"
           REPORT_PROJECT: javascript
       - name: run-send-gen-test-results-secure
         if: ${{ always() }}
