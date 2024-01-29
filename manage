@@ -72,6 +72,14 @@ if [ "${PWD_HOST_FQDN}" != "" ]; then
   fi
 fi
 
+# Set default platform to linux/amd64 when running on Arm based MAC since there are no arm based images available currently.
+if [[ $OSTYPE == 'darwin'* ]]; then
+  architecture=$(uname -m)
+  if [[ "${architecture}" == 'arm'* ]] || [[ "${architecture}" == 'aarch'* ]]; then
+    export DOCKER_DEFAULT_PLATFORM=linux/amd64
+  fi
+fi
+
 # ========================================================================================================
 # Check Docker Compose
 # --------------------------------------------------------------------------------------------------------
