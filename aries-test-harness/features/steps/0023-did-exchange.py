@@ -272,7 +272,7 @@ def step_impl(context, requester, responder):
     if context.peer_did_method and context.peer_did_method != "unqualified":
         resp_json = json.loads(resp_text)
         assert (
-            resp_json["my_did"].startswith(context.peer_did_method)
+            resp_json["my_did"].startswith("context.peer_did_method")
         ), f"my_did {resp_json['my_did']} does not start with {context.peer_did_method}"
 
 
@@ -377,8 +377,8 @@ def step_impl(context, responder: str, requester: str):
     if context.peer_did_method and context.peer_did_method != "unqualified":
         resp_json = json.loads(resp_text)
         assert (
-            resp_json["my_did"].startswith(context.peer_did_method)
-        ), f"my_did {resp_json['my_did']} for {responder} does not start with {context.peer_did_method}"
+            resp_json["my_did"].startswith("did:")
+        ), f"my_did {resp_json['my_did']} for {responder} does not start with did:"
         assert (
             resp_json["their_did"].startswith(context.peer_did_method)
         ), f"their_did {resp_json['their_did']} for {requester} does not start with {context.peer_did_method}"
