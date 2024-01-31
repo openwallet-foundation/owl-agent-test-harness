@@ -6,6 +6,7 @@ import os
 import signal
 import subprocess
 import sys
+import yaml
 from timeit import default_timer
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
@@ -299,6 +300,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if os.getenv("AGENT_CONFIG_FILE") is not None:
             # if the env var is set then use that.
             print(os.getenv("AGENT_CONFIG_FILE"))
+
+            # Itterate over all of the items in the AGENT_CONFIG_FILE yaml, and if they already exist in the result list, then remove them.
+            # Since commandline args take pressidence over config file args so this is to prevent the expectations of config file passed 
+            # being overridded by the default args that the AATH ACA-Py Backchannel may setup.
+            with open(os.getenv("AGENT_CONFIG_FILE"), 'r') as stream:
+                try:
+                    data = yaml.safe_load(stream)
+                    for key, value in data.items():
+                        item = "--" + key
+                        # Check if item is in any tuple in result
+                        if any(item in tup for tup in result if isinstance(tup, tuple)):
+                            # Remove tuples containing the item
+                            result = [tup for tup in result if item not in tup]
+                except yaml.YAMLError as exc:
+                    print(exc)
+                
             result.append(("--arg-file", os.getenv("AGENT_CONFIG_FILE")))
 
         # result.append(("--trace", "--trace-target", "log", "--trace-tag", "acapy.events", "--trace-label", "acapy",))
@@ -375,7 +392,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 )
         else:
             log_msg(
-                "in webhook, topic is: " + topic + " payload is: " + json.dumps(payload)
+                "in webhook, topic is: " + topic + " payload is: " + json.dumps(payload, indent=4)
             )
 
     async def handle_connections(self, message: Mapping[str, Any]):
@@ -394,11 +411,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             raise Exception(
                 f"Unknown message type in Connections Webhook: {json.dumps(message)}"
             )
-        log_msg("Received a Connection Webhook message: " + json.dumps(message))
+        log_msg("Received a Connection Webhook message: " + json.dumps(message, indent=4))
 
     async def handle_revocation_notification(self, message: Mapping[str, Any]):
         log_msg(
-            "Received a Revocation Notification Webhook message: " + json.dumps(message)
+            "Received a Revocation Notification Webhook message: " + json.dumps(message, indent=4)
         )
 
         thread_id = message["thread_id"]
@@ -407,7 +424,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         push_resource(thread_id, "revocation-notification-msg", message)
 
     async def handle_issue_credential(self, message: Mapping[str, Any]):
-        log_msg("Received Issue Credential Webhook message: " + json.dumps(message))
+        log_msg("Received Issue Credential Webhook message: " + json.dumps(message, indent=4))
         thread_id = message["thread_id"]
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
@@ -418,7 +435,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg("Issue Credential Webhook message contains revocation info")
 
     async def handle_issue_credential_v2_0(self, message: Mapping[str, Any]):
-        log_msg("Received Issue Credential v2 Webhook message: " + json.dumps(message))
+        log_msg("Received Issue Credential v2 Webhook message: " + json.dumps(message, indent=4))
         thread_id = message["thread_id"]
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
@@ -429,7 +446,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             log_msg("Issue Credential Webhook message contains revocation info")
 
     async def handle_present_proof_v2_0(self, message: Mapping[str, Any]):
-        log_msg("Received a Present Proof v2 Webhook message: " + json.dumps(message))
+        log_msg("Received a Present Proof v2 Webhook message: " + json.dumps(message, indent=4))
         thread_id = message["thread_id"]
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
@@ -437,7 +454,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         push_resource(thread_id, "presentation-msg", message)
 
     async def handle_present_proof(self, message: Mapping[str, Any]):
-        log_msg("Received a Present Proof Webhook message: " + json.dumps(message))
+        log_msg("Received a Present Proof Webhook message: " + json.dumps(message, indent=4))
         thread_id = message["thread_id"]
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
@@ -448,23 +465,32 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # No thread id in the webhook for revocation registry messages
         cred_def_id = message["cred_def_id"]
         push_resource(cred_def_id, "revocation-registry-msg", message)
-        log_msg("Received Revocation Registry Webhook message: " + json.dumps(message))
+        log_msg("Received Revocation Registry Webhook message: " + json.dumps(message, indent=4))
 
     # TODO Handle handle_issuer_cred_rev (this must be newer than the revocation tests?)
     # TODO Handle handle_issue_credential_v2_0_indy
 
+    # handle_oob_invitation may not be needed anymore. We are seeing handle_out_of_band error messages in the logs, so maybe at some point it was changed.
     async def handle_oob_invitation(self, message: Mapping[str, Any]):
         # No thread id in the webhook for revocation registry messages
         invitation_id = message["invitation_id"]
         push_resource(invitation_id, "oob-inviation-msg", message)
         log_msg(
-            "Received Out of Band Invitation Webhook message: " + json.dumps(message)
+            "Received Out of Band Invitation Webhook message: " + json.dumps(message, indent=4)
         )
+
+    async def handle_out_of_band(self, message: Mapping[str, Any]):
+        log_msg(
+            "Received Out of Band Webhook message: " + json.dumps(message, indent=4)
+        )
+        #invitation_id = message["invitation_msg_id"]
+        invitation_id = message["invi_msg_id"]
+        push_resource(invitation_id, "out-of-band-msg", message)
 
     async def handle_problem_report(self, message: Mapping[str, Any]):
         thread_id = message["thread_id"]
         push_resource(thread_id, "problem-report-msg", message)
-        log_msg("Received Problem Report Webhook message: " + json.dumps(message))
+        log_msg("Received Problem Report Webhook message: " + json.dumps(message, indent=4))
 
     async def swap_thread_id_for_exchange_id(
         self,
@@ -635,7 +661,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                             raise Exception("Expected state request but not received")
 
                 agent_operation = f"/connections/{connection_id}/{operation}"
-                log_msg("POST Request: ", agent_operation, data)
+                log_msg("POST Request: ", agent_operation, json.dumps(command.data, indent=4))
 
                 if self.auto_accept_requests and operation == "accept-request":
                     resp_status = 200
@@ -652,7 +678,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                             command.topic, resp_text
                         )
 
-                log_msg(resp_status, resp_text)
+                log_msg(resp_status, json.dumps(resp_text, indent=4))
                 return (resp_status, resp_text)
 
         elif command.topic == "schema":
@@ -684,7 +710,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 schema_post_endpoint, data
             )
 
-            log_msg(resp_status, resp_text)
+            log_msg(resp_status, json.dumps(resp_text, indent=4))
             resp_text = self.move_field_to_top_level(resp_text, "schema_id")
             return (resp_status, resp_text)
 
@@ -702,7 +728,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 cred_defs_post_endpoint = '/credential-definitions'
 
             agent_operation = "/credential-definitions"
-            log_msg(cred_defs_post_endpoint, data)
+            log_msg(agent_operation, json.dumps(command.data, indent=4))
 
             # Check if credential definition id already exists
             (resp_status, resp_text) = await self.admin_GET(
@@ -726,7 +752,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 cred_defs_post_endpoint, data
             )
 
-            log_msg(resp_status, resp_text)
+            log_msg(resp_status, json.dumps(resp_text, indent=4))
             resp_text = self.move_field_to_top_level(
                 resp_text, "credential_definition_id"
             )
@@ -811,7 +837,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     else:
                         agent_operation = acapy_topic + operation
 
-                log_msg(agent_operation, data)
+                log_msg(agent_operation, json.dumps(data, indent=4))
 
                 # As of adding the Auto Accept and Auto Respond support and not taking time to check interim states
                 # it seems a sleep is required here,
@@ -819,7 +845,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 await asyncio.sleep(1)
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
-                log_msg(resp_status, resp_text)
+                log_msg(resp_status, json.dumps(resp_text, indent=4))
                 if resp_status == 200 and self.aip_version != "AIP20":
                     resp_text = self.agent_state_translation(command.topic, resp_text)
 
@@ -854,7 +880,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 admin_data,
             ) = await self.get_agent_operation_acapy_version_based(command)
 
-            log_msg(agent_operation, admin_data)
+            log_msg(agent_operation, json.dumps(admin_data, indent=4))
 
             if admin_data is None:
                 (resp_status, resp_text) = await self.admin_POST(agent_operation)
@@ -863,7 +889,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_operation, admin_data
                 )
 
-            log_msg(resp_status, resp_text)
+            log_msg(resp_status, json.dumps(resp_text, indent=4))
             if resp_status == 200:
                 resp_text = self.agent_state_translation(command.topic, resp_text)
             return (resp_status, resp_text)
@@ -932,7 +958,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     else:
                         agent_operation = f"/present-proof/{operation}"
 
-                log_msg(agent_operation, data)
+                log_msg(agent_operation, json.dumps(data, indent=4))
 
                 if data is not None:
                     # Format the message data that came from the test, to what the Aca-py admin api expects.
@@ -946,7 +972,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 await asyncio.sleep(1)
                 (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
-                log_msg(resp_status, resp_text)
+                log_msg(resp_status, json.dumps(resp_text, indent=4))
                 if resp_status == 200:
                     resp_text = self.agent_state_translation(command.topic, resp_text)
 
@@ -979,7 +1005,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         agent_operation = "/out-of-band/"
         log_msg(
-            f"Data passed to backchannel by test for operation: {agent_operation}", data
+            f"Data passed to backchannel by test for operation: {agent_operation}", json.dumps(data, indent=4)
         )
 
         # If mediator_connection_id is included we should use that as the mediator for this connection
@@ -1087,7 +1113,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         # TODO: this now returns an oob record. If connection_id is present fetch the
         # connection and return that. Otherwise return state "invitation-received"
-        log_msg(resp_status, resp_text)
+        log_msg(resp_status, json.dumps(resp_text, indent=4))
         if resp_status == 200 and operation == "receive-invitation":
             # AATH expects DIDExchange state instead of actual OOB state... :(
             resp_json = json.loads(resp_text)
@@ -1221,7 +1247,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                     resp_text = json.dumps({"did": did})
 
-                    log_msg(resp_status, resp_text)
+                    log_msg(resp_status, json.dumps(resp_text, indent=4))
                     return (resp_status, resp_text)
                 else:
                     return (500, "Unable to create did")
@@ -1246,7 +1272,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     for name, val in data["filter"].items()
                 )
 
-            log_msg(agent_operation, data)
+            log_msg(agent_operation, json.dumps(data, indent=4))
             await asyncio.sleep(1)
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
 
@@ -1265,7 +1291,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 resp_text = json.dumps(resp_json)
 
-            log_msg(resp_status, resp_text)
+            log_msg(resp_status, json.dumps(resp_text, indent=4))
             resp_text = self.move_field_to_top_level(resp_text, "state")
 
             if operation == "create-offer":
@@ -1322,14 +1348,14 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             log_msg(
                 f"Data passed to backchannel by test for operation: {agent_operation}",
-                data,
+                json(data, indent=4),
             )
             if data is not None:
                 # Format the message data that came from the test, to what the Aca-py admin api expects.
                 data = self.map_test_json_to_admin_api_json("proof-v2", operation, data)
             log_msg(
                 f"Data translated by backchannel to send to agent for operation: {agent_operation}",
-                data,
+                json.dumps(data, indent=4),
             )
             await asyncio.sleep(1)
             (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
@@ -1340,7 +1366,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     {"record": resp_json, "message": resp_json["pres_request"]}
                 )
 
-            log_msg(resp_status, resp_text)
+            log_msg(resp_status, json.dumps(resp_text, indent=4))
             resp_text = self.move_field_to_top_level(resp_text, "state")
             return (resp_status, resp_text)
 
@@ -1394,7 +1420,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             if resp_status != 200:
                 return (resp_status, resp_text)
 
-            log_msg("GET Request response details: ", resp_status, resp_text)
+            log_msg("GET Request response details: ", resp_status, json.dumps(resp_text, indent=4))
 
             resp_json = json.loads(resp_text)
             if record_id:
@@ -1846,7 +1872,20 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         my_env = os.environ.copy()
         my_env["PYTHONPATH"] = DEFAULT_PYTHON_PATH
 
-        agent_args = self.get_process_args(bin_path) + args
+        agent_args = self.get_process_args(bin_path)
+        # If args contains items that are in agent_args, remove them from agent_args
+        # This is to avoid duplicate arguments, and respects the ones that were passed in.
+        # Remove all items in args that do not have a '--' prefix to help with removing duplicates
+        args_names_only = [arg for arg in args if arg.startswith('--')]
+        for arg in args_names_only:
+            if arg in agent_args:
+                index = agent_args.index(arg)
+                # remove the key
+                del agent_args[index]
+                # remove all items after the key until the next key that starts with '--'
+                while index < len(agent_args) and not agent_args[index].startswith('--'):
+                    del agent_args[index]
+        agent_args = agent_args + args
 
         # start agent sub-process
         self.log("Starting agent sub-process ...")

@@ -446,7 +446,12 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # }
     context.mediator_dict = {}
 
-    def is_anoncreds():
+    def is_anoncreds(context=None):
+        """Check if the test is running with askar-anoncreds wallet"""
+        # First check if the @Anoncreds tag is present in the context.
+        # The tag takes precedence over the EXTRA_ARGS env variable.
+        if context and "AnonCreds" in context.tags:
+            return True
         try: 
             return json.loads(os.environ["EXTRA_ARGS"])['wallet-type'] == "askar-anoncreds"
         except Exception:
@@ -455,7 +460,7 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     # Feature run with askar-anoncreds wallet
     #
     # context.anoncreds = True
-    context.anoncreds = is_anoncreds()
+    context.anoncreds = is_anoncreds(context)
 
 def before_feature(context, feature):
     # retry failed tests 
@@ -477,7 +482,12 @@ def before_feature(context, feature):
 def after_feature(context: Context, feature: Feature):
     if "UsesCustomParameters" in feature.tags:
         # after a feature that uses custom parameters, clear all custom parameters in each agent
-        for agent in ["Acme", "Bob", "Faber", "Mallory"]:
+        # if context.agents_to_reset exists then used the names in that list otherwise use all agents
+        if hasattr(feature, "agents_to_reset"):
+            agents = feature.agents_to_reset
+        else:
+            agents = ["Acme", "Bob", "Faber", "Mallory"]
+        for agent in agents:
             context.execute_steps(
                 f'Given "{agent}" is running with parameters ' + '"{}"'
             )

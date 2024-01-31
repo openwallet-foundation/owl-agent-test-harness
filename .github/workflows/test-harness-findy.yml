@@ -42,7 +42,7 @@ jobs:
           BUILD_AGENTS: "-a findy"
           TEST_AGENTS: "-d findy"
           REPORT_PROJECT: findy  
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025 -t ~@QualifiedDIDs"
       - name: run-send-gen-test-results-secure
         if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure

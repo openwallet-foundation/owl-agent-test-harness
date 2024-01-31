@@ -37,11 +37,26 @@ def step_impl(context, sender: str, receiver: str):
     """
     )
 
+@when('"{responder}" sends an invitation to "{requester}" with {peer_did_method}')
 @when('"{responder}" sends an explicit invitation to "{requester}"')
-def step_impl(context, responder: str, requester: str):
+def step_impl(context, responder: str, requester: str, peer_did_method: str = None):
     responder_url = context.config.userdata.get(responder)
 
-    data = {"use_public_did": False}
+    # Have data values come in from the feature file context.table
+    # if context.table exists, then use the value(s) from the table, otherwise use the default value
+    if context.table:
+        for row in context.table:
+            # get the use_public_did value from the table
+            if row["use_public_did"] == "True":
+                data = {"use_public_did": True}
+            else:
+                data = {"use_public_did": False}
+    else:
+        data = {"use_public_did": False}
+
+    # if peer_did_method is set, then save it to the context for validation later in the tests
+    if peer_did_method:
+        context.peer_did_method = peer_did_method
 
     # If mediator is set for the current connection, set the mediator_connection_id
     mediator = context.mediator_dict.get(responder)
@@ -253,6 +268,14 @@ def step_impl(context, requester, responder):
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 
+    # Check for peer did prefix in the request response
+    if context.peer_did_method and context.peer_did_method != "unqualified":
+        resp_json = json.loads(resp_text)
+        assert (
+            resp_json["my_did"].startswith("context.peer_did_method")
+        ), f"my_did {resp_json['my_did']} does not start with {context.peer_did_method}"
+
+
 @then('"{responder}" does not receive the request')
 def step_impl(context, responder: str):
     responder_url = context.config.userdata.get(responder)
@@ -349,6 +372,17 @@ def step_impl(context, responder: str, requester: str):
         data=data
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+
+    # check for peer did prefix in the response
+    if context.peer_did_method and context.peer_did_method != "unqualified":
+        resp_json = json.loads(resp_text)
+        assert (
+            resp_json["my_did"].startswith("did:")
+        ), f"my_did {resp_json['my_did']} for {responder} does not start with did:"
+        assert (
+            resp_json["their_did"].startswith(context.peer_did_method)
+        ), f"their_did {resp_json['their_did']} for {requester} does not start with {context.peer_did_method}"
+        
 
 
 @when('"{responder}" sends a response to "{requester}" which produces a problem_report')

@@ -43,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a findy -a javascript -a dotnet"
           TEST_AGENTS: "-d findy -b javascript -f dotnet"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP10 -t ~@wip -t ~@revocation -t ~@RFC0025 -t ~@QualifiedDIDs"
           REPORT_PROJECT: findy-b-javascript-f-dotnet
       - name: run-send-gen-test-results-secure
         if: ${{ always() }}
