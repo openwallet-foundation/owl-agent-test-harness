@@ -29,8 +29,8 @@ Feature: Qualified DID - Unqualified DID Transition
          | unqualified     | use_running_agent                                              |
          #| did:peer:1      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-1"]} |
          | did:peer:2      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-2"]} |
-         | did:peer:3      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-3"]} |
-         #| did:peer:4      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-4"]} |
+         #| did:peer:3      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-3"]} |
+         | did:peer:4      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-4"]} |
 
 
    @T002-RFC0793 @critical @AcceptanceTest
@@ -66,8 +66,8 @@ Feature: Qualified DID - Unqualified DID Transition
          | peer_did_method | start_parameters                                               |
          #| did:peer:1      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-1"]} |
          | did:peer:2      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-2"]} |
-         | did:peer:3      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-3"]} |
-         #| did:peer:4      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-4"]} |
+         #| did:peer:3      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-3"]} |
+         | did:peer:4      | {"wallet-type":"askar-anoncreds", "flags":["emit-did-peer-4"]} |
 
 
    @T003-RFC0793 @critical @AcceptanceTest
