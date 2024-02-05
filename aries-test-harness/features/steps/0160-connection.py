@@ -92,7 +92,7 @@ def step_impl(context, n):
     # Iterate over the context.table again and if start_parameters exist for one or more agents, call the start agent step definition.
     # You can find examples of usage of this in 0793-peer-did.feature
     for row in context.table:
-        if row["start_parameters"]:
+        if row.get("start_parameters"):
             if row['start_parameters'] != 'use_running_agent':
                 context.execute_steps(
                     f"""
