@@ -32,6 +32,10 @@ async def get_mediation_record(request: web.Request):
         outbound_transports=outbound,
     )
 
+    # Remove inbound_transports and outbound_transports from parameters since they are already processed.
+    parameters.pop("inbound_transports", None)
+    parameters.pop("outbound_transports", None)
+
     # add the remaining data from parameters to the args
     args = args + [item for key, value in parameters.items() if key != "data" and key != "flags" for item in [f"--{key}", str(value)]]
     if "flags" in parameters:
