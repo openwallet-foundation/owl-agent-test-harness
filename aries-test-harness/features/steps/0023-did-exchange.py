@@ -269,10 +269,10 @@ def step_impl(context, requester, responder):
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 
     # Check for peer did prefix in the request response
-    if context.peer_did_method and context.peer_did_method != "unqualified":
+    if hasattr(context, 'peer_did_method') and context.peer_did_method != "unqualified":
         resp_json = json.loads(resp_text)
         assert (
-            resp_json["my_did"].startswith("context.peer_did_method")
+            resp_json["my_did"].startswith(context.peer_did_method)
         ), f"my_did {resp_json['my_did']} does not start with {context.peer_did_method}"
 
 
@@ -374,7 +374,7 @@ def step_impl(context, responder: str, requester: str):
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 
     # check for peer did prefix in the response
-    if context.peer_did_method and context.peer_did_method != "unqualified":
+    if hasattr(context, 'peer_did_method') and context.peer_did_method != "unqualified":
         resp_json = json.loads(resp_text)
         assert (
             resp_json["my_did"].startswith("did:")
