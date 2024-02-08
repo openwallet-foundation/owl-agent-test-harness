@@ -1348,7 +1348,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             log_msg(
                 f"Data passed to backchannel by test for operation: {agent_operation}",
-                json(data, indent=4),
+                json.dumps(data, indent=4),
             )
             if data is not None:
                 # Format the message data that came from the test, to what the Aca-py admin api expects.
