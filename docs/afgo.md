@@ -4,7 +4,7 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.11.0 | afgo-interop<br>unknown | acapy-main<br>0.11.0 | acapy-main<br>0.11.0 | pre-AIP 2.0 | [**0 / 14<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afgo](#runset-acapy-afgo) | acapy-main<br>0.12.0rc0 | afgo-interop<br>unknown | acapy-main<br>0.12.0rc0 | acapy-main<br>0.12.0rc0 | pre-AIP 2.0 | [**0 / 14<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-afgo/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo-acapy](#runset-afgo-acapy) | afgo-interop<br>unknown | acapy-main<br>0.12.0rc0 | afgo-interop<br>unknown | afgo-interop<br>unknown | pre-AIP 2.0 | [**0 / 17<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [afgo](#runset-afgo) | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | afgo-master<br>unknown | AIP 2.0 | [**27 / 45<br>60%**](https://allure.vonx.io/api/allure-docker-service/projects/afgo/reports/latest/index.html?redirect=false#behaviors) |
 
@@ -18,7 +18,7 @@ Runset Name: ACA-PY to AF-Go
 **Latest results: 0 out of 14 (0%)**
 
 
-*Last run: Wed Jan 24 00:21:05 UTC 2024*
+*Last run: Mon Feb 12 00:20:43 UTC 2024*
 ```
 
 #### Current Runset Status
@@ -41,7 +41,7 @@ Runset Name: AF-Go to ACA-PY
 **Latest results: 0 out of 17 (0%)**
 
 
-*Last run: Wed Jan 24 01:02:55 UTC 2024*
+*Last run: Mon Feb 12 01:01:45 UTC 2024*
 ```
 
 #### Current Runset Status
@@ -64,7 +64,7 @@ Runset Name: AF-Go to AF-Go
 **Latest results: 27 out of 45 (60%)**
 
 
-*Last run: Wed Jan 24 01:22:47 UTC 2024*
+*Last run: Mon Feb 12 01:24:49 UTC 2024*
 ```
 
 #### Current Runset Status
