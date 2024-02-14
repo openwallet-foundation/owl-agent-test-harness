@@ -30,7 +30,7 @@ jobs:
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
     steps:
       - name: checkout-test-harness
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: test-harness
       - name: run-von-network

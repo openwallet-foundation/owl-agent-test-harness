@@ -23,7 +23,7 @@ jobs:
           echo "name=${name}" >> $GITHUB_OUTPUT
 
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get File List
         id: get-file-list
