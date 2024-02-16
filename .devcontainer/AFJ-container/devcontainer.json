@@ -6,7 +6,7 @@
 	"context": "../../aries-backchannels",
 	"dockerFile": "../../aries-backchannels/javascript/Dockerfile.javascript",
 
-	"workspaceFolder": "/aries-backchannels/javascript",
+	"workspaceFolder": "/workspaces/aries-agent-test-harness_nodlesh/aries-backchannels/javascript",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
@@ -17,7 +17,16 @@
 	// "postCreateCommand": "uname -a",
 
 	// Configure tool-specific properties.
-	// "customizations": {},
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"dzannotti.vscode-babel-coloring"
+			]
+		}
+	},
+
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "root"

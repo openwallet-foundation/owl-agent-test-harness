@@ -1,0 +1,35 @@
+FROM python:3.9-slim-bullseye
+
+RUN apt-get update \
+   && apt-get install -y git gnupg2 software-properties-common curl \
+   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
+   && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' \
+   && apt-get update \
+   && apt-get install -y libindy libnullpay
+
+#RUN mkdir -p /aries-backchannels
+#WORKDIR /aries-backchannels
+
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+
+COPY python/requirements.txt python/
+COPY acapy/requirements-main.txt acapy/
+RUN pip install -r python/requirements.txt -r acapy/requirements-main.txt
+
+# Copy the necessary files from the AATH Backchannel sub-folders
+#COPY python python
+#COPY acapy acapy
+#COPY data ./
+
+# The Backchannel is looking for it in ./bin, copy a file that invokes the ACA-Py installed script in /usr/local/bin
+RUN mkdir -p ./bin
+COPY acapy/bin/aca-py ./bin/aca-py
+RUN chmod +x ./bin/aca-py
+
+ENV PYTHONPATH=/aries-backchannels
+ENV RUNMODE=docker
+
+#RUN ./bin/aca-py --version > ./acapy/acapy-version.txt
+
+#ENTRYPOINT ["bash", "acapy/ngrok-wait.sh"]

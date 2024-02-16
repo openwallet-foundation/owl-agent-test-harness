@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": "${command:pickArgs}"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            //"program": "${file}",
+            "console": "integratedTerminal",
+            // "cwd": "${workspaceFolder}",
+            "module": "acapy_backchannel",
+            "args" : ["-p", "8020"],
+            "env": {
+                "LEDGER_URL": "http://test.bcovrin.vonx.io",
+                "TAILS_SERVER_URL": "http://tails.bcovrin.vonx.io",
+                "ACAPY_LOG_LEVEL": "debug",
+                "ACAPY_LOG_FILE": "/aries-backchannels/acapy/acapy.log"
+            },
+        },
+    ]
+}

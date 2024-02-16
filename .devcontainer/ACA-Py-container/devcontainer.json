@@ -3,9 +3,22 @@
 {
 	"name": "ACA-Py Backchannel Dev",
 	// Use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"context": "../../aries-backchannels",
-	"dockerFile": "../../aries-backchannels/acapy/Dockerfile.acapy-main",
+	//"dockerFile": "../../aries-backchannels/acapy/Dockerfile.dev-acapy-main",
+	"build": {
+        // Path is relative to the devcontainer.json file.
+		"context": "../../aries-backchannels",
+        "dockerfile": "../../aries-backchannels/acapy/Dockerfile.dev-acapy-main"
+    },
 
+	//"workspaceMount": "source=${localWorkspaceFolder}/aries-backchannels/acapy,target=/aries-backchannels/acapy,type=bind",
+	//"workspaceFolder": "/aries-backchannels/acapy",
+	"workspaceMount": "source=${localWorkspaceFolder}/aries-backchannels/acapy,target=/aries-backchannels/acapy,type=bind",
+	//"mounts": "source=${localWorkspaceFolder}/aries-backchannels/python,target=/aries-backchannels/python,type=bind",
+	//"mounts": [{ "source": "${localWorkspaceFolder}/aries-backchannels/python", "target": "/aries-backchannels/python", "type": "volume" }],
+	"mounts": [
+		{ "source": "${localWorkspaceFolder}/aries-backchannels/python", "target": "/aries-backchannels/python", "type": "bind" },
+		{ "source": "${localWorkspaceFolder}/aries-backchannels/data", "target": "/aries-backchannels/data", "type": "bind" }
+	],
 	"workspaceFolder": "/aries-backchannels/acapy",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -13,12 +26,22 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"remoteUser": "root",
+
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "uname -a",
+	"postCreateCommand": "/bin/aca-py --version > acapy-version.txt",
 
 	// Configure tool-specific properties.
-	// "customizations": {},
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	"remoteUser": "root"
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.debugpy",
+				"ms-python.vscode-pylance"
+			]
+		}
+	}
 }

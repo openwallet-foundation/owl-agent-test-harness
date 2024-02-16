@@ -3,9 +3,17 @@
 {
 	"name": "AATH Test Dev",
 	// Use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"dockerFile": "../../aries-test-harness/Dockerfile.harness",
+	"build": {
+        // Path is relative to the devcontainer.json file.
+		"context": "../../aries-test-harness",
+        "dockerfile": "../../aries-test-harness/Dockerfile.dev-harness"
+    },
+	//"dockerFile": "../../aries-test-harness/Dockerfile.dev-harness",
 
-	"workspaceFolder": "/aries-test-harness"
+	"workspaceMount": "source=${localWorkspaceFolder}/aries-test-harness,target=/aries-test-harness,type=bind",
+
+
+	"workspaceFolder": "/aries-test-harness",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
@@ -16,7 +24,19 @@
 	// "postCreateCommand": "uname -a",
 
 	// Configure tool-specific properties.
-	// "customizations": {},
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.debugpy",
+				"ms-python.vscode-pylance",
+				"alexkrechik.cucumberautocomplete",
+				"zainchen.json"
+			]
+		}
+	}
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
