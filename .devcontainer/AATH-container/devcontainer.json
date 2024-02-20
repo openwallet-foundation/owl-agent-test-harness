@@ -8,10 +8,8 @@
 		"context": "../../aries-test-harness",
         "dockerfile": "../../aries-test-harness/Dockerfile.dev-harness"
     },
-	//"dockerFile": "../../aries-test-harness/Dockerfile.dev-harness",
 
 	"workspaceMount": "source=${localWorkspaceFolder}/aries-test-harness,target=/aries-test-harness,type=bind",
-
 
 	"workspaceFolder": "/aries-test-harness",
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -36,8 +34,8 @@
 				"zainchen.json"
 			]
 		}
-	}
+	},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	"remoteUser": "root"
 }

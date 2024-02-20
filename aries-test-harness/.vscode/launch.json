@@ -1,0 +1,29 @@
+{
+  // Use IntelliSense to find out which attributes exist for C# debugging
+  // Use hover for the description of the existing attributes
+  // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+  "version": "0.2.0",
+  "configurations": [
+    {
+        "name": "Python: Behave current file",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "behave",
+        "console": "integratedTerminal",
+        "cwd": "/aries-test-harness",
+        "args": [
+            "${file}",
+            "--tags=@T001-RFC0160",
+            "-k",
+            "-D",
+            "Acme=http://host.docker.internal:9020",
+            "-D",
+            "Bob=http://host.docker.internal:9030",
+            "-D",
+            "Mallory=http://host.docker.internal:8040",
+            "-D",
+            "Faber=http://host.docker.internal:8050"
+        ]
+    }
+  ]
+}
