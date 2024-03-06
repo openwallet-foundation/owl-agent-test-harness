@@ -285,8 +285,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-mime-type"))
 
-        result.append(("--plugin", "universal_resolver"))
-        result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
+        result.append(("--universal-resolver"))
 
         result.append(("--plugin", "redis_queue.v1_0.events"))
         result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
