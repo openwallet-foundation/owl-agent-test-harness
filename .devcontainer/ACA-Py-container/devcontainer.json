@@ -20,8 +20,11 @@
 		{ "source": "${localWorkspaceFolder}/aries-backchannels/data", "target": "/aries-backchannels/data", "type": "bind" }
 	],
 	"workspaceFolder": "/aries-backchannels/acapy",
+	//"workspaceFolder": "/aries-backchannels",
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"docker-from-docker": "latest"
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
@@ -29,8 +32,33 @@
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "root",
 
+	"runArgs": [
+		"--network=aath_network"
+	],
+
+	//"onCreateCommand": "apt-get update && apt-get install -y git gnupg2 software-properties-common curl && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' && apt-get update && apt-get install -y libindy libnullpay",
+
+	"updateContentCommand": "apt-get update && apt-get install -y git gnupg2 software-properties-common curl && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' && apt-get update && apt-get install -y libindy libnullpay",
+
+	// Use 'postCreateCommand' to run commands right after the container is created.
+	//"updateContentCommand": "pip install -r /aries-backchannels/acapy/requirements.txt",
+	// "updateContentCommand": [
+	// 	"pip install -r /aries-backchannels/acapy/requirements.txt",
+	// 	"pip install -r /aries-backchannels/python/requirements.txt"
+	// ],
+
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "/bin/aca-py --version > acapy-version.txt",
+	//"postCreateCommand": "/bin/aca-py --version > acapy-version.txt",
+	//"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && pip install git+https://github.com/bcgov/aries-acapy-plugin-redis-events.git && python -V && which python && pip list",
+	"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && python -V && which python && pip list",
+
+
+	// "postCreateCommand": [
+	// 	"pip install --upgrade pip",
+	// 	"pip install -r /aries-backchannels/python/requirements.txt",
+	// 	"pip install -r /aries-backchannels/acapy/requirements-main.txt",
+	// 	"./bin/aca-py --version > acapy-version.txt"
+	// ],
 
 	// Configure tool-specific properties.
 	"customizations": {
