@@ -20,12 +20,12 @@
             "console": "integratedTerminal",
             // "cwd": "${workspaceFolder}",
             "module": "acapy_backchannel",
-            "args" : ["-p", "8020"],
+            "args" : ["-p", "9020"],
             "env": {
                 "LEDGER_URL": "http://test.bcovrin.vonx.io",
-                "TAILS_SERVER_URL": "http://tails.bcovrin.vonx.io",
-                "ACAPY_LOG_LEVEL": "debug",
-                "ACAPY_LOG_FILE": "/aries-backchannels/acapy/acapy.log"
+                "TAILS_SERVER_URL": "http://tails.bcovrin.vonx.io"
+                //"ACAPY_LOG_LEVEL": "debug",
+                //"ACAPY_LOG_FILE": "/aries-backchannels/acapy/acapy.log"
             },
         },
     ]

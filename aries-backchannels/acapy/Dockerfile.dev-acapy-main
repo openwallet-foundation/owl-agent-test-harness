@@ -1,21 +1,22 @@
 FROM python:3.9-slim-bullseye
 
-RUN apt-get update \
-   && apt-get install -y git gnupg2 software-properties-common curl \
-   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
-   && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' \
-   && apt-get update \
-   && apt-get install -y libindy libnullpay
+# RUN apt-get update \
+#    && apt-get install -y git gnupg2 software-properties-common curl \
+#    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
+#    && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' \
+#    && apt-get update \
+#    && apt-get install -y libindy libnullpay
 
 #RUN mkdir -p /aries-backchannels
-#WORKDIR /aries-backchannels
+WORKDIR /aries-backchannels
 
 ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
 RUN chmod +x ./jq
 
-COPY python/requirements.txt python/
-COPY acapy/requirements-main.txt acapy/
-RUN pip install -r python/requirements.txt -r acapy/requirements-main.txt
+#COPY python/requirements.txt python/
+#COPY acapy/requirements-main.txt acapy/
+#RUN pip install --no-cache-dir -r /aries-backchannels/python/requirements.txt -r /aries-backchannels/acapy/requirements-main.txt
+#RUN pip install git+https://github.com/bcgov/aries-acapy-plugin-redis-events.git
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 #COPY python python
