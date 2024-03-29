@@ -50,6 +50,7 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	//"postCreateCommand": "/bin/aca-py --version > acapy-version.txt",
 	//"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && pip install git+https://github.com/bcgov/aries-acapy-plugin-redis-events.git && python -V && which python && pip list",
+	//"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && pip install git+https://github.com/hyperledger/aries-acapy-plugins@main#subdirectory=redis_events && python -V && which python && pip list",
 	"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && python -V && which python && pip list",
 
 
