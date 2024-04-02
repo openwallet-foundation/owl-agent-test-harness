@@ -1,3 +1,4 @@
+#[allow(clippy::await_holding_lock)]
 mod controllers;
 mod error;
 mod setup;
@@ -14,16 +15,23 @@ extern crate clap;
 extern crate reqwest;
 extern crate uuid;
 
-use std::collections::HashMap;
-use std::sync::{Mutex, RwLock};
+use std::{
+    collections::HashMap,
+    sync::{Mutex, RwLock},
+};
 
-use crate::controllers::{connection, credential_definition, did_exchange, didcomm, general, issuance, presentation, revocation, schema};
 use actix_web::{middleware, web, App, HttpServer};
+use aries_vcx_agent::{
+    aries_vcx::{aries_vcx_core::wallet::indy::IndySdkWallet, messages::AriesMessage},
+    Agent as AriesAgent,
+};
 use clap::Parser;
-
-use aries_vcx_agent::{aries_vcx::messages::AriesMessage, Agent as AriesAgent};
-use aries_vcx_agent::aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
 use controllers::out_of_band;
+
+use crate::controllers::{
+    connection, credential_definition, did_exchange, didcomm, general, issuance, presentation,
+    revocation, schema,
+};
 
 #[derive(Parser)]
 struct Opts {

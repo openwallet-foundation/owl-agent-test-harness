@@ -1,17 +1,23 @@
-use crate::controllers::Request;
-use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::soft_assert_eq;
-use crate::{HarnessAgent, State};
-use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::handlers::util::OfferInfo;
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::cred_issuance::v1::{CredentialPreviewV1 as VcxCredentialPreview, CredentialPreviewV1};
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::cred_issuance::v1::propose_credential::{ProposeCredentialV1, ProposeCredentialV1Content};
-use aries_vcx_agent::aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx_agent::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use uuid::Uuid;
 use std::sync::RwLock;
+
+use actix_web::{get, post, web, Responder};
 use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
+use aries_vcx_agent::aries_vcx::{
+    handlers::util::OfferInfo,
+    messages::msg_fields::protocols::cred_issuance::v1::{
+        propose_credential::{ProposeCredentialV1, ProposeCredentialV1Content},
+        CredentialPreviewV1 as VcxCredentialPreview, CredentialPreviewV1,
+    },
+    protocols::issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
+};
 use display_as_json::Display;
+use uuid::Uuid;
+
+use crate::{
+    controllers::AathRequest,
+    error::{HarnessError, HarnessErrorType, HarnessResult},
+    soft_assert_eq, HarnessAgent, State,
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct CredentialPreview(VcxCredentialPreview);
@@ -57,7 +63,8 @@ fn to_backchannel_state_issuer(state: IssuerState) -> State {
     match state {
         IssuerState::Initial => State::Initial,
         IssuerState::ProposalReceived | IssuerState::OfferSet => State::ProposalReceived,
-        // IssuerState::OfferSent => State::OfferSent, // todo: we used to track "io state" in vcx, now we don't - will this fail some AATH cases?
+        // IssuerState::OfferSent => State::OfferSent, // todo: we used to track "io state" in vcx,
+        // now we don't - will this fail some AATH cases?
         IssuerState::RequestReceived => State::RequestReceived,
         IssuerState::CredentialSet => State::CredentialSent,
         IssuerState::Finished => State::Done,
@@ -88,12 +95,6 @@ async fn download_tails_file(
     let url = match tails_base_url.to_string().matches('/').count() {
         0 => format!("{}/{}", tails_base_url, rev_reg_id),
         1.. => tails_base_url.to_string(),
-        _ => {
-            return Err(HarnessError::from_msg(
-                HarnessErrorType::InternalServerError,
-                "Negative count",
-            ))
-        }
     };
     let client = reqwest::Client::new();
     let tails_folder_path = std::env::current_dir()
@@ -166,7 +167,10 @@ impl HarnessAgent {
         cred_offer: &CredentialOffer,
         thread_id: &str,
     ) -> HarnessResult<String> {
-        info!("issuance::send_credential_offer >> cred_offer: {}, thread_id: {}", cred_offer, thread_id);
+        info!(
+            "issuance::send_credential_offer >> cred_offer: {}, thread_id: {}",
+            cred_offer, thread_id
+        );
         let get_tails_rev_id =
             |cred_def_id: &str| -> HarnessResult<(Option<String>, Option<String>)> {
                 Ok(
@@ -194,7 +198,11 @@ impl HarnessAgent {
         let (offer_info, id) = if thread_id.is_empty() {
             let credential_preview =
                 serde_json::to_string(&cred_offer.credential_preview.0.attributes)?;
-            info!("issuance::send_credential_offer >> no thread_id provided, this offer initiates new didcomm conversation, using credential_preview: {:?}", credential_preview);
+            info!(
+                "issuance::send_credential_offer >> no thread_id provided, this offer initiates \
+                 new didcomm conversation, using credential_preview: {:?}",
+                credential_preview
+            );
             let (tails_file, rev_reg_id) = get_tails_rev_id(&cred_offer.cred_def_id)?;
             (
                 OfferInfo {
@@ -207,20 +215,29 @@ impl HarnessAgent {
             )
         } else {
             let proposal = self.aries_agent.issuer().get_proposal(thread_id)?;
-            info!("issuance::send_credential_offer >> thread_id is available, this offer will be built based on previous proposal: {:?}", proposal);
+            info!(
+                "issuance::send_credential_offer >> thread_id is available, this offer will be \
+                 built based on previous proposal: {:?}",
+                proposal
+            );
             let (tails_file, rev_reg_id) = get_tails_rev_id(&proposal.content.cred_def_id)?;
             (
                 OfferInfo {
-                    credential_json: serde_json::to_string(&proposal.content.credential_proposal.attributes)
-                        .unwrap(),
-                    cred_def_id: CredentialDefinitionId::new(&proposal.content.cred_def_id)? ,
+                    credential_json: serde_json::to_string(
+                        &proposal.content.credential_proposal.attributes,
+                    )
+                    .unwrap(),
+                    cred_def_id: CredentialDefinitionId::new(&proposal.content.cred_def_id)?,
                     rev_reg_id,
                     tails_file,
                 },
                 Some(thread_id),
             )
         };
-        info!("issuance::send_credential_offer >> offer_info: {:?}", offer_info);
+        info!(
+            "issuance::send_credential_offer >> offer_info: {:?}",
+            offer_info
+        );
         let id = self
             .aries_agent
             .issuer()
@@ -272,7 +289,7 @@ impl HarnessAgent {
 
 #[post("/send-proposal")]
 pub async fn send_credential_proposal(
-    req: web::Json<Request<CredentialProposal>>,
+    req: web::Json<AathRequest<CredentialProposal>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -284,7 +301,7 @@ pub async fn send_credential_proposal(
 
 #[post("/send-offer")]
 pub async fn send_credential_offer(
-    req: web::Json<Request<CredentialOffer>>,
+    req: web::Json<AathRequest<CredentialOffer>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -296,7 +313,7 @@ pub async fn send_credential_offer(
 
 #[post("/send-request")]
 pub async fn send_credential_request(
-    req: web::Json<Request<String>>,
+    req: web::Json<AathRequest<String>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().send_credential_request(&req.id).await
@@ -316,7 +333,7 @@ pub async fn get_issuer_state(
 
 #[post("/issue")]
 pub async fn issue_credential(
-    req: web::Json<Request<Credential>>,
+    req: web::Json<AathRequest<Credential>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -328,7 +345,7 @@ pub async fn issue_credential(
 
 #[post("/store")]
 pub async fn store_credential(
-    req: web::Json<Request<CredentialId>>,
+    req: web::Json<AathRequest<CredentialId>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().store_credential(&req.id).await
