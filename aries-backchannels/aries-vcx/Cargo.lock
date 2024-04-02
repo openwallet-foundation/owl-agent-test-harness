@@ -301,7 +301,7 @@ dependencies = [
 [[package]]
 name = "anoncreds_types"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "anoncreds-clsignatures 0.3.2",
  "bitvec",
@@ -315,8 +315,8 @@ dependencies = [
 
 [[package]]
 name = "aries-vcx-agent"
-version = "0.62.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+version = "0.63.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "anoncreds_types",
  "aries_vcx",
@@ -360,8 +360,8 @@ dependencies = [
 
 [[package]]
 name = "aries_vcx"
-version = "0.62.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+version = "0.63.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_core",
@@ -372,7 +372,7 @@ dependencies = [
  "derive_builder",
  "did_doc",
  "did_key",
- "did_parser",
+ "did_parser_nom",
  "did_peer",
  "did_resolver",
  "did_resolver_registry",
@@ -404,13 +404,13 @@ dependencies = [
 [[package]]
 name = "aries_vcx_core"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "anoncreds_types",
  "async-trait",
  "bitvec",
  "bs58 0.5.0",
- "did_parser",
+ "did_parser_nom",
  "futures",
  "indy-api-types",
  "indy-credx",
@@ -1199,14 +1199,15 @@ dependencies = [
 [[package]]
 name = "did_doc"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "base64",
  "bs58 0.5.0",
  "did_key",
- "did_parser",
+ "did_parser_nom",
  "display_as_json",
  "hex",
+ "log",
  "multibase",
  "pem",
  "public_key",
@@ -1221,9 +1222,9 @@ dependencies = [
 [[package]]
 name = "did_key"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
- "did_parser",
+ "did_parser_nom",
  "public_key",
  "serde",
  "serde_json",
@@ -1231,26 +1232,29 @@ dependencies = [
 ]
 
 [[package]]
-name = "did_parser"
+name = "did_parser_nom"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
+ "log",
+ "nom",
  "serde",
- "shared",
 ]
 
 [[package]]
 name = "did_peer"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "async-trait",
  "base64",
  "bs58 0.5.0",
+ "derive_builder",
  "did_doc",
- "did_parser",
+ "did_parser_nom",
  "did_resolver",
  "display_as_json",
+ "log",
  "multibase",
  "once_cell",
  "public_key",
@@ -1259,6 +1263,7 @@ dependencies = [
  "serde_json",
  "sha256",
  "thiserror",
+ "typed-builder 0.16.2",
  "unsigned-varint",
  "url",
 ]
@@ -1266,12 +1271,12 @@ dependencies = [
 [[package]]
 name = "did_resolver"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "async-trait",
  "chrono",
  "did_doc",
- "did_parser",
+ "did_parser_nom",
  "serde",
  "serde_json",
 ]
@@ -1279,7 +1284,7 @@ dependencies = [
 [[package]]
 name = "did_resolver_registry"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "async-trait",
  "did_resolver",
@@ -1290,7 +1295,7 @@ dependencies = [
 [[package]]
 name = "did_resolver_sov"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "aries_vcx_core",
  "async-trait",
@@ -1306,8 +1311,8 @@ dependencies = [
 
 [[package]]
 name = "diddoc_legacy"
-version = "0.62.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+version = "0.63.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "display_as_json",
  "serde",
@@ -1360,7 +1365,7 @@ dependencies = [
 [[package]]
 name = "display_as_json"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "quote",
  "syn 1.0.109",
@@ -2115,7 +2120,7 @@ dependencies = [
 [[package]]
 name = "indy-api-types"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "bs58 0.5.0",
  "futures",
@@ -2207,7 +2212,7 @@ dependencies = [
 [[package]]
 name = "indy-ledger-response-parser"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "anoncreds-clsignatures 0.2.4",
  "indy-vdr",
@@ -2220,7 +2225,7 @@ dependencies = [
 [[package]]
 name = "indy-utils"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "base64",
  "dirs",
@@ -2271,7 +2276,7 @@ dependencies = [
 [[package]]
 name = "indy-wallet"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "async-trait",
  "bs58 0.5.0",
@@ -2464,7 +2469,7 @@ dependencies = [
 [[package]]
 name = "libvdrtools"
 version = "0.8.6"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2574,12 +2579,12 @@ checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 
 [[package]]
 name = "messages"
-version = "0.62.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+version = "0.63.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "chrono",
  "derive_more",
- "did_parser",
+ "did_parser_nom",
  "diddoc_legacy",
  "display_as_json",
  "isolang",
@@ -2599,7 +2604,7 @@ dependencies = [
 [[package]]
 name = "messages_macros"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "darling 0.20.6",
  "proc-macro2",
@@ -3121,7 +3126,7 @@ dependencies = [
 [[package]]
 name = "public_key"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "base64",
  "bs58 0.5.0",
@@ -3593,8 +3598,8 @@ dependencies = [
 
 [[package]]
 name = "shared"
-version = "0.62.0"
-source = "git+https://github.com/hyperledger/aries-vcx.git?rev=e79316e74e#e79316e74e213b8c07efb297b090b32b166788d4"
+version = "0.63.0"
+source = "git+https://github.com/hyperledger/aries-vcx.git?rev=37707bc7f3b1#37707bc7f3b1d7df9831bf57809f620402b6fb85"
 dependencies = [
  "bs58 0.4.0",
  "lazy_static",
