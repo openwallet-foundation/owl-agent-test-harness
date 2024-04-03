@@ -811,7 +811,7 @@ startHarness(){
       NGROK_AUTHTOKEN="harness_${NGROK_AUTHTOKEN}"
     fi
     # start the ngrok container but don't start the tunnels in the config yml file. We will start them later as needed for each agent.
-    docker run -d --rm -v $(pwd)/aath_ngrok_config.yml:/etc/ngrok.yml -e NGROK_CONFIG=/etc/ngrok.yml -e NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}" --name agents-ngrok --network aath_network -p 4040:4040 ngrok/ngrok start --all
+    docker run -d --rm -v $(pwd)/aath_ngrok_config.yml:/etc/ngrok.yml -e NGROK_CONFIG=/etc/ngrok.yml -e NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}" --name agents-ngrok --network aath_network -p 4040:4040 ngrok/ngrok:alpine start --all
     
     export NGROK_NAME="agents-ngrok"
   else
