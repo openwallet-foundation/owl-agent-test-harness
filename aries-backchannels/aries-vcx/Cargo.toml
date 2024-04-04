@@ -17,9 +17,9 @@ serde_derive = "1.0.97"
 log = "^0.4.20"
 env_logger = "0.9.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
-aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "37707bc7f3b1" }
-anoncreds_types = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "37707bc7f3b1" }
-display_as_json = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "37707bc7f3b1" }
+aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "d0ad7a6ba25" }
+anoncreds_types = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "d0ad7a6ba25" }
+display_as_json = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "d0ad7a6ba25" }
 #aries-vcx-agent = { path = "../../../aries/agents/aries-vcx-agent" }
 #anoncreds_types = { path = "../../../aries/misc/anoncreds_types" }
 #display_as_json = { path = "../../../misc/display_as_json" }
