@@ -44,6 +44,7 @@
     "typescript": "~4.3.0"
   },
   "resolutions": {
+    "ffi-napi": "npm:@2060.io/ffi-napi",
     "ref-napi": "npm:@2060.io/ref-napi"
   }
 }
