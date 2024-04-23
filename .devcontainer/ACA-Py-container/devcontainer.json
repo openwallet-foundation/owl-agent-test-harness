@@ -27,7 +27,7 @@
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	"forwardPorts": [9020],
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "root",
@@ -38,7 +38,12 @@
 
 	//"onCreateCommand": "apt-get update && apt-get install -y git gnupg2 software-properties-common curl && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' && apt-get update && apt-get install -y libindy libnullpay",
 
-	"updateContentCommand": "apt-get update && apt-get install -y git gnupg2 software-properties-common curl && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' && apt-get update && apt-get install -y libindy libnullpay",
+	"updateContentCommand": "apt-get update && \
+		apt-get install -y git gnupg2 software-properties-common curl && \
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && \
+		add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' && \
+		apt-get update && \
+		apt-get install -y libindy libnullpay",
 
 	// Use 'postCreateCommand' to run commands right after the container is created.
 	//"updateContentCommand": "pip install -r /aries-backchannels/acapy/requirements.txt",
@@ -51,8 +56,17 @@
 	//"postCreateCommand": "/bin/aca-py --version > acapy-version.txt",
 	//"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && pip install git+https://github.com/bcgov/aries-acapy-plugin-redis-events.git && python -V && which python && pip list",
 	//"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && pip install git+https://github.com/hyperledger/aries-acapy-plugins@main#subdirectory=redis_events && python -V && which python && pip list",
-	"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && ./bin/aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && python -V && which python && pip list",
-
+	//"postCreateCommand": "pip install --upgrade pip && pip install -r /aries-backchannels/python/requirements.txt && pip install -r /aries-backchannels/acapy/requirements-main.txt && aca-py --version > acapy-version.txt && mkdir -p /data-mount/ && cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && python -V && which python && pip list",
+	"postCreateCommand": "pip install --upgrade pip && \
+		pip install -r /aries-backchannels/python/requirements.txt && \
+		pip install -r /aries-backchannels/acapy/requirements-main.txt && \
+		chmod +x ./bin/aca-py && \
+		./bin/aca-py --version > acapy-version.txt && \
+		mkdir -p /data-mount/ && \
+		cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml && \
+		python -V && \
+		which python && \
+		pip list",
 
 	// "postCreateCommand": [
 	// 	"pip install --upgrade pip",
@@ -65,7 +79,9 @@
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
-			"settings": {},
+			"settings": {
+				"extensions.verifySignature": false
+			},
 			"extensions": [
 				"ms-python.python",
 				"ms-python.debugpy",

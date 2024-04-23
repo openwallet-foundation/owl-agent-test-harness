@@ -20,12 +20,16 @@
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "uname -a",
+	"postCreateCommand": "pip install --upgrade pip && \
+		pip install --no-cache-dir aiohttp behave allure-behave",
 
 	// Configure tool-specific properties.
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
-			"settings": {},
+			"settings": {
+					"extensions.verifySignature": false
+				},
 			"extensions": [
 				"ms-python.python",
 				"ms-python.debugpy",
