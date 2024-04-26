@@ -3,24 +3,35 @@
 {
 	"name": "AFJ Backchannel Dev",
 	// Use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"context": "../../aries-backchannels",
-	"dockerFile": "../../aries-backchannels/javascript/Dockerfile.javascript",
+	"build": {
+		"context": "../../aries-backchannels",
+		"dockerFile": "../../aries-backchannels/javascript/Dockerfile.javascript"
+	},
 
-	"workspaceFolder": "/workspaces/aries-agent-test-harness_nodlesh/aries-backchannels/javascript",
+	"workspaceFolder": "/aries-backchannels/javascript",
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"docker-from-docker": "latest"
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	"forwardPorts": [9020],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "uname -a",
+
+	"runArgs": [
+		"--network=aath_network",
+		"--name=acme_agent"
+	],
 
 	// Configure tool-specific properties.
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
-			"settings": {},
+			"settings": {
+				"extensions.verifySignature": false
+			},
 			"extensions": [
 				"dzannotti.vscode-babel-coloring"
 			]

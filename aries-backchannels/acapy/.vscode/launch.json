@@ -23,7 +23,8 @@
             "args" : ["-p", "9020"],
             "env": {
                 "LEDGER_URL": "http://test.bcovrin.vonx.io",
-                "TAILS_SERVER_URL": "http://tails.bcovrin.vonx.io"
+                "TAILS_SERVER_URL": "http://tails.bcovrin.vonx.io",
+                "DOCKERHOST": "acme_agent",
                 //"ACAPY_LOG_LEVEL": "debug",
                 //"ACAPY_LOG_FILE": "/aries-backchannels/acapy/acapy.log"
             },

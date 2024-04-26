@@ -16,13 +16,13 @@
             "--tags=@T001-RFC0160",
             "-k",
             "-D",
-            "Acme=http://host.docker.internal:9020",
+            "Acme=http://acme_agent:9020",
             "-D",
-            "Bob=http://host.docker.internal:9030",
+            "Bob=http://bob_agent:9030",
             "-D",
-            "Mallory=http://host.docker.internal:8040",
+            "Faber=http://faber_agent:9040",
             "-D",
-            "Faber=http://host.docker.internal:8050"
+            "Mallory=http://mallory_agent:9050"
         ]
     }
   ]

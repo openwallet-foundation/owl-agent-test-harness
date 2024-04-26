@@ -13,13 +13,19 @@
 
 	"workspaceFolder": "/aries-test-harness",
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"docker-from-docker": "latest"
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
+	"runArgs": [
+		"--network=aath_network",
+		"--name=aath_test_dev"
+	],
+
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "uname -a",
 	"postCreateCommand": "pip install --upgrade pip && \
 		pip install --no-cache-dir aiohttp behave allure-behave",
 

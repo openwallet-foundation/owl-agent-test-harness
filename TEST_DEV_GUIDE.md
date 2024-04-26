@@ -143,6 +143,7 @@ See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in th
 
 ## Diving Deeper
 
+- [Developing Tests and Backchannels in Dev Containers](AATH_DEV_CONTAINERS.md)
 - [Accessing Connection ID in Test Code](ACCESS-CONNECTION-IDS.md)
 - [Configuring Tests with Credential Types and Proofs](CONFIGURE-CRED-TYPES.md)
 - [Debugging a Backchannel Running Inside a Docker Container](DEBUGGING.md)
