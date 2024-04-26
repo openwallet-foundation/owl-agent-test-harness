@@ -1,0 +1,44 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+	"name": "AFJ Backchannel Dev",
+	// Use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"build": {
+		"context": "../../aries-backchannels",
+		"dockerFile": "../../aries-backchannels/javascript/Dockerfile.javascript"
+	},
+
+	"workspaceFolder": "/aries-backchannels/javascript",
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"docker-from-docker": "latest"
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [9020],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "uname -a",
+
+	"runArgs": [
+		"--network=aath_network",
+		"--name=acme_agent"
+	],
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {
+				"extensions.verifySignature": false
+			},
+			"extensions": [
+				"dzannotti.vscode-babel-coloring"
+			]
+		}
+	},
+
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"remoteUser": "root"
+}
