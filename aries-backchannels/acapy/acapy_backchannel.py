@@ -287,7 +287,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         result.append(("--universal-resolver"))
 
-        #result.append(("--plugin", "redis_queue.v1_0.events"))
         result.append(("--plugin", "redis_events.v1_0.redis_queue.events"))
         result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
         
