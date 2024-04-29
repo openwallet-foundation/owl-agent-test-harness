@@ -1,2 +1,1 @@
 aries-cloudagent[indy, bbs, askar]@git+https://github.com/hyperledger/aries-cloudagent-python@main
-git+https://github.com/hyperledger/aries-acapy-plugins@main#subdirectory=redis_events
