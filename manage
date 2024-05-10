@@ -969,10 +969,8 @@ runTests() {
       echo "No tags specified; all tests will be run."
   fi
 
-  if [[ "${GITHUB_ACTIONS}" != "true" ]]; then
-    mkdir -p .logs
-    echo "" > .logs/request.log
-  fi
+  mkdir -p .logs
+  echo "" > .logs/request.log
 
   echo
   # Behave.ini file handling
@@ -981,7 +979,7 @@ runTests() {
 
   if [[ "${REPORT}" = "allure" && "${COMMAND}" != "dry-run" ]]; then
       echo "Executing tests with Allure Reports."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" $DOCKER_ENV aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" $DOCKER_ENV aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
   elif [[ "${COMMAND}" = "dry-run" ]]; then
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini $DOCKER_ENV aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
         grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
@@ -992,7 +990,7 @@ runTests() {
   rm ${BEHAVE_INI_TMP}
 
   # Export agent logs
-  if [[ "${GITHUB_ACTIONS}" != "true" && ${COMMAND} != "dry-run" ]]; then
+  if [[ ${COMMAND} != "dry-run" ]]; then
     echo ""
     echo "Exporting Agent logs."
     docker logs acme_agent > .logs/acme_agent.log
