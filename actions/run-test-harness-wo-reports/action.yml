@@ -52,14 +52,8 @@ runs:
       uses: jwalton/gh-docker-logs@v2
       with:
         dest: "./.logs/docker-logs"
-    - name: Debug List docker log files
-      run: ls -l ./.logs/docker-logs
-      shell: bash
-    - name: Debug List agent log files
-      run: ls -l ./.logs
-      shell: bash
     - name: Debug List agent log files in AATH folder
-      run: ls -l /aries-agent-test-harness/.logs
+      run: ls -l /aries-test-harness/logs
       shell: bash
     - name: archive logs
       if: ${{ always() }}
@@ -67,6 +61,13 @@ runs:
       with:
         name: container-logs
         path: .logs
+        retention-days: 14
+    - name: archive agent logs
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: agent-logs
+        path: /aries-test-harness/logs
         retention-days: 14
 branding:
   icon: "mic"
