@@ -53,7 +53,13 @@ runs:
       with:
         dest: "./.logs/docker-logs"
     - name: Debug List agent log files in AATH folder
-      run: ls -l /aries-test-harness/logs
+      run: ls -l /aries-test-harness/.logs
+      shell: bash
+    - name: Debug where are we
+      run: pwd
+      shell: bash
+    - name: Debug what is in this location
+      run: ls -ltr
       shell: bash
     - name: archive logs
       if: ${{ always() }}
@@ -67,7 +73,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: agent-logs
-        path: /aries-test-harness/logs
+        path: /aries-test-harness/.logs
         retention-days: 14
 branding:
   icon: "mic"
