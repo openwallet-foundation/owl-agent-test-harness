@@ -58,8 +58,9 @@ runs:
         pwd
         ls -ltr
         ls -l /
-        ls -l /aries-test-harness
-        ls -l /aries-agent-test-harness
+        ls -l ./test-harness
+        ls -l ./test-harness/.logs
+        ls -l ./test-harness/logs
       shell: bash
     - name: archive logs
       if: ${{ always() }}
@@ -73,7 +74,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: agent-logs
-        path: /aries-test-harness/.logs
+        path: ./test-harness/.logs
         retention-days: 14
 branding:
   icon: "mic"
