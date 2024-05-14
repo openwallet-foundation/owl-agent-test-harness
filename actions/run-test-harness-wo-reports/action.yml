@@ -52,16 +52,6 @@ runs:
       uses: jwalton/gh-docker-logs@v2
       with:
         dest: "./.logs/docker-logs"
-    - name: Debug where are we
-      run: |
-        set -x
-        pwd
-        ls -ltr
-        ls -l /
-        ls -l ./test-harness
-        ls -l ./test-harness/.logs
-        ls -l ./test-harness/logs
-      shell: bash
     - name: archive logs
       if: ${{ always() }}
       uses: actions/upload-artifact@v4
