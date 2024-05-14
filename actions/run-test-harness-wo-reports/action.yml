@@ -52,15 +52,6 @@ runs:
       uses: jwalton/gh-docker-logs@v2
       with:
         dest: "./.logs/docker-logs"
-    - name: Debug where are we
-      run: |
-        set -x
-        pwd
-        ls -ltr
-        ls -l /
-        ls -l /aries-test-harness
-        ls -l /aries-agent-test-harness
-      shell: bash
     - name: archive logs
       if: ${{ always() }}
       uses: actions/upload-artifact@v4
@@ -73,7 +64,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: agent-logs
-        path: /aries-test-harness/.logs
+        path: ./test-harness/.logs
         retention-days: 14
 branding:
   icon: "mic"
