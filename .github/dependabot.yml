@@ -5,10 +5,206 @@ updates:
   # Maintain dependencies for GitHub Actions
   #  - Check for updates once a week
   #  - Group all updates into a single PR
-  - package-ecosystem: github-actions
-    directory: /
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: weekly
+      interval: "weekly"
     groups:
       all-actions:
         patterns: [ "*" ]
+
+  # Maintain dependencies for TypeScript and JavaScript
+  - package-ecosystem: "npm"
+    directory: "/aries-backchannels/javascript/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-patch"]
+
+  # Maintain dependencies for Python Packages
+  - package-ecosystem: "pip"
+    directory: "/aries-backchannels/acapy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Python Packages
+  - package-ecosystem: "pip"
+    directory: "/aries-backchannels/mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Python Packages
+  - package-ecosystem: "pip"
+    directory: "/aries-backchannels/python"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Python Packages
+  - package-ecosystem: "pip"
+    directory: "/aries-test-harness"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-backchannels/acapy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-backchannels/afgo"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-backchannels/aries-vcx"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-backchannels/dotnet"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-backchannels/findy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-backchannels/javascript"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-backchannels/mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries-test-harness"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for Cargo Packages
+  - package-ecosystem: "cargo"
+    directory: "/aries-backchannels/aries-vcx"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for dev Container
+  - package-ecosystem: "devcontainers"
+    directory: "/.devcontainer/AATH-container"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for dev Container
+  - package-ecosystem: "devcontainers"
+    directory: "/.devcontainer/ACA-Py-container"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for dev Container
+  - package-ecosystem: "devcontainers"
+    directory: "/.devcontainer/AFJ-container"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for Ruby
+  - package-ecosystem: "bundler"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # Maintain dependencies for C#
+  - package-ecosystem: "nuget"
+    directory: "/aries-backchannels/dotnet/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-patch"]
+
