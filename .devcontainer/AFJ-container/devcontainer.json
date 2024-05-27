@@ -1,14 +1,18 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
+	"image": "node:18.18-bookworm",
 	"name": "AFJ Backchannel Dev",
 	// Use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"build": {
-		"context": "../../aries-backchannels",
-		"dockerFile": "../../aries-backchannels/javascript/Dockerfile.javascript"
-	},
+	//"build": {
+	// 	"context": "../../aries-backchannels",
+	//	"dockerfile": "../../aries-backchannels/javascript/Dockerfile.dev-javascript"
+	//},
+
+	"workspaceMount": "source=${localWorkspaceFolder}/aries-backchannels/javascript,target=/aries-backchannels/javascript,type=bind",
 
 	"workspaceFolder": "/aries-backchannels/javascript",
+	
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"docker-from-docker": "latest"
@@ -20,6 +24,17 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "uname -a",
 
+	"postCreateCommand": "npm install -g typescript && \
+		yarn install && \
+		cd server && \
+		npm install && \
+		apt-get update -y && \
+		apt-get install -y software-properties-common apt-transport-https curl build-essential && \
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && \
+		add-apt-repository \"deb https://repo.sovrin.org/sdk/deb bionic stable\" && \
+		apt-get install -y --allow-unauthenticated libindy",
+
+
 	"runArgs": [
 		"--network=aath_network",
 		"--name=acme_agent"
@@ -30,10 +45,13 @@
 		// Configure properties specific to VS Code.
 		"vscode": {
 			"settings": {
-				"extensions.verifySignature": false
+				"extensions.verifySignature": false, // Disable signature verification otherwise installtion takes too long or fails
+				"typescript.tsdk": "node_modules/typescript/lib" // Use workspace version of TypeScript
 			},
 			"extensions": [
-				"dzannotti.vscode-babel-coloring"
+				"dbaeumer.vscode-eslint", // ESLint extension
+        		"esbenp.prettier-vscode", // Prettier extension
+				"dzannotti.vscode-babel-coloring" // Babel Coloring extension
 			]
 		}
 	},
