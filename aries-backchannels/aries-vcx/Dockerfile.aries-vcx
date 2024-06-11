@@ -1,1 +1,1 @@
-FROM ghcr.io/hyperledger/aries-vcx/aath-backchannel:0.63.0-gmaath-064-update-7588
+FROM ghcr.io/hyperledger/aries-vcx/aath-backchannel:0.64.0-gmaath-064-update-7597
