@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Configuration Data -- order matters in these arrays. A new entry requires an entry in ALL "ta_" arrays
-ta_tlas=("acapy" "javascript" "aries-vcx")
+ta_tlas=("acapy" "credo" "aries-vcx")
 ta_names=("Aries Cloud Agent Python" "Credo-TS" "Aries VCX")
 ta_shortnames=("ACA-Py" "Credo" "VCX")
 ta_scopes=("AIP 1, 2" "AIP 1" "AIP 1")
@@ -16,7 +16,7 @@ aath_guide="docs/guide"
 # We don't want these files checked into the website
 
 if [[ "$1" == "clean" ]]; then
-   rm -rf ${aath_guide} docs/acapy.md docs/aries-vcx.md docs/javascript.md docs/README.md
+   rm -rf ${aath_guide} docs/acapy.md docs/aries-vcx.md docs/credo.md docs/README.md
    exit 0
 fi
 

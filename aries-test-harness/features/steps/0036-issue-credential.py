@@ -99,10 +99,13 @@ def step_impl(context, issuer):
 
     resp_json = json.loads(resp_text)
 
-
-    context.issuer_schema_id_dict[get_schema_name(context)] = resp_json[
-        "schema_id"
-    ]
+    # if the schema id contains indy then convert it to a legacy id.
+    if "indy" in resp_json["schema_id"]:
+        context.issuer_schema_id_dict[get_schema_name(context)] = convert_fully_qualified_indy_schema_id_to_legacy(resp_json["schema_id"])
+    else:
+        context.issuer_schema_id_dict[get_schema_name(context)] = resp_json[
+            "schema_id"
+        ]
 
 
 @when('"{issuer}" creates a new credential definition')
@@ -136,10 +139,11 @@ def step_impl(context, issuer):
         # context.cred_rev_creation_time = resp_json["created"]
         context.cred_rev_creation_time = time.time()
 
-    context.credential_definition_id_dict[get_schema_name(context)] = resp_json[
-        "credential_definition_id"
-    ]
-
+    # if the credential definition id contains indy then convert it to a legacy id.
+    if "indy" in resp_json["credential_definition_id"]:
+        context.credential_definition_id_dict[get_schema_name(context)] = convert_fully_qualified_indy_cred_def_id_to_legacy(resp_json["credential_definition_id"])
+    else:
+        context.credential_definition_id_dict[get_schema_name(context)] = resp_json["credential_definition_id"]
 
 @then('"{issuer}" has an existing schema')
 def step_impl(context, issuer):
@@ -265,6 +269,22 @@ def step_impl(context, holder, issuer):
     # Get the thread ID from the response text.
     context.cred_thread_id = resp_json["thread_id"]
 
+# Some agents will have qualifed ids like did:indy:bcovrin:test:PDTK22oZnNyDSEn3XedwMq/anoncreds/v0/SCHEMA/test_schema.Acme/1.0.0
+# This function will strip it down to the id only, so remove the prefix and the suffix that has : or / in it and match the regex /^([a-zA-Z0-9]{21,22}):2:(.+):([0-9.]+)$/
+def convert_fully_qualified_indy_cred_def_id_to_legacy(id):
+    parts = id.split(":")
+    id_part = parts[-1].split("/")[0]
+    schema_name = parts[-1].split("/")[4]
+    schema_id = parts[-1].split("/")[5]
+    cred_def_id = "CL"
+    return f"{id_part}:3:{cred_def_id}:{schema_name}:{schema_id}"
+    
+def convert_fully_qualified_indy_schema_id_to_legacy(id):
+    parts = id.split(":")
+    id_part = parts[-1].split("/")[0]
+    schema_name = parts[-1].split("/")[4]
+    version = parts[-1].split("/")[5]
+    return f"{id_part}:2:{schema_name}:{version}"
 
 @given('"{issuer}" offers a credential')
 @when('"{issuer}" offers a credential')
@@ -488,12 +508,18 @@ def step_impl(context, holder):
         assert resp_json["referent"] == credentials[-1]
         # Some agents don't return or have a schema id or cred_def_id, so only check it it exists.
         if "schema_id" in resp_json:
-            assert resp_json["schema_id"] == context.issuer_schema_id_dict[schema_name]
+            if "indy" in resp_json["schema_id"]:
+                assert convert_fully_qualified_indy_schema_id_to_legacy(resp_json["schema_id"]) == context.issuer_schema_id_dict[schema_name]
+            else:
+                assert resp_json["schema_id"] == context.issuer_schema_id_dict[schema_name]
         if "cred_def_id" in resp_json:
-            assert (
-                resp_json["cred_def_id"]
-                == context.credential_definition_id_dict[schema_name]
-            )
+            if "indy" in resp_json["cred_def_id"]:
+                assert convert_fully_qualified_indy_cred_def_id_to_legacy(resp_json["cred_def_id"]) == context.credential_definition_id_dict[schema_name]
+            else:
+                assert (
+                    resp_json["cred_def_id"]
+                    == context.credential_definition_id_dict[schema_name]
+                )
 
     # Make sure the issuer is not holding the credential
     # get the credential from the holders wallet
