@@ -1,14 +1,13 @@
 #! /bin/bash
 
 # Configuration Data -- order matters in these arrays. A new entry requires an entry in ALL "ta_" arrays
-ta_tlas=("acapy" "javascript" "findy" "aries-vcx")
-ta_names=("Aries Cloud Agent Python" "Aries Framework JavaScript" "Findy Agent" "AriesVCX")
-ta_shortnames=("ACA-Py" "AFJ" "Findy" "VCX")
-ta_scopes=("AIP 1, 2" "AIP 1" "AIP 1" "AIP 1")
-ta_exceptions=("None" "Revocation" "Credential Exchange" "Revocation")
+ta_tlas=("acapy" "javascript" "aries-vcx")
+ta_names=("Aries Cloud Agent Python" "Aries Framework JavaScript" "AriesVCX")
+ta_shortnames=("ACA-Py" "AFJ" "VCX")
+ta_scopes=("AIP 1, 2" "AIP 1" "AIP 1")
+ta_exceptions=("None" "Revocation" "Revocation")
 ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
 https://github.com/hyperledger/aries-framework-javascript \
-https://github.com/findy-network/findy-agent \
 https://github.com/hyperledger/aries-vcx)
 workflows=".github/workflows/test-harness-*"
 
