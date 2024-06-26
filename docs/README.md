@@ -14,10 +14,7 @@ that page are links to a full history of the test runs and full details on every
 The following test agents are currently supported:
 
 - [Aries Cloud Agent Python](https://github.com/hyperledger/aries-cloudagent-python) (ACA-Py)
-- [Aries Framework Go](https://github.com/hyperledger/aries-framework-go) (AF-Go)
 - [Aries Framework JavaScript](https://github.com/hyperledger/aries-framework-javascript) (AFJ)
-- [Aries Framework .NET](https://github.com/hyperledger/aries-framework-dotnet) (AF-.NET)
-- [Findy Agent](https://github.com/findy-network/findy-agent) (Findy)
 - [AriesVCX](https://github.com/hyperledger/aries-vcx) (VCX)
 
 Want to add your Aries component to this page? You need to add a runset to the
@@ -25,14 +22,11 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 ## Latest Interoperability Results
 
-| Test Agent | Scope | Exceptions | ACA-Py | AF-Go | AFJ | AF-.NET | Findy | VCX | **All Tests** |
-| ----- | ----- | ----- | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | 96 / 96<br>100% | 0 / 31<br>0% | 55 / 79<br>69% | 6 / 36<br>16% | 34 / 34<br>100% | 37 / 38<br>97% | **222 / 302<br>73%** |
-| [AF-Go](afgo.md)| AIP 2 | None | 0 / 31<br>0% | 26 / 45<br>57% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | 0 / 0<br>0% | **26 / 76<br>34%** |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 55 / 79<br>69% | 0 / 0<br>0% | 12 / 28<br>42% | 12 / 53<br>22% | 25 / 51<br>49% | 3 / 18<br>16% | **95 / 200<br>47%** |
-| [AF-.NET](dotnet.md)| AIP 1 | Proof Proposal | 6 / 36<br>16% | 0 / 0<br>0% | 12 / 53<br>22% | 0 / 12<br>0% | 6 / 39<br>15% | 0 / 0<br>0% | **12 / 111<br>10%** |
-| [Findy](findy.md)| AIP 1 | Credential Exchange | 34 / 34<br>100% | 0 / 0<br>0% | 25 / 51<br>49% | 6 / 39<br>15% | 17 / 17<br>100% | 0 / 0<br>0% | **76 / 124<br>61%** |
-| [VCX](aries-vcx.md)| AIP 1 | Revocation | 37 / 38<br>97% | 0 / 0<br>0% | 3 / 18<br>16% | 0 / 0<br>0% | 0 / 0<br>0% | 19 / 20<br>95% | **59 / 76<br>77%** |
+| Test Agent | Scope | Exceptions | ACA-Py | AFJ | VCX | **All Tests** |
+| ----- | ----- | ----- | :----: | :----: | :----: | :----: |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 95 / 96<br>98% | 19 / 67<br>28% | 37 / 38<br>97% | **151 / 201<br>75%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 19 / 67<br>28% | 12 / 28<br>42% | 3 / 18<br>16% | **34 / 113<br>30%** |
+| [VCX](aries-vcx.md)| AIP 1 | Revocation | 37 / 38<br>97% | 3 / 18<br>16% | 18 / 20<br>90% | **58 / 76<br>76%** |
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
 - The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
@@ -40,5 +34,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Sun Jun 16 19:32:41 UTC 2024*
+*Results last updated: Wed Jun 26 05:18:21 UTC 2024*
 
