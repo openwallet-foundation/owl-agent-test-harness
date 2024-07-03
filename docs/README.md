@@ -24,9 +24,9 @@ Want to add your Aries component to this page? You need to add a runset to the
 
 | Test Agent | Scope | Exceptions | ACA-Py | AFJ | VCX | **All Tests** |
 | ----- | ----- | ----- | :----: | :----: | :----: | :----: |
-| [ACA-Py](acapy.md)| AIP 1, 2 | None | 95 / 96<br>98% | 19 / 67<br>28% | 37 / 38<br>97% | **151 / 201<br>75%** |
-| [AFJ](javascript.md)| AIP 1 | Revocation | 19 / 67<br>28% | 12 / 28<br>42% | 3 / 18<br>16% | **34 / 113<br>30%** |
-| [VCX](aries-vcx.md)| AIP 1 | Revocation | 37 / 38<br>97% | 3 / 18<br>16% | 18 / 20<br>90% | **58 / 76<br>76%** |
+| [ACA-Py](acapy.md)| AIP 1, 2 | None | 96 / 96<br>100% | 48 / 67<br>71% | 36 / 38<br>94% | **180 / 201<br>89%** |
+| [AFJ](javascript.md)| AIP 1 | Revocation | 48 / 67<br>71% | 12 / 28<br>42% | 3 / 18<br>16% | **63 / 113<br>55%** |
+| [VCX](aries-vcx.md)| AIP 1 | Revocation | 36 / 38<br>94% | 3 / 18<br>16% | 17 / 20<br>85% | **56 / 76<br>73%** |
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
 - The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
@@ -34,5 +34,5 @@ Want to add your Aries component to this page? You need to add a runset to the
 - Select the "Test Agent" links to drill down into the tests being run for each Test Agent.
 
 
-*Results last updated: Wed Jun 26 05:18:21 UTC 2024*
+*Results last updated: Wed Jul 3 05:38:40 UTC 2024*
 
