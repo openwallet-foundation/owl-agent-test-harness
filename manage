@@ -276,7 +276,7 @@ setDockerEnv() {
   fi
 
   # variables that have the same variable name as what is being set for the container
-  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "CONTAINER_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE")
+  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "CONTAINER_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE" "START_TIMEOUT")
   for var in "${GENERAL_VARIABLES[@]}"; do
     if [[ -n "${!var}" ]]; then
       DOCKER_ENV+=" -e ${var}=${!var}"
