@@ -1,9 +1,19 @@
 name: test-harness-ariesvcx-acapy
 # RUNSET_NAME: "aries-vcx to acapy"
 # Scope: AIP 1.0
-# Exceptions: Public Dids
+# Exceptions: None
 #
-# Passing tests: @RFC0036,@RFC0037,@RFC0160,@revocation
+# Summary
+#
+# This runset uses the current main branch of Aries VCX for all of the agents except Bob (holder),
+# which uses the master branch of ACA-Py.
+# @RFC0023 is excluded, as aries-vcx does not handle unqualified DIDs in invitations/responses
+#
+# Current
+#
+# @RFC0793 has relatively low success due to aries-vcx not supporting full range of DID methods in
+# these tests.
+# *Status Note Updated: 2024.07.05*
 #
 # End
 on:
@@ -34,7 +44,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a aries-vcx -a acapy-main"
           TEST_AGENTS: "-d aries-vcx -b acapy-main"
-          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@RFC0023,@RFC0793 -t ~@wip -t ~@RFC0434 -t ~@RFC0453 -t ~@RFC0211 -t ~@DIDExchangeConnection -t ~@Transport_Ws"
+          TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@RFC0793 -t ~@wip -t ~@RFC0434 -t ~@RFC0453 -t ~@RFC0211 -t ~@DIDExchangeConnection -t ~@Transport_Ws"
           REPORT_PROJECT: aries-vcx-b-acapy
       - uses: actions/upload-artifact@v4
         with:
