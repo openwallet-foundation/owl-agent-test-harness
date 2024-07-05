@@ -11,6 +11,8 @@ name: test-harness-ariesvcx-acapy
 #
 # Current
 #
+# Most tests are currently struggling, due to aries-vcx reporting the wrong connection state to the
+# backchannel. Being resolved here: https://github.com/hyperledger/aries-vcx/issues/1253
 # @RFC0793 has relatively low success due to aries-vcx not supporting full range of DID methods in
 # these tests.
 # *Status Note Updated: 2024.07.05*
