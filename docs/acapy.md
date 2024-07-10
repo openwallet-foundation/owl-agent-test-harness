@@ -4,12 +4,12 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afj](#runset-acapy-afj) | acapy-main<br>0.12.1 | javascript<br>0.5.0-alpha.97 | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | AIP 1.0 | [**37 / 39<br>94%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-aip10](#runset-acapy-aip10) | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | AIP 1.0 | [**35 / 35<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip10/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-aip20](#runset-acapy-aip20) | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | AIP 2.0 | [**61 / 61<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip20/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>0.12.1 | aries-vcx<br>1.0.0 | acapy-main<br>0.12.1 | acapy-main<br>0.12.1 | AIP 1.0 | [**18 / 18<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>0.5.0-alpha.97 | acapy-main<br>0.12.1 | javascript<br>0.5.0-alpha.97 | javascript<br>0.5.0-alpha.97 | AIP 1.0 | [**11 / 28<br>39%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>1.0.0 | acapy-main<br>0.12.1 | aries-vcx<br>1.0.0 | aries-vcx<br>1.0.0 | AIP 1.0 | [**18 / 20<br>90%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afj](#runset-acapy-afj) | acapy-main<br>1.0.0rc4 | javascript<br>0.5.0-alpha.97 | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | AIP 1.0 | [**37 / 39<br>94%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-aip10](#runset-acapy-aip10) | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | AIP 1.0 | [**35 / 35<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip10/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-aip20](#runset-acapy-aip20) | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | AIP 2.0 | [**61 / 61<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip20/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>1.0.0rc4 | aries-vcx<br>0.64.0 | acapy-main<br>1.0.0rc4 | acapy-main<br>1.0.0rc4 | AIP 1.0 | [**18 / 28<br>64%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>0.5.0-alpha.97 | acapy-main<br>1.0.0rc4 | javascript<br>0.5.0-alpha.97 | javascript<br>0.5.0-alpha.97 | AIP 1.0 | [**11 / 28<br>39%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>0.64.0 | acapy-main<br>1.0.0rc4 | aries-vcx<br>0.64.0 | aries-vcx<br>0.64.0 | AIP 1.0 | [**2 / 28<br>7%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -21,7 +21,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 37 out of 39 (94%)**
 
 
-*Last run: Wed Jul  3 00:47:46 UTC 2024*
+*Last run: Wed Jul 10 00:47:39 UTC 2024*
 ```
 
 #### Current Runset Status
@@ -44,7 +44,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 35 out of 35 (100%)**
 
 
-*Last run: Wed Jul  3 01:10:17 UTC 2024*
+*Last run: Wed Jul 10 01:09:53 UTC 2024*
 ```
 
 #### Current Runset Status
@@ -67,7 +67,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 61 out of 61 (100%)**
 
 
-*Last run: Wed Jul  3 01:42:30 UTC 2024*
+*Last run: Wed Jul 10 01:42:21 UTC 2024*
 ```
 
 #### Current Runset Status
@@ -87,16 +87,16 @@ All of the tests being executed in this runset are passing.
 Runset Name: acapy to aries-vcx
 
 ```tip
-**Latest results: 18 out of 18 (100%)**
+**Latest results: 18 out of 28 (64%)**
 
 
-*Last run: Wed Jul  3 02:17:59 UTC 2024*
+*Last run: Wed Jul 10 02:00:06 UTC 2024*
 ```
 
 #### Current Runset Status
-```warning
-No test status note is available for this runset. Please update: .github/workflows/test-harness-acapy-ariesvcx.yml.
-```
+
+RFC0023 is disabled due to inconsistent results. RFC0793 is also being investigated: https://github.com/hyperledger/aries-vcx/issues/1252
+*Status Note Updated: 2024.07.05*
 
 #### Runset Details
 
@@ -112,7 +112,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 11 out of 28 (39%)**
 
 
-*Last run: Wed Jul  3 03:16:15 UTC 2024*
+*Last run: Wed Jul 10 02:57:59 UTC 2024*
 ```
 
 #### Current Runset Status
@@ -132,16 +132,19 @@ All AIP10 tests are currently running.
 Runset Name: aries-vcx to acapy
 
 ```tip
-**Latest results: 18 out of 20 (90%)**
+**Latest results: 2 out of 28 (7%)**
 
 
-*Last run: Wed Jul  3 04:05:55 UTC 2024*
+*Last run: Wed Jul 10 03:44:25 UTC 2024*
 ```
 
 #### Current Runset Status
-```warning
-No test status note is available for this runset. Please update: .github/workflows/test-harness-ariesvcx-acapy.yml.
-```
+
+Most tests are currently struggling, due to aries-vcx reporting the wrong connection state to the
+backchannel. Being resolved here: https://github.com/hyperledger/aries-vcx/issues/1253
+@RFC0793 has relatively low success due to aries-vcx not supporting full range of DID methods in
+these tests.
+*Status Note Updated: 2024.07.05*
 
 #### Runset Details
 
