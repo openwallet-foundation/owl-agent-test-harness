@@ -7,6 +7,8 @@ defaults:
 
 permissions:
   contents: write
+  pull-requests: read
+  statuses: write
 
 jobs:
   test:
