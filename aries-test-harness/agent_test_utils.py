@@ -56,10 +56,10 @@ def get_relative_timestamp_to_epoch(timestamp):
 
 
 def format_cred_proposal_by_aip_version(
-    context, aip_version, cred_data, connection_id: Optional[str] = None, filters=None
+    context, aip_version, cred_data, connection_id: Optional[str] = None, filters=None, did_for_id=None
 ):
     if aip_version == "AIP20":
-        filters = amend_filters_with_runtime_data(context, filters)
+        filters = amend_filters_with_runtime_data(context, filters, did_for_id)
         credential_proposal = {
             "credential_preview": {
                 "@type": "issue-credential/2.0/credential-preview",
@@ -80,7 +80,7 @@ def get_schema_name(context):
         return context.schema["schema_name"]
 
 
-def amend_filters_with_runtime_data(context, filters):
+def amend_filters_with_runtime_data(context, filters, did_for_id=None):
     schema_name = get_schema_name(context)
     # This method will need comdification as new types of filters are used. Intially "indy" is used.
     if "indy" in filters:
@@ -131,6 +131,9 @@ def amend_filters_with_runtime_data(context, filters):
                 + "Z"
             )
             credential["issuanceDate"] = created_datetime
+        # Check if "credentialSubject" is in json_ld and then check if "id" is not already in "credentialSubject"
+        if did_for_id and "credentialSubject" in json_ld["credential"] and "id" not in json_ld["credential"]["credentialSubject"]:
+            json_ld["credential"]["credentialSubject"]["id"] = did_for_id
 
     return filters
 

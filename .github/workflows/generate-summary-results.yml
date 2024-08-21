@@ -4,6 +4,12 @@ on:
 defaults:
   run:
     shell: bash
+
+permissions:
+  contents: write
+  pull-requests: read
+  statuses: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
