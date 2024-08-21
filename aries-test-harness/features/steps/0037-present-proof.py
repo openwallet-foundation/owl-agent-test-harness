@@ -354,10 +354,8 @@ def step_impl(context, verifier):
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "done"
 
-    # FIXME: why do we only store the verified property if support_revocation is enabled?
-    if context.support_revocation:
-        verified = resp_json["verified"] == True or resp_json["verified"] == "true"
-        context.credential_verification_dict[context.presentation_thread_id] = verified
+    verified = resp_json["verified"] == True or resp_json["verified"] == "true"
+    context.credential_verification_dict[context.presentation_thread_id] = verified
 
 
 @then('"{prover}" has the proof verified')

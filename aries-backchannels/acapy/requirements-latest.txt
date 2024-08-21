@@ -1,1 +1,1 @@
-aries-cloudagent
+aries-cloudagent[indy, bbs, askar]

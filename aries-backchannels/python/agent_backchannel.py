@@ -3,17 +3,15 @@ import logging
 import os
 import random
 import traceback
+import debugpy
 from dataclasses import dataclass
 from typing import Any, Optional, Tuple
 
-import ptvsd
 from aiohttp import ClientSession, web
 from aiohttp.typedefs import Handler
 from typing_extensions import Literal, TypedDict
 
 from .utils import log_msg
-
-ptvsd.enable_attach()
 
 LOGGER = logging.getLogger(__name__)
 

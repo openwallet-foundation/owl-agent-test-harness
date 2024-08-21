@@ -54,10 +54,17 @@ runs:
         dest: "./.logs/docker-logs"
     - name: archive logs
       if: ${{ always() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: container-logs
         path: .logs
+        retention-days: 14
+    - name: archive agent logs
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: agent-logs
+        path: ./test-harness/.logs
         retention-days: 14
 branding:
   icon: "mic"

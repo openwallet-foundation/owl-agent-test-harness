@@ -3,7 +3,7 @@ pygments
 git+https://github.com/webpy/webpy.git#egg=web.py
 python3-indy
 pyyaml
-ptvsd
+debugpy
 aiohttp>=3.8.1
 ConfigArgParse
 typing_extensions

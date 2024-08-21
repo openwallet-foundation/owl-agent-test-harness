@@ -88,6 +88,12 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
         ), f"credential data has no filter for cred format {cred_format}"
         filters = {cred_format: context.filters[cred_format]}
 
+        # It the credential format is json-ls then get a holder did for the credentialSubject.id by calling the prepare-json-ld command.
+        if cred_format == CRED_FORMAT_JSON_LD:
+            holder_did_for_id = create_did_for_id(context, holder, cred_format)
+        else:
+            holder_did_for_id = None
+
         # This call may need to be formated by cred_format instead of version. Reassess when more types are used.
         credential_offer = format_cred_proposal_by_aip_version(
             context,
@@ -95,6 +101,7 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
             context.credential_data,
             context.connection_id_dict[holder][issuer],
             filters,
+            holder_did_for_id,
         )
 
     (resp_status, resp_text) = agent_backchannel_POST(
@@ -109,6 +116,28 @@ def step_impl(context, holder, cred_format, issuer, credential_data):
     # Get the thread ID from the response text.
     context.cred_thread_id = resp_json["thread_id"]
 
+
+def create_did_for_id(context, agent: str, cred_format: str = CRED_FORMAT_INDY):
+    if cred_format == CRED_FORMAT_JSON_LD:
+        agent_url = context.config.userdata.get(agent)
+
+        data = {"did_method": context.did_method, "proof_type": context.proof_type}
+
+        (resp_status, resp_text) = agent_backchannel_POST(
+            agent_url + "/agent/command/",
+            "issue-credential-v2",
+            operation="prepare-json-ld",
+            data=data,
+        )
+
+        assert (
+            resp_status == 200
+        ), f"issue-credential-v2/prepare-json-ld: resp_status {resp_status} is not 200; {resp_text}"
+        resp_json = json.loads(resp_text)
+
+        return resp_json["did"]
+    else:
+        raise Exception(f"Unknown credential format {cred_format}")
 
 @given('"{issuer}" offers the "{cred_format}" credential')
 @when('"{issuer}" offers the "{cred_format}" credential')
