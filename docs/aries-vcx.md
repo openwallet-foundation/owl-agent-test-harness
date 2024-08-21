@@ -4,8 +4,8 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>1.0.0rc6 | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0rc6 | aries-vcx<br>0.65.0 | aries-vcx<br>0.65.0 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>1.0.0 | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0 | aries-vcx<br>0.65.0 | aries-vcx<br>0.65.0 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 | [ariesvcx-ariesvcx](#runset-ariesvcx-ariesvcx) | aries-vcx<br>0.65.0 | aries-vcx<br>0.65.0 | aries-vcx<br>0.65.0 | aries-vcx<br>0.65.0 | AIP 1.0 | [**0 / 32<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
 | [javascript-ariesvcx](#runset-javascript-ariesvcx) | javascript<br>0.5.0-alpha.97 | aries-vcx<br>1.0.0 | javascript<br>0.5.0-alpha.97 | javascript<br>0.5.0-alpha.97 | AIP 1.0 | [**3 / 18<br>16%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
 
@@ -19,7 +19,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 0 out of 28 (0%)**
 
 
-*Last run: Wed Aug 14 01:37:31 UTC 2024*
+*Last run: Tue 20 Aug 2024 06:49:12 PM PDT*
 ```
 
 #### Current Runset Status
@@ -41,7 +41,7 @@ Runset Name: aries-vcx to acapy
 **Latest results: 0 out of 28 (0%)**
 
 
-*Last run: Wed Aug 14 02:57:20 UTC 2024*
+*Last run: Tue 20 Aug 2024 08:08:13 PM PDT*
 ```
 
 #### Current Runset Status
@@ -66,7 +66,7 @@ Runset Name: aries-vcx to aries-vcx
 **Latest results: 0 out of 32 (0%)**
 
 
-*Last run: Wed Aug 14 03:02:03 UTC 2024*
+*Last run: Tue 20 Aug 2024 08:12:33 PM PDT*
 ```
 
 #### Current Runset Status
@@ -89,7 +89,7 @@ Runset Name: javascript to aries-vcx
 **Latest results: 3 out of 18 (16%)**
 
 
-*Last run: Mon May 13 02:34:19 UTC 2024*
+*Last run: Sun 12 May 2024 07:34:19 PM PDT*
 ```
 
 #### Current Runset Status
