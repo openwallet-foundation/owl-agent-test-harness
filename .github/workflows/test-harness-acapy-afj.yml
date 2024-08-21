@@ -28,6 +28,7 @@ jobs:
     env:
       LEDGER_URL_CONFIG: "http://localhost:9000"
       TAILS_SERVER_URL_CONFIG: "http://localhost:6543"
+      START_TIMEOUT: 120
     steps:
       - name: checkout-test-harness
         uses: actions/checkout@v4

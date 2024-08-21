@@ -379,11 +379,10 @@ def step_impl(context, verifier):
     resp_json = json.loads(resp_text)
     assert resp_json["state"] == "done"
 
-    if context.support_revocation:
-        # Add the verified property returned to the credential verification dictionary to check in subsequent steps. Key by presentation thread id
-        context.credential_verification_dict[
-            context.presentation_thread_id
-        ] = strtobool(resp_json["verified"])
+    # Add the verified property returned to the credential verification dictionary to check in subsequent steps. Key by presentation thread id
+    context.credential_verification_dict[
+        context.presentation_thread_id
+    ] = strtobool(resp_json["verified"])
 
 
 @then('"{prover}" has the proof with formats verified')

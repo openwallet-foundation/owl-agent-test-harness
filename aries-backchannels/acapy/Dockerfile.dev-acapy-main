@@ -1,0 +1,15 @@
+FROM python:3.9-slim-bullseye
+
+WORKDIR /aries-backchannels
+
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+
+
+# The Backchannel is looking for it in ./bin, copy a file that invokes the ACA-Py installed script in /usr/local/bin
+RUN mkdir -p ./bin
+COPY acapy/bin/aca-py ./bin/aca-py
+
+ENV PYTHONPATH=/aries-backchannels
+ENV RUNMODE=docker
+

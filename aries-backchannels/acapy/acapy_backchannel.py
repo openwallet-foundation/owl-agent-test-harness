@@ -285,10 +285,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-mime-type"))
 
-        result.append(("--plugin", "universal_resolver"))
-        result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
+        result.append(("--universal-resolver"))
 
-        result.append(("--plugin", "redis_queue.v1_0.events"))
+        result.append(("--plugin", "redis_events.v1_0.redis_queue.events"))
         result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
         
         # This code for log level is included here because aca-py does not support the env var directly yet.
@@ -400,7 +399,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # This is a did-exchange message based on a Public DID non-invitation
             request_id = message["request_id"]
             push_resource(request_id, "didexchange-msg", message)
-        elif message["connection_protocol"] == "didexchange/1.0":
+        elif message["connection_protocol"] == "didexchange/1.0" or message["connection_protocol"] == "didexchange/1.1":
             # This is an did-exchange message based on a Non-Public DID invitation
             invitation_id = message["invitation_msg_id"]
             push_resource(invitation_id, "didexchange-msg", message)
@@ -1028,6 +1027,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             attachments = data.get("attachments", [])
             handshake_protocols = data.get("handshake_protocols", None)
             formatted_attachments = []
+            use_did_method = data.get("use_did_method", None)
+            use_did = data.get("use_did", None)
 
             for attachment in attachments:
                 message_type = attachment["@type"]
@@ -1081,6 +1082,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 ]
             else:
                 data["handshake_protocols"] = handshake_protocols or []
+
+            if use_did_method:
+                data["use_did_method"] = use_did_method
+
+            if use_did:
+                data["use_did"] = use_did
 
             # If mediator_connection_id is included we should use that as the mediator for this connection
             if mediation_id:
@@ -1171,6 +1178,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 command, message_name="didexchange-msg"
             )
             return (wh_status, wh_text)
+
+        # If data is not none and contains use_did_method, add it to the agent operation
+        if data and "use_did_method" in data:
+            agent_operation += f"?use_did_method={data['use_did_method']}"
+            data.pop("use_did_method")
 
         (resp_status, resp_text) = await self.admin_POST(agent_operation, data)
         if resp_status == 200:
@@ -2182,7 +2194,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             if topic == "connection":
                 # if the response contains didexchange/1.0, swap out the connection states for the did exchange states
                 # if "didexchange/1.0" in resp_json["connection_protocol"]:
-                if "didexchange/1.0" in data:
+                if "didexchange/1.0" in data or "didexchange/1.1" in data:
                     data = replace_state_values(
                         data,
                         old_state=agent_state,

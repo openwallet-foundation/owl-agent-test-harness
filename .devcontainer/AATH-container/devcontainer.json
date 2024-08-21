@@ -1,0 +1,51 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+	"name": "AATH Test Dev",
+	// Use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"build": {
+        // Path is relative to the devcontainer.json file.
+		"context": "../../aries-test-harness",
+        "dockerfile": "../../aries-test-harness/Dockerfile.dev-harness"
+    },
+
+	"workspaceMount": "source=${localWorkspaceFolder}/aries-test-harness,target=/aries-test-harness,type=bind",
+
+	"workspaceFolder": "/aries-test-harness",
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"docker-from-docker": "latest"
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	"runArgs": [
+		"--network=aath_network",
+		"--name=aath_test_dev"
+	],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "pip install --upgrade pip && \
+		pip install --no-cache-dir aiohttp behave allure-behave",
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {
+					"extensions.verifySignature": false
+				},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.debugpy",
+				"ms-python.vscode-pylance",
+				"alexkrechik.cucumberautocomplete",
+				"zainchen.json"
+			]
+		}
+	},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"remoteUser": "root"
+}

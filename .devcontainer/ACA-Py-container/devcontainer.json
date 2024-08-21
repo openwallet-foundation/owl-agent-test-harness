@@ -1,0 +1,68 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+	"name": "ACA-Py Backchannel Dev",
+	// Use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	//"dockerFile": "../../aries-backchannels/acapy/Dockerfile.dev-acapy-main",
+	"build": {
+        // Path is relative to the devcontainer.json file.
+		"context": "../../aries-backchannels",
+        "dockerfile": "../../aries-backchannels/acapy/Dockerfile.dev-acapy-main"
+    },
+
+	"workspaceMount": "source=${localWorkspaceFolder}/aries-backchannels/acapy,target=/aries-backchannels/acapy,type=bind",
+
+	"mounts": [
+		{ "source": "${localWorkspaceFolder}/aries-backchannels/python", "target": "/aries-backchannels/python", "type": "bind" },
+		{ "source": "${localWorkspaceFolder}/aries-backchannels/data", "target": "/aries-backchannels/data", "type": "bind" }
+	],
+
+	"workspaceFolder": "/aries-backchannels/acapy",
+	
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"docker-from-docker": "latest"
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [9020],
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"remoteUser": "root",
+
+	"runArgs": [
+		"--network=aath_network",
+		"--name=acme_agent"
+	],
+
+	"updateContentCommand": "apt-get update && \
+		apt-get install -y git gnupg2 software-properties-common curl && \
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && \
+		add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' && \
+		apt-get update && \
+		apt-get install -y libindy libnullpay",
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "pip install --upgrade pip && \
+		pip install -r /aries-backchannels/python/requirements.txt && \
+		pip install -r /aries-backchannels/acapy/requirements-main.txt && \
+		chmod +x ./bin/aca-py && \
+		./bin/aca-py --version > acapy-version.txt && \
+		mkdir -p /data-mount/ && \
+		cp /aries-backchannels/acapy/.build/acapy-main.data/plugin-config.yml /data-mount/plugin-config.yml",
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {
+				"extensions.verifySignature": false
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.debugpy",
+				"ms-python.vscode-pylance"
+			]
+		}
+	}
+}

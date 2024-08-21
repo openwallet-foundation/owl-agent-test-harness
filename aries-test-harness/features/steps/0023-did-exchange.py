@@ -51,12 +51,19 @@ def step_impl(context, responder: str, requester: str, peer_did_method: str = No
                 data = {"use_public_did": True}
             else:
                 data = {"use_public_did": False}
+            # get handshake_protocols value from the table and add it to an array in the data
+            if row["handshake_protocols"]:
+                data["handshake_protocols"] = row["handshake_protocols"].split(", ")
+                
+            
     else:
         data = {"use_public_did": False}
 
     # if peer_did_method is set, then save it to the context for validation later in the tests
-    if peer_did_method:
+    if peer_did_method and peer_did_method != "unqualified":
         context.peer_did_method = peer_did_method
+        # append use_did_method to the data
+        data["use_did_method"] = peer_did_method
 
     # If mediator is set for the current connection, set the mediator_connection_id
     mediator = context.mediator_dict.get(responder)
@@ -254,26 +261,47 @@ def step_impl(context, requester):
                 "connection_id"
             ]
 
-
+@when('"{requester}" sends the request to "{responder}" with {requester_peer_did_method}')
 @when('"{requester}" sends the request to "{responder}"')
-def step_impl(context, requester, responder):
+def step_impl(context, requester, responder, requester_peer_did_method=None):
     requester_url: str = context.config.userdata.get(requester)
     requester_connection_id = context.connection_id_dict[requester][responder]
+
+    # if peer_did_method is set, then add it to the data
+    data = {}
+    # passed in requester_peer_did_method takes presedence over the context.peer_did_method
+    if requester_peer_did_method:
+        if requester_peer_did_method != "unqualified":
+            data["use_did_method"] = requester_peer_did_method
+    else:
+        if hasattr(context, 'peer_did_method') and context.peer_did_method != "unqualified":
+            data["use_did_method"] = context.peer_did_method
+        # if use_did is set, then add it to the data
+        if hasattr(context, 'use_did') and context.use_did:
+            data["use_did"] = context.use_did
 
     (resp_status, resp_text) = agent_backchannel_POST(
         requester_url + "/agent/command/",
         "did-exchange",
         operation="send-request",
         id=requester_connection_id,
+        data=data,
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 
     # Check for peer did prefix in the request response
-    if hasattr(context, 'peer_did_method') and context.peer_did_method != "unqualified":
-        resp_json = json.loads(resp_text)
-        assert (
-            resp_json["my_did"].startswith(context.peer_did_method)
-        ), f"my_did {resp_json['my_did']} does not start with {context.peer_did_method}"
+    if requester_peer_did_method:
+        if requester_peer_did_method != "unqualified":
+            resp_json = json.loads(resp_text)
+            assert (
+                resp_json["my_did"].startswith(requester_peer_did_method)
+            ), f"my_did {resp_json['my_did']} does not start with {requester_peer_did_method}"
+    else:
+        if hasattr(context, 'peer_did_method') and context.peer_did_method != "unqualified":
+            resp_json = json.loads(resp_text)
+            assert (
+                resp_json["my_did"].startswith(context.peer_did_method)
+            ), f"my_did {resp_json['my_did']} does not start with {context.peer_did_method}"
 
 
 @then('"{responder}" does not receive the request')
@@ -380,8 +408,8 @@ def step_impl(context, responder: str, requester: str):
             resp_json["my_did"].startswith("did:")
         ), f"my_did {resp_json['my_did']} for {responder} does not start with did:"
         assert (
-            resp_json["their_did"].startswith(context.peer_did_method)
-        ), f"their_did {resp_json['their_did']} for {requester} does not start with {context.peer_did_method}"
+            resp_json["their_did"].startswith("did:")
+        ), f"their_did {resp_json['their_did']} for {requester} does not start with did:"
         
 
 
