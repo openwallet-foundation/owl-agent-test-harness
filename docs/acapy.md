@@ -4,12 +4,12 @@
 
 | Runset | ACME<br>(Issuer) | Bob<br>(Holder) | Faber<br>(Verifier) | Mallory<br>(Holder) | Scope | Results | 
 | ------ | :--------------: | :-------------: | :----------------: | :-----------------: | ----- | :-----: | 
-| [acapy-afj](#runset-acapy-afj) | acapy-main<br>1.0.0rc6 | javascript<br>0.5.0-alpha.97 | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | AIP 1.0 | [**38 / 39<br>97%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-aip10](#runset-acapy-aip10) | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | AIP 1.0 | [**35 / 35<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip10/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-aip20](#runset-acapy-aip20) | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | AIP 2.0 | [**61 / 61<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip20/reports/latest/index.html?redirect=false#behaviors) |
-| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>1.0.0rc6 | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0rc6 | acapy-main<br>1.0.0rc6 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
-| [afj-acapy](#runset-afj-acapy) | javascript<br>0.5.0-alpha.97 | acapy-main<br>1.0.0rc6 | javascript<br>0.5.0-alpha.97 | javascript<br>0.5.0-alpha.97 | AIP 1.0 | [**11 / 28<br>39%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
-| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0rc6 | aries-vcx<br>0.65.0 | aries-vcx<br>0.65.0 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-afj](#runset-acapy-afj) | acapy-main<br>1.0.0 | javascript<br>0.5.0-alpha.97 | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | AIP 1.0 | [**38 / 39<br>97%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-javascript/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-aip10](#runset-acapy-aip10) | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | AIP 1.0 | [**35 / 35<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip10/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-aip20](#runset-acapy-aip20) | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | AIP 2.0 | [**61 / 61<br>100%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-aip20/reports/latest/index.html?redirect=false#behaviors) |
+| [acapy-ariesvcx](#runset-acapy-ariesvcx) | acapy-main<br>1.0.0 | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0 | acapy-main<br>1.0.0 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/acapy-b-aries-vcx/reports/latest/index.html?redirect=false#behaviors) |
+| [afj-acapy](#runset-afj-acapy) | javascript<br>0.5.0-alpha.97 | acapy-main<br>1.0.0 | javascript<br>0.5.0-alpha.97 | javascript<br>0.5.0-alpha.97 | AIP 1.0 | [**11 / 28<br>39%**](https://allure.vonx.io/api/allure-docker-service/projects/javascript-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
+| [ariesvcx-acapy](#runset-ariesvcx-acapy) | aries-vcx<br>0.65.0 | acapy-main<br>1.0.0 | aries-vcx<br>0.65.0 | aries-vcx<br>0.65.0 | AIP 1.0 | [**0 / 28<br>0%**](https://allure.vonx.io/api/allure-docker-service/projects/aries-vcx-b-acapy/reports/latest/index.html?redirect=false#behaviors) |
 
 ## Runset Notes
 
@@ -21,7 +21,7 @@ Runset Name: ACA-PY to AFJ
 **Latest results: 38 out of 39 (97%)**
 
 
-*Last run: Wed Aug 14 00:45:07 UTC 2024*
+*Last run: Tue 20 Aug 2024 05:44:59 PM PDT*
 ```
 
 #### Current Runset Status
@@ -44,7 +44,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 35 out of 35 (100%)**
 
 
-*Last run: Wed Aug 14 01:07:57 UTC 2024*
+*Last run: Tue 20 Aug 2024 06:08:08 PM PDT*
 ```
 
 #### Current Runset Status
@@ -67,7 +67,7 @@ Runset Name: ACA-PY to ACA-Py
 **Latest results: 61 out of 61 (100%)**
 
 
-*Last run: Fri Aug 16 11:31:30 UTC 2024*
+*Last run: Tue 20 Aug 2024 06:40:49 PM PDT*
 ```
 
 #### Current Runset Status
@@ -90,7 +90,7 @@ Runset Name: acapy to aries-vcx
 **Latest results: 0 out of 28 (0%)**
 
 
-*Last run: Wed Aug 14 01:37:31 UTC 2024*
+*Last run: Tue 20 Aug 2024 06:49:12 PM PDT*
 ```
 
 #### Current Runset Status
@@ -112,7 +112,7 @@ Runset Name: AFJ to ACA-PY
 **Latest results: 11 out of 28 (39%)**
 
 
-*Last run: Wed Aug 14 02:35:54 UTC 2024*
+*Last run: Tue 20 Aug 2024 07:47:08 PM PDT*
 ```
 
 #### Current Runset Status
@@ -135,7 +135,7 @@ Runset Name: aries-vcx to acapy
 **Latest results: 0 out of 28 (0%)**
 
 
-*Last run: Wed Aug 14 02:57:20 UTC 2024*
+*Last run: Tue 20 Aug 2024 08:08:13 PM PDT*
 ```
 
 #### Current Runset Status
