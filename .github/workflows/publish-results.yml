@@ -1,0 +1,41 @@
+name: publish-docs 
+
+on:
+  workflow_dispatch:
+    # Publish `main` as latest only. Versions/tags are not published.
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch all commits/branches
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - uses: actions/cache@v4
+        with:
+          key: ${{ github.ref }}
+          path: .cache
+      - name: Install Python dependencies
+        run: pip install -r ./mkdocs-requirements.txt
+      - name: Configure git user
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Deploy docs
+        run: |
+          # Run a script to prepare all the files that have to be moved/updated to publish cleanly
+          ./gen-interop.sh
+          # Not really needed, but used in case we do want versions published in the future
+          VERSION=main
+          ALIAS=latest
+          mike deploy --push --update-aliases $VERSION $ALIAS
+          mike set-default latest

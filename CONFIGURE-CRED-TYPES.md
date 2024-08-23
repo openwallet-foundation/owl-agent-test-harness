@@ -2,12 +2,14 @@
 
 ## Contents<!-- omit in toc -->
 
--  [Default Test Credentials and the Need for More](#default-test-credentials-and-the-need-for-more)
--  [Defining Tests in Feature Files w/ Externalized Credential Info](#defining-tests-in-feature-files-with-externalized-credential-info)
--  [Credential Type Definitions](#credential-type-definitions)
--  [Credential Data](#credential-data)
--  [Proof Requests](#proof-requests)
--  [Proof Presentations](#proof-presentations)
+- [Default Test Credentials and the Need for More](#default-test-credentials-and-the-need-for-more)
+- [Defining Tests in Feature Files with Externalized Credential Info](#defining-tests-in-feature-files-with-externalized-credential-info)
+  - [Handling Multiple Credentials in a Proof](#handling-multiple-credentials-in-a-proof)
+- [Credential Type Definitions](#credential-type-definitions)
+- [Credential Data](#credential-data)
+- [Proof Requests](#proof-requests)
+- [Proof Presentations](#proof-presentations)
+- [Conclusion](#conclusion)
 
 ## Default Test Credentials and the Need for More
 Initially the Aries Agent Interop Tests were written with hard coded Credential Type Definitions, Credential Data for issued cedentials, and a canned Proof Request and Presentation of that Proof. This default behaviour for the tests is fine for quick cursory assessment of the protocol, however it was always a goal to provide a method of having this credential and proof input external to the tests, and to be able to quickly construct tests with different credential and proof data, driven from that external data.
@@ -35,7 +37,7 @@ Examples:
 ## Defining Tests in Feature Files with Externalized Credential Info
 Tests that have externalized input data for credentials and proofs look obviously different than the test above. They use Scenario tags and Example Data Tables to feed the test with input data. This input data is contains in json files located in `/aries-agent-test-harness/aries-test-harness/features/data`. 
 
-![Externalized Credentials](ExternalizedCredentials.png)
+![Externalized Credentials](docs/assets/ExternalizedCredentials.png)
 
  1. The *Credential Type* points to a file containing json that describes the credential in terms of what the types of data the credential contains, the schema, if you will. For the above you will find the `schema_driverslicense.json` file in `/aries-agent-test-harness/aries-test-harness/features/data`.
  2. The *Credential Data* points to the json contents of a file named cred_data_\<cred_type_name>. This file holds all data for all instances of credentials issued within the tests that use that credential type. For example. The example above will have a `cred_data_schema_driverslicense.json` file in `/aries-agent-test-harness/aries-test-harness/features/data`. This file will contain to sections, one for "Data_DL_MaxValues" and one for "Data_DL_MinValues".

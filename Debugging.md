@@ -1,4 +1,4 @@
-# Debug Backchannels
+# Debugging Backchannels
 
 ## VSCode
 

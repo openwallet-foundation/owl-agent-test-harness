@@ -1,0 +1,106 @@
+site_name: Aries Agent Test Harness (AATH) Interop Information
+repo_name: hyperledger/aries-agent-test-harness
+repo_url: https://github.com/hyperledger/aries-agent-test-harness
+theme:
+  name: material
+  logo: https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/Hyperledger_Aries_Logo_White.png
+  favicon: https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+  - content.code.copy
+  - navigation.expand
+  - navigation.footer
+  - navigation.instant
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.top
+  - navigation.tracking
+  - toc.follow
+#  - toc.integrate
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+plugins:
+  - search
+  - mike
+extra:
+  version:
+    provider: mike
+nav:
+- Aries Interoperability Information:
+    - Summary of Latest Results: README.md
+    - Introduction to Aries Interoperability: aries-interop-intro.md
+    - Aries Agent Test Harness Coverage: guide/TEST-COVERAGE.md
+- Latest Results by Agent:
+    - Aries Cloud Agent Python: acapy.md
+    - Credo-TS: javascript.md
+    - Aries VCX: aries-vcx.md
+- AATH Documentation:
+    - Aries Agent Test Harness: guide/README.md
+    - Test Development Guidelines: guide/TEST_DEV_GUIDE.md
+    - Aries Backchannels: guide/aries-backchannels.md
+    - Working with Dev Containers in AATH: guide/AATH_DEV_CONTAINERS.md
+    - Running AATH Locally: guide/RunningLocally.md
+    - Debugging Backchannels: guide/Debugging.md
+    - Running AATH Using Dev Containers: guide/AATH_DEV_CONTAINERS.md
+    - Managing Connection IDs in Tests: guide/ACCESS-CONNECTION-IDS.md
+    - Taking Advantage of Connection Reuse in AATH: guide/CONNECTION-REUSE.md
+    - Configuring Tests with Credential Types and Proofs: guide/CONFIGURE-CRED-TYPES.md
+    - Mobile Agent Testing: guide/MOBILE_AGENT_TESTING.md
+    - Retry Failed Test Scenarios: guide/RETRY-FAILED-SCENARIOS.md
+    - Aries Agent Test Harness Advanced Test Reporting: guide/TEST_REPORTING.md
+- Contributing:
+    - Contributing: guide/CONTRIBUTING.md
+    - Code of Conduct: guide/CODE_OF_CONDUCT.md
+    - Maintainers: guide/MAINTAINERS.md
+    - License: guide/LICENSE.md

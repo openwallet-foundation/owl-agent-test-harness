@@ -46,7 +46,7 @@ Support for testing new protocols will extend the OpenAPI spec with additional `
 
 ### Backchannel/Agent Interaction
 
-The test harness interacts with each published backchannel API using the following [common Python functions](../aries-test-harness/agent_backchannel_client.py). Pretty simple, eh?
+The test harness interacts with each published backchannel API using the following [common Python functions](https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-test-harness/agent_backchannel_client.py). Pretty simple, eh?
 
 ### Docker Build Script
 
@@ -68,7 +68,7 @@ The following lists the requirements for building AATH compatible docker images:
   - The lowest port number is passed to the TA on startup and is used by the test harness to send HTTP requests to the running TA.
   - The next nine higher ports are exposed across the docker network and can be used as needed by the TA.
 
-Examples are provided for aca-py [(`Dockerfile.acapy`)](acapy/Dockerfile.acapy), aries-vcx [(`Dockerfile.vcx`)](aries-vcx/Dockerfile.aries-vcx) and .NET [(`Dockerfile.dotnet`)](dotnet/Dockerfile.dotnet).
+See examples of this for aca-py [(`Dockerfile.acapy`)](https://github.com/hyperledger/aries-agent-test-harness/blob/main/acapy/Dockerfile.acapy) and aries-vcx [(`Dockerfile.vcx`)](https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-vcx/Dockerfile.aries-vcx).
 
 ### `./manage` Script Integration
 

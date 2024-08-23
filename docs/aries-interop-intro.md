@@ -1,13 +1,10 @@
----
-sort: 1 # follow a certain sequence of letters or numbers
----
 # Introduction to Aries Interoperability
 
 This website reports on the interoperability between different Hyperledger Aries agents. Interoperability includes how seamlessly the agents work together, and how well each agent adheres to community-agreed standards such as Aries Interop Profile (AIP) 1.0 and AIP 2.0.
 
 ## Why is interoperability important?
 
-As Digital Trust ecosystems evolve they will naturally require many technologies to coexist and cooperate. Worldwide projects will get larger and will start to overlap. Also, stakeholders and users will not care about incompatibilities; they will simply wish to take advantage of Digital Trust benefits. Finally, interoperability ultimately means more than just Aries agents working with each other, as it covers worldwide standards and paves the way for broader compatibility.
+As Digital Trust ecosystems evolve they will naturally require many technologies to coexist and cooperate. Worldwide projects will get larger and will start to overlap. Also, stakeholders and users will not care about incompatibilities; they will simply wish to take advantage of Digital Trust benefits. Interoperability ultimately means more than just Aries agents working with each other, as it covers worldwide standards and paves the way for broader compatibility.
 
 For all these reasons interoperability is incredibly important if Hyperledger Aries is to continue to flourish.
 
@@ -20,9 +17,13 @@ What unites Aries agents are the standards and protocols they aim to adhere to, 
 The Aries frameworks and agents currently tested for interoperability with AATH are:
 
 - [Aries Cloud Agent Python (ACA-Py)](https://github.com/hyperledger/aries-cloudagent-python)
+- [Credo-TS (Credo)](https://github.com/openwallet-foundation/credo-ts)
+- [Aries VCX](https://github.com/hyperledger/aries-vcx)
+
+The Aries frameworks and agents formerly tested for interoperability with AATH are:
+
 - [Aries Framework .NET](https://github.com/hyperledger/aries-framework-dotnet)
 - [Aries Framework Go](https://github.com/hyperledger/aries-framework-go)
-- [Aries Framework JavaScript](https://github.com/hyperledger/aries-framework-javascript)
 - [Findy Agent](https://findy-network.github.io/)
 
 ## How is interoperability assessed?
@@ -31,7 +32,7 @@ The Aries frameworks and agents currently tested for interoperability with AATH 
 
 Aries Agent Test Harness (AATH) is open-source software that runs a series of Aries interoperability tests and delivers the test results data to this website.
 
-AATH uses a [Behavior Driven-Development](URL) (BDD) framework to run tests that are designed to exercise the community-designed Aries Protocols, as defined in the [Aries RFC]([https://github.com/hyperledger/aries-rfcs](https://github.com/hyperledger/aries-rfcs)) GitHub repo.
+AATH uses a [Behavior Driven-Development](https://en.wikipedia.org/wiki/Behavior-driven_development) (BDD) framework to run tests that are designed to exercise the community-designed Aries Protocols, as defined in the [Aries RFC](https://hyperledger.github.io/aries-rfcs/latest/) specifications.
 
 The tests are executed by starting up four Test Agents (“Acme” is an issuer, “Bob” a holder/prover, “Faber” a verifier and Mallory, a sometimes malicious holder/prover), and having the test harness send instructions to the Test Agents to execute the steps of the BDD tests. Each Test Agent is a container that contains the “component under test” (an Aries agent or framework), along with a web server that communicates (using HTTP) with the test harness to receive instructions and report status, and translates and passes on those instructions to the “component under test” using whatever method works for that component. This is pictured in the diagram below, and is covered in more detail in the [AATH Architecture](https://github.com/hyperledger/aries-agent-test-harness#architecture) section of the repo’s README.
 
