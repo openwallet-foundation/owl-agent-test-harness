@@ -1,0 +1,3121 @@
+openapi: 3.0.0
+servers:
+  - description: Agent Backchannel
+    url: http://localhost:{port}
+    variables:
+      port:
+        description: >
+          The port to use for the backchannel
+            * Acme:    9020
+            * Bob:      9030
+            * Faber:    9040
+            * Mallory:  9050
+        enum:
+          - "9020"
+          - "9030"
+          - "9040"
+          - "9050"
+        default: "9020"
+info:
+  description: |
+    This page documents the backchannel API the test harness uses to communicate with agents under tests.
+
+    For more information checkout the [Aries Interoperability Information](http://aries-interop.info) page.
+  version: "1.0.0"
+  title: Aries Agent Test Harness Backchannel API
+  contact:
+    name: Province of British Columbia
+    url: https://github.com/hyperledger/aries-agent-test-harness
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+  x-logo:
+    url: https://raw.githubusercontent.com/hyperledger/aries-agent-test-harness/master/docs/assets/aries-logo.png
+    altText: Hyperledger Aries logo
+
+tags:
+  - name: Status
+    description: Agent commands to get agent status
+  - name: Agent
+    description: Agent commands to manage an agent
+  - name: Connection
+    description: Agent commands related to `connection` topic
+  - name: DID
+    description: Agent commands related to `did` topic
+  - name: Schema
+    description: Agent commands related to `schema` topic
+  - name: Credential Definition
+    description: Agent commands related to `credential-definition` topic
+  - name: Issue Credential
+    description: Agent commands related to `issue-credential` topic
+  - name: Issue Credential V2
+    description: Agent commands related to `issue-credential-v2` topic
+  - name: Credential
+    description: Agent commands related to `credential` topic
+  - name: Present Proof
+    description: Agent commands related to `proof` topic
+  - name: Present Proof V2
+    description: Agent commands related to `proof-v2` topic
+  - name: Present Proof V3
+    description: Agent commands related to `proof-v3` topic
+  - name: Revocation
+    description: Agent commands related to `revocation` topic
+  - name: DID Exchange
+    description: Agent commands related to `did-exchange` topic
+  - name: Out of Band
+    description: Agent commands related to `out-of-band` topic
+  - name: Coordinate Mediation
+    description: Agent commands related to `mediation` topic
+    externalDocs:
+      url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md
+  - name: Out of Band V2
+    description: Agent commands related to `oob-v2` topic
+paths:
+  /agent/command/status:
+    get:
+      summary: Get agent/backchannel status
+      operationId: StatusGet
+      tags:
+        - Status
+      responses:
+        200:
+          description: Agent is active
+          content:
+            application/json:
+              schema:
+                properties:
+                  status:
+                    type: string
+                    enum: [active]
+        418:
+          description: Agent is not active
+          content:
+            application/json:
+              schema:
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    enum: [inactive]
+  /agent/command/version:
+    get:
+      summary: Get agent/backchannel version
+      operationId: VersionGet
+      tags:
+        - Status
+      responses:
+        200:
+          description: Agent version
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 0.6.0
+
+  /agent/command/agent/start:
+    post:
+      summary: (re)start the agent
+      operationId: AgentStart
+      tags:
+        - Agent
+      requestBody:
+        required: true
+        description: >
+          Start the agent with specified parameters. If values are emitted, agent default values should be used.
+
+          For the `inbound_transports` and `outbound_transports` properties the following applies:
+            - If the property is left out the agent should use default configuration. For most agent this means only using HTTP inbound/outbound transport
+            - If the property is an empty array no inbound or outbound transport should be used. This is useful for testing cases where the agent doesn't have an inbound endpoint. An error should be thrown in if the transport requirements can't be met.
+            - If the property contains transports, the specified transports should be used.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - parameters
+                  properties:
+                    parameters:
+                      type: object
+                      properties:
+                        mime-type:
+                          type: string
+                          example: "didcomm/v2"
+                        inbound_transports:
+                          type: array
+                          items:
+                            type: string
+                            enum: [ws, http]
+                          example: [ws, http]
+                        outbound_transports:
+                          type: array
+                          items:
+                            type: string
+                            enum: [ws, http]
+                          example: [ws, http]
+      responses:
+        200:
+          description: OK
+        500:
+          description: Failed
+  /agent/command/connection:
+    get:
+      tags:
+        - Connection
+      summary: Get all connections
+      operationId: ConnectionGetAll
+      responses:
+        200:
+          description: Connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConnectionResponse"
+  /agent/command/connection/{connectionId}:
+    get:
+      tags:
+        - Connection
+      summary: Get connection by id
+      operationId: ConnectionGetById
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionResponse"
+        404:
+          description: Connection not found
+  /agent/command/connection/create-invitation:
+    post:
+      tags:
+        - Connection
+      summary: Create a new connection invitation
+      operationId: ConnectionCreateInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    mediator_connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                  - invitation
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  invitation:
+                    $ref: "#/components/schemas/ConnectionInvitation"
+  /agent/command/connection/receive-invitation:
+    post:
+      tags:
+        - Connection
+      summary: Receive an invitation
+      operationId: ConnectionReceiveInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  allOf:
+                    - $ref: "#/components/schemas/ConnectionInvitation"
+                    - properties:
+                        mediator_connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Invitation received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    $ref: "#/components/schemas/ConnectionState"
+  /agent/command/connection/accept-invitation:
+    post:
+      tags:
+        - Connection
+      summary: Accept an invitation
+      operationId: ConnectionAcceptInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    # With allOf we can overwrite properties of the $ref
+                    allOf:
+                      - $ref: "#/components/schemas/ConnectionState"
+                      - example: request
+  /agent/command/connection/accept-request:
+    post:
+      tags:
+        - Connection
+      summary: Accept a connection request
+      operationId: ConnectionAcceptRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    # With allOf we can overwrite properties of the $ref
+                    allOf:
+                      - $ref: "#/components/schemas/ConnectionState"
+                      - example: response
+  /agent/command/connection/send-ping:
+    post:
+      tags:
+        - Connection
+      summary: Send trust ping
+      operationId: ConnectionSendPing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+                data:
+                  type: object
+                  required:
+                    - comment
+                  properties:
+                    comment:
+                      $ref: "#/components/schemas/Comment"
+
+      responses:
+        200:
+          description: Trust ping sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    # With allOf we can overwrite properties of the $ref
+                    allOf:
+                      - $ref: "#/components/schemas/ConnectionState"
+                      - example: response
+
+  /agent/command/did:
+    get:
+      tags:
+        - DID
+      summary: Get public DID
+      operationId: DIDGetPublic
+      responses:
+        200:
+          description: Public DID information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  did:
+                    $ref: "#/components/schemas/Did"
+                  verkey:
+                    $ref: "#/components/schemas/Verkey"
+
+  /agent/command/schema/{schemaId}:
+    get:
+      tags:
+        - Schema
+      summary: Get schema by id
+      operationId: SchemaGetById
+      parameters:
+        - in: path
+          name: schemaId
+          required: true
+          schema:
+            $ref: "#/components/schemas/SchemaId"
+      responses:
+        200:
+          description: Schema
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schema"
+        404:
+          description: Schema not found
+  /agent/command/schema:
+    post:
+      tags:
+        - Schema
+      summary: Create a new schema
+      operationId: SchemaCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - schema_name
+                    - schema_version
+                    - attributes
+                  properties:
+                    schema_name:
+                      $ref: "#/components/schemas/SchemaName"
+                    schema_version:
+                      $ref: "#/components/schemas/SchemaVersion"
+                    attributes:
+                      $ref: "#/components/schemas/SchemaAttributes"
+
+      responses:
+        200:
+          description: Schema created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schema_id:
+                    $ref: "#/components/schemas/SchemaId"
+                  schema:
+                    $ref: "#/components/schemas/Schema"
+
+  /agent/command/credential-definition/{credentialDefinitionId}:
+    get:
+      tags:
+        - Credential Definition
+      summary: Get credential definition by id
+      operationId: CredentialDefinitionGetById
+      parameters:
+        - in: path
+          name: credentialDefinitionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialDefinitionId"
+      responses:
+        200:
+          description: Credential Definition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialDefinition"
+        404:
+          description: Credential Definition not found
+  /agent/command/credential-definition:
+    post:
+      tags:
+        - Credential Definition
+      summary: Create a new credential definition
+      operationId: CredentialDefinitionCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - support_revocation
+                    - schema_id
+                    - tag
+                  properties:
+                    support_revocation:
+                      type: boolean
+                      example: false
+                    schema_id:
+                      $ref: "#/components/schemas/SchemaId"
+                    tag:
+                      type: string
+                      example: default
+      responses:
+        200:
+          description: Credential definition created
+          content:
+            application/json:
+              schema:
+                properties:
+                  credential_definition_id:
+                    $ref: "#/components/schemas/CredentialDefinitionId"
+
+  /agent/command/issue-credential/{credentialExchangeThreadId}:
+    get:
+      tags:
+        - Issue Credential
+      summary: Get credential exchange record by thread id
+      operationId: IssueCredentialGetByThreadId
+      parameters:
+        - in: path
+          name: credentialExchangeThreadId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential Exchange
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueCredentialOperationResponse"
+        404:
+          description: Credential exchange record not found
+  /agent/command/issue-credential/send-proposal:
+    post:
+      tags:
+        - Issue Credential
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#propose-credential
+      operationId: IssueCredentialSendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                  properties:
+                    comment:
+                      $ref: "#/components/schemas/Comment"
+                    credential_proposal:
+                      $ref: "#/components/schemas/CredentialPreview"
+                    schema_issuer_did:
+                      $ref: "#/components/schemas/Did"
+                    schema_id:
+                      $ref: "#/components/schemas/SchemaId"
+                    schema_name:
+                      $ref: "#/components/schemas/SchemaName"
+                    schema_version:
+                      $ref: "#/components/schemas/SchemaVersion"
+                    cred_def_id:
+                      $ref: "#/components/schemas/CredentialDefinitionId"
+                    issuer_did:
+                      $ref: "#/components/schemas/Did"
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Credential proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential/create-offer:
+    post:
+      tags:
+        - Issue Credential
+      summary: Create credential offer.
+      description: >
+        Create an `offer-credential` message. The message can be used in a connection(less) out-of-band invitation.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#offer-credential
+      operationId: IssueCredentialCreateOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Create Offer to start credential issuance flow
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - credential_preview
+                        - cred_def_id
+                      properties:
+                        comment:
+                          $ref: "#/components/schemas/Comment"
+                        credential_preview:
+                          $ref: "#/components/schemas/CredentialPreview"
+                        cred_def_id:
+                          $ref: "#/components/schemas/CredentialDefinitionId"
+      responses:
+        200:
+          description: Credential offer created
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: object
+                    example:
+                      {
+                        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential",
+                        "@id": "be02fa0b-3177-4202-ba40-76f29e992541",
+                        "~thread": {},
+                        "offers~attach":
+                          [
+                            {
+                              "@id": "libindy-cred-offer-0",
+                              "mime-type": "application/json",
+                              "data":
+                                {
+                                  "base64": "eyJzY2hlbWFfaWQiOiAiV1ZxcHBVdjlYM1d5V0dyYm5zNVVpYToyOkV4YW1wbGU6MS4wIiwgImNyZWRfZGVmX2lkIjogIkVoeDNSWlNWMzhwbjNNWXZ4dEhoYlE6MzpDTDoyMTM3ODE6ZGVmYXVsdCIsICJrZXlfY29ycmVjdG5lc3NfcHJvb2YiOiB7ImMiOiAiMzQzMzE3Njc5MzU5MTI2MTAyNDU5Mzg4OTM5MzU4OTY1MzIzNzMxNTA1NDcyMjAyOTAzMjYzNjQzMjMwNzkwODUxMDY5MjI5MDMyMjEiLCAieHpfY2FwIjogIjY1ODkyMjE5MDg3Njc2NTIzMTI2NjY2MTExMTc5Njg2OTE4MDQ2NjI2MjAzNzcyNTU0NDYwOTYzMTI4NzYxMjU4OTI3MTYwNjI0MTY3NzE4ODgyMjYxMzEwNDA5NTc3OTAwMDU4OTc5NTk5NzcyODU5NTk2NzY0NTMwNjE3MzAxNzYzMDc1MDk1NTg1MjQ1MjQwMzI1MTIzNTE5ODUyNjU1Mjg4MDQ2MDQ0ODIwMzIwMjc5MjY4OTA4NTczMTc1ODAwODM2ODU3MTUzMjA0NjYyMDM5NTQwNTc5NjY4Nzk5MzY1OTczOTQ0MjYxOTg4NjY3OTM0MDQyODkzOTYyMDQyOTgyOTUwMjE3MTUxNTU0MDEzNTg3MjcwMzg4MTE3NDE1MDM5NzY4Mjk2NTYwNDU0NTk1MDc5NDEyNTg5MzY5NzAzNDIzNDE3NDE3OTEwMDI5MDM2MjE0MzA5OTMxODU2NjMwMzcxNTQzNzg2NTc5Njg3NTE4NTU0MDU2ODYwMjUxMTkxMjgyMjI1MDQ1NzU4MjQwNjIwMDMxMTAyMDI1NDc0MzE0MzY3NjUzOTI5ODg0Njk2MDQwMzQ0NTEyMDA4NzE1MzIxODYyMDc2NjIyMTYxNDM3Mzk1MDI4ODI4MzMxMzUwMDkxNDA5MTAyMDQ0ODg2ODcxMzE1NzkwNzYwOTMyMjE1OTg3MTg2MzMyNjg2MzcwNTU3MDgwOTk1MjU2NTgwMjA3NDE4MzgzNDcxMjI3ODE3MjkwNjE2MjUzOTA4ODA0NzIzODA2MDIxMjQ0Nzc0MTg1MzEwNzQzMjk4NDQ5MjAyNTIyMTczMDk5MDk5NDAxMDkzNTU1NzEyNDEzNDYwNDA2MzAzMjY2MDc0NDg3NTU0ODA5NzQ5NTg0MzMyMTQyNDM2NTUzMTE3MDI5NTA2MiIsICJ4cl9jYXAiOiBbWyJleGFtcGxlIiwgIjQ3OTQzOTIzNTUxMzk1Mjk0MDExOTEwNjExMDYxODM3OTEzNzU4MjAwODk2MzU0OTk3NDYxMjUzNjQxNDc3NjQzOTczNTcwNjY2OTgzMTkyNzg1Nzg5MzYzODEyMjk3NDY2MjA1ODE4NDQ0MTAzNzM3MjcwMzA0NjY3NjU3MTYxMjA2MzczODk2NDQ1OTUwMDcwMzcxNjQ3MjQ5MDIxNjk3NDA4MDkxNTc0MTQzODI1ODY2NzYyMzI5MDU4MDM2MzQ3Mjc1NjY1OTE1NjEwMTIxNDYxMDc2NTg3MDE4NTcwMTg5MTUzNzg4NTQ0NTM5NjY5NjY0NjAzODA5MTYzODYzNzMzODEwODI5NTQ0Njc1ODk1MDc2MTgyODA1NDc4MTMxMTMzMDg5NDEzMDU2MDgyNTUwMjE3Njk2ODMyNTg5Nzk2NzI1NzM0MTQ0OTg2MTI3OTc4NzEyMTQ5NDM4ODE1NzA2MDM0NzY4NTg2NzQ3MzM2MjMwMzk4NDAxMTU5NTA4NzgzMTQ5MDMyMDY5NTUzODQxMDE1NzE5NDk4MjE2OTEyNDAzMDcyMTMxNzgyMjg2MDE2MzIzMDY1ODMxMDUxMDU0MTIyNzMwODU0Njk1NzMyMzAyNzc0ODgwMTcyNTI0OTk3NTk0MjE1MjE1NzI2MTU1MjY5Mzk3MTUxMDg5NzE2MTc1MjQxMzg0NTEwMTI3MjI5NDI5OTcyNzU2NzMzMzIyODg5MjgxODUxNjMxNzcxNTAwOTA5ODkzNTgxNDA2MzQ4MTgxODc2NDk3NjQ2OTE5MTIzNDI1NzIwNTQ5MjE1MDE4NzE4Mzg1NjAxNTcwMzE5NzQ4MjAwMDgyMDk2MzQzMTIzMTE2NjU3NTU4ODMxODU1NjQ2NjU1NTQ2ODI5Mjk5NjQzMjM0OTYxODAwMTg4MiJdLCBbIm1hc3Rlcl9zZWNyZXQiLCAiMzg0NzYyNzI1ODkxMDM5MDIzNjUyNjUzMDU0MzAxNDUzOTk1MDk2NTAwMTQxNzQxNDQ5OTIyODY5OTEwNTc5NDU3OTE1MTAxNTU4NzgwODQ3MzU1NTMxMjgyOTI1MTQ5NTA1NzA3NDM4OTQyMDAyODk1NjQ4ODA5MTgyODAxOTc2ODgyMDMxMTcxNTMwNTYwODc5NDQ2ODczMjg3NzA2MTY5OTEzODA0MTY1Nzg4Njc2OTY4MDI3MTI4NTE4MDcyMjU2NTAxMjUxMzQ4Nzc4NzM3MzE4NzAyMTAxODE1NTU0NzE0ODQ4NjQ1NTA5MTczMjQ1NDYzOTE0NTM3MjYzODA5NzAwNDc2NjM2NzE2OTQ1NjgxNTMzMTA2MTM3MjY5MDc1MzY5MjEwOTExNTc5NDY5MTc3NjI5MjA0NDA0MjQ4MTA2MzExNzI5MjE1MTQ4ODM4MTc1NDcwMDg1ODE5OTk2MTk5MjQ0MDA5MTQ5ODg3NzMzMjQ0NjU1NzMxODYyNjYwODAwNzU1MTUxNTkwNDI0MDY0NjIwMTE5OTk5NjM3NjUyNTkxMTgwMDA3MDA2ODcyMTkzMTUzODM2OTg3MDQ5MjQyNzYyNDMwMjE3NTc2NDI2ODM1MzIyODQxNzIyMTE3ODY1Njg2MzMzOTE1NjYzMDgwODI5NTQ3MTY1NTYwMTY2ODMyODgzODgxNjc1MDY2MjUxOTM3NDA5Njk4NTE0NzkyMDYyNDgwMzQxMTUxMTkwMTk5MjcwOTkyMDgzOTgyNTIzMzI0MzU5OTUyNjUyMzQ5MDY5ODE5NTEyOTQwMzUwMzM2NDMwOTE4OTMwODQ2MjA4MTMxNzEzNDI0NTczNzY4NDQ0ODE2Njc4MTM4OTM2MTUyNzY1MzQwOTA4ODM5MTA2MjkyOTcyNTM2MjIzMjEyIl1dfSwgIm5vbmNlIjogIjE5MDU3NTc5MDc0ODIyODA1NTkzODA4MSJ9",
+                                },
+                            },
+                          ],
+                        "credential_preview":
+                          {
+                            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+                            "attributes":
+                              [
+                                {
+                                  "name": "example",
+                                  "mime-type": "image/jpeg",
+                                  "value": "martini",
+                                },
+                              ],
+                          },
+                      }
+                  record:
+                    allOf:
+                      - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                      - properties:
+                          state:
+                            example: offer-sent
+  /agent/command/issue-credential/send-offer:
+    post:
+      tags:
+        - Issue Credential
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#offer-credential
+      operationId: IssueCredentialSendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Offer to start credential issuance flow
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - credential_preview
+                      properties:
+                        comment:
+                          $ref: "#/components/schemas/Comment"
+                        credential_preview:
+                          $ref: "#/components/schemas/CredentialPreview"
+                        cred_def_id:
+                          $ref: "#/components/schemas/CredentialDefinitionId"
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                - title: Send Offer in response to Proposal
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential offer sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential/send-request:
+    post:
+      tags:
+        - Issue Credential
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#request-credential
+      operationId: IssueCredentialSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - title: Send Request to start credential issuance flow
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ConnectionId"
+                - title: Send Request in response to Offer
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential/issue:
+    post:
+      tags:
+        - Issue Credential
+      summary: Issue Credential
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#issue-credential
+      operationId: IssueCredentialIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  properties:
+                    comment:
+                      $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential/store:
+    post:
+      tags:
+        - Issue Credential
+      summary: Store Credential
+      operationId: IssueCredentialStore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - required:
+                      - credential_id
+                    properties:
+                      state:
+                        example: done
+
+  /agent/command/issue-credential-v2/{credentialExchangeThreadId}:
+    get:
+      tags:
+        - Issue Credential V2
+      summary: Get credential exchange v2 record by thread id
+      operationId: IssueCredentialV2GetByThreadId
+      parameters:
+        - in: path
+          name: credentialExchangeThreadId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential Exchange v2
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueCredentialOperationResponse"
+        404:
+          description: Credential exchange record not found
+  /agent/command/issue-credential-v2/prepare-json-ld:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Prepare for issuing a JSON-LD credential (RFC0593)
+      operationId: IssueCredentialV2PrepareJsonLD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - did_method
+                - proof_type
+              properties:
+                did_method:
+                  $ref: "#/components/schemas/DidMethod"
+                proof_type:
+                  $ref: "#/components/schemas/ProofType"
+      responses:
+        200:
+          description: Ready to issue a JSON-LD credential
+          content:
+            application/json:
+              schema:
+                required:
+                  - did
+                properties:
+                  did:
+                    $ref: "#/components/schemas/FullDid"
+  /agent/command/issue-credential-v2/send-proposal:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#propose-credential
+      operationId: IssueCredentialV2SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - filter
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    credential_preview:
+                      allOf:
+                        - $ref: "#/components/schemas/CredentialPreview"
+                        - properties:
+                            "@type":
+                              example: "issue-credential/2.0/credential-preview"
+                    filter:
+                      $ref: "#/components/schemas/IssueCredentialV2CredentialProposalFilter"
+
+      responses:
+        200:
+          description: Credential proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential-v2/send-offer:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#offer-credential
+      operationId: IssueCredentialV2SendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Offer to start credential issuance flow
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - filter
+                      properties:
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                        credential_preview:
+                          allOf:
+                            - $ref: "#/components/schemas/CredentialPreview"
+                            - properties:
+                                "@type":
+                                  example: "issue-credential/2.0/credential-preview"
+                        filter:
+                          $ref: "#/components/schemas/IssueCredentialV2CredentialProposalFilter"
+                - title: Send Offer in response to Proposal
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential offer sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential-v2/create-offer:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Create credential offer
+      description: >
+        Create an `offer-credential` message. The message can be used in a connection(less) out-of-band invitation.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#offer-credential
+      operationId: IssueCredentialV2CreateOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: Create Offer to start credential issuance flow
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - filter
+                  properties:
+                    credential_preview:
+                      allOf:
+                        - $ref: "#/components/schemas/CredentialPreview"
+                        - properties:
+                            "@type":
+                              example: "issue-credential/2.0/credential-preview"
+                    filter:
+                      $ref: "#/components/schemas/IssueCredentialV2CredentialProposalFilter"
+
+      responses:
+        200:
+          description: Credential offer created
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: object
+                    example:
+                      {
+                        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/2.0/offer-credential",
+                        "@id": "bfe69ea4-72d7-4be1-97d0-8a499b6eb526",
+                        "formats":
+                          [
+                            {
+                              "attach_id": "indy",
+                              "format": "hlindy/cred-abstract@v2.0",
+                            },
+                          ],
+                        "offers~attach":
+                          [
+                            {
+                              "@id": "indy",
+                              "mime-type": "application/json",
+                              "data":
+                                {
+                                  "base64": "eyJzY2hlbWFfaWQiOiAiV1ZxcHBVdjlYM1d5V0dyYm5zNVVpYToyOkV4YW1wbGU6MS4wIiwgImNyZWRfZGVmX2lkIjogIkVoeDNSWlNWMzhwbjNNWXZ4dEhoYlE6MzpDTDoyMTM3ODE6ZGVmYXVsdCIsICJrZXlfY29ycmVjdG5lc3NfcHJvb2YiOiB7ImMiOiAiMzQzMzE3Njc5MzU5MTI2MTAyNDU5Mzg4OTM5MzU4OTY1MzIzNzMxNTA1NDcyMjAyOTAzMjYzNjQzMjMwNzkwODUxMDY5MjI5MDMyMjEiLCAieHpfY2FwIjogIjY1ODkyMjE5MDg3Njc2NTIzMTI2NjY2MTExMTc5Njg2OTE4MDQ2NjI2MjAzNzcyNTU0NDYwOTYzMTI4NzYxMjU4OTI3MTYwNjI0MTY3NzE4ODgyMjYxMzEwNDA5NTc3OTAwMDU4OTc5NTk5NzcyODU5NTk2NzY0NTMwNjE3MzAxNzYzMDc1MDk1NTg1MjQ1MjQwMzI1MTIzNTE5ODUyNjU1Mjg4MDQ2MDQ0ODIwMzIwMjc5MjY4OTA4NTczMTc1ODAwODM2ODU3MTUzMjA0NjYyMDM5NTQwNTc5NjY4Nzk5MzY1OTczOTQ0MjYxOTg4NjY3OTM0MDQyODkzOTYyMDQyOTgyOTUwMjE3MTUxNTU0MDEzNTg3MjcwMzg4MTE3NDE1MDM5NzY4Mjk2NTYwNDU0NTk1MDc5NDEyNTg5MzY5NzAzNDIzNDE3NDE3OTEwMDI5MDM2MjE0MzA5OTMxODU2NjMwMzcxNTQzNzg2NTc5Njg3NTE4NTU0MDU2ODYwMjUxMTkxMjgyMjI1MDQ1NzU4MjQwNjIwMDMxMTAyMDI1NDc0MzE0MzY3NjUzOTI5ODg0Njk2MDQwMzQ0NTEyMDA4NzE1MzIxODYyMDc2NjIyMTYxNDM3Mzk1MDI4ODI4MzMxMzUwMDkxNDA5MTAyMDQ0ODg2ODcxMzE1NzkwNzYwOTMyMjE1OTg3MTg2MzMyNjg2MzcwNTU3MDgwOTk1MjU2NTgwMjA3NDE4MzgzNDcxMjI3ODE3MjkwNjE2MjUzOTA4ODA0NzIzODA2MDIxMjQ0Nzc0MTg1MzEwNzQzMjk4NDQ5MjAyNTIyMTczMDk5MDk5NDAxMDkzNTU1NzEyNDEzNDYwNDA2MzAzMjY2MDc0NDg3NTU0ODA5NzQ5NTg0MzMyMTQyNDM2NTUzMTE3MDI5NTA2MiIsICJ4cl9jYXAiOiBbWyJleGFtcGxlIiwgIjQ3OTQzOTIzNTUxMzk1Mjk0MDExOTEwNjExMDYxODM3OTEzNzU4MjAwODk2MzU0OTk3NDYxMjUzNjQxNDc3NjQzOTczNTcwNjY2OTgzMTkyNzg1Nzg5MzYzODEyMjk3NDY2MjA1ODE4NDQ0MTAzNzM3MjcwMzA0NjY3NjU3MTYxMjA2MzczODk2NDQ1OTUwMDcwMzcxNjQ3MjQ5MDIxNjk3NDA4MDkxNTc0MTQzODI1ODY2NzYyMzI5MDU4MDM2MzQ3Mjc1NjY1OTE1NjEwMTIxNDYxMDc2NTg3MDE4NTcwMTg5MTUzNzg4NTQ0NTM5NjY5NjY0NjAzODA5MTYzODYzNzMzODEwODI5NTQ0Njc1ODk1MDc2MTgyODA1NDc4MTMxMTMzMDg5NDEzMDU2MDgyNTUwMjE3Njk2ODMyNTg5Nzk2NzI1NzM0MTQ0OTg2MTI3OTc4NzEyMTQ5NDM4ODE1NzA2MDM0NzY4NTg2NzQ3MzM2MjMwMzk4NDAxMTU5NTA4NzgzMTQ5MDMyMDY5NTUzODQxMDE1NzE5NDk4MjE2OTEyNDAzMDcyMTMxNzgyMjg2MDE2MzIzMDY1ODMxMDUxMDU0MTIyNzMwODU0Njk1NzMyMzAyNzc0ODgwMTcyNTI0OTk3NTk0MjE1MjE1NzI2MTU1MjY5Mzk3MTUxMDg5NzE2MTc1MjQxMzg0NTEwMTI3MjI5NDI5OTcyNzU2NzMzMzIyODg5MjgxODUxNjMxNzcxNTAwOTA5ODkzNTgxNDA2MzQ4MTgxODc2NDk3NjQ2OTE5MTIzNDI1NzIwNTQ5MjE1MDE4NzE4Mzg1NjAxNTcwMzE5NzQ4MjAwMDgyMDk2MzQzMTIzMTE2NjU3NTU4ODMxODU1NjQ2NjU1NTQ2ODI5Mjk5NjQzMjM0OTYxODAwMTg4MiJdLCBbIm1hc3Rlcl9zZWNyZXQiLCAiMzg0NzYyNzI1ODkxMDM5MDIzNjUyNjUzMDU0MzAxNDUzOTk1MDk2NTAwMTQxNzQxNDQ5OTIyODY5OTEwNTc5NDU3OTE1MTAxNTU4NzgwODQ3MzU1NTMxMjgyOTI1MTQ5NTA1NzA3NDM4OTQyMDAyODk1NjQ4ODA5MTgyODAxOTc2ODgyMDMxMTcxNTMwNTYwODc5NDQ2ODczMjg3NzA2MTY5OTEzODA0MTY1Nzg4Njc2OTY4MDI3MTI4NTE4MDcyMjU2NTAxMjUxMzQ4Nzc4NzM3MzE4NzAyMTAxODE1NTU0NzE0ODQ4NjQ1NTA5MTczMjQ1NDYzOTE0NTM3MjYzODA5NzAwNDc2NjM2NzE2OTQ1NjgxNTMzMTA2MTM3MjY5MDc1MzY5MjEwOTExNTc5NDY5MTc3NjI5MjA0NDA0MjQ4MTA2MzExNzI5MjE1MTQ4ODM4MTc1NDcwMDg1ODE5OTk2MTk5MjQ0MDA5MTQ5ODg3NzMzMjQ0NjU1NzMxODYyNjYwODAwNzU1MTUxNTkwNDI0MDY0NjIwMTE5OTk5NjM3NjUyNTkxMTgwMDA3MDA2ODcyMTkzMTUzODM2OTg3MDQ5MjQyNzYyNDMwMjE3NTc2NDI2ODM1MzIyODQxNzIyMTE3ODY1Njg2MzMzOTE1NjYzMDgwODI5NTQ3MTY1NTYwMTY2ODMyODgzODgxNjc1MDY2MjUxOTM3NDA5Njk4NTE0NzkyMDYyNDgwMzQxMTUxMTkwMTk5MjcwOTkyMDgzOTgyNTIzMzI0MzU5OTUyNjUyMzQ5MDY5ODE5NTEyOTQwMzUwMzM2NDMwOTE4OTMwODQ2MjA4MTMxNzEzNDI0NTczNzY4NDQ0ODE2Njc4MTM4OTM2MTUyNzY1MzQwOTA4ODM5MTA2MjkyOTcyNTM2MjIzMjEyIl1dfSwgIm5vbmNlIjogIjE5MDU3NTc5MDc0ODIyODA1NTkzODA4MSJ9",
+                                },
+                            },
+                          ],
+                        "credential_preview":
+                          {
+                            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/2.0/credential-preview",
+                            "attributes":
+                              [
+                                {
+                                  "name": "example",
+                                  "mime-type": "image/jpeg",
+                                  "value": "martini",
+                                },
+                              ],
+                          },
+                      }
+                  record:
+                    allOf:
+                      - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                      - properties:
+                          state:
+                            example: offer-sent
+  /agent/command/issue-credential-v2/send-request:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#request-credential
+      operationId: IssueCredentialV2SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - title: Send Request in response to Offer
+                  description: It is currently not possible yet to start from a credential request, even though supported for some credential types (e.g. JSON-LD)
+                  required:
+                    - id
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential-v2/issue:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Issue Credential
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2#issue-credential
+      operationId: IssueCredentialV2Issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  properties:
+                    comment:
+                      $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential-v2/store:
+    post:
+      tags:
+        - Issue Credential V2
+      summary: Store Credential
+      operationId: IssueCredentialV2Store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - required:
+                      - indy
+                      - json-ld
+                    properties:
+                      state:
+                        example: done
+                      indy:
+                        required:
+                          - credential_id
+                        properties:
+                          credential_id:
+                            $ref: "#/components/schemas/CredentialId"
+                      json-ld:
+                        required:
+                          - credential_id
+                        properties:
+                          credential_id:
+                            $ref: "#/components/schemas/CredentialId"
+
+  /agent/command/issue-credential-v3/send-proposal:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential proposal
+      description: >
+        Send a `propose-credential` message to connection with `connection_id` and `pthid` in body.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#propose-credential
+      operationId: IssueCredentialV3SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - pthid
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    pthid:
+                      $ref: "#/components/schemas/pthid"
+
+      responses:
+        200:
+          description: Credential proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/issue-credential-v3/retrieve-credential-proposal:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Propose Credential object received by the agent.
+      description: >
+        Retrieves the Propose Credential object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialProposal
+
+      responses:
+        200:
+          description: Propose Credential object
+  /agent/command/issue-credential-v3/send-offer:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential offer
+      description: >
+        Send an `offer-credential` message.
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#offer-credential
+      operationId: IssueCredentialV3SendOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Credential offer sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: offer-sent
+  /agent/command/issue-credential-v3/send-request:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Send credential request
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#request-credential
+      operationId: IssueCredentialV3SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+
+      responses:
+        200:
+          description: Credential request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/issue-credential-v3/retrieve-credential-application:
+    get:
+      tags:
+        - Issue Credential V3
+      summary: Retrieves the Credential Application object received by the agent.
+      description: >
+        Retrieves the Credential Application object received by the agent.
+      externalDocs:
+        url: https://identity.foundation/waci-presentation-exchange/#issuance-2
+      operationId: IssueCredentialV3RetrieveCredentialApplication
+
+      responses:
+        200:
+          description: Credential Application object
+  /agent/command/issue-credential-v3/issue:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Issue credential
+      externalDocs:
+        url: https://github.com/decentralized-identity/waci-presentation-exchange/blob/main/issue_credential/README.md#issue-credential
+      operationId: IssueCredentialV3Issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+      responses:
+        200:
+          description: Credential issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - properties:
+                      state:
+                        example: credential-issued
+  /agent/command/issue-credential-v3/store:
+    post:
+      tags:
+        - Issue Credential V3
+      summary: Store/accept credential
+      operationId: IssueCredentialV3Store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Credential stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/IssueCredentialOperationResponse"
+                  - required:
+                      - credential_id
+                    properties:
+                      state:
+                        example: done
+
+  /agent/command/revocation/revoke:
+    post:
+      tags:
+        - Revocation
+      summary: Revoke Credential
+      operationId: RevocationRevokeCredential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    cred_rev_id:
+                      $ref: "#/components/schemas/IndyCredentialRevocationId"
+                    rev_registry_id:
+                      $ref: "#/components/schemas/IndyRevocationRegistryId"
+                    publish_immediately:
+                      type: boolean
+                    notify_connection_id:
+                      description: Id of the connection to notify of the revocation. If not present, will not notify
+                      $ref: "#/components/schemas/ConnectionId"
+                  required:
+                    - cred_rev_id
+                    - rev_registry_id
+                    - publish_immediately
+
+      responses:
+        200:
+          description: Credential revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+  /agent/response/revocation-notification/{threadId}:
+    get:
+      tags:
+        - Revocation
+      summary: Get revocation notification message based on the revocation notification message `thread_id` property.
+      operationId: RevocationGetNotificationByThreadId
+      parameters:
+        - in: path
+          name: threadId
+          description: The value of the `threadId` property in the revocation notification message
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Revocation Notification
+          content:
+            application/json:
+              schema:
+                properties:
+                  thread_id:
+                    type: string
+  /agent/command/credential/{credentialId}:
+    get:
+      tags:
+        - Credential
+      summary: Get credential by id
+      operationId: CredentialGetById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - title: Indy Credential
+                    description: Expected response for an Indy credential
+                    required:
+                      - referent
+                      - schema_id
+                      - cred_def_id
+                    properties:
+                      referent:
+                        $ref: "#/components/schemas/CredentialId"
+                      schema_id:
+                        $ref: "#/components/schemas/SchemaId"
+                      cred_def_id:
+                        $ref: "#/components/schemas/CredentialDefinitionId"
+                  - title: W3C Credential
+                    description: Expected response for a W3C credential
+                    required:
+                      - credential_id
+                      - credential
+                    properties:
+                      credential_id:
+                        $ref: "#/components/schemas/CredentialId"
+                      credential:
+                        $ref: "#/components/schemas/W3CCredential"
+        404:
+          description: Credential not found
+    delete:
+      tags:
+        - Credential
+      summary: Delete credential by id
+      operationId: CredentialDeleteById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+
+        404:
+          description: Credential not found
+  /agent/command/credential/revoked/{credentialId}:
+    get:
+      tags:
+        - Credential
+      summary: Get Credential Revocation Status
+      operationId: CredentialGetRevocationStatusById
+      parameters:
+        - in: path
+          name: credentialId
+          required: true
+          schema:
+            $ref: "#/components/schemas/CredentialId"
+      responses:
+        200:
+          description: Credential Revocation Status
+          content:
+            application/json:
+              schema:
+                required:
+                  - revoked
+                properties:
+                  revoked:
+                    type: boolean
+        404:
+          description: Credential not found
+
+  /agent/command/proof/{presentationExchangeThreadId}:
+    get:
+      tags:
+        - Present Proof
+      summary: Get presentation exchange record by thread id
+      operationId: PresentProofGetByThreadId
+      parameters:
+        - in: path
+          name: presentationExchangeThreadId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation Exchange
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresentProofOperationResponse"
+        404:
+          description: Presentation exchange record not found
+  /agent/command/proof/send-proposal:
+    post:
+      tags:
+        - Present Proof
+      summary: Send presentation proposal
+      description: >
+        Send a `propose-presentation` message to connection with `connection_id` in body.
+        When the backchannel sends a `send-proposal` operation to a backchannel it sends an `presentation-preview` inner message.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#propose-presentation
+      operationId: PresentProofSendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - presentation_proposal
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    presentation_proposal:
+                      $ref: "#/components/schemas/PresentationPreview"
+      responses:
+        200:
+          description: Presentation proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/proof/send-request:
+    post:
+      tags:
+        - Present Proof
+      summary: Send presentation request
+      description: >
+        Send a `request-presentation` message to connection with `connection_id` in body.
+        When the backchannel sends a `send-request` operation to a backchannel it sends the (almost) complete `request-presentation` message. However the data inside the proposal is not base64 encoded yet.
+        See the [`proof_request_json`](https://github.com/hyperledger/indy-sdk/blob/57dcdae74164d1c7aa06f2cccecaae121cefac25/libindy/src/api/anoncreds.rs#L1415-L1432) docs for expected contents of the data for Indy credentials.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#request-presentation
+      operationId: PresentProofSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - connection_id
+                    - presentation_request
+                  properties:
+                    connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    presentation_request:
+                      $ref: "#/components/schemas/PresentationRequestMessage"
+      responses:
+        200:
+          description: Presentation request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/proof/send-presentation:
+    post:
+      tags:
+        - Present Proof
+      summary: Send presentation
+      description: >
+        Send a `presentation` message in response to presentation request with specified thread id.
+        See the [`requested_credentials_json`](https://github.com/hyperledger/indy-sdk/blob/57dcdae74164d1c7aa06f2cccecaae121cefac25/libindy/src/api/anoncreds.rs#L1433-L1445) docs for expected contents of the data for Indy credentials.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#presentation
+      operationId: PresentProofSendPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  allOf:
+                    - $ref: "#/components/schemas/RequestedCredentials"
+                    - type: object
+                      properties:
+                        comment:
+                          $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Presentation sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: presentation-sent
+  /agent/command/proof/verify-presentation:
+    post:
+      tags:
+        - Present Proof
+      summary: Verify presentation
+      description: >
+        Verify the received presentation with specified thread id.
+      operationId: PresentProofVerifyPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation verified
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: done
+
+  /agent/command/proof-v2/send-request:
+    post:
+      tags:
+        - Present Proof V2
+      summary: Send presentation request
+      description: >
+        Send a `request-presentation` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0454-present-proof-v2/README.md#request-presentation
+      operationId: PresentProofV2SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Indy Proof Request
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - presentation_request
+                      properties:
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                        presentation_request:
+                          allOf:
+                            - $ref: "#/components/schemas/PresentProofV2SendRequestIndy"
+                            - properties:
+                                connection_id:
+                                  $ref: "#/components/schemas/ConnectionId"
+                              required:
+                                - connection_id
+                - title: Send DIF Proof Request
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - connection_id
+                        - presentation_request
+                      properties:
+                        connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                        presentation_request:
+                          allOf:
+                            - $ref: "#/components/schemas/PresentProofV2SendRequestDIF"
+                            - properties:
+                                connection_id:
+                                  $ref: "#/components/schemas/ConnectionId"
+                              required:
+                                - connection_id
+      responses:
+        200:
+          description: Presentation request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/proof-v2/send-presentation:
+    post:
+      tags:
+        - Present Proof V2
+      summary: Send presentation
+      description: >
+        Send a `presentation` message in response to presentation request with specified thread id.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0454-present-proof-v2/README.md#presentation
+      operationId: PresentProofV2SendPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  title: TODO
+      responses:
+        200:
+          description: Presentation sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: presentation-sent
+  /agent/command/proof-v2/verify-presentation:
+    post:
+      tags:
+        - Present Proof V2
+      summary: Verify presentation
+      description: >
+        Verify the received presentation with specified thread id.
+      operationId: PresentProofV2VerifyPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation verified
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: done
+                      verified:
+                        type: boolean
+                        example: true
+                    required:
+                      - state
+                      - verified
+
+  /agent/command/proof-v3/send-proposal:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Send presentation proposal
+      description: >
+        Send a `propose-presentation` message to connection with `connection_id` in body.
+      operationId: PresentProofV3SendProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              anyOf:
+                - title: Send Proposal
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - presentation_proposal
+                      properties:
+                        presentation_proposal:
+                          required:
+                            - connection_id
+                          properties:
+                            connection_id:
+                              $ref: "#/components/schemas/ConnectionId"
+                            comment:
+                              $ref: "#/components/schemas/Comment"
+      responses:
+        200:
+          description: Presentation proposal sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: proposal-sent
+  /agent/command/proof-v3/send-request:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Send present-proof v3 presentation request
+      description: >
+        Send a `request-presentation` message, either as the start of a thread, or as an acceptance of a presentation proposal.
+         - To accept a presentation proposal: include thread `id` in body.
+         - To start a thread: include `connection_id` in body.
+      operationId: PresentProofV3SendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                connection_id:
+                  $ref: "#/components/schemas/ConnectionId"
+                data:
+                  type: object
+                  properties:
+                    presentation_request:
+                      anyOf:
+                        - $ref: "#/components/schemas/PresentProofV2SendRequestIndy"
+                        - $ref: "#/components/schemas/PresentProofV2SendRequestDIF"
+      responses:
+        200:
+          description: Presentation request sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: request-sent
+  /agent/command/proof-v3/send-presentation:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Send presentation
+      description: >
+        Send a `presentation` message in response to presentation request with specified thread id.
+      operationId: PresentProofV3SendPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - data
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+                data:
+                  type: object
+                  title: TODO
+      responses:
+        200:
+          description: Presentation sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: presentation-sent
+  /agent/command/proof-v3/verify-presentation:
+    post:
+      tags:
+        - Present Proof V3
+      summary: Verify presentation
+      description: >
+        Verify the received presentation with specified thread id.
+      operationId: PresentProofV3VerifyPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ThreadId"
+      responses:
+        200:
+          description: Presentation verified
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PresentProofOperationResponse"
+                  - properties:
+                      state:
+                        example: done
+                      verified:
+                        type: boolean
+                        example: true
+                    required:
+                      - state
+                      - verified
+
+  /agent/command/mediation/{connectionId}:
+    get:
+      tags:
+        - Coordinate Mediation
+      summary: Get mediation record by connection id
+      operationId: CoordinateMediationGetByConnectionId
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediation record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
+        404:
+          description: Mediation record not found
+  /agent/command/mediation/send-request:
+    post:
+      tags:
+        - Coordinate Mediation
+      summary: Send mediation request message
+      description: >
+        Send a `mediate-request` message to connection with `connection_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#mediation-request
+      operationId: CoordinateMediationSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediate request message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
+  /agent/command/mediation/send-grant:
+    post:
+      tags:
+        - Coordinate Mediation
+      summary: Send mediation grant message
+      description: >
+        Send a `mediate-grant` message to mediator with `mediation_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#mediation-grant
+      operationId: CoordinateMediationSendGrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediate grant message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
+  /agent/command/mediation/send-deny:
+    post:
+      tags:
+        - Coordinate Mediation
+      summary: Send mediation deny message
+      description: >
+        Send a `mediate-deny` message to mediator with `mediation_id` in body.
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#mediation-deny
+      operationId: CoordinateMediationSendDeny
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Mediate grant message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinateMediationOperationResponse"
+
+  /agent/command/out-of-band/send-invitation-message:
+    post:
+      tags:
+        - Out of Band
+      summary: Create a new out of band invitation
+      description: |
+        Create an out of band invitation. If both `handshake_protocols` and `attachments` are not provided, backchannel should default to `handshake_protocols` value `["https://didcomm.org/didexchange/1.0"]`. This is legacy behaviour.
+      operationId: OutOfBandCreateInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    mediator_connection_id:
+                      $ref: "#/components/schemas/ConnectionId"
+                    use_public_did:
+                      type: boolean
+                    attachments:
+                      type: array
+                      items:
+                        type: object
+                        example:
+                          {
+                            "@type": "https://didcomm.org/the-protocol/1.0/the-version",
+                          }
+                    handshake_protocols:
+                      type: array
+                      items:
+                        type: string
+                      example: ["https://didcomm.org/didexchange/1.0"]
+      responses:
+        200:
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                required:
+                  - state
+                  - invitation
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    allOf:
+                      - $ref: "#/components/schemas/DidExchangeState"
+                      - example: invitation-sent
+                  invitation:
+                    $ref: "#/components/schemas/OutOfBandInvitation"
+  /agent/command/out-of-band/receive-invitation:
+    post:
+      tags:
+        - Out of Band
+      summary: Receive an out of band invitation
+      operationId: OutOfBandReceiveInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  allOf:
+                    - $ref: "#/components/schemas/OutOfBandInvitation"
+                    - type: object
+                      properties:
+                        use_existing_connection:
+                          type: boolean
+                        mediator_connection_id:
+                          $ref: "#/components/schemas/ConnectionId"
+                      required:
+                        - use_existing_connection
+                  example:
+                    {
+                      "@id": "f3375429-b116-4224-b55f-563d7ef461f1",
+                      "@type": "https://didcomm.org/out-of-band/1.0/invitation",
+                      "label": "Invitation created by http://host.docker.internal:9042",
+                      "services":
+                        [
+                          {
+                            "id": "86548a10-2b2a-47ce-b9cc-5e835e9add50",
+                            "type": "did-communication",
+                            "recipientKeys":
+                              [
+                                "did:key:z6MkurAvs5HUdN8ARq8indff9ZvVAHNMqWBEevrc82ydPLNh",
+                              ],
+                            "serviceEndpoint": "http://host.docker.internal:9041",
+                          },
+                        ],
+                      "accept": ["didcomm/aip2;env=rfc19"],
+                      "handshake_protocols":
+                        ["https://didcomm.org/didexchange/1.0"],
+                      "use_existing_connection": false,
+                      "mediator_connection_id": "77d58e00-f79a-477c-9e50-c05254ab4b54",
+                    }
+      responses:
+        200:
+          description: Invitation received
+          content:
+            application/json:
+              schema:
+                required:
+                  - state
+                  - connection_id
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    allOf:
+                      - $ref: "#/components/schemas/DidExchangeState"
+                      - example: invitation-received
+
+  /agent/command/did-exchange/{connectionId}:
+    get:
+      tags:
+        - DID Exchange
+      summary: Get did exchange connection by id
+      operationId: DidExchangeGetById
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: DID Exchange Connection
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                  - state
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+                  state:
+                    $ref: "#/components/schemas/DidExchangeState"
+        404:
+          description: Connection not found
+  /agent/response/did-exchange/{invitationId}:
+    get:
+      tags:
+        - DID Exchange
+      summary: Get did exchange connection by invitation id. Can be used to determine the connection id based of an invitation id.
+      operationId: DidExchangeGetByInvitationId
+      parameters:
+        - in: path
+          name: invitationId
+          description: The invitation `@id`
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: DID Exchange Connection
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/did-exchange/create-request-resolvable-did:
+    post:
+      tags:
+        - DID Exchange
+      summary: Send a did exchange request to the didcomm service registered in the public did
+      operationId: DidExchangeCreateRequestResolvableDid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - their_public_did
+                    - their_did
+                  properties:
+                    their_public_did:
+                      $ref: "#/components/schemas/FullDid"
+                    their_did:
+                      $ref: "#/components/schemas/FullDid"
+      responses:
+        200:
+          description: Request Sent
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/did-exchange/receive-request-resolvable-did:
+    post:
+      tags:
+        - DID Exchange
+      operationId: DidExchangeReceiveRequestResolvableDid
+      summary: "The documentation of this endpoint need to be looked at."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+      responses:
+        200:
+          description: Request Received
+          content:
+            application/json:
+              schema:
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/did-exchange/send-request:
+    post:
+      tags:
+        - DID Exchange
+      summary: Send a did exchange request to the connection with specified id.
+      operationId: DidExchangeSendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+
+      responses:
+        200:
+          description: Request sent
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /agent/command/did-exchange/send-response:
+    post:
+      tags:
+        - DID Exchange
+      summary: Send a did exchange response to the connection with specified id.
+      operationId: DidExchangeSendResponse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Response Sent
+          content:
+            application/json:
+              schema:
+                properties: {}
+        400:
+          description: Error sending response. This should send a problem report
+          content:
+            application/json:
+              schema:
+                properties: {}
+
+  /agent/command/oob-v2/create-invitation:
+    post:
+      tags:
+        - Out of Band V2
+      summary: Create a new DIDComm V2 out of band invitation
+      operationId: DIDCommV2CreateInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    goal-code:
+                      $ref: "#/components/schemas/GoalCode"
+      responses:
+        200:
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                required:
+                  - invitation
+                properties:
+                  invitation:
+                    $ref: "#/components/schemas/DIDCommV2Invitation"
+  /agent/command/oob-v2/accept-invitation:
+    post:
+      tags:
+        - Out of Band V2
+      summary: Accept a DIDComm V2 out of band invitation
+      operationId: DIDCommV2AcceptInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    invitation:
+                      $ref: "#/components/schemas/DIDCommV2Invitation"
+      responses:
+        200:
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+  /agent/command/oob-v2/invitation-connection/{invitationId}:
+    get:
+      tags:
+        - Out of Band V2
+      summary: Get connection ID of new connection created by a response to this invitation.
+      operationId: DIDCommV2GetByInvitationId
+      parameters:
+        - in: path
+          name: invitationId
+          description: The invitation `@id`
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConnectionId"
+      responses:
+        200:
+          description: Connection ID
+          content:
+            application/json:
+              schema:
+                required:
+                  - connection_id
+                properties:
+                  connection_id:
+                    $ref: "#/components/schemas/ConnectionId"
+components:
+  schemas:
+    ConnectionInvitation:
+      title: Connection Invitation
+      type: object
+      example:
+        {
+          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation",
+          "@id": "11640bd1-cdc2-45e4-9fcc-43ccc27fc9d4",
+          "serviceEndpoint": "http://192.168.65.3:9021",
+          "recipientKeys": ["GqQh9pLeMrE7E2ZxA47GbW4XQuLYsyd1bdfZvxLi7aZ6"],
+          "label": "aca-py",
+        }
+    ConnectionId:
+      title: Connection Id
+      example: "8fb9ea21-d094-4506-86b6-c7c1627d753a"
+      type: string
+    ThreadId:
+      title: Thread Id
+      example: "e7280776-5315-4569-8cac-42cae108adfe"
+      type: string
+    pthid:
+      title: pthid
+      example: "5a7f69cf-ee3c-4a75-9975-1aa3c28db122"
+      type: string
+    MediatorId:
+      title: Mediator Id
+      example: "42cab98c-816c-4dec-8d8b-8da55dadaab9"
+      type: string
+    SchemaId:
+      title: Schema Id
+      example: "Y9oNbFNTgxrRuvxQk3xEzr:2:test_schema:1.0.0"
+      type: string
+    CredentialDefinitionId:
+      title: Credential Definition Id
+      example: "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default"
+      type: string
+    IndyRevocationRegistryId:
+      title: Indy Revocation Registry Id
+      example: "WgWxqztrNooG92RXvxSTWv:4:WgWxqztrNooG92RXvxSTWv:3:CL:20:tag:CL_ACCUM:0"
+      type: string
+    IndyCredentialRevocationId:
+      title: Indy Credential Revocation Id
+      example: "12345"
+      type: string
+    ConnectionState:
+      title: Connection State
+      description: All possible connection state values
+      type: string
+      example: invitation
+      enum:
+        - invitation
+        - request
+        - response
+        - active
+    DidExchangeState:
+      title: Did Exchange State
+      description: All possible did exchange state values
+      type: string
+      example: invitation-sent
+      enum:
+        - start
+        - invitation-sent
+        - request-sent
+        - request-received
+        - response-sent
+        - response-received
+        - abandoned
+        - completed
+    OutOfBandInvitation:
+      title: Out of Band Invitation
+      type: object
+      example:
+        {
+          "@id": "f3375429-b116-4224-b55f-563d7ef461f1",
+          "@type": "https://didcomm.org/out-of-band/1.0/invitation",
+          "label": "Invitation created by http://host.docker.internal:9042",
+          "services":
+            [
+              {
+                "id": "86548a10-2b2a-47ce-b9cc-5e835e9add50",
+                "type": "did-communication",
+                "recipientKeys":
+                  ["did:key:z6MkurAvs5HUdN8ARq8indff9ZvVAHNMqWBEevrc82ydPLNh"],
+                "serviceEndpoint": "http://host.docker.internal:9041",
+              },
+            ],
+          "accept": ["didcomm/aip2;env=rfc19"],
+          "handshake_protocols": ["https://didcomm.org/didexchange/1.0"],
+        }
+    DIDCommV2Invitation:
+      title: DIDComm V2 Out of Band Invitation
+      type: object
+      example:
+        {
+          "id": "f3375429-b116-4224-b55f-563d7ef461f1",
+          "type": "https://didcomm.org/out-of-band/2.0/invitation",
+          "from": "did:orb:example.org:EiCRKRZKozDBAlxpZ0UI2UylXW6AmwSdQfguo0VGeyVKKg",
+          "body": { "goal-code": "streamlined-vc", "accept": ["didcomm/v2"] },
+        }
+    GoalCode:
+      title: DIDComm V2 Out of Band Invitation Goal Code
+      type: string
+      example: streamlined-vc
+    Connection:
+      title: Connection
+      example: {}
+      type: object
+    ConnectionResponse:
+      title: Connection Response
+      type: object
+      required:
+        - connection_id
+        - state
+      properties:
+        connection_id:
+          $ref: "#/components/schemas/ConnectionId"
+        state:
+          $ref: "#/components/schemas/ConnectionState"
+        connection:
+          $ref: "#/components/schemas/Connection"
+    DidMethod:
+      title: Did method
+      example: key
+      type: string
+    ProofType:
+      title: Proof type
+      example: Ed25519Signature2018
+      type: string
+    FullDid:
+      title: Fully qualified did
+      example: did:key:z6MkfZfsiVsAy6CgQht7vQVk1dWBnztivjbhxRiKTtTi62PB
+      type: string
+    Did:
+      title: DID
+      example: Y9oNbFNTgxrRuvxQk3xEzr
+      type: string
+    Verkey:
+      title: Verkey
+      example: HymVhRozF7o9Sh9iyKXu5WKHP95YERhrpZxGx5d6WhYw
+      type: string
+    Comment:
+      title: Comment
+      example: Hello World
+      type: string
+    SchemaName:
+      title: Schema Name
+      type: string
+      example: test_schema
+    SchemaVersion:
+      title: Schema Version
+      type: string
+      example: "1.0.0"
+    SchemaAttributes:
+      title: Schema Attributes
+      type: array
+      items:
+        type: string
+      example:
+        - attr_1
+        - attr_2
+        - attr_3
+    Schema:
+      title: Schema
+      description: Schema definition
+      type: object
+      example:
+        {
+          "ver": "1.0",
+          "id": "Y9oNbFNTgxrRuvxQk3xEzr:2:test_schema:1.0.0",
+          "name": "test_schema",
+          "version": "1.0.0",
+          "attrNames": ["attr_1", "attr_2", "attr_3"],
+          "seqNo": 11,
+        }
+    W3CCredential:
+      title: W3C Verifiable Credential
+      type: object
+      externalDocs:
+        url: https://www.w3.org/TR/vc-data-model/
+      example:
+        {
+          "@context":
+            [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://www.w3.org/2018/credentials/examples/v1",
+            ],
+          "id": "http://example.edu/credentials/1872",
+          "type": ["VerifiableCredential", "AlumniCredential"],
+          "issuer": "https://example.edu/issuers/565049",
+          "issuanceDate": "2010-01-01T19:73:24Z",
+          "credentialSubject":
+            {
+              "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+              "alumniOf":
+                {
+                  "id": "did:example:c276e12ec21ebfeb1f712ebc6f1",
+                  "name":
+                    [
+                      { "value": "Example University", "lang": "en" },
+                      { "value": "Exemple d'Université", "lang": "fr" },
+                    ],
+                },
+            },
+          "proof":
+            {
+              "type": "RsaSignature2018",
+              "created": "2017-06-18T21:19:10Z",
+              "proofPurpose": "assertionMethod",
+              "verificationMethod": "https://example.edu/issuers/keys/1",
+              "jws":
+                "eyJhbGciOiJSUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..TCYt5X
+                sITJX1CxPCT8yAV-TVkIEq_PbChOMqsLfRoPsnsgw5WEuts01mq-pQy7UJiN5mgRxD-WUc
+                X16dUEMGlv50aqzpqh4Qktb3rk-BuQy72IFLOqV0G_zS245-kronKb78cPN25DGlcTwLtj
+                PAYuNzVBAh4vGHSrQyHUdBBPM",
+            },
+        }
+    CredentialPreview:
+      title: Credential Preview
+      type: object
+      required:
+        - "@type"
+        - attributes
+      properties:
+        "@type":
+          type: string
+          enum:
+            - "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"
+          example: "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"
+        attributes:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - value
+            properties:
+              name:
+                type: string
+              mime-type:
+                type: string
+              value:
+                type: string
+      example:
+        {
+          "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+          "attributes":
+            [
+              { "name": "attr_1", "value": "value_1" },
+              { "name": "attr_2", "value": "value_2" },
+              { "name": "attr_3", "value": "10" },
+            ],
+        }
+    AttachmentFormat:
+      title: Attachment Format
+      type: string
+      example: indy
+      enum:
+        - indy
+        - json-ld
+    IssueCredentialState:
+      title: Issue Credential State
+      description: All possible issue credential state values
+      type: string
+      example: proposal-sent
+      enum:
+        - proposal-sent
+        - proposal-received
+        - offer-sent
+        - offer-received
+        - request-sent
+        - request-received
+        - credential-issued
+        - credential-received
+        - done
+
+    CredentialDefinition:
+      title: Credential Definition
+      type: object
+      example:
+        {
+          "ver": "1.0",
+          "id": "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default",
+          "schemaId": "12",
+          "type": "CL",
+          "tag": "default",
+          "value":
+            {
+              "primary":
+                {
+                  "n": "127473542495438147573510476102476902133854813754098957204867619522405674317018859941864352419933227338200593131633863547249552725335523634158360861379038920996404174540285309296147612235783265529767167904996672533424299318502061201785710802874714294174143582682739350240229266415073900875507216317608608419590749758007624873612987354273561597672087026667313974344205743513108098303412867935178289607206971675919540105355234142077505442787841104628317493214564810784261197466701597725036470989697050855442369151927195340336984787674149053901429543050018150008478471976322268372173725164950897146486534208375313658743913",
+                  "s": "65818689269823967224337061200277779392234203780958681071979765611348839168322943966737475112261896111357320138778757065891281921197440097002615498509033425652242864586741386765592821062979097745378937128174004971762786640103105629442159475365159836976073886029307851026908970994829903300109597230301114225997246242679312570675015835522760053319269527084928663538396971295690506335377466402252848447042892658905613203874434705837943677780063921041179819697545228811016183063967989936330561640506841490120102577693339579651117393959310406568508979515298779995407222937217220638869118337307458754771745779882842551583957",
+                  "r":
+                    {
+                      "attr_2": "51288787261098209501918361017434738039396559240181084024072376043981733617197124422285362785531867106205259059511012989265257750815057229625776239902268148159240026351692626846471237370316944382717070664579921786642246297025320221128643932326231901994502071437080527938105845057316611594317815585962995630440264494906187392024263524589040353791190656247954182173035217728619640076109690946048473714974821555775006753553400010494644755834190135206012433445625838647683519920548605994424810625611229251495082321603992265565001261836732982193329161683683007877406661513473331737004850593281692214631901319662119982702922",
+                      "attr_3": "49181762688290033657446628790584551868718995111464422170653915452393747911840814545440872765372893672471205136395434982292712460522218700053539095558984733806664620823639102136028452144009159713045675694364042524060684443787233750663981609531778189390047496947791414470032823060753313065437518080235878845351585405484399614405394732610591997574454401630571733355205236989435994214291321960467589480432939966179940916409629940016780143983651757105859829934723575147299207641665320314894905208079668584551936316156492573527926041185621509809863665431708246846967753137673120991441299733316834328405117780995288938831960",
+                      "master_secret": "55538424482357179006904475057212929303648337854551436067860163418580875286658754309614134356521736148588690128194367442517503542151131893353616029898291001113787008415246944257559064252055726634969959428779277791311649310859911986025543178916305739383261726815449892298017969062336790138195201464646418205024584174631846494837622469674261184752618226770681209326126925275817705162548925201642177095627695920338858257041172323289863931904819081634906164566038325643344387794492965878883835475209080317985881686751050847796692787879655322665209901159744163351765059041544796505393057421762647235069315054477528853561473",
+                      "attr_1": "30886155743965686596111154816080405248462718126264612304549353774874576024335575570672949599223811931464968785591555429018481986959035338465010646916129018856811265590112946954474656478128827689132913637543377270592217574931365985240940393300396509940083648506176813465677576969450791064392913905672340945666537607742715770967118252787128981065813564952993994324545119742090220379288320480251447895567821617698929571634776885837657497224943766401548060195388838088667649983419151624233451714099262934942791309973082062184242430968684229937149556567677716686322793149698990735633517128615499672788711239033452193882997",
+                    },
+                  "rctxt": "118794108011306418186599966013685417259067451572329168338986396401718511272829290486080995212827126457817056257265484527810068143652813250691318847597106924333754555635689923547896416240741937417433198117397677657367813549201117642415892893893381488036182474297804412028150810635810333104761444058436184382989414463435135399687357899136817489918140316906972132553030427022094507232967240719401668656063683319995507797481327116566453773630750501126563798296642025598222840921566196961717932895723665756200235727569096614264333988899662958311074895571782854329655460918882500227649533684869211196542823703742125337784110",
+                  "z": "105630626525262054412237755083369001506042501169646719098603962721650276426684319172879455142677137798560163792358891628363088368803209632822777508716551660571988904519705987074094883201485589766095616179828793397893771789008873400971460093284769835475804783847161628863255694379113641839797171437881461956336479878362639116657891310026976287218412427465483710278481629012528677992951433715775723708478290067190705706789707748967166740980626023098110954588495187304096367803794208972671801623501450811525547654409352588261071510140289955775228914918919001173412112332959725654909432886608249741918119912786853133051762",
+                },
+            },
+        }
+    IssueCredentialOperationResponse:
+      title: Issue Credential Operation Response
+      type: object
+      required:
+        - state
+        - thread_id
+      properties:
+        state:
+          $ref: "#/components/schemas/IssueCredentialState"
+        thread_id:
+          $ref: "#/components/schemas/ThreadId"
+        credential_id:
+          $ref: "#/components/schemas/CredentialId"
+    CredentialId:
+      title: Credential Id
+      example: "828761d2-65e9-44a5-852e-1f60b943ab65"
+      type: string
+    PresentProofOperationResponse:
+      title: Present Proof Operation Response
+      type: object
+      required:
+        - state
+        - thread_id
+      properties:
+        state:
+          $ref: "#/components/schemas/PresentProofState"
+        thread_id:
+          $ref: "#/components/schemas/ThreadId"
+    PresentProofState:
+      title: Present Proof State
+      description: All possible present proof state values
+      type: string
+      example: proposal-sent
+      enum:
+        - proposal-sent
+        - proposal-received
+        - request-sent
+        - request-received
+        - presentation-sent
+        - presentation-received
+        - reject-sent
+        - done
+    PresentationPreview:
+      title: Presentation Preview
+      type: object
+      required:
+        - "@type"
+        - attributes
+        - predicates
+      properties:
+        "@type":
+          type: string
+          enum:
+            - "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview"
+          example: "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview"
+        attributes:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+              cred_def_id:
+                $ref: "#/components/schemas/CredentialDefinitionId"
+              mime-type:
+                type: string
+              value:
+                type: string
+              referent:
+                type: string
+        predicates:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - cred_def_id
+              - predicate
+              - threshold
+            properties:
+              name:
+                type: string
+              cred_def_id:
+                $ref: "#/components/schemas/CredentialDefinitionId"
+              predicate:
+                type: string
+                enum:
+                  - "<"
+                  - "<="
+                  - ">="
+                  - ">"
+              threshold:
+                type: string
+      example:
+        {
+          "attributes":
+            [
+              {
+                "name": "attr_1",
+                "cred_def_id": "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default",
+                "value": "value_1",
+                "referent": "0",
+              },
+            ],
+          "predicates":
+            [
+              {
+                "name": "attr_2",
+                "cred_def_id": "TTK1F3HKKBdtb6HrhrxYtC:3:CL:12:default",
+                "predicate": ">=",
+                "treshold": "100",
+              },
+            ],
+        }
+    PresentationRequestMessage:
+      title: Presentation Request Message
+      externalDocs:
+        url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0037-present-proof/README.md#request-presentation
+      type: object
+      example:
+        {
+          "comment": "This is a comment for the request for presentation.",
+          "proof_request":
+            {
+              "data":
+                {
+                  "requested_attributes":
+                    {
+                      "attr_1":
+                        {
+                          "name": "attr_1",
+                          "restrictions":
+                            [
+                              {
+                                "schema_name": "test_schema",
+                                "schema_version": "1.0.0",
+                              },
+                            ],
+                        },
+                    },
+                  "requested_predicates":
+                    {
+                      "attr_3":
+                        {
+                          "name": "attr_3",
+                          "p_type": ">",
+                          "p_value": 8,
+                          "restrictions":
+                            [
+                              {
+                                "schema_name": "test_schema",
+                                "schema_version": "1.0.0",
+                              },
+                            ],
+                        },
+                    },
+                },
+            },
+        }
+    RequestedCredentials:
+      title: Requested Credentials
+      externalDocs:
+        url: https://github.com/hyperledger/indy-sdk/blob/57dcdae74164d1c7aa06f2cccecaae121cefac25/libindy/src/api/anoncreds.rs#L1433-L1445
+      type: object
+      example:
+        {
+          "requested_attributes":
+            {
+              "attr_1":
+                {
+                  "revealed": true,
+                  "cred_id": "828761d2-65e9-44a5-852e-1f60b943ab65",
+                },
+            },
+          "requested_predicates":
+            { "attr_3": { "cred_id": "828761d2-65e9-44a5-852e-1f60b943ab65" } },
+        }
+    PresentProofV2SendRequestIndy:
+      required:
+        - format
+        - data
+      properties:
+        format:
+          enum: [indy]
+          type: string
+        comment:
+          $ref: "#/components/schemas/Comment"
+        data:
+          type: object
+          title: Indy Proof Request
+          example:
+            {
+              "name": "Biological Indicator A Proof",
+              "requested_attributes":
+                {
+                  "bioindicators_attrs":
+                    {
+                      "names": ["name"],
+                      "restrictions":
+                        [
+                          {
+                            "schema_name": "Schema_Biological_Indicators",
+                            "schema_version": "0.2.0",
+                          },
+                        ],
+                    },
+                },
+              "requested_predicates":
+                {
+                  "concentration":
+                    {
+                      "name": "concentration",
+                      "p_type": ">",
+                      "p_value": 1,
+                      "restrictions":
+                        [
+                          {
+                            "schema_name": "Schema_Biological_Indicators",
+                            "schema_version": "0.2.0",
+                          },
+                        ],
+                    },
+                },
+              "version": "0.2.0",
+            }
+    PresentProofV2SendRequestDIF:
+      required:
+        - format
+        - data
+      properties:
+        format:
+          enum: [json-ld]
+          type: string
+        comment:
+          $ref: "#/components/schemas/Comment"
+        data:
+          type: object
+          title: DIF Presentation Definition
+          example:
+            {
+              "options":
+                {
+                  "challenge": "9a7e9aa6-9e8f-4b6b-9911-bfec18cfa208",
+                  "domain": "dajj33j3aj3j",
+                },
+              "presentation_definition":
+                {
+                  "id": "5ab84299-c066-4b34-bcc6-d356aa44c826",
+                  "format":
+                    { "ldp_vp": { "proof_type": ["Ed25519Signature2018"] } },
+                  "input_descriptors":
+                    [
+                      {
+                        "id": "citizenship_input_1",
+                        "name": "EU Driver's License",
+                        "schema":
+                          [
+                            {
+                              "uri": "https://www.w3.org/2018/credentials#VerifiableCredential",
+                            },
+                            {
+                              "uri": "https://w3id.org/citizenship#PermanentResident",
+                            },
+                          ],
+                        "constraints":
+                          {
+                            "fields":
+                              [
+                                {
+                                  "path": ["$.credentialSubject.familyName"],
+                                  "purpose": "Just making sure your family name is Smith",
+                                  "filter":
+                                    { "type": "string", "const": "SMITH" },
+                                },
+                                {
+                                  "path": ["$.credentialSubject.givenName"],
+                                  "purpose": "We also want to know your first name",
+                                },
+                              ],
+                          },
+                      },
+                    ],
+                },
+            }
+    IssueCredentialV2AttachFormatLdProofDetail:
+      type: object
+      example:
+        {
+          "credential":
+            {
+              "@context":
+                [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/security/bbs/v1",
+                  {
+                    "dl": "http://example.com/drivers-license#",
+                    "AATHDriversLicense": "dl:AATHDriversLicense",
+                    "address": "dl:address",
+                    "DL_number": "dl:DL_number",
+                    "expiry": "dl:expiry",
+                    "age": "dl:age",
+                  },
+                ],
+              "type": ["VerifiableCredential", "AATHDriversLicense"],
+              "issuer": "did:key:z6MkfZfsiVsAy6CgQht7vQVk1dWBnztivjbhxRiKTtTi62PB",
+              "issuanceDate": "2010-01-01T19:73:24Z",
+              "credentialSubject":
+                {
+                  "address": "947 this street, Kingston Ontario Canada, K9O 3R5",
+                  "DL_number": "09385029529385",
+                  "expiry": "10/12/2022",
+                  "age": "30",
+                },
+            },
+          "options": { "proofType": "Ed25519Signature2018" },
+        }
+    IssueCredentialV2AttachFormatIndyCredFilter:
+      type: object
+      properties:
+        schema_issuer_did:
+          $ref: "#/components/schemas/Did"
+        schema_id:
+          $ref: "#/components/schemas/SchemaId"
+        schema_name:
+          $ref: "#/components/schemas/SchemaName"
+        schema_version:
+          $ref: "#/components/schemas/SchemaVersion"
+        cred_def_id:
+          $ref: "#/components/schemas/CredentialDefinitionId"
+        issuer_did:
+          $ref: "#/components/schemas/Did"
+    IssueCredentialV2CredentialProposalFilter:
+      title: Issue Credential V2 Credential Proposal Filter
+      properties:
+        indy:
+          $ref: "#/components/schemas/IssueCredentialV2AttachFormatIndyCredFilter"
+        json-ld:
+          $ref: "#/components/schemas/IssueCredentialV2AttachFormatLdProofDetail"
+
+    CoordinateMediationState:
+      title: Coordinate Mediation State
+      description: All possible coordinate mediation state values
+      type: string
+      example: request-sent
+      enum:
+        - request-sent
+        - request-received
+        - grant-sent
+        - grant-received
+        - deny-sent
+        - deny-received
+    CoordinateMediationOperationResponse:
+      title: Coordinate Mediation Operation Response
+      type: object
+      required:
+        - connection_id
+        - state
+      properties:
+        connection_id:
+          $ref: "#/components/schemas/ConnectionId"
+        state:
+          $ref: "#/components/schemas/CoordinateMediationState"
