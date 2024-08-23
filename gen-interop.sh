@@ -2,14 +2,23 @@
 
 # Configuration Data -- order matters in these arrays. A new entry requires an entry in ALL "ta_" arrays
 ta_tlas=("acapy" "javascript" "aries-vcx")
-ta_names=("Aries Cloud Agent Python" "Aries Framework JavaScript" "AriesVCX")
-ta_shortnames=("ACA-Py" "AFJ" "VCX")
+ta_names=("Aries Cloud Agent Python" "Credo-TS" "Aries VCX")
+ta_shortnames=("ACA-Py" "Credo" "VCX")
 ta_scopes=("AIP 1, 2" "AIP 1" "AIP 1")
 ta_exceptions=("None" "Revocation" "Revocation")
 ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
-https://github.com/hyperledger/aries-framework-javascript \
+https://github.com/openwallet-foundation/credo-ts \
 https://github.com/hyperledger/aries-vcx)
 workflows=".github/workflows/test-harness-*"
+aath_guide="docs/guide"
+
+# Clean up files made when testing the information web site.
+# We don't want these files checked into the website
+
+if [[ "$1" == "clean" ]]; then
+   rm -rf ${aath_guide} docs/acapy.md docs/aries-vcx.md docs/javascript.md docs/README.md
+   exit 0
+fi
 
 unameOut="$(uname -s)"
 case "${unameOut}" in
@@ -84,22 +93,12 @@ aries_interop_header () {
 
     cat << EOF
 
-This web site shows the current status of Aries Interoperability between Aries frameworks and agents. While
-not yet included in these results, we have a working prototype for testing Aries mobile wallets using the
-same tests.
+This web site shows the current status of Aries Interoperability between Aries frameworks and agents.
+The latest interoperability test results are below.
 
-The latest interoperability test results are below. Each row is a test agent, its columns
-the results of tests executed in combination with other test agents.
-The last column ("All Tests") shows the results of all tests run for the given test agent in any role. The link on each test
-agent name provides more details about results for all test combinations for that test agent. On
-that page are links to a full history of the test runs and full details on every executed test. 
-
-The following test agents are currently supported:
+The following test agents are currently being tested:
 
 $(list_agents)
-
-Want to add your Aries component to this page? You need to add a runset to the
-[Aries Agent Test Harness](https://github.com/hyperledger/aries-agent-test-harness).
 
 ## Latest Interoperability Results
 
@@ -110,6 +109,13 @@ aries_interop_footer () {
     # The summary page footer -- markdown format
 
     cat << EOF
+
+In the table above, each row is a test agent, its columns the results of tests executed in combination with other test agents.
+The last column ("All Tests") shows the results of all tests run for the given test agent in any role. The link on each test
+agent name provides more details about results for all test combinations for that test agent. On
+that page are links to a full history of the test runs and full details on every executed test. 
+
+**Notes:**
 
 - Where the row and column are the same Test Agent, the results include only the tests where the Test Agent plays ALL of the roles (ACME, Bob, Faber and Mallory)
 - The results in the "All Tests" column include tests involving the "Test Agent" in ANY of the roles.
@@ -193,6 +199,22 @@ aries_interop_summary_table () {
 }
 
 # Inline code starts here
+
+# Copy the MD guide files from the root a folder in the docs folder
+mkdir -p ${aath_guide}
+cp aries-backchannels/README.md aries-backchannels.md
+cp LICENSE ${aath_guide}/LICENSE.md
+
+# Fix links in the copied Guide documents
+for file in *.md; do
+    sed ${file} -e "s/LICENSE/LICENSE.md/" \
+    -e "s#(\.*/docs/assets#(../assets#g" \
+    -e "s#(docs/assets#(../assets#g" \
+    -e "s#../aries-agent-test-harness/aries-backchannels/README.md#aries-backchannels.md#g" \
+    -e "s#aries-backchannels/README.md#./aries-backchannels.md#g" \
+    > ${aath_guide}/${file}
+done
+
 # Collect all the data about each runset into a series of arrays - one per data element
 count=0
 for file in ${workflows}; do
@@ -268,8 +290,9 @@ for file in ${workflows}; do
     count=$(expr ${count} + 1)
 done
 
-# First write the summary file -- make sure to replace the old version with a ">" and ">>" for the rest
+# First write the summary file
 outfile=docs/README.md
+
 # Remove the file if it exists
 rm -f $outfile
 

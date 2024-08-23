@@ -56,3 +56,5 @@ target/
 
 # AATH test results
 aries-test-harness/json.pretty.output
+docs/guide/
+aries-backchannels.md

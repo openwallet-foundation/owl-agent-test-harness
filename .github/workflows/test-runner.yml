@@ -71,19 +71,3 @@ jobs:
           wait_workflow: true
           wait_interval: 60
 
-  generate-summary-results:
-    name: Generate Summary Results
-    needs: [get-test-harnesses, run-test-harness]
-    if: (success() || failure()) && ((github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: generate-summary-results.yml
-        uses: convictional/trigger-workflow-and-wait@v1.6.5
-        with:
-          workflow_file_name: generate-summary-results.yml
-          owner: ${{ github.repository_owner }}
-          repo: ${{ needs.get-test-harnesses.outputs.repo-name }}
-          ref: ${{ github.event.ref }}
-          github_token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          wait_workflow: true
-          wait_interval: 60

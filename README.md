@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-The Aries Agent Test Harness (AATH) is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development)-based test execution engine and set of tests for evaluating the interoperability of Aries Agents and Agent Frameworks. The tests are agnostic to the components under test but rather are designed based on the [Aries RFCs](https://github.com/hyperledger/aries) and the interaction protocols documented there. The AATH enables the creation of an interop lab much like the [labs](https://www.iol.unh.edu/) used by the telcos when introducing new hardware into the markets&mdash;routers, switchers and the like. Aries agent and agent framework builders can easily incorporate these tests into the their CI/CD pipelines to ensure that interoperability is core to the development process.
+The Aries Agent Test Harness (AATH) is a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development)-based test execution engine and set of tests for evaluating the interoperability of Aries Agents and Agent Frameworks. The tests are agnostic to the components under test but rather are designed based on the [Aries RFCs](https://hyperledger.github.io/aries-rfcs/latest/) and the interaction protocols documented there. The AATH enables the creation of an interop lab much like the [labs](https://www.iol.unh.edu/) used by the telcos when introducing new hardware into the markets&mdash;routers, switchers and the like. Aries agent and agent framework builders can easily incorporate these tests into the their CI/CD pipelines to ensure that interoperability is core to the development process.
 
 Want to see the Aries Agent Test Harness in action? Give it a try using a git, docker and bash enabled system. Once you are in a bash shell, run the following commands to execute a set of RFC tests using the [Aries Cloud Agent - Python](https://github.com/hyperledger/aries-cloudagent-python):
 
@@ -11,7 +11,6 @@ git clone https://github.com/hyperledger/aries-agent-test-harness
 cd aries-agent-test-harness
 ./manage build -a acapy -a javascript
 ./manage run -d acapy -b javascript -t @AcceptanceTest -t ~@wip
-
 ```
 
 The commands take a while to run (you know...building modern apps always means downloading half the internet...), so while you wait, here's what's happening:
@@ -39,10 +38,11 @@ We'd love to have help in building out a full Aries interoperability lab.
     - [Aries Mobile Test Harness](#aries-mobile-test-harness)
 - [Extra Backchannel-Specific Parameters](#extra-backchannel-specific-parameters)
 - [Custom Configurations for Agents](#custom-configurations-for-agents)
-  - [Use Cases](#use-cases-1)
-    - [Aries Mobile Test Harness](#aries-mobile-test-harness-1)
+  - [Custom Configuration Use Cases](#custom-configuration-use-cases)
+    - [Usage in Aries Mobile Test Harness](#usage-in-aries-mobile-test-harness)
 - [Test Tags](#test-tags)
   - [Running Tagged Tests](#running-tagged-tests)
+    - [Using AND, OR in Test Execution Tags](#using-and-or-in-test-execution-tags)
   - [Test Coverage](#test-coverage)
   - [Test Reporting](#test-reporting)
 - [Adding Runsets](#adding-runsets)
@@ -101,11 +101,11 @@ A further complication is that as tests are added to the test suite, the backcha
 
 ### Implemented Backchannels
 
-Backchannels can be found in the [`aries-backchannels`](aries-backchannels) folder of this repo. For more information on building a backchannel, see the documentation in the [`aries-backchannels` README](aries-backchannels/README.md), and look at the code of the existing backchannels. To get help in building a backchannel for a component you want tested, please use GitHub issues and/or ask questions on the [Hyperledger Discord](https://discord.gg/hyperledger) `#aries-agent-test-harness` channel.
+Backchannels can be found in the [`aries-backchannels`](https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-backchannels) folder of this repo. For more information on building a backchannel, see the documentation in the [`aries-backchannels` README](aries-backchannels/README.md), and look at the code of the existing backchannels. To get help in building a backchannel for a component you want tested, please use GitHub issues and/or ask questions on the [Hyperledger Discord](https://discord.gg/hyperledger) `#aries-agent-test-harness` channel.
 
-Three backchannels have been implemented, for the [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python), [AriesVCX](https://github.com/hyperledger/aries-vcx), [.NET](https://github.com/hyperledger/aries-framework-dotnet) and [JavaScript](https://github.com/hyperledger/aries-framework-javascript.git) Aries agent frameworks. The ACA-Py is built on a common Python base (./aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. On the other hand AriesVCX is build on their preferred language (Rust). The ACA-PY (./aries-backchannels/acapy/acapy_backchannel.py) and AriesVCX (./aries-backchannels/aries-vcx) implementations are good example to extend the base to add support for their respective agent frameworks.
+A number of backchannels have been implemented, with the a subset being regularly run for testing [ACA-PY](https://github.com/hyperledger/aries-cloudagent-python), [Aries VCX](https://github.com/hyperledger/aries-vcx) and [Credo-TS](https://github.com/openwallet-foundation/credo-ts) Aries agent frameworks. The ACA-Py is built on a common Python base (https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-backchannels/python/aries_backchannel.py) that sets up the backchannel API listener and performs some basic request validation and dispatching. On the other hand Aries VCX is build on their preferred language (Rust). The ACA-PY (https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-backchannels/acapy/acapy_backchannel.py) and AriesVCX (https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-backchannels/aries-vcx) implementations are good example to extend the base to add support for their respective agent frameworks.
 
-There is also a backchannel to support (manual) testing with [mobile](./aries-backcgannels/mobile) agents. This backchannel doesn't control the mobile agent directly, rather it will prompt the tester to manually accept connection requests, credential offers etc. Use of the mobile backchannel is described [here](./MOBILE_AGENT_TESTING.md).
+There is also a backchannel to support (manual) testing with [mobile](https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-backcgannels/mobile) agents. This backchannel doesn't control the mobile agent directly, rather it will prompt the tester to manually accept connection requests, credential offers etc. Use of the mobile backchannel is described [here](./MOBILE_AGENT_TESTING.md).
 
 ## The `manage` bash script
 
@@ -123,7 +123,7 @@ There are two ways to control the behave test engine's selection of test cases t
 
 > Note that the `<tag>` arguments passed in on the command line **cannot** have a space, even if you double-quote the tag or escape the space. This is because the args are going through multiple layers shells (the script, calling docker, calling a script in the docker instance that in turn calls behave...). In all that argument passing, the wrappers around the args get lost. That should be OK in most cases, but if it is a problem, we have the `-i` option as follows...
 
-To enable full control over behave's behaviour (if you will...), the `-i <ini file>` option can be used to pass a behave "ini" format file into the test harness container. The ini file enables full control over the behave engine, add handles the shortcoming of not being able to pass tags arguments with spaces in them. See the behave configuration file options [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files). Note that the file name can be whatever you want. When it lands in the test harness container, it will be called `behave.ini`. There is a default ini file located in `aries-agent-test-harness/aries-test-harness/behave.ini`. This ini file is picked up and used by the test harness without the -i option. To run the tests with a custom behave ini file, follow this example,
+To enable full control over behave's behavior (if you will...), the `-i <ini file>` option can be used to pass a behave "ini" format file into the test harness container. The ini file enables full control over the behave engine, add handles the shortcoming of not being able to pass tags arguments with spaces in them. See the behave configuration file options [here](https://behave.readthedocs.io/en/stable/behave.html#configuration-files). Note that the file name can be whatever you want. When it lands in the test harness container, it will be called `behave.ini`. There is a default ini file located in `aries-agent-test-harness/aries-test-harness/behave.ini`. This ini file is picked up and used by the test harness without the -i option. To run the tests with a custom behave ini file, follow this example,
 
 ```bash
 ./manage run -d acapy -t @AcceptanceTest -t ~@wip -i aries-test-harness/MyNewBehaveConfig.ini
@@ -134,33 +134,46 @@ For a full inventory of tests available to run, use the `./manage tests`. Note t
 ## Using AATH Agents as Services
 You may have the need to utilize the agents and their controller/backchannels separately from running interop tests with them. This can be for debugging AATH test code, or for something outside of AATH, like Aries Mobile Test Harness (AMTH) tests. To assist in this requirement the manage script can start 1-n agents of any aries framework that exists in AATH. This is done as follows:
 
-```
+```bash
 ./manage start -a acapy-main
 ```
+
 The command above will only start Acme as ACA-py. No other agents (Bob, Faber, etc.) will be started. 
-```
+
+```bash
 NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a afgo-interop -b acapy-main -n
 ```
+
 The second command above, will start Acme as AFGO, and Bob as ACA-py, utilizing an external Ledger and Tails Server, with a custom configuration to start ACA-py with. It will also start ngrok which is usually needed for mobile testing in AMTH. 
 
 To stop any agents started in this manner just run `./manage stop`.
 
 ### Use Cases
+
 #### Debugging within AATH
-When running test code in a debugger, you may not always want or need all the agents running when doing your debugging. Your test may only utilize Acme and Bob, and have no need for Faber and Mallory. This feature will allow you to start only the agents needed in your test you are debugging. The following example will run ACA-py as Acme and Bob with no other agents running. 
-```
+
+When running test code in a debugger, you may not always want or need all the agents running when doing your debugging. Your test may only utilize Acme and Bob, and have no need for Faber and Mallory. This feature will allow you to start only the agents needed in your test you are debugging. The following example will run ACA-py as Acme and Bob with no other agents running.
+
+```bash
 ./manage start -a acapy-main -b acapy-main
 ```
+
 #### Aries Mobile Test Harness
+
 Aries Mobile Test Harness (AMTH) is a testing stack used to test mobile Aries wallets. To do this end to end, mobile tests need issuers, verifiers, and maybe mediators. Instead of AMTH managing a set of controllers and agents, AMTH can point to an Issuer or Verifier controller/agent URL. AMTH can take advantage of the work done across aries frameworks and backchannels to assign AATH agents as issuers or verifiers in testing aries wallets. For example, the BC Wallet tests in AMTH are utilizing ACA-py agents in AATH as an issuer and verifier. This is done by executing the following.
+
 From within aries-agent-test-harness
-```
+
+```bash
 ./manage start -a acapy-main -b acapy-main
 ```
+
 From within aries-mobile-test-harness
-```
+
+```bash
 LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io REGION=us-west-1 ./manage run -d SauceLabs -u <device-cloud-username> -k <device-cloud-access-key> -p iOS -a AriesBifold-114.ipa -i http://0.0.0.0:9020 -v http://0.0.0.0:9030 -t @bc_wallet -t @T001-Connect
 ```
+
 The URLs for issuer and verifier are pointers to the backchannel controllers for Acme and Bob in AATH, so that these test take advantage of the work done there. 
 
 ## Extra Backchannel-Specific Parameters
@@ -178,21 +191,30 @@ The contents of the environment variable are backchannel-specific. For aca-py it
 The above example runs all the tests using the `indy` wallet type (vs `askar`, which is the default).
 
 ## Custom Configurations for Agents
-  Alternatively to the Extra Backchannel-Specific Parameters above, you can also pass a configuration file through to your agent when it starts (only works if your agent is started by your backchannel). The AATH tests have a predefined set of options needed for the test flow to function properly so, adding this configuration to AATH test execution may have side effects causing the interop tests to fail. However, this is helpful when using the agents as services outside of AATH tests like with Mobile Wallet tests in Aries Mobile Test Harness, where the agents usually will benefit from having auto options turned on. You can pass through your config file using the environment variable AGENT_CONFIG_FILE as follows:
-  ```
-  NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -b acapy-main -n
-  ```
+
+Alternatively to the Extra Backchannel-Specific Parameters above, you can also pass a configuration file through to your agent when it starts (only works if your agent is started by your backchannel). The AATH tests have a predefined set of options needed for the test flow to function properly so, adding this configuration to AATH test execution may have side effects causing the interop tests to fail. However, this is helpful when using the agents as services outside of AATH tests like with Mobile Wallet tests in Aries Mobile Test Harness, where the agents usually will benefit from having auto options turned on. You can pass through your config file using the environment variable AGENT_CONFIG_FILE as follows:
+  
+```bash
+NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -b acapy-main -n
+```
+
 The config file should live in the `aries-backchannels/<agent>` folder so it gets copied into the agent container automatically. Currently only the acapy backchannel supports this custom configuration in this manner. 
 
-### Use Cases
-#### Aries Mobile Test Harness
+### Custom Configuration Use Cases
+
+#### Usage in Aries Mobile Test Harness
+
 When using AATH agents as a service for AMTH, these agent services will need to be started with differet or extra parameters on the agents than AATH starts them with by default. Mobile test issuers and verifiers may need the auto parameters turned on, like `--auto-accept-requests`, `--auto-respond-credential-proposal`, etc. The only way to do this when using the AATH agents is through using this configuration file handling. There is an existing file in `aries-backchannels/acapy` called auto_isser_config.yaml that is there to support this requirement for the BC wallet. This works in BC Wallet as follows;
+
 From within aries-agent-test-harness
-```
+
+```bash
 NGROK_AUTHTOKEN=2ZrwpFakeAuthToken_W4VDBxavAzdB5K3wsDGz LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io AGENT_CONFIG_FILE=/aries-backchannels/acapy/auto_issuer_config.yaml ./manage start -a acapy-main -b acapy-main -n
 ```
+
 From within aries-mobile-test-harness
-```
+
+```bash
 LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io REGION=us-west-1 ./manage run -d SauceLabs -u <device-cloud-username> -k <device-cloud-access-key> -p iOS -a AriesBifold-114.ipa -i http://0.0.0.0:9020 -v http://0.0.0.0:9030 -t @bc_wallet -t @T001-Connect
 ```
 
@@ -250,7 +272,8 @@ or all the ExceptionTests...
 ./manage run -t @ExceptionTest
 ```
 
-Using AND, OR in Test Execution Tags
+#### Using AND, OR in Test Execution Tags
+
 Stringing tags together in one `-t` with commas as separators is equivalent to an `OR`. The separate `-t` options is equivalent to an `AND`.
 
 ```bash
@@ -277,4 +300,4 @@ Runsets are GHA based workflows that automate the execution of your interop test
 
 These workflows are contained in the .github/workflows folder and must be named `test-harness-<name>.yml`.  Refer to the existing files for examples on how to create one specific to your use case.  In most cases you will be able to copy an existing file and change a few parameters.
 
-Test execution is controlled by the [`test-harness-runner`](./.github/workflows/test-runner.yml).  This workflow will dynamically pick up and run any workflow conforming to the `test-harness-*.yml` naming convention.  Specific test harnesses can be excluded by adding their file name pattern to the `ignore_files_starts_with` list separated by a `,`.  The test harnesses are run by the **Run Test Harness** job which uses a throttled matrix strategy.  The number of concurrent test harness runs can be controlled by setting the `max-parallel` parameter to an appropriate number.
+Test execution is controlled by the [`test-harness-runner`](https://github.com/hyperledger/aries-agent-test-harness/blob/main/.github/workflows/test-runner.yml).  This workflow will dynamically pick up and run any workflow conforming to the `test-harness-*.yml` naming convention.  Specific test harnesses can be excluded by adding their file name pattern to the `ignore_files_starts_with` list separated by a `,`.  The test harnesses are run by the **Run Test Harness** job which uses a throttled matrix strategy.  The number of concurrent test harness runs can be controlled by setting the `max-parallel` parameter to an appropriate number.

@@ -13,7 +13,7 @@
 
 ## Writing Tests in Gherkin
 
-The Aries Agent Test Harness utilizes a behavioural driven approach to testing. The Python toolset [Behave](https://behave.readthedocs.io/en/stable/index.html) is used to actualize this approach. [Gherkin] is the language syntax used to define test preconditions and context, actions and events, and expected results and outcomes.
+The Aries Agent Test Harness utilizes a behavioral driven approach to testing. The Python toolset [Behave](https://behave.readthedocs.io/en/stable/index.html) is used to actualize this approach. [Gherkin] is the language syntax used to define test preconditions and context, actions and events, and expected results and outcomes.
 
 The first step in developing a suite of tests for an Aries RFC is to write plain english Gherkin definitions, before any code is written. The only input to the test cases should be the RFC. The test cases should not be driven by agent or agent framework implementations.
 
@@ -59,7 +59,7 @@ As necessary, other persona will be added. We expect adding `Carol` (another hol
 
 The test harness run script supports the use of [tags](https://behave.readthedocs.io/en/latest/tutorial.html?highlight=tags#controlling-things-with-tags) in the feature files to be able to narrow down a test set to be executed. The general tags currently utilized are as follows:
 
-- @AcceptanceTest - Tests based on requirements specifically stated in the RFC. These are tests that will run to verify confirmance of the implemented protocol in the Agents.
+- @AcceptanceTest - Tests based on requirements specifically stated in the RFC. These are tests that will run to verify conformance of the implemented protocol in the Agents.
 - @DerivedFunctionalTest - Tests derived on requirements but not specifically stated in the RFC.
 - @P1 - Test Priority
 - @P2 - Test Priority
@@ -80,7 +80,7 @@ The test harness run script supports the use of [tags](https://behave.readthedoc
 
 ### Defining Protocol Suite Specific Tags
 
-There will be cases where there will be a need for Protocol specific tags. This will usually reveal itself when there are optional implementations or where implementations can diverge into 2 or more options. Tests will need to be tagged with the least common option, where no tag means the other option. For example in the connection protocol there are specific tests that exercise the behaviour of the protocol using a Multi Use Invite and a Single Use Invite. The tag @MultiUseInvite is used to differentiate the two, and by default it is expected that MultiUseInvite is the least common option.
+There will be cases where there will be a need for Protocol specific tags. This will usually reveal itself when there are optional implementations or where implementations can diverge into 2 or more options. Tests will need to be tagged with the least common option, where no tag means the other option. For example in the connection protocol there are specific tests that exercise the behavior of the protocol using a Multi Use Invite and a Single Use Invite. The tag @MultiUseInvite is used to differentiate the two, and by default it is expected that MultiUseInvite is the least common option.
 
 Currently Existing Connection Protocol Tags
 
@@ -139,12 +139,12 @@ To update the file, run the test suite locally (as in the above command) - it wi
 
 ## Implementing the Backchannel
 
-See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in the [aries-backchannels](../aries-agent-test-harness/aries-backchannels) folder for details on writing backchannels.
+See the [README](../aries-agent-test-harness/aries-backchannels/README.md) in the `aries-backchannels` folder for details on writing backchannels.
 
 ## Diving Deeper
 
 - [Developing Tests and Backchannels in Dev Containers](AATH_DEV_CONTAINERS.md)
 - [Accessing Connection ID in Test Code](ACCESS-CONNECTION-IDS.md)
 - [Configuring Tests with Credential Types and Proofs](CONFIGURE-CRED-TYPES.md)
-- [Debugging a Backchannel Running Inside a Docker Container](DEBUGGING.md)
+- [Debugging a Backchannel Running Inside a Docker Container](Debugging.md)
 - [Taking Advantage of Connection Reuse in AATH](CONNECTION-REUSE.md)
