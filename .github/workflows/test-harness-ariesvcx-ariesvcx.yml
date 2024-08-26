@@ -44,10 +44,6 @@ jobs:
           TEST_AGENTS: "-d aries-vcx"
           TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@RFC0023,@RFC0793 -t ~@wip -t ~@RFC0434 -t ~@RFC0453 -t ~@RFC0211 -t ~@DIDExchangeConnection -t ~@Transport_Ws"
           REPORT_PROJECT: aries-vcx
-      - uses: actions/upload-artifact@v4
-        with:
-          name: agent-logs
-          path: ./test-harness/.logs/
       - name: run-send-gen-test-results-secure
         if: ${{ always() }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
