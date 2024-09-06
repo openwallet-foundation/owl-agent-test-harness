@@ -2,6 +2,7 @@ import asyncio
 import json
 import os.path
 from time import sleep
+import urllib.parse
 
 from aiohttp import ClientSession
 
@@ -72,6 +73,10 @@ def agent_backchannel_GET(url, topic, operation=None, id=None, anoncreds=False) 
     if operation:
         agent_url = agent_url + operation + "/"
     if id:
+        # Some ids like a schema id contain / and can be qualified. This causes problems finding the proper route in the backchannel.
+        # if id contains one or more /, encode the id.
+        if '/' in id:
+            id = urllib.parse.quote(id, safe='')
         agent_url = agent_url + id
     if (anoncreds):
         params["anoncreds"] = 'True'
