@@ -1,4 +1,4 @@
-/* import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
+import { Controller, Get, PathParams, Post, BodyParams } from '@tsed/common'
 import { NotFound } from '@tsed/exceptions'
 import {
   OutOfBandRecord,
@@ -119,7 +119,7 @@ export class OutOfBandController extends BaseController {
   @Post('/accept-request')
   async acceptRequest(@BodyParams('id') id: string) {
     // possible here that the request hasn't finished processing yet
-    await this.waitForState(id, DidExchangeState.RequestReceived)
+    //await this.waitForState(id, DidExchangeState.RequestReceived)
 
     const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
 
@@ -149,15 +149,15 @@ export class OutOfBandController extends BaseController {
     return mediator?.id
   }
 
-  private async waitForState(id: string, state: DidExchangeState) {
-    return await firstValueFrom(
-      this.subject.pipe(
-        filter((c) => c.payload.connectionRecord.id === id ),
-        filter((c) => c.payload.connectionRecord.state === state),
-        timeout(20000)
-      )
-    )
-  }
+  // private async waitForState(id: string, state: DidExchangeState) {
+  //   return await firstValueFrom(
+  //     this.subject.pipe(
+  //       filter((c) => c.payload.connectionRecord.id === id ),
+  //       filter((c) => c.payload.connectionRecord.state === state),
+  //       timeout(20000)
+  //     )
+  //   )
+  // }
 
   private mapConnection(connection: ConnectionRecord) {
     return {
@@ -169,4 +169,3 @@ export class OutOfBandController extends BaseController {
     }
   }
 }
- */

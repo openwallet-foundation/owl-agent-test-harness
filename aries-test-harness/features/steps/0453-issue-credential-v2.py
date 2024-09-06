@@ -277,8 +277,7 @@ def step_impl(context, holder, cred_format):
     state = resp_json["state"]
     assert state == "done", f"state is '{state}', expected 'done'"
 
-    # FIXME: the return value of this is very ACA-Py specific, should just be credential_id
-    credential_id = resp_json[cred_format]["credential_id"]
+    credential_id = find_credential_id(resp_json)
     context.credential_id_dict[get_schema_name(context)].append(credential_id)
 
     # Verify issuer status
@@ -298,6 +297,20 @@ def step_impl(context, holder, cred_format):
         context.cred_rev_id = resp_json["revocation_id"]
         context.rev_reg_id = resp_json["revoc_reg_id"]
 
+def find_credential_id(data):
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if key == "credential_id":
+                return value
+            result = find_credential_id(value)
+            if result is not None:
+                return result
+    elif isinstance(data, list):
+        for item in data:
+            result = find_credential_id(item)
+            if result is not None:
+                return result
+    return None
 
 @then('"{holder}" has the "{cred_format}" credential issued')
 def step_impl(context, holder, cred_format):
