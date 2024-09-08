@@ -83,7 +83,7 @@ nav:
     - Aries Agent Test Harness Coverage: guide/TEST-COVERAGE.md
 - Latest Results by Agent:
     - Aries Cloud Agent Python: acapy.md
-    - Credo-TS: javascript.md
+    - Credo-TS: credo.md
     - Aries VCX: aries-vcx.md
 - AATH Documentation:
     - Aries Agent Test Harness: guide/README.md
