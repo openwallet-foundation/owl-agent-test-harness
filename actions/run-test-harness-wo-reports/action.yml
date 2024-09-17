@@ -59,6 +59,7 @@ runs:
         name: container-logs
         path: .logs
         retention-days: 14
+        include-hidden-files: true
     - name: archive agent logs
       if: ${{ always() }}
       uses: actions/upload-artifact@v4
@@ -66,6 +67,7 @@ runs:
         name: agent-logs
         path: ./test-harness/.logs
         retention-days: 14
+        include-hidden-files: true
 branding:
   icon: "mic"
   color: "purple"
