@@ -260,6 +260,11 @@ def step_impl(context, requester):
             context.connection_id_dict[requester][context.responder_name] = resp_json[
                 "connection_id"
             ]
+        # Credo returns id instead of connection_id on out of band connections.
+        elif "id" in resp_json:
+            context.connection_id_dict[requester][context.responder_name] = resp_json[
+                "id"
+            ]
 
 @when('"{requester}" sends the request to "{responder}" with {requester_peer_did_method}')
 @when('"{requester}" sends the request to "{responder}"')
