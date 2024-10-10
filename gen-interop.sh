@@ -6,7 +6,7 @@ ta_names=("Aries Cloud Agent Python" "Credo-TS" "Aries VCX")
 ta_shortnames=("ACA-Py" "Credo" "VCX")
 ta_scopes=("AIP 1, 2" "AIP 1" "AIP 1")
 ta_exceptions=("None" "Revocation" "Revocation")
-ta_urls=(https://github.com/hyperledger/aries-cloudagent-python \
+ta_urls=(https://github.com/openwallet-foundation/acapy \
 https://github.com/openwallet-foundation/credo-ts \
 https://github.com/hyperledger/aries-vcx)
 workflows=".github/workflows/test-harness-*"

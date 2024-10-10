@@ -7,7 +7,7 @@ jobs:
   get-test-harnesses:
     name: Get Test Harnesses
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    if: (github.event_name == 'schedule' && github.repository == 'openwallet-foundation/owl-agent-test-harness') || (github.event_name != 'schedule')
     outputs:
       harnesses: ${{ steps.get-file-list.outputs.files }}
       repo-name: ${{ steps.get-repo-info.outputs.name }}
@@ -51,7 +51,7 @@ jobs:
     name: Run Test Harness
     needs: [get-test-harnesses]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'schedule' && github.repository == 'hyperledger/aries-agent-test-harness') || (github.event_name != 'schedule')
+    if: (github.event_name == 'schedule' && github.repository == 'openwallet-foundation/owl-agent-test-harness') || (github.event_name != 'schedule')
     strategy:
       max-parallel: 1
       matrix:

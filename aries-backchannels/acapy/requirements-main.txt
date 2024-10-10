@@ -1,1 +1,1 @@
-aries-cloudagent[indy, bbs, askar]@git+https://github.com/hyperledger/aries-cloudagent-python@main
+acapy-agent[indy, bbs, askar]@git+https://github.com/openwallet-foundation/acapy@main
