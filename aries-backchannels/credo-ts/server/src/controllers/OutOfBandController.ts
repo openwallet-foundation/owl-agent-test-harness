@@ -104,7 +104,7 @@ export class OutOfBandController extends BaseController {
 
     const { outOfBandRecord, connectionRecord } = await this.agent.oob.receiveInvitation(oobInvitation, {
       routing,
-      autoAcceptConnection: false,
+      autoAcceptConnection: true, //was false
       autoAcceptInvitation: true,
     })
 
