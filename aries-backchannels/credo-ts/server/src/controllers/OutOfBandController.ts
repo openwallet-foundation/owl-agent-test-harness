@@ -111,9 +111,9 @@ export class OutOfBandController extends BaseController {
     this.agent.config.logger.debug('OutOfBandController.receiveInvitation: outOfBandRecord: ', outOfBandRecord)
     this.agent.config.logger.debug('OutOfBandController.receiveInvitation: connectionRecord: ', connectionRecord)
 
-    if (!outOfBandRecord) {
-      throw new CredoError('Processing invitation did not result in a out of band record')
-    }
+    // if (!outOfBandRecord) {
+    //   throw new CredoError('Processing invitation did not result in a out of band record')
+    // }
 
     if (!connectionRecord) {
       throw new CredoError('Processing invitation did not result in a connection record')
@@ -128,9 +128,18 @@ export class OutOfBandController extends BaseController {
       connectionRecord.state = DidExchangeState.InvitationReceived
     }
 
+    // Add the two records to the response and move the state from the connectionRecord to the root of connectionRecords.
+    const connectionRecords = {
+      ...(connectionRecord && { connectionRecord }),
+      ...(outOfBandRecord && { outOfBandRecord }),
+      ...(connectionRecord && { state: connectionRecord.state }),
+      ...(connectionRecord && { connection_id: connectionRecord.outOfBandId })
+    }
+
     //return this.mapConnection(connectionRecord)
-    return connectionRecord
+    //return connectionRecord
     //return outOfBandRecord
+    return connectionRecords
   }
 
   // Implementing this method just to satisfy AATH. This will not call credo and just set the state that was set in the previous step of receive invitation.
