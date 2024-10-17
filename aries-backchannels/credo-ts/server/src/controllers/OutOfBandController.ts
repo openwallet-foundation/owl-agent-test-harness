@@ -16,6 +16,8 @@ import {
 
 import { convertToNewInvitation } from '@credo-ts/core/build/modules/oob/helpers'
 import { convertToOldInvitation } from '@credo-ts/core/build/modules/oob/helpers'
+import { ProofUtils } from '../utils/ProofUtils'
+import { CredentialUtils } from '../utils/CredentialUtils'
 import { filter, firstValueFrom, ReplaySubject, tap, timeout } from 'rxjs'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
@@ -81,13 +83,21 @@ export class OutOfBandController extends BaseController {
     }
   }
 
-  // @Post('/send-invitation-message')
-  // async sendInvitationMessage(@BodyParams() invitationDetails: any) {
-  //   // Implement the logic to send an invitation message
-  //   // Example:
-  //   const result = await this.agent.sendInvitationMessage(invitationDetails)
-  //   return result
-  // }
+  @Post('/send-invitation-message')
+  async sendInvitationMessage(@BodyParams() invitationDetails: any) {
+    // Implement the logic to send an invitation message
+    // Example:
+
+    // Adjust the invitation details based on it's contents
+    const adjustedInvitationDetails = await this.mapOOBInvitationDetails(invitationDetails)
+
+    // Create the invitation
+    const invitation = await this.createInvitation(adjustedInvitationDetails);
+
+
+    //const result = await this.agent.sendInvitationMessage(invitationDetails)
+    return invitation
+  }
 
   @Post('/receive-invitation')
   async receiveInvitation(@BodyParams('data') data: Record<string, unknown> & { mediator_connection_id?: string }) {
@@ -214,5 +224,78 @@ export class OutOfBandController extends BaseController {
       connection_id: connection.id,
       connection,
     }
+  }
+
+  private async mapOOBInvitationDetails(invitationDetails: any) {
+    // Adjust the invitation details based on it's contents
+
+    const auto_accept = "false";
+    const multi_use = "false";
+    let agent_operation = "create-invitation?multi_use=" + multi_use;
+
+    const attachments = invitationDetails.attachments || [];
+    const handshake_protocols = invitationDetails.handshake_protocols || null;
+    const formatted_attachments: any[] = [];
+    const use_did_method = invitationDetails.use_did_method || null;
+    const use_did = invitationDetails.use_did || null;
+
+    for (const attachment of attachments) {
+      const message_type = attachment["@type"];
+      const thread_id = attachment["~thread"]?.thid || attachment["@id"];
+      let record_id, record_type;
+
+      if (message_type.endsWith("/issue-credential/1.0/offer-credential")) {
+        const credential = await CredentialUtils.getCredentialByThreadId(this.agent, thread_id)
+        //const resp = await this.admin_GET("/issue-credential/records", { params: { thread_id } });
+        //const resp_json = await resp.json();
+        //record_id = resp_json.results[0].credential_exchange_id;
+        record_type = "credential-offer";
+      // } else if (message_type.endsWith("/issue-credential/2.0/offer-credential")) {
+      //   const resp = await this.admin_GET("/issue-credential-2.0/records", { params: { thread_id } });
+      //   const resp_json = await resp.json();
+      //   record_id = resp_json.results[0].cred_ex_record.cred_ex_id;
+      //   record_type = "credential-offer";
+      } else if (message_type.endsWith("present-proof/1.0/request-presentation")) {
+        const proof = await ProofUtils.getProofByThreadId(this.agent, thread_id)
+        //const resp = await this.admin_GET("/present-proof/records", { params: { thread_id } });
+        //const resp_json = await resp.json();
+        //record_id = resp_json.results[0].presentation_exchange_id;
+        //record_type = "present-proof";
+      // } else if (message_type.endsWith("present-proof/2.0/request-presentation")) {
+      //   const resp = await this.admin_GET("/present-proof-2.0/records", { params: { thread_id } });
+      //   const resp_json = await resp.json();
+      //   record_id = resp_json.results[0].pres_ex_id;
+      //   record_type = "present-proof";
+      } else {
+        return { status: 500, message: `Unsupported message type '${message_type}'` };
+      }
+
+      formatted_attachments.push({ id: record_id, type: record_type });
+    }
+
+    const data: any = {
+      use_public_did: invitationDetails.use_public_did || false,
+      attachments: formatted_attachments,
+    };
+
+    if (!handshake_protocols && !formatted_attachments.length) {
+      data.handshake_protocols = ["did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0"];
+    } else {
+      data.handshake_protocols = handshake_protocols || [];
+    }
+
+    if (use_did_method) {
+      data.use_did_method = use_did_method;
+    }
+
+    if (use_did) {
+      data.use_did = use_did;
+    }
+
+    if (invitationDetails.mediation_id) {
+      data.mediation_id = invitationDetails.mediation_id;
+    }
+
+    return data;
   }
 }
