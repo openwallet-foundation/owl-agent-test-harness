@@ -53,7 +53,7 @@ Build the local agents:
 
 Run a remote agent locally:
 ```bash
-docker run -dt --name "fred_agent" --expose "9030-9039" -p "9030-9039:9030-9039" -v /Users/Shel/Projects/BC.gov/aries-agent-test-harness_nodlesh/aries-backchannels/acapy/.build/acapy-main.data:/data-mount:z --env-file=aries-backchannels/acapy/acapy-main.env -e AGENT_NAME=Fred -e LEDGER_URL=http://test.bcovrin.vonx.io -e TAILS_SERVER_URL=https://tails.vonx.io -e DOCKERHOST=host.docker.internal -e CONTAINER_NAME=fred_agent "acapy-main-agent-backchannel" -p "9031" -i false
+docker run -dt --name "fred_agent" --expose "9030-9039" -p "9030-9039:9030-9039" -v  <location_of_test_harness>/aries-backchannels/acapy/.build/acapy-main.data:/data-mount:z --env-file=aries-backchannels/acapy/acapy-main.env -e AGENT_NAME=Fred -e LEDGER_URL=http://test.bcovrin.vonx.io -e TAILS_SERVER_URL=https://tails.vonx.io -e DOCKERHOST=host.docker.internal -e CONTAINER_NAME=fred_agent "acapy-main-agent-backchannel" -p "9031" -i false
 ```
 
 Run the tests:
