@@ -74,6 +74,8 @@ The following diagram provides an overview of the architecture of the AATH.
 - The `./manage` script also supports running the services needed by the tests, such as a [von-network](https://github.com/bcgov/von-network) Indy instance, an [Indy tails service](https://github.com/bcgov/indy-tails-server), a universal resolver and a `did:orb` instance.
   - Environment variables can also be used to configure a test run to use public services, such as the BCovrin test Indy instance. You'll find examples of using environment variables to use those services in various documentation files in this repo.
 - A special Test Agent called `mobile` can be used in the `Bob` role to test mobile wallet apps on phones. See [this document](./MOBILE_AGENT_TESTING.md) for details.
+- OATH has the ability to include remote agents in other/external environments into an interop test run. 
+This allows the verification of agents unmanaged by the test harness with other agents. See [this document](./REMOTE_AGENT_TESTING.md) for more details on the `remote` option. 
 
 ## Aries Agent Test Harness Terminology
 
