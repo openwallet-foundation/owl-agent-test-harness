@@ -53,13 +53,19 @@ Build the local agents:
 
 Run a remote agent locally:
 ```bash
-docker run -dt --name "fred_agent" --expose "9030-9039" -p "9030-9039:9030-9039" -v  $PWD/aries-backchannels/acapy/.build/acapy-main.data:/data-mount:z --env-file=aries-backchannels/acapy/acapy-main.env -e AGENT_NAME=Fred -e LEDGER_URL=http://test.bcovrin.vonx.io -e TAILS_SERVER_URL=https://tails.vonx.io -e DOCKERHOST=host.docker.internal -e CONTAINER_NAME=fred_agent "acapy-main-agent-backchannel" -p "9031" -i false
+./start-remote-agent-demo.sh
 ```
 
 Run the tests:
 ```bash
 LEDGER_URL_CONFIG=http://test.bcovrin.vonx.io TAILS_SERVER_URL_CONFIG=https://tails.vonx.io ./manage run -a acapy-main -b remote --bep http://0.0.0.0:9031 -f acapy-main -m acapy-main -t @T002-RFC0160
 ```
+
+Shutdown the remote agent
+```bash
+./end-remote-agent-demo.sh
+```
+
 
 #### Handling Errors
 

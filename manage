@@ -1500,9 +1500,6 @@ case "${COMMAND}" in
   dockerhost)
       echo ${DOCKERHOST}
     ;;
-  dockerhost_url_templates)
-      dockerhost_url_templates
-    ;;
   *)
       usage
     ;;
