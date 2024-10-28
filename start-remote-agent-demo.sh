@@ -3,6 +3,7 @@
 
 . /dev/stdin <<<"$(cat <(curl -s --raw https://raw.githubusercontent.com/bcgov/DITP-DevOps/main/code/snippets/getDockerHost))"
 export DOCKERHOST=$(getDockerHost)
+SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 
   # generate acapy plugin config file, writing $DOCKERHOST into URLs
 pushd ${SCRIPT_HOME}/aries-backchannels/acapy/ > /dev/null
