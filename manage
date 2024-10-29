@@ -2,7 +2,9 @@
 # set -x
 
 # Set of valid agents - add new agents here
+# added remote as a valid agent to allow for remote agent testing.
 export VALID_AGENTS=$(ls aries-backchannels/*/Dockerfile.* | sed "s/^.*file.//" |  tr "\n" " " | sort -u)
+VALID_AGENTS="${VALID_AGENTS} remote"
 
 export MSYS_NO_PATHCONV=1
 # getDockerHost; for details refer to https://github.com/bcgov/DITP-DevOps/tree/main/code/snippets#getdockerhost
@@ -33,6 +35,15 @@ TAILS_SERVER_URL_INTERNAL="$(echo ${TAILS_SERVER_URL_INTERNAL} | sed "s/:\/\/loc
 
 REDIS_CLUSTER_URL_HOST="${REDIS_CLUSTER_URL_CONFIG:-http://localhost:6377}"
 
+# Define variables for endpoints and ports
+declare ACME_ENDPOINT=""
+declare BOB_ENDPOINT=""
+declare FABER_ENDPOINT=""
+declare MALLORY_ENDPOINT=""
+declare IS_ACME_REMOTE=0
+declare IS_BOB_REMOTE=0
+declare IS_FABER_REMOTE=0
+declare IS_MALLORY_REMOTE=0
 
 # Running on Windows?
 if [[ "$OSTYPE" == "msys" ]]; then
@@ -500,10 +511,16 @@ dockerhost_url_templates() {
 
 pingAgent(){
   name=${1}
-  port=${2}
+  endpoint=${2}
+  port=${3}
 
   # ping agent using a backchannel-exposed api
-  rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:${port}/agent/command/status/)
+  # if port is not provided just use the endpoint
+  if [[ -z ${port} ]]; then
+    rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${endpoint}/agent/command/status/)
+  else
+    rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${endpoint}:${port}/agent/command/status/)
+  fi
   if (( ${rtnCd} == 200 )); then
     return 0
   else
@@ -823,35 +840,68 @@ startHarness(){
 
   # Only start agents that are asked for in the ./manage start command
   if [[ "$ACME" != "none" ]]; then
-    export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
-    startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021 "$AIP_CONFIG" "$ACME"
+    if checkAndSetRemote "ACME"; then
+      echo "ACME is set to remote."
+    else
+      export ACME_AGENT=${ACME_AGENT:-${ACME}-agent-backchannel}
+      startAgent Acme acme_agent "$ACME_AGENT" "9020-9029" 9020 9021 "$AIP_CONFIG" "$ACME"
+    fi
   fi
   if [[ "$BOB" != "none" ]]; then
-    export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
-    startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031 "$AIP_CONFIG" "$BOB"
+    if checkAndSetRemote "BOB"; then
+      echo "BOB is set to remote."
+    else
+      export BOB_AGENT=${BOB_AGENT:-${BOB}-agent-backchannel}
+      startAgent Bob bob_agent "$BOB_AGENT" "9030-9039" 9030 9031 "$AIP_CONFIG" "$BOB"
+    fi
   fi
   if [[ "$FABER" != "none" ]]; then
-    export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
-    startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040 9041 "$AIP_CONFIG" "$FABER"
+    if checkAndSetRemote "FABER"; then
+      echo "FABER is set to remote."
+    else
+      export FABER_AGENT=${FABER_AGENT:-${FABER}-agent-backchannel}
+      startAgent Faber faber_agent "$FABER_AGENT" "9040-9049" 9040 9041 "$AIP_CONFIG" "$FABER"
+    fi
   fi
   if [[ "$MALLORY" != "none" ]]; then
-    export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
-    startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
+    if checkAndSetRemote "MALLORY"; then
+      echo "MALLORY is set to remote."
+    else
+      export MALLORY_AGENT=${MALLORY_AGENT:-${MALLORY}-agent-backchannel}
+      startAgent Mallory mallory_agent "$MALLORY_AGENT" "9050-9059" 9050 9051 "$AIP_CONFIG" "$MALLORY"
+    fi
   fi
 
   echo
+
   # Check if agents were successfully started.
   if [[ "$ACME" != "none" ]]; then
-    waitForAgent Acme 9020
+    if [[ IS_ACME_REMOTE -eq 0 ]]; then
+      waitForAgent Acme http://localhost 9020
+    else
+      waitForAgent Acme ${ACME_ENDPOINT}
+    fi
   fi
   if [[ "$BOB" != "none" ]]; then
-    waitForAgent Bob 9030
+    if [[ IS_BOB_REMOTE -eq 0 ]]; then
+      waitForAgent Bob http://localhost 9030
+    else
+      waitForAgent Bob ${BOB_ENDPOINT}
+    fi
   fi
   if [[ "$FABER" != "none" ]]; then
-    waitForAgent Faber 9040
+    if [[ IS_FABER_REMOTE -eq 0 ]]; then
+      waitForAgent Faber http://localhost 9040
+    else
+      waitForAgent Faber ${FABER_ENDPOINT}
+    fi
   fi
   if [[ "$MALLORY" != "none" ]]; then
-    waitForAgent Mallory 9050
+    if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
+      waitForAgent Mallory http://localhost 9050
+    else
+      waitForAgent Mallory ${MALLORY_ENDPOINT}
+    fi
   fi
   echo
 
@@ -865,11 +915,35 @@ startHarness(){
   fi
 }
 
+# Check if the agent is remote and set the endpoint and port
+checkAndSetRemote() {
+  local agent_name=$1
+  local endpoint_var="${agent_name}_ENDPOINT"
+  local port_var="${agent_name}_PORT"
+  local is_remote_var="IS_${agent_name}_REMOTE"
+
+  if [[ -n "${!endpoint_var}" ]]; then
+    eval $is_remote_var=1
+    return 0
+  else
+    return 1
+  fi
+}
+
 deleteAgents() {
-    deleteAgent acme_agent
-    deleteAgent bob_agent
-    deleteAgent faber_agent
-    deleteAgent mallory_agent
+    # Check if agent is remote and delete it
+    if [[ IS_ACME_REMOTE -eq 0 ]]; then
+      deleteAgent acme_agent
+    fi
+    if [[ IS_BOB_REMOTE -eq 0 ]]; then
+      deleteAgent bob_agent
+    fi
+    if [[ IS_FABER_REMOTE -eq 0 ]]; then
+      deleteAgent faber_agent
+    fi
+    if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
+      deleteAgent mallory_agent
+    fi
 }
 
 deleteAgent() {
@@ -960,6 +1034,38 @@ runRunSet() {
   exit 0
 }
 
+# Function to build the -D options for agents when running the tests
+buildAgentOptions() {
+  local agent_name=$1
+  # need an upper case version of the agent name
+  upper_agent_name=$(printf "%s" "$agent_name" | tr '[:lower:]' '[:upper:]')
+  local endpoint_var="${upper_agent_name}_ENDPOINT"
+
+  if [[ -n "${!endpoint_var}" ]]; then
+    echo "-D ${agent_name}=${!endpoint_var}"
+  else
+    # Use predefined ports for non-remote agents
+    case ${upper_agent_name} in
+      ACME)
+        echo "-D ${agent_name}=http://0.0.0.0:9020"
+        ;;
+      BOB)
+        echo "-D ${agent_name}=http://0.0.0.0:9030"
+        ;;
+      FABER)
+        echo "-D ${agent_name}=http://0.0.0.0:9040"
+        ;;
+      MALLORY)
+        echo "-D ${agent_name}=http://0.0.0.0:9050"
+        ;;
+      *)
+        echo "Error: Unknown agent ${agent_name}"
+        exit 1
+        ;;
+    esac
+  fi
+}
+
 runTests() {
   runArgs=${@}
 
@@ -977,14 +1083,20 @@ runTests() {
   export BEHAVE_INI_TMP="$(pwd)/behave.ini.tmp"
   cp ${BEHAVE_INI} ${BEHAVE_INI_TMP}
 
+  # Build the agent options
+  ACME_OPTIONS=$(buildAgentOptions "Acme")
+  BOB_OPTIONS=$(buildAgentOptions "Bob")
+  FABER_OPTIONS=$(buildAgentOptions "Faber")
+  MALLORY_OPTIONS=$(buildAgentOptions "Mallory")
+
   if [[ "${REPORT}" = "allure" && "${COMMAND}" != "dry-run" ]]; then
       echo "Executing tests with Allure Reports."
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" $DOCKER_ENV aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" $DOCKER_ENV aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress ${ACME_OPTIONS} ${BOB_OPTIONS} ${FABER_OPTIONS} ${MALLORY_OPTIONS}
   elif [[ "${COMMAND}" = "dry-run" ]]; then
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini $DOCKER_ENV aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050 |\
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini $DOCKER_ENV aries-test-harness -k ${runArgs} ${ACME_OPTIONS} ${BOB_OPTIONS} ${FABER_OPTIONS} ${MALLORY_OPTIONS} |\
         grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
   else
-      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" $DOCKER_ENV aries-test-harness -k ${runArgs} -D Acme=http://0.0.0.0:9020 -D Bob=http://0.0.0.0:9030 -D Faber=http://0.0.0.0:9040 -D Mallory=http://0.0.0.0:9050
+      ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" $DOCKER_ENV aries-test-harness -k ${runArgs} ${ACME_OPTIONS} ${BOB_OPTIONS} ${FABER_OPTIONS} ${MALLORY_OPTIONS}
   fi
   local docker_result=$?
   rm ${BEHAVE_INI_TMP}
@@ -993,17 +1105,29 @@ runTests() {
   if [[ ${COMMAND} != "dry-run" ]]; then
     echo ""
     echo "Exporting Agent logs."
-    docker logs acme_agent > .logs/acme_agent.log
-    docker logs bob_agent > .logs/bob_agent.log
-    docker logs faber_agent > .logs/faber_agent.log
-    docker logs mallory_agent > .logs/mallory_agent.log
-
-    if [[ "${USE_NGROK}" = "true" ]]; then
-      echo "Exporting ngrok Agent logs."
-      docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
-      docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
-      docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
-      docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+    if [[ IS_ACME_REMOTE -eq 0 ]]; then
+      docker logs acme_agent > .logs/acme_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
+      fi
+    fi
+    if [[ IS_BOB_REMOTE -eq 0 ]]; then
+      docker logs bob_agent > .logs/bob_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
+      fi
+    fi
+    if [[ IS_FABER_REMOTE -eq 0 ]]; then
+      docker logs faber_agent > .logs/faber_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
+      fi
+    fi
+    if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
+      docker logs mallory_agent > .logs/mallory_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+      fi
     fi
   fi
 
@@ -1029,14 +1153,30 @@ stopHarness(){
   fi
 
   echo "Cleanup:"
-  echo "  - Shutting down all the agents ..."
-  docker stop acme_agent bob_agent faber_agent mallory_agent > /dev/null
-  docker rm -v acme_agent bob_agent faber_agent mallory_agent > /dev/null
-
-  stopIfExists acme_agent-ngrok
-  stopIfExists bob_agent-ngrok
-  stopIfExists faber_agent-ngrok
-  stopIfExists mallory_agent-ngrok
+  echo "  - Shutting down all test harness managed agents ..."
+  # Check if each agent is remote and only stop and remove the container if it is not remote
+  if [[ IS_ACME_REMOTE -eq 0 ]]; then
+    docker stop acme_agent > /dev/null
+    docker rm -v acme_agent > /dev/null
+    stopIfExists acme_agent-ngrok
+  fi
+  if [[ IS_BOB_REMOTE -eq 0 ]]; then
+    docker stop bob_agent > /dev/null
+    docker rm -v bob_agent > /dev/null
+    stopIfExists bob_agent-ngrok
+  fi
+  if [[ IS_FABER_REMOTE -eq 0 ]]; then
+    docker stop faber_agent > /dev/null
+    docker rm -v faber_agent > /dev/null
+    stopIfExists faber_agent-ngrok
+  fi
+  if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
+    docker stop mallory_agent > /dev/null
+    docker rm -v mallory_agent > /dev/null
+    stopIfExists mallory_agent-ngrok
+  fi
+  # docker stop acme_agent bob_agent faber_agent mallory_agent > /dev/null
+  # docker rm -v acme_agent bob_agent faber_agent mallory_agent > /dev/null
 
   printf "Done\n"
 
@@ -1068,6 +1208,7 @@ isAgent() {
   for agent in ${VALID_AGENTS}; do
     if [[ "${1}" == "${agent}" ]]; then
         result=true
+        break
     fi
   done
 
@@ -1154,43 +1295,90 @@ if [[ "${COMMAND}" == "run" || "${COMMAND}" == "start" || "${COMMAND}" == "test"
   TAGS=""
   BEHAVE_INI=aries-test-harness/behave.ini
 
-  while getopts "hna:b:c:f:m:r:e:d:t:v:i:" FLAG; do
-    case $FLAG in
-        h ) usage ;;
-        : ) usage ;;
-        \? ) #unrecognized option - show help
-        echo -e \\n"Invalid script option: -${OPTARG}"\\n
-        usage
-            ;;
-        r ) export REPORT=${OPTARG}
-            ;;
-        e ) export REPORT_ERROR_TYPE=${OPTARG}
-            ;;
-        a ) export ACME=${OPTARG}
-            ;;
-        b ) export BOB=${OPTARG}
-            ;;
-        f ) export FABER=${OPTARG}
-            ;;
-        m ) export MALLORY=${OPTARG}
-            ;;
-        t ) export TAGS="${TAGS} --tags=${OPTARG}"
-            ;;
-        v ) export AIP_CONFIG=${OPTARG}
-            ;;
-        i ) export BEHAVE_INI=${OPTARG}
-            ;;
-        n ) export USE_NGROK="true"
-            ;;
-        d )
-            export ACME=${OPTARG}
-            export BOB=${OPTARG}
-            export FABER=${OPTARG}
-            export MALLORY=${OPTARG}
-            ;;
-    esac
-  done
-  shift $((OPTIND-1))
+# --- Parse options manually ---
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h)
+      usage
+      shift
+      ;;
+    -a)
+      export ACME="$2"
+      shift 2
+      ;;
+    -b)
+      export BOB="$2"
+      shift 2
+      ;;
+    -f)
+      export FABER="$2"
+      shift 2
+      ;;
+    -m)
+      export MALLORY="$2"
+      shift 2
+      ;;
+    -r)
+      export REPORT="$2"
+      shift 2
+      ;;
+    -e)
+      export REPORT_ERROR_TYPE="$2"
+      shift 2
+      ;;
+    -d)
+      export ACME="$2"
+      export BOB="$2"
+      export FABER="$2"
+      export MALLORY="$2"
+      shift 2
+      ;;
+    -t)
+      export TAGS="${TAGS} --tags=$2"
+      shift 2
+      ;;
+    -v)
+      export AIP_CONFIG="$2"
+      shift 2
+      ;;
+    -i)
+      export BEHAVE_INI="$2"
+      shift 2
+      ;;
+    -n)
+      export USE_NGROK="true"
+      shift
+      ;;
+    --aep)
+      export ACME_ENDPOINT="$2"
+      shift 2
+      ;;
+    --bep)
+      export BOB_ENDPOINT="$2"
+      shift 2
+      ;;
+    --fep)
+      export FABER_ENDPOINT="$2"
+      shift 2
+      ;;
+    --mep)
+      export MALLORY_ENDPOINT="$2"
+      shift 2
+      ;;
+    --) # End of options
+      shift
+      break
+      ;;
+    -*)
+      echo -e "\\nInvalid script option: $1\\n"
+      usage
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 
   if [[ "${COMMAND}" == "run" || "${COMMAND}" == "test" ]]; then
     for agent in ${ACME} ${BOB} ${FABER} ${MALLORY}; do

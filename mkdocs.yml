@@ -1,6 +1,6 @@
-site_name: Aries Agent Test Harness (AATH) Interop Information
-repo_name: hyperledger/aries-agent-test-harness
-repo_url: https://github.com/hyperledger/aries-agent-test-harness
+site_name: OWL Agent Test Harness (OATH) Interop Information
+repo_name: openwallet-foundation/owl-agent-test-harness
+repo_url: https://github.com/openwallet-foundation/owl-agent-test-harness
 theme:
   name: material
   logo: https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/Hyperledger_Aries_Logo_White.png
@@ -77,28 +77,29 @@ extra:
   version:
     provider: mike
 nav:
-- Aries Interoperability Information:
+- Interoperability Information:
     - Summary of Latest Results: README.md
-    - Introduction to Aries Interoperability: aries-interop-intro.md
-    - Aries Agent Test Harness Coverage: guide/TEST-COVERAGE.md
+    - Introduction to Interoperability: aries-interop-intro.md
+    - OWL Agent Test Harness Coverage: guide/TEST-COVERAGE.md
 - Latest Results by Agent:
-    - Aries Cloud Agent Python: acapy.md
+    - Cloud Agent Python: acapy.md
     - Credo-TS: credo.md
     - Aries VCX: aries-vcx.md
-- AATH Documentation:
-    - Aries Agent Test Harness: guide/README.md
+- OATH Documentation:
+    - OWL Agent Test Harness: guide/README.md
     - Test Development Guidelines: guide/TEST_DEV_GUIDE.md
-    - Aries Backchannels: guide/aries-backchannels.md
-    - Working with Dev Containers in AATH: guide/AATH_DEV_CONTAINERS.md
-    - Running AATH Locally: guide/RunningLocally.md
+    - Backchannels: guide/aries-backchannels.md
+    - Working with Dev Containers in OATH: guide/AATH_DEV_CONTAINERS.md
+    - Running OATH Locally: guide/RunningLocally.md
     - Debugging Backchannels: guide/Debugging.md
-    - Running AATH Using Dev Containers: guide/AATH_DEV_CONTAINERS.md
+    - Running OATH Using Dev Containers: guide/AATH_DEV_CONTAINERS.md
     - Managing Connection IDs in Tests: guide/ACCESS-CONNECTION-IDS.md
-    - Taking Advantage of Connection Reuse in AATH: guide/CONNECTION-REUSE.md
+    - Taking Advantage of Connection Reuse in OATH: guide/CONNECTION-REUSE.md
     - Configuring Tests with Credential Types and Proofs: guide/CONFIGURE-CRED-TYPES.md
+    - Remote Agent Testing: guide/REMOTE_AGENT_TESTING.md
     - Mobile Agent Testing: guide/MOBILE_AGENT_TESTING.md
     - Retry Failed Test Scenarios: guide/RETRY-FAILED-SCENARIOS.md
-    - Aries Agent Test Harness Advanced Test Reporting: guide/TEST_REPORTING.md
+    - OWL Agent Test Harness Advanced Test Reporting: guide/TEST_REPORTING.md
 - Contributing:
     - Contributing: guide/CONTRIBUTING.md
     - Code of Conduct: guide/CODE_OF_CONDUCT.md
