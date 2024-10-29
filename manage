@@ -1105,17 +1105,29 @@ runTests() {
   if [[ ${COMMAND} != "dry-run" ]]; then
     echo ""
     echo "Exporting Agent logs."
-    docker logs acme_agent > .logs/acme_agent.log
-    docker logs bob_agent > .logs/bob_agent.log
-    docker logs faber_agent > .logs/faber_agent.log
-    docker logs mallory_agent > .logs/mallory_agent.log
-
-    if [[ "${USE_NGROK}" = "true" ]]; then
-      echo "Exporting ngrok Agent logs."
-      docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
-      docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
-      docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
-      docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+    if [[ IS_ACME_REMOTE -eq 0 ]]; then
+      docker logs acme_agent > .logs/acme_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
+      fi
+    fi
+    if [[ IS_BOB_REMOTE -eq 0 ]]; then
+      docker logs bob_agent > .logs/bob_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
+      fi
+    fi
+    if [[ IS_FABER_REMOTE -eq 0 ]]; then
+      docker logs faber_agent > .logs/faber_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
+      fi
+    fi
+    if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
+      docker logs mallory_agent > .logs/mallory_agent.log
+      if [[ "${USE_NGROK}" = "true" ]]; then
+        docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+      fi
     fi
   fi
 
