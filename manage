@@ -881,12 +881,18 @@ startHarness(){
     else
       waitForAgent Acme ${ACME_ENDPOINT}
     fi
+    if [ $? -eq 1 ]; then
+      return 1
+    fi
   fi
   if [[ "$BOB" != "none" ]]; then
     if [[ IS_BOB_REMOTE -eq 0 ]]; then
       waitForAgent Bob http://localhost 9030
     else
       waitForAgent Bob ${BOB_ENDPOINT}
+    fi
+    if [ $? -eq 1 ]; then
+      return 1
     fi
   fi
   if [[ "$FABER" != "none" ]]; then
@@ -895,12 +901,18 @@ startHarness(){
     else
       waitForAgent Faber ${FABER_ENDPOINT}
     fi
+    if [ $? -eq 1 ]; then
+      return 1
+    fi
   fi
   if [[ "$MALLORY" != "none" ]]; then
     if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
       waitForAgent Mallory http://localhost 9050
     else
       waitForAgent Mallory ${MALLORY_ENDPOINT}
+    fi
+    if [ $? -eq 1 ]; then
+      return 1
     fi
   fi
   echo
@@ -1473,9 +1485,11 @@ case "${COMMAND}" in
 
   run)
       startHarness
-      echo ""
-      runTests ${TAGS} ${@}
-      echo ""
+      if [ $? -eq 1 ]; then
+        echo "Failed to communicate with one or more agents. Please see agent logs to diagnose the problem. Skipping tests."
+      else
+        runTests ${TAGS} ${@}
+      fi
       stopHarness auto
     ;;
   runset)
