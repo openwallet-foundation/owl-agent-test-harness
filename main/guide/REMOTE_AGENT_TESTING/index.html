@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../TEST_DEV_GUIDE/">
+        <link rel="prev" href="../CONFIGURE-CRED-TYPES/">
       
       
-        <link rel="next" href="../AATH_DEV_CONTAINERS/">
+        <link rel="next" href="../MOBILE_AGENT_TESTING/">
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Backchannels - OWL Agent Test Harness (OATH) Interop Information</title>
+        <title>Remote Agent Testing - OWL Agent Test Harness (OATH) Interop Information</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#aries-backchannels" class="md-skip">
+        <a href="#remote-agent-testing-in-oath" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Backchannels
+              Remote Agent Testing
             
           </span>
         </div>
@@ -640,30 +640,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Backchannels
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../aries-backchannels/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -672,104 +652,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#writing-a-new-backchannel" class="md-nav__link">
-    <span class="md-ellipsis">
-      Writing a new Backchannel
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Writing a new Backchannel">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#whats-needed" class="md-nav__link">
-    <span class="md-ellipsis">
-      What's Needed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#standard-backchannel-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      Standard Backchannel API
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#standard-backchannel-topics-and-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Standard Backchannel Topics and Operations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backchannelagent-interaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Backchannel/Agent Interaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#docker-build-script" class="md-nav__link">
-    <span class="md-ellipsis">
-      Docker Build Script
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manage-script-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      ./manage Script Integration
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-aca-py-and-indy-influence" class="md-nav__link">
-    <span class="md-ellipsis">
-      The ACA-Py and Indy Influence
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -926,10 +808,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../REMOTE_AGENT_TESTING/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Remote Agent Testing
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -938,6 +840,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1171,78 +1120,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#writing-a-new-backchannel" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
-      Writing a new Backchannel
+      Prerequisites
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Writing a new Backchannel">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#whats-needed" class="md-nav__link">
-    <span class="md-ellipsis">
-      What's Needed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#standard-backchannel-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      Standard Backchannel API
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#standard-backchannel-topics-and-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Standard Backchannel Topics and Operations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backchannelagent-interaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Backchannel/Agent Interaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#docker-build-script" class="md-nav__link">
-    <span class="md-ellipsis">
-      Docker Build Script
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manage-script-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      ./manage Script Integration
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-aca-py-and-indy-influence" class="md-nav__link">
+  <a href="#command-structure" class="md-nav__link">
     <span class="md-ellipsis">
-      The ACA-Py and Indy Influence
+      Command Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
     </span>
   </a>
   
@@ -1266,100 +1164,63 @@
   
 
 
-<h1 id="aries-backchannels">Aries Backchannels<a class="headerlink" href="#aries-backchannels" title="Permanent link">&para;</a></h1>
-<p>This folder contains the Aries backchannels that have been added to the Aries Agent Test Harness, each in their own folder, plus some shared files that may be useful to specific backchannel implementations. As noted in the main repo readme, backchannels receive requests from the test harness and convert those requests into instructions for the component under test (CUT). Within the component backchannel folders there may be more than one Dockerfile to build a different Test Agents sharing a single backchannel, perhaps for different versions of the CUT or different configurations.</p>
-<h2 id="writing-a-new-backchannel">Writing a new Backchannel<a class="headerlink" href="#writing-a-new-backchannel" title="Permanent link">&para;</a></h2>
-<p>If you are writing a backchannel using Python, you're in luck! Just use either the <code>ACA-Py</code> or <code>VCX</code> backchannels as a model. They sub-class from a common base class (in the <code>python</code> folder), which implements the common backchannel features. The Python implementation is data driven, using the txt file in the <code>data</code> folder.</p>
-<h3 id="whats-needed">What's Needed<a class="headerlink" href="#whats-needed" title="Permanent link">&para;</a></h3>
-<p>If you are implementing from scratch, you need to implement a backchannel which:</p>
+<h1 id="remote-agent-testing-in-oath">Remote Agent Testing in OATH<a class="headerlink" href="#remote-agent-testing-in-oath" title="Permanent link">&para;</a></h1>
+<p>OWL Agent Test Harness is a powerful tool for running verifiable credential and decentralized identity interoperability tests. It supports a variety of agent configurations, including running agents locally that are test harness managed, or remotely, unmanaged by the test harness. This guide covers the <strong>remote</strong> option, allowing you to execute interoperability tests with agents running on remote servers in development, test, staging, or production environments, communicating with other remote agents or test harness managed agents.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>Before using the <code>remote</code> option, make sure you have:</p>
 <ul>
-<li>implements the standard backchannel web service interface (which is very simple) and all of the test step protocols (called topics), of which there are a fair number</li>
-<li>starts an instance of the component under test (CUT), and</li>
-<li>converts the requests from test harness into directives understood by the CUT</li>
+<li>A running remote instance of an agent you want to connect to and test with.</li>
+<li>The agent(s) controller has implemented the test api (backchannel api) for the protocols desired to be tested.</li>
+<li>OATH is cloned and set up locally or on a machine with network access to your remote agent(s).</li>
+<li>The remote agent(s) are configured with the same ledgers or tails server that OATH is configured with.</li>
+<li>Valid configuration URLs for remote agents, including public endpoints to the test api in the agent controller.</li>
 </ul>
-<p>Once you have the backchannel, you need to define one or more docker files to create docker images of Test Agents to deploy in an AATH run. To do that, you must create a Dockerfile that builds a Docker image for the Test Agent (TA), including the backchannel, the CUT and anything else needed to operate the TA. The resulting docker image must be able to be launched by the common <code>./manage</code> bash script so the new TA can be included in the standard test scenarios.</p>
-<h3 id="standard-backchannel-api">Standard Backchannel API<a class="headerlink" href="#standard-backchannel-api" title="Permanent link">&para;</a></h3>
-<p>The test harness interacts with each backchannel using a small set of standard set of web services. Endpoints are here:</p>
-<ul>
-<li>POST /agent/command/{topic}/{operation}</li>
-<li>GET /agent/command/{topic}/</li>
-<li>GET /agent/command/{topic}/{id}</li>
-</ul>
-<p>That's all of the endpoints your agent has to handle. Of course, your backchannel also has to be able to communicate
-with the CUT (the agent or agent framework being tested). Likely that means being able to generate requests to the
-CUT (mostly based on requests from the endpoints above) and monitor events from the CUT.</p>
-<p>See the OpenAPI definition located <a href="../../assets/openapi-spec.yml">here</a> for an overview of all current topics and operations.</p>
-<h3 id="standard-backchannel-topics-and-operations">Standard Backchannel Topics and Operations<a class="headerlink" href="#standard-backchannel-topics-and-operations" title="Permanent link">&para;</a></h3>
-<p>Although the number of endpoints is small, the number of topic and operation parameters is much larger. That list of operations drives the effort in building and maintaining the backchannel. The list of operations to be supported can be found in this <a href="../../assets/openapi-spec.yml">OpenAPI spec</a>. It lists all of the possible <code>topic</code> values, the related <code>operations</code> and information about each one, including such things as:</p>
-<ul>
-<li>related RFC and protocol</li>
-<li>a description</li>
-<li>the HTTP method</li>
-<li>data associated with the operation</li>
-</ul>
-<p>A rendered version of the OpenAPI spec can be found
-We recommend that in writing a backchannel, any <code>Not Implemented</code> commands and operations return an HTTP <code>501</code> result code ("Not Implemented").</p>
-<p>Support for testing new protocols will extend the OpenAPI spec with additional <code>topics</code> and related <code>operations</code>, adding to the workload of the backchannel maintainer.</p>
-<h3 id="backchannelagent-interaction">Backchannel/Agent Interaction<a class="headerlink" href="#backchannelagent-interaction" title="Permanent link">&para;</a></h3>
-<p>The test harness interacts with each published backchannel API using the following <a href="https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-test-harness/agent_backchannel_client.py">common Python functions</a>. Pretty simple, eh?</p>
-<h3 id="docker-build-script">Docker Build Script<a class="headerlink" href="#docker-build-script" title="Permanent link">&para;</a></h3>
-<p>Each backchannel should provide one or more Docker scripts, each of which build a self-contained Docker image for the backchannel, the CUT and anything else needed to run the TA.</p>
-<p>The following lists the requirements for building AATH compatible docker images:</p>
-<ul>
-<li>the Dockerfile for each Test Agent (TA) must be called <code>Dockerfile.&lt;TA&gt;</code>. For example <code>Dockerfile.acapy</code>, <code>Dockerfile.vcx</code>.</li>
-<li>The <code>./manage</code> script uses the <code>&lt;TA&gt;</code> to validate command line arguments, to tag the agent, and for invoking docker build and run operations.</li>
-<li>A backchannel may have multiple TA configurations and versions, each based on a different Dockerfile.<ul>
-<li>See the <code>acapy</code> backchannel where there the <code>Dockerfile.acapy</code> builds the latest released version of ACA-Py, where <code>Dockerfile.acapy-main</code> builds from the ACA-Py <code>main</code> branch.</li>
-</ul>
-</li>
-<li>TAs docker images are tagged with their <code>&lt;TA&gt;</code> name.</li>
-<li>The Dockerfiles must be located in a predefined location in this repo, currently in folders in the <code>aries-backchannels</code> folder.</li>
-<li>The <code>./manage</code> script looks for the TA Dockerfiles in those folders.</li>
-<li>A TA docker image must include all of the processes needed to run the backchannel and the CUT. For example:</li>
-<li>the Aries-VCX TA includes its backchannel, which embeds the Aries-VCX agent framework.</li>
-<li>the ACA-Py framework TA includes its backchannel and an appropriate release of ACA-Py.</li>
-<li>On startup, each TA has a range of ten public (to the docker network) ports available to it.</li>
-<li>The lowest port number is passed to the TA on startup and is used by the test harness to send HTTP requests to the running TA.</li>
-<li>The next nine higher ports are exposed across the docker network and can be used as needed by the TA.</li>
-</ul>
-<p>See examples of this for aca-py <a href="https://github.com/hyperledger/aries-agent-test-harness/blob/main/acapy/Dockerfile.acapy">(<code>Dockerfile.acapy</code>)</a> and aries-vcx <a href="https://github.com/hyperledger/aries-agent-test-harness/blob/main/aries-vcx/Dockerfile.aries-vcx">(<code>Dockerfile.vcx</code>)</a>.</p>
-<h3 id="manage-script-integration"><code>./manage</code> Script Integration<a class="headerlink" href="#manage-script-integration" title="Permanent link">&para;</a></h3>
-<p>The <code>./manage</code> script builds images and runs those images as containers in test runs. This integration applies some constraints on the docker images used. Most of those constraints are documented in the previous section, but the following provides some additional context.</p>
-<p>An image for each backchannel using the following command:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="w">      </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Building </span><span class="si">${</span><span class="nv">agent</span><span class="si">}</span><span class="s2">-agent-backchannel ...&quot;</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">      </span>docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">        </span><span class="si">${</span><span class="nv">args</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">        </span><span class="k">$(</span>initDockerBuildArgs<span class="k">)</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">        </span>-t<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">agent</span><span class="si">}</span><span class="s2">-agent-backchannel&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">BACKCHANNEL_FOLDER</span><span class="si">}</span><span class="s2">/Dockerfile.</span><span class="si">${</span><span class="nv">agent</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;aries-backchannels/&quot;</span>
+<h2 id="command-structure">Command Structure<a class="headerlink" href="#command-structure" title="Permanent link">&para;</a></h2>
+<p>When running the test harness with remote agents, the basic command structure for setting remote agents is as follows:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./manage<span class="w"> </span>run<span class="w"> </span>-a<span class="w"> </span>remote<span class="w"> </span>--aep<span class="w"> </span>&lt;acme_endpoint&gt;<span class="w"> </span>-b<span class="w"> </span>remote<span class="w"> </span>--bep<span class="w"> </span>&lt;bob_endpoint&gt;<span class="w"> </span>-f<span class="w"> </span>remote<span class="w"> </span>--fep<span class="w"> </span>&lt;faber_endpoint&gt;<span class="w"> </span>-m<span class="w"> </span>remote<span class="w"> </span>--mep<span class="w"> </span>&lt;mallory_endpoint&gt;<span class="w"> </span>
 </code></pre></div>
-<p>where:</p>
+<p>For any of the agent flags, <code>-a</code>, <code>-b</code>, <code>-f</code>, <code>-m</code>, if the agent is set to <code>remote</code> then the test harness will look for the long option of <code>--aep</code>, <code>--bep</code>, <code>--fep</code>, and <code>-mep</code> for the endpoint of that particular remote agent. </p>
+<h4 id="long-options-for-remote-endpoints">Long Options for Remote Endpoints<a class="headerlink" href="#long-options-for-remote-endpoints" title="Permanent link">&para;</a></h4>
 <ul>
-<li><code>${agent}</code> is the name of the component under test (CUT)</li>
-<li><code>$(initDockerBuildArgs)</code> picks up any HTTP_PROXY environment variables, and</li>
-<li><code>${args}</code> are any extra arguments on the command line after standard options processing.</li>
-<li>Note that the docker build context is the aries-backchannel folder&mdash;the folder above the backchannel folders</li>
+<li>--aep: ACME agent’s remote endpoint URL (e.g., <a href="http://remote-acme.com">http://remote-acme.com</a>).</li>
+<li>--bep: BOB agent’s remote endpoint URL.</li>
+<li>--fep: FABER agent’s remote endpoint URL.</li>
+<li>--mep: MALLORY agent’s remote endpoint URL.</li>
 </ul>
-<p>Once built, the selected TAs for the run are started for the test roles (currently Acme, Bob and Mallory) using the following commands:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Starting Acme Agent ...&quot;</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--rm<span class="w"> </span>--name<span class="w"> </span>acme_agent<span class="w"> </span>--expose<span class="w"> </span><span class="m">9020</span>-9029<span class="w"> </span>-p<span class="w"> </span><span class="m">9020</span>-9029:9020-9029<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;DOCKERHOST=</span><span class="si">${</span><span class="nv">DOCKERHOST</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;LEDGER_URL=http://</span><span class="si">${</span><span class="nv">DOCKERHOST</span><span class="si">}</span><span class="s2">:9000&quot;</span><span class="w"> </span><span class="si">${</span><span class="nv">ACME_AGENT</span><span class="si">}</span><span class="w"> </span>-p<span class="w"> </span><span class="m">9020</span><span class="w"> </span>-i<span class="w"> </span><span class="nb">false</span><span class="w"> </span>&gt;/dev/null
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Starting Bob Agent ...&quot;</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--rm<span class="w"> </span>--name<span class="w"> </span>bob_agent<span class="w"> </span>--expose<span class="w"> </span><span class="m">9030</span>-9039<span class="w"> </span>-p<span class="w"> </span><span class="m">9030</span>-9039:9030-9039<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;DOCKERHOST=</span><span class="si">${</span><span class="nv">DOCKERHOST</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;LEDGER_URL=http://</span><span class="si">${</span><span class="nv">DOCKERHOST</span><span class="si">}</span><span class="s2">:9000&quot;</span><span class="w"> </span><span class="si">${</span><span class="nv">BOB_AGENT</span><span class="si">}</span><span class="w"> </span>-p<span class="w"> </span><span class="m">9030</span><span class="w"> </span>-i<span class="w"> </span><span class="nb">false</span><span class="w"> </span>&gt;/dev/null
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Starting Mallory Agent ...&quot;</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--rm<span class="w"> </span>--name<span class="w"> </span>mallory_agent<span class="w"> </span>--expose<span class="w"> </span><span class="m">9040</span>-9049<span class="w"> </span>-p<span class="w"> </span><span class="m">9040</span>-9049:9040-9049<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;DOCKERHOST=</span><span class="si">${</span><span class="nv">DOCKERHOST</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;LEDGER_URL=http://</span><span class="si">${</span><span class="nv">DOCKERHOST</span><span class="si">}</span><span class="s2">:9000&quot;</span><span class="w"> </span><span class="si">${</span><span class="nv">MALLORY_AGENT</span><span class="si">}</span><span class="w"> </span>-p<span class="w"> </span><span class="m">9040</span><span class="w">  </span>-i<span class="w"> </span><span class="nb">false</span><span class="w"> </span>&gt;/dev/null
+<h4 id="example-command">Example Command<a class="headerlink" href="#example-command" title="Permanent link">&para;</a></h4>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">LEDGER_URL_CONFIG</span><span class="o">=</span>http://test.bcovrin.vonx.io<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">TAILS_SERVER_URL_CONFIG</span><span class="o">=</span>https://tails.vonx.io<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>./manage<span class="w"> </span>run<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-a<span class="w"> </span>remote<span class="w"> </span>--aep<span class="w"> </span>http://remote-acme.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>-b<span class="w"> </span>acapy-main<span class="w"> </span>-f<span class="w"> </span>acapy-main<span class="w"> </span>-m<span class="w"> </span>acapy-main<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>-t<span class="w"> </span>@T002-RFC0160
 </code></pre></div>
-<p>Important things to note from the script snippet:</p>
+This example command will test a remote agent in the role if Acme, an issuer/verifier in conjuction with test harness managed acapy agents playing the other roles of Bob, Faber, and Mallory.</p>
+<p>Any combination of remote and test harness managed agents is testable, including all remote if one is so inclined.</p>
+<h4 id="local-example">Local Example<a class="headerlink" href="#local-example" title="Permanent link">&para;</a></h4>
+<p>To verify and see the remote implementation in the test harness working locally, you will need to run one of the test harness agents outside of the OATH docker network. Then use that agent as a remote agent. </p>
+<p>Build the local agents:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./manage<span class="w"> </span>build<span class="w"> </span>-a<span class="w"> </span>acapy-main
+</code></pre></div></p>
+<p>Run a remote agent locally:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./start-remote-agent-demo.sh
+</code></pre></div></p>
+<p>Run the tests:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">LEDGER_URL_CONFIG</span><span class="o">=</span>http://test.bcovrin.vonx.io<span class="w"> </span><span class="nv">TAILS_SERVER_URL_CONFIG</span><span class="o">=</span>https://tails.vonx.io<span class="w"> </span>./manage<span class="w"> </span>run<span class="w"> </span>-a<span class="w"> </span>acapy-main<span class="w"> </span>-b<span class="w"> </span>remote<span class="w"> </span>--bep<span class="w"> </span>http://0.0.0.0:9031<span class="w"> </span>-f<span class="w"> </span>acapy-main<span class="w"> </span>-m<span class="w"> </span>acapy-main<span class="w"> </span>-t<span class="w"> </span>@T002-RFC0160
+</code></pre></div></p>
+<p>Shutdown the remote agent
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>./end-remote-agent-demo.sh
+</code></pre></div></p>
+<h4 id="handling-errors">Handling Errors<a class="headerlink" href="#handling-errors" title="Permanent link">&para;</a></h4>
+<p>If you encounter any issues while using the remote option, check the following:</p>
 <ul>
-<li>each backchannel is provided a range of public ports (the <code>-expose</code> parameter), which are mapped to localhost</li>
-<li>the backchannel must allocate the ports at runtime based on the <code>-p</code> parameter, and not hard code them in the container.</li>
-<li>the binding of the TA (e.g. <code>acapy</code> or <code>aries-vcx</code>, etc.) is done earlier in the script by setting the <code>${ACME_AGENT}</code> etc. environment variables</li>
-<li>environment variables provide the Docker host IP (<code>DOCKERHOST</code>) and a url to the ledger genesis transactions (<code>LEDGER_URL</code>)</li>
-<li>the variables are defaulted if not already set, with the <code>LEDGER_URL</code> assumed to be for a locally running instance of <code>von-network</code></li>
-<li>parameters passed to the backchannel specify the base port number (<code>-p port</code>) and to use non-interactive mode (<code>-i false</code>)</li>
+<li>Endpoint URLs and Ports: Ensure the URLs and ports specified are correct and accessible from your local machine or environment the test harness is running in.</li>
+<li>Agent Configuration: Make sure the agents on the remote server are properly configured and running.</li>
+<li>Logs: Check the remote agents log in conjuction with the other agents logs for hints on what could be causing the errors. </li>
 </ul>
-<h2 id="the-aca-py-and-indy-influence">The ACA-Py and Indy Influence<a class="headerlink" href="#the-aca-py-and-indy-influence" title="Permanent link">&para;</a></h2>
-<p>Many of the BDD feature steps (and hence, backchannel requests) in the initial test cases map very closely to the ACA-Py "admin" API used by a controller to control an instance of an ACA-Py agent. This makes sense because both the ACA-Py admin API and the AATH test cases were defined based on the Aries RFCs. However, we are aware the alignment between the two might be too close and welcome recommendations for making the backchannel API more agnostic, easier for other CUTs. Likewise, as the test suite becomes ledger- and verifiable credential format-agnostic, we anticipate abstracting away the Indy-isms that are in the current test cases, making them test parameters versus explicit steps.</p>
-<p>The Google Sheet list of operations has that same influence, referencing things like <code>connection_id</code>, <code>cred_exchange_id</code> and so on. As new backchannels are developed, we welcome feedback on how to make the list of operations easier to maintain backchannels.</p>
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The remote option in the Test Harness allows you to test verifiable credential interactions with agents running in remote environments. This flexibility essentially allows you to verify that your agent(s) can successfully interop with other agents for the implemented protocols. </p>
+<p>For any extra troubleshooting please consult with the <a href="https://discord.com/channels/1022962884864643214/1214965981470924911">OWL maintainers on Discord</a>.</p>
 
 
 
@@ -1395,7 +1256,7 @@ We recommend that in writing a backchannel, any <code>Not Implemented</code> com
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../TEST_DEV_GUIDE/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Test Development Guidelines">
+          <a href="../CONFIGURE-CRED-TYPES/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Configuring Tests with Credential Types and Proofs">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1405,20 +1266,20 @@ We recommend that in writing a backchannel, any <code>Not Implemented</code> com
                 Previous
               </span>
               <div class="md-ellipsis">
-                Test Development Guidelines
+                Configuring Tests with Credential Types and Proofs
               </div>
             </div>
           </a>
         
         
           
-          <a href="../AATH_DEV_CONTAINERS/" class="md-footer__link md-footer__link--next" aria-label="Next: Working with Dev Containers in OATH">
+          <a href="../MOBILE_AGENT_TESTING/" class="md-footer__link md-footer__link--next" aria-label="Next: Mobile Agent Testing">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Working with Dev Containers in OATH
+                Mobile Agent Testing
               </div>
             </div>
             <div class="md-footer__button md-icon">
