@@ -12,6 +12,7 @@ import {
   OutOfBandState,
   CredoError,
   DidExchangeState,
+  CreateOutOfBandInvitationConfig,
 } from '@credo-ts/core'
 
 import { convertToNewInvitation } from '@credo-ts/core/build/modules/oob/helpers'
@@ -22,13 +23,16 @@ import { filter, firstValueFrom, ReplaySubject, tap, timeout } from 'rxjs'
 import { BaseController } from '../BaseController'
 import { TestHarnessConfig } from '../TestHarnessConfig'
 import { ConnectionUtils } from '../utils/ConnectionUtils'
+import { DidController } from './DidController';
 
 @Controller('/agent/command/out-of-band')
 export class OutOfBandController extends BaseController {
   private subject = new ReplaySubject<OutOfBandStateChangedEvent>()
+  private didController: DidController;
 
-  public constructor(testHarnessConfig: TestHarnessConfig) {
-    super(testHarnessConfig)
+  public constructor(testHarnessConfig: TestHarnessConfig, didController: DidController) {
+    super(testHarnessConfig);
+    this.didController = didController;
   }
 
   onStartup = () => {
@@ -38,6 +42,17 @@ export class OutOfBandController extends BaseController {
       .observable<OutOfBandStateChangedEvent>(OutOfBandEventTypes.OutOfBandStateChanged)
       .subscribe(this.subject)
   }
+
+  // Define the state translation dictionary
+  didExchangeResponderStateTranslationDict: { [key: string]: string } = {
+    "Initial": "invitation-sent",
+    "invitation": "invitation-sent",
+    "request": "request-received",
+    "response": "response-sent",
+    "?": "abandoned",
+    "active": "completed",
+    "completed": "completed",
+  };
 
   @Get('/:id')
   async getConnectionById(@PathParams('id') id: string) {
@@ -56,45 +71,63 @@ export class OutOfBandController extends BaseController {
   }
 
   @Post('/create-invitation')
-  async createInvitation(@BodyParams('data') data?: { mediator_connection_id?: string }) {
+  async createInvitation(@BodyParams('data') data?: { mediator_connection_id?: string, [key: string]: any }) {
     const mediatorId = await this.mediatorIdFromMediatorConnectionId(data?.mediator_connection_id)
 
-    const routing = await this.agent.mediationRecipient.getRouting({
-      mediatorId,
-    })
+    // Adjust the invitation details based on it's contents
+    const invitationOptions = await this.mapOOBInvitationDetails(data)
 
-    const outOfBandRecord = await this.agent.oob.createInvitation({
-      routing,
-      // Needed to complete connection: https://github.com/hyperledger/aries-framework-javascript/issues/668
-      // TODO probably don't need this anymore.
-      autoAcceptConnection: true,
-    })
+    if (!invitationOptions.invitationDid) {
+      // If there is no public did in the invitation then we can use routing.
+      const routing = await this.agent.mediationRecipient.getRouting({
+        mediatorId,
+      })
+      invitationOptions.routing = routing
+    }
+    else {
+      // Remove routing from invitationOptions if it exists
+      delete invitationOptions.routing
+    }
+
+    // let invitationOptions: any = {
+    //   autoAcceptConnection: true,
+    //   ...data, // Spread the entire data object into invitationOptions
+    // };
+
+    // If data contains use_public_did call DidController.getPublicDid() to get the public DID
+    // if (data?.use_public_did) {
+    //   const publicDid = await this.didController.getPublicDid();
+    //   if (publicDid) {
+    //     invitationOptions.invitationDid = publicDid;
+    //   }
+    // }
+
+    const outOfBandRecord = await this.agent.oob.createInvitation(invitationOptions)
 
     const config = this.agent.dependencyManager.resolve(AgentConfig)
     const invitation = outOfBandRecord.outOfBandInvitation
     const invitationJson = invitation.toJSON({ useDidSovPrefixWhereAllowed: config.useDidSovPrefixWhereAllowed })
 
     return {
-      state: OutOfBandState.Initial,
+      //state: OutOfBandState.Initial,
+      state: DidExchangeState.InvitationSent,
       // This should be the connection id. However, the connection id is not available until a request is received.
       // We can just use the oob invitation I guess.
       connection_id: outOfBandRecord.id,
       invitation: invitationJson,
+      originalCredoState: OutOfBandState.Initial,
     }
   }
 
   @Post('/send-invitation-message')
-  async sendInvitationMessage(@BodyParams() invitationDetails: any) {
+  async sendInvitationMessage(@BodyParams() { data }: { data: any }) {
     // Implement the logic to send an invitation message
-    // Example:
-
-    // Adjust the invitation details based on it's contents
-    const adjustedInvitationDetails = await this.mapOOBInvitationDetails(invitationDetails)
 
     // Create the invitation
-    const invitation = await this.createInvitation(adjustedInvitationDetails);
-
-
+    const invitation = await this.createInvitation(data);
+    // Translate the state in the invitation to what the test harness expects.
+    //invitation.state = this.didExchangeResponderStateTranslationDict[invitation.state] as OutOfBandState || invitation.state;
+    
     //const result = await this.agent.sendInvitationMessage(invitationDetails)
     return invitation
   }
@@ -226,8 +259,54 @@ export class OutOfBandController extends BaseController {
     }
   }
 
-  private async mapOOBInvitationDetails(invitationDetails: any) {
+
+  private async mapOOBInvitationDetails(details: any): Promise<CreateOutOfBandInvitationConfig> {
+    const invitationOptions: CreateOutOfBandInvitationConfig = {
+      label: details.label,
+      alias: details.alias,
+      imageUrl: details.imageUrl,
+      goalCode: details.goalCode,
+      goal: details.goal,
+      handshake: details.handshake || true,
+      handshakeProtocols: details.handshakeProtocols,
+      messages: details.messages,
+      multiUseInvitation: details.multiUseInvitation || false,
+      autoAcceptConnection: details.autoAcceptConnection || true,
+      routing: details.routing,
+      appendedAttachments: details.appendedAttachments,
+    };
+  
+    if (details.use_public_did === true) {
+      const publicDid = await this.didController.getPublicDid();
+      if (publicDid) {
+        invitationOptions.invitationDid = publicDid as string;
+      }
+    }
+
+    return invitationOptions;
+  }
+
+
+  private async oldmapOOBInvitationDetails(invitationDetails: any) {
     // Adjust the invitation details based on it's contents
+
+    // export interface CreateOutOfBandInvitationConfig {
+    //   label?: string;
+    //   alias?: string;
+    //   imageUrl?: string;
+    //   goalCode?: string;
+    //   goal?: string;
+    //   handshake?: boolean;
+    //   handshakeProtocols?: HandshakeProtocol[];
+    //   messages?: AgentMessage[];
+    //   multiUseInvitation?: boolean;
+    //   autoAcceptConnection?: boolean;
+    //   routing?: Routing;
+    //   appendedAttachments?: Attachment[];
+    //   /**
+    //    * Did to use in the invitation. Cannot be used in combination with `routing`.
+    //    */
+    //   invitationDid?: string;
 
     const auto_accept = "false";
     const multi_use = "false";

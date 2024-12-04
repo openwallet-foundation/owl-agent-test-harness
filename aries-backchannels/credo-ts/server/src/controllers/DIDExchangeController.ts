@@ -50,13 +50,6 @@ export class DIDExchangeController extends BaseController {
     const { their_public_did } = data.data;
 
     const { outOfBandRecord, connectionRecord } = await this.agent.oob.receiveImplicitInvitation({ did: their_public_did } as ReceiveOutOfBandImplicitInvitationConfig);
-    //const request = await this.agent.connections.createRequest(their_public_did);
-
-    // their_public_did = data["their_public_did"]
-    // agent_operation = (
-    //     f"{agent_operation}create-request?their_public_did={their_public_did}"
-    // )
-    // data = None
 
     // Add the two records to the response and move the state from the connectionRecord to the root of connectionRecords.
     const connectionRecords = {
@@ -83,5 +76,45 @@ export class DIDExchangeController extends BaseController {
     return connection
   }
 
+  // Implementing this method just to satisfy AATH. This will not call credo and just set the state that was set in the previous step of receive invitation.
+  @Post('/send-response')
+  //async sendResponse(@BodyParams('id') id: string) {
+  //async sendResponse(@PathParams('id') id: string, @BodyParams('mediator_connection_id') mediatorConnectionId: string) {
+  async sendResponse(@BodyParams('id') id: string, @BodyParams('mediator_connection_id') mediatorConnectionId: string) {
+    //const { mediator_connection_id, ...invitationJson } = data
 
+    // If we have a mediator connection id, we need to find the mediator id
+    if (mediatorConnectionId) {
+      const id = await this.mediatorIdFromMediatorConnectionId(mediatorConnectionId)
+    }
+
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
+
+    return connection
+  }
+
+  private async mediatorIdFromMediatorConnectionId(mediatorConnectionId?: string): Promise<string | undefined> {
+    if (!mediatorConnectionId) return undefined
+
+    // Find mediator id if mediator connection id is provided
+    const mediator = await this.agent.mediationRecipient.findByConnectionId(mediatorConnectionId)
+
+    return mediator?.id
+  }
+}
+
+@Controller('/agent/response/did-exchange')
+export class DIDExchangeResponseController extends BaseController {
+  public constructor(testHarnessConfig: TestHarnessConfig) {
+    super(testHarnessConfig)
+  }
+
+  @Get('/:id')
+  async getDidExchangeResponse(@PathParams('id') id: string) {
+    const connection = await ConnectionUtils.getConnectionByConnectionIdOrOutOfBandId(this.agent, id)
+
+    if (!connection) throw new NotFound(`Connection with id ${id} not found`)
+
+    return connection
+  }
 }

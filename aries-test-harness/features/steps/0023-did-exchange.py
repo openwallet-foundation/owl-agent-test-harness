@@ -83,13 +83,14 @@ def step_impl(context, responder: str, requester: str, peer_did_method: str = No
     context.responder_invitation = resp_json["invitation"]
     # TODO drill into the handshake protocol in the invitation and remove anything else besides didexchange.
 
-    # Get the responders's connection id from the above request's response webhook in the backchannel
-    invitation_id = context.responder_invitation["@id"]
-    (resp_status, resp_text) = agent_backchannel_GET(
-        responder_url + "/agent/response/", "did-exchange", id=invitation_id
-    )
-    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
-    resp_json = json.loads(resp_text)
+    if "connection_id" not in resp_json:
+        # Get the responders's connection id from the above request's response webhook in the backchannel
+        invitation_id = context.responder_invitation["@id"]
+        (resp_status, resp_text) = agent_backchannel_GET(
+            responder_url + "/agent/response/", "did-exchange", id=invitation_id
+        )
+        assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+        resp_json = json.loads(resp_text)
 
     # Some agents (afgo) do not have a webhook that give a connection id at this point in the protocol.
     # If it is not here, skip this and check for one later in the process and add it then.
@@ -203,12 +204,16 @@ def step_impl(context, responder: str, requester: str):
     # TODO drill into the handshake protocol in the invitation and remove anything else besides didexchange.
 
     # Get the responders's connection id from the above request's response webhook in the backchannel
-    invitation_id = context.responder_invitation["@id"]
-    (resp_status, resp_text) = agent_backchannel_GET(
-        responder_url + "/agent/response/", "did-exchange", id=invitation_id
-    )
-    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
-    resp_json = json.loads(resp_text)
+    # This really only needs to be done if the connection id is not in the response.
+    # Agents like Credo-ts do not have a webhook response that gives the connection id at this point in the protocol.
+    # Credo will have the connection_id in the response above.
+    if "connection_id" not in resp_json:
+        invitation_id = context.responder_invitation["@id"]
+        (resp_status, resp_text) = agent_backchannel_GET(
+            responder_url + "/agent/response/", "did-exchange", id=invitation_id
+        )
+        assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+        resp_json = json.loads(resp_text)
 
     if "connection_id" in resp_text:
         context.connection_id_dict[responder][requester] = resp_json["connection_id"]
