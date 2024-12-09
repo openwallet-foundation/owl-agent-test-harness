@@ -44,7 +44,7 @@ jobs:
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@T004-RFC0211 -t ~@DidMethod_orb -t ~@Transport_NoHttpOutbound"
           REPORT_PROJECT: acapy
       - name: run-send-gen-test-results-secure
-        if: ${{ always() }}
+        if: ${{ steps.run-test-harness-wo-reports.outcome == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: acapy 
