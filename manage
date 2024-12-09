@@ -13,7 +13,7 @@ export DOCKERHOST=$(getDockerHost)
 
 SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
-export AGENT_TIMEOUT=30
+export AGENT_TIMEOUT=60
 export LEDGER_TIMEOUT=60
 # these can be overridden via env vars
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
@@ -517,9 +517,9 @@ pingAgent(){
   # ping agent using a backchannel-exposed api
   # if port is not provided just use the endpoint
   if [[ -z ${port} ]]; then
-    rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${endpoint}/agent/command/status/)
+    rtnCd=$(curl -s --max-time 10 --write-out '%{http_code}' --output /dev/null ${endpoint}/agent/command/status/)
   else
-    rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null ${endpoint}:${port}/agent/command/status/)
+    rtnCd=$(curl -s --max-time 10 --write-out '%{http_code}' --output /dev/null ${endpoint}:${port}/agent/command/status/)
   fi
   if (( ${rtnCd} == 200 )); then
     return 0
@@ -1484,13 +1484,15 @@ case "${COMMAND}" in
     ;;
 
   run)
+      trap 'stopHarness auto' EXIT
+
       startHarness
       if [ $? -eq 1 ]; then
         echo "Failed to communicate with one or more agents. Please see agent logs to diagnose the problem. Skipping tests."
+        exit 1
       else
         runTests ${TAGS} ${@}
       fi
-      stopHarness auto
     ;;
   runset)
       runRunSet ${@}

@@ -1,4 +1,4 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.12-slim-bullseye
 
 RUN apt-get update \
    && apt-get install -y git gnupg2 software-properties-common curl \
@@ -15,7 +15,7 @@ RUN chmod +x ./jq
 
 COPY python/requirements.txt python/
 COPY acapy/requirements-latest.txt acapy/
-RUN pip install -r acapy/requirements-latest.txt && pip install -r python/requirements.txt
+RUN pip install -r acapy/requirements-latest.txt -r python/requirements.txt
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 COPY python python
