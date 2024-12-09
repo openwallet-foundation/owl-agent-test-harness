@@ -43,7 +43,7 @@ jobs:
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211 -t ~@DIDExchangeConnection -t ~@QualifiedDIDs"
           REPORT_PROJECT: credo
       - name: run-send-gen-test-results-secure
-        if: ${{ always() }}
+        if: ${{ steps.run-test-harness-wo-reports.outcome == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: credo
