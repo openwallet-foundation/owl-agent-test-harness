@@ -36,6 +36,7 @@ jobs:
       - name: run-indy-tails-server
         uses: ./test-harness/actions/run-indy-tails-server
       - name: run-test-harness-wo-reports
+        id: run_test_harness
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
           BUILD_AGENTS: "-a credo"
@@ -43,7 +44,7 @@ jobs:
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211 -t ~@DIDExchangeConnection -t ~@QualifiedDIDs"
           REPORT_PROJECT: credo
       - name: run-send-gen-test-results-secure
-        if: ${{ steps.run-test-harness-wo-reports.outcome == 'success' }}
+        if: ${{ steps.run_test_harness.conclusion == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: credo
