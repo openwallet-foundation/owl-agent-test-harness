@@ -39,6 +39,7 @@ jobs:
       - name: run-indy-tails-server
         uses: ./test-harness/actions/run-indy-tails-server
       - name: run-test-harness-wo-reports
+        id: run_test_harness
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
           BUILD_AGENTS: "-a acapy-main -a credo"
@@ -46,7 +47,7 @@ jobs:
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10,@RFC0441,@RFC0211,@T001-RFC0453 -t ~@wip -t ~@DIDExchangeConnection -t ~@T004-RFC0211 -t ~@QualifiedDIDs -t ~@T001-RFC0183"
           REPORT_PROJECT: acapy-b-credo
       - name: run-send-gen-test-results-secure
-        if: ${{ always() }}
+        if: ${{ steps.run_test_harness.conclusion == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: acapy-b-credo
