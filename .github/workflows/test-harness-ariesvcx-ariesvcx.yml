@@ -38,6 +38,7 @@ jobs:
       - name: run-indy-tails-server
         uses: ./test-harness/actions/run-indy-tails-server
       - name: run-test-harness-wo-reports
+        id: run_test_harness
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
           BUILD_AGENTS: "-a aries-vcx"
@@ -45,7 +46,7 @@ jobs:
           TEST_SCOPE: "-t @RFC0036,@RFC0037,@RFC0160,@RFC0023,@RFC0793 -t ~@wip -t ~@RFC0434 -t ~@RFC0453 -t ~@RFC0211 -t ~@DIDExchangeConnection -t ~@Transport_Ws"
           REPORT_PROJECT: aries-vcx
       - name: run-send-gen-test-results-secure
-        if: ${{ always() }}
+        if: ${{ steps.run_test_harness.conclusion == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: aries-vcx
