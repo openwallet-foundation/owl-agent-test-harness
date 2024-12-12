@@ -32,6 +32,7 @@ jobs:
       - name: run-indy-tails-server
         uses: ./test-harness/actions/run-indy-tails-server
       - name: run-test-harness-wo-reports
+        id: run_test_harness
         uses: ./test-harness/actions/run-test-harness-wo-reports
         with:
           BUILD_AGENTS: "-a aries-vcx -a credo"
@@ -44,6 +45,7 @@ jobs:
           name: agent-logs
           path: ./test-harness/.logs/
       - name: run-send-gen-test-results-secure
+        if: ${{ steps.run_test_harness.conclusion == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
           REPORT_PROJECT: aries-vcx-b-credo
