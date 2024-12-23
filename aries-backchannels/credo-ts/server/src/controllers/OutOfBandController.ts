@@ -102,6 +102,10 @@ export class OutOfBandController extends BaseController {
     //   }
     // }
 
+    // Remove all undefined values from invitationOptions
+    Object.keys(invitationOptions).forEach(key => (invitationOptions as any)[key] === undefined && delete (invitationOptions as any)[key]);
+    
+
     const outOfBandRecord = await this.agent.oob.createInvitation(invitationOptions)
 
     const config = this.agent.dependencyManager.resolve(AgentConfig)
