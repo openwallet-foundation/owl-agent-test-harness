@@ -8,13 +8,11 @@ name: test-harness-credo-acapy
 # This runset uses the current master branch of Credo TS for all of the agents except Bob (holder),
 # which uses the main branch of ACA-Py. The runset covers all of the AIP 1.0 tests
 # except those that are known **not** to work with the Credo TS
-# The runset excludes implicit invitations since Credo does not support this. 
-#   See https://github.com/openwallet-foundation/credo-ts/issues/992
 #
 # Current
 #
 # All AIP10 tests are currently running.
-# OOB & DID Exchange Tests are running, except for the implicit invitations. 
+# OOB & DID Exchange Tests are running. 
 #
 # *Status Note Updated: 2024.10.29*
 #
@@ -45,7 +43,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a credo -a acapy-main"
           TEST_AGENTS: "-d credo -b acapy-main"
-          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211,@T001-RFC0453,@RFC0023 -t ~@T005-RFC0023 -t ~@Transport_NoHttpOutbound -t ~@DIDExchangeConnection -t ~@QualifiedDIDs"
+          TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t @AIP10,@RFC0211,@T001-RFC0453,@RFC0023 -t ~@Transport_NoHttpOutbound -t ~@QualifiedDIDs"
           REPORT_PROJECT: credo-b-acapy
       - name: run-send-gen-test-results-secure
         if: ${{ steps.run_test_harness.conclusion == 'success' }}
