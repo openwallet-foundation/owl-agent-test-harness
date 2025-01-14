@@ -30,6 +30,14 @@
             "schema_name": "Schema_DriversLicense_v2",
             "schema_version": "1.0.1"
          },
+         "anoncreds":{
+            "cred_def_id": "replace_me",
+            "issuer_did": "replace_me",
+            "schema_id": "replace_me",
+            "schema_issuer_did": "replace_me",
+            "schema_name": "Schema_DriversLicense_v2",
+            "schema_version": "1.0.1"
+         },
          "json-ld": {
             "credential": {
                "@context": [
