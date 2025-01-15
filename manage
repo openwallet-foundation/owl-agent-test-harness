@@ -755,7 +755,7 @@ stopServices() {
     auxiliaryService orb stop
     auxiliaryService indy-tails stop
     auxiliaryService von-network stop
-    auxiliaryService redis-cluster stop
+    # auxiliaryService redis-cluster stop
 
   fi
 }
