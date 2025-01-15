@@ -287,7 +287,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         result.append(("--universal-resolver"))
 
-        result.append(("--plugin", "redis_events.v1_0.redis_queue.events"))
+        # result.append(("--plugin", "redis_events.v1_0.redis_queue.events"))
         result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
         
         # This code for log level is included here because aca-py does not support the env var directly yet.
