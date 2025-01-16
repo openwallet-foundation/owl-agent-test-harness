@@ -9,6 +9,7 @@ import sys
 import yaml
 from timeit import default_timer
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from time import gmtime, strftime
 
 from acapy.routes.agent_routes import routes as agent_routes
 from acapy.routes.mediation_routes import get_mediation_record_by_connection_id
@@ -47,6 +48,11 @@ if RUN_MODE == "docker":
 elif RUN_MODE == "pwd":
     DEFAULT_BIN_PATH = "./bin"
     DEFAULT_PYTHON_PATH = "."
+
+
+def current_time():
+    # just return GMT time for now
+    return strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
 
 class AcaPyAgentBackchannel(AgentBackchannel):
@@ -1840,10 +1846,15 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         async def fetch_swagger(url: str, timeout: float):
             text = None
             start = default_timer()
+            # add a short delay on startup in case the agent takes some time to initialize
+            await asyncio.sleep(0.5)
             async with ClientSession(timeout=ClientTimeout(total=3.0)) as session:
                 while default_timer() - start < timeout:
                     try:
                         async with session.get(url) as resp:
+                            # a bit of debugging for startup issues
+                            c_time = current_time()
+                            print(f">>> {c_time}: {url} -> {resp.status}")
                             if resp.status == 200:
                                 text = await resp.text()
                                 break
@@ -1854,13 +1865,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         status_url = self.admin_url + "/status"
         status_text = await fetch_swagger(status_url, START_TIMEOUT)
-        print("Agent running with admin url", self.admin_url)
-
+        c_time = current_time()
         if not status_text:
+            print(f">>> {c_time}: Error starting agent on admin url", self.admin_url)
             raise Exception(
                 "Timed out waiting for agent process to start. "
                 + f"Admin URL: {status_url}"
             )
+        else:
+            print(f">>> {c_time}: Agent running with admin url", self.admin_url)
+
         ok = False
         try:
             status = json.loads(status_text)
@@ -1927,7 +1941,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         )
 
         # start agent sub-process
-        self.log("Starting agent sub-process ...")
+        c_time = current_time()
+        self.log(f"{c_time}: Starting agent sub-process ...")
         self.log("agent starting with params: ")
         self.log(agent_args)
         loop = asyncio.get_event_loop()
@@ -2299,6 +2314,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
 async def main(start_port: int, show_timing: bool = False, interactive: bool = True):
 
+    c_time = current_time()
+    print(f"{c_time}: starting backchannel process")
+
     # check for extra args
     extra_args = {}
     if EXTRA_ARGS:
@@ -2413,7 +2431,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.new_event_loop().run_until_complete(
             main(start_port=args.port, interactive=args.interactive)
         )
     except KeyboardInterrupt:
