@@ -19,7 +19,7 @@ DEFAULT_POSTGRES = bool(os.getenv("POSTGRES"))
 DEFAULT_INTERNAL_HOST = "127.0.0.1"
 DEFAULT_EXTERNAL_HOST = "localhost"
 
-START_TIMEOUT = float(os.getenv("START_TIMEOUT", 30.0))
+START_TIMEOUT = float(os.getenv("START_TIMEOUT", 60.0))
 
 RUN_MODE = os.getenv("RUNMODE")
 

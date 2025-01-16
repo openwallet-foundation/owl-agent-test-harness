@@ -755,7 +755,7 @@ stopServices() {
     auxiliaryService orb stop
     auxiliaryService indy-tails stop
     auxiliaryService von-network stop
-    auxiliaryService redis-cluster stop
+    # auxiliaryService redis-cluster stop
 
   fi
 }
@@ -882,6 +882,7 @@ startHarness(){
       waitForAgent Acme ${ACME_ENDPOINT}
     fi
     if [ $? -eq 1 ]; then
+      dumpAgentLogs acme_agent
       return 1
     fi
   fi
@@ -892,6 +893,7 @@ startHarness(){
       waitForAgent Bob ${BOB_ENDPOINT}
     fi
     if [ $? -eq 1 ]; then
+      dumpAgentLogs bob_agent
       return 1
     fi
   fi
@@ -902,6 +904,7 @@ startHarness(){
       waitForAgent Faber ${FABER_ENDPOINT}
     fi
     if [ $? -eq 1 ]; then
+      dumpAgentLogs faber_agent
       return 1
     fi
   fi
@@ -912,6 +915,7 @@ startHarness(){
       waitForAgent Mallory ${MALLORY_ENDPOINT}
     fi
     if [ $? -eq 1 ]; then
+      dumpAgentLogs mallory_agent
       return 1
     fi
   fi
@@ -961,6 +965,11 @@ deleteAgents() {
 deleteAgent() {
     agent=$1
     docker rm -f $agent || 1
+}
+
+dumpAgentLogs() {
+    agent=$1
+    docker logs $agent
 }
 
 runSetUsage() {
