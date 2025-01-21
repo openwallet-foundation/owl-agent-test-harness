@@ -137,7 +137,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "proof-v2": "/present-proof-2.0/",
         }
 
-        self.credFormatFilterTranslationDict = {"indy": "indy", "json-ld": "ld_proof"}
+        self.credFormatFilterTranslationDict = {
+            "indy": "indy",
+            "json-ld": "ld_proof",
+            "anoncreds": "anoncreds",
+        }
 
         self.proofTypeKeyTypeTranslationDict = {
             "Ed25519Signature2018": "ed25519",
@@ -256,6 +260,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             result.append(("--genesis-transactions", self.genesis_data))
         if self.seed:
             result.append(("--seed", self.seed))
+        # deprecated - should be removed
         if self.storage_type:
             result.append(("--storage-type", self.storage_type))
         if self.postgres:
@@ -298,6 +303,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         # when it does (and there is talk of supporting YAML) then this code can be removed.
         if os.getenv("LOG_LEVEL") is not None:
             result.append(("--log-level", os.getenv("LOG_LEVEL")))
+        else:
+            result.append(("--log-level", "ERROR"))
 
         # aca-py supports a config.yaml file to pass in arguments. This env var point to such a file.
         if os.getenv("AGENT_CONFIG_FILE") is not None:
