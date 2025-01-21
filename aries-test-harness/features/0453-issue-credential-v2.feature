@@ -10,22 +10,24 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     Given "Acme" has a public did
     And "Acme" is ready to issue a credential
     And "Acme" and "Bob" have an existing connection
-    When "Bob" proposes a "indy" credential to "Acme" with <credential_data>
-    And "Acme" offers the "indy" credential
-    And "Bob" requests the "indy" credential
-    And "Acme" issues the "indy" credential
-    And "Bob" acknowledges the "indy" credential issue
-    Then "Bob" has the "indy" credential issued
+    When "Bob" proposes a "<credential_type>" credential to "Acme" with <credential_data>
+    And "Acme" offers the "<credential_type>" credential
+    And "Bob" requests the "<credential_type>" credential
+    And "Acme" issues the "<credential_type>" credential
+    And "Bob" acknowledges the "<credential_type>" credential issue
+    Then "Bob" has the "<credential_type>" credential issued
 
     @RFC0160
     Examples:
-      | credential_data   |
-      | Data_DL_MaxValues |
+      | credential_type | credential_data   |
+      | indy            | Data_DL_MaxValues |
+      | anoncreds       | Data_DL_MaxValues |
 
     @DIDExchangeConnection
     Examples:
-      | credential_data   |
-      | Data_DL_MaxValues |
+      | credential_type | credential_data   |
+      | indy            | Data_DL_MaxValues |
+      | anoncreds       | Data_DL_MaxValues |
 
   @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2
   Scenario Outline: Issue a JSON-LD credential with the Holder beginning with a proposal
