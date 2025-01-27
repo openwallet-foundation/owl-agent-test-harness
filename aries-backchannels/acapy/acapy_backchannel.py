@@ -692,6 +692,11 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 return (resp_status, resp_text)
 
         elif command.topic == "schema":
+            # check command type vs agent wallet type - can we support "anoncreds" tests?
+            if command.anoncreds:
+                if not self.wallet_type == "askar-anoncreds":
+                    return (400, "Bad request - agent wallet cannot support anoncreds format")
+
             # POST operation is to create a new schema
             if command.anoncreds:
                 schema_name = data['schema'].get("name")
@@ -2087,7 +2092,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if cred_format is None:
                     raise Exception("Credential format not specified for presentation")
-                elif cred_format == "indy":
+                elif cred_format == "indy" or cred_format == "anoncreds":
                     requested_attributes = pres_request_data.get(
                         "requested_attributes", {}
                     )
@@ -2132,7 +2137,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
                 if cred_format is None:
                     raise Exception("Credential format not specified for presentation")
-                elif cred_format == "indy":
+                elif cred_format == "indy" or cred_format == "anoncreds":
                     requested_attributes = data.get("requested_attributes", {})
                     requested_predicates = data.get("requested_predicates", {})
                     self_attested_attributes = data.get("self_attested_attributes", {})
