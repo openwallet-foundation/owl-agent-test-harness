@@ -20,6 +20,12 @@ Feature: RFC 0454 Aries agent present proof v2
          | Acme   | Data_DL_MaxValues | proof_request_DL_address_v2     | presentation_DL_address_v2     |
          | Faber  | Data_DL_MaxValues | proof_request_DL_age_over_19_v2 | presentation_DL_age_over_19_v2 |
 
+      @CredFormat_Anoncreds @RFC0592 @Schema_DriversLicense_v2 @CredProposalStart @Anoncreds
+      Examples:
+         | issuer | credential_data   | request_for_proof               | presentation                   |
+         | Acme   | Data_DL_MaxValues | proof_request_DL_address_v2     | presentation_DL_address_v2     |
+         | Faber  | Data_DL_MaxValues | proof_request_DL_age_over_19_v2 | presentation_DL_age_over_19_v2 |
+
       @CredFormat_JSON-LD @RFC0510 @Schema_DriversLicense_v2 @CredProposalStart @ProofType_Ed25519Signature2018 @DidMethod_key
       Examples:
          | issuer | credential_data   | request_for_proof                  | presentation                      |

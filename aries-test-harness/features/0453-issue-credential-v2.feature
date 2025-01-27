@@ -1,7 +1,7 @@
 @RFC0453 @AIP20
 Feature: RFC 0453 Aries Agent Issue Credential v2
 
-  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @CredFormat_Indy @Schema_DriversLicense_v2 @Anoncreds
+  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @CredFormat_Indy @Schema_DriversLicense_v2
   Scenario Outline: Issue a Indy credential with the Holder beginning with a proposal
     Given "2" agents
       | name | role   |
@@ -21,9 +21,19 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     Examples:
       | credential_type | credential_data   |
       | indy            | Data_DL_MaxValues |
+
+    @RFC0160 @Anoncreds
+    Examples:
+      | credential_type | credential_data   |
+      | indy            | Data_DL_MaxValues |
       | anoncreds       | Data_DL_MaxValues |
 
     @DIDExchangeConnection
+    Examples:
+      | credential_type | credential_data   |
+      | indy            | Data_DL_MaxValues |
+
+    @DIDExchangeConnection @Anoncreds
     Examples:
       | credential_type | credential_data   |
       | indy            | Data_DL_MaxValues |
