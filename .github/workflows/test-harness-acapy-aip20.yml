@@ -41,7 +41,7 @@ jobs:
         with:
           BUILD_AGENTS: "-a acapy-main"
           TEST_AGENTS: "-d acapy-main"
-          TEST_SCOPE: "-t @AcceptanceTest -t @AIP20 -t ~@wip -t ~@T004-RFC0211 -t ~@Transport_NoHttpOutbound -t ~@DidMethod_orb"
+          TEST_SCOPE: "-t @AcceptanceTest -t @AIP20 -t ~@wip -t ~@T004-RFC0211 -t ~@Transport_NoHttpOutbound -t ~@DidMethod_orb -t ~@Anoncreds"
           REPORT_PROJECT: acapy-aip20
       - name: run-send-gen-test-results-secure
         if: ${{ steps.run_test_harness.conclusion == 'success' }}

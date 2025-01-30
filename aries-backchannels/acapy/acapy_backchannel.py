@@ -182,6 +182,13 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "active": "completed",
         }
 
+    def is_wallet_anoncreds(self):
+        return self.wallet_type == "askar-anoncreds"
+
+    def use_anoncreds(self, command):
+        anoncreds = self.is_wallet_anoncreds() or command.anoncreds
+        return anoncreds
+
     def get_acapy_version_as_float(self):
         # construct some number to compare to with > or < instead of listing out the version number
         # if it starts with zero strip it off
@@ -498,9 +505,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         push_resource(invitation_id, "out-of-band-msg", message)
 
     async def handle_problem_report(self, message: Mapping[str, Any]):
-        thread_id = message["thread_id"]
-        push_resource(thread_id, "problem-report-msg", message)
         log_msg("Received Problem Report Webhook message: " + json.dumps(message, indent=4))
+        thread_id = message.get("thread_id")
+        if thread_id:
+            push_resource(thread_id, "problem-report-msg", message)
 
     async def swap_thread_id_for_exchange_id(
         self,
@@ -693,12 +701,23 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "schema":
             # check command type vs agent wallet type - can we support "anoncreds" tests?
-            if command.anoncreds:
-                if not self.wallet_type == "askar-anoncreds":
+            if self.use_anoncreds(command):
+                if not self.is_wallet_anoncreds():
                     return (400, "Bad request - agent wallet cannot support anoncreds format")
 
             # POST operation is to create a new schema
-            if command.anoncreds:
+            if self.use_anoncreds(command):
+                # make sure our "data" is in the correct format
+                if not "schema" in data:
+                    new_data = {
+                        "schema": {
+                            "issuerId": data.get("issuer_id"),
+                            "name": data.get("schema_name"),
+                            "version": data.get("schema_version"),
+                            "attrNames": data.get("attributes"),
+                        }
+                    }
+                    data = new_data
                 schema_name = data['schema'].get("name")
                 schema_version = data['schema'].get("version")
                 schema_get_endpoint = '/anoncreds/schemas'
@@ -708,6 +727,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 schema_version = data.get("schema_version")
                 schema_get_endpoint = '/schemas/created'
                 schema_post_endpoint = '/schemas'
+                # not needed for "legacy" indy schemas
+                if "issuer_id" in data:
+                    del data["issuer_id"]
 
             # Check if schema id already exists
             log_msg(schema_post_endpoint, data)
@@ -730,8 +752,22 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif command.topic == "credential-definition":
+            # check command type vs agent wallet type - can we support "anoncreds" tests?
+            if self.use_anoncreds(command):
+                if not self.is_wallet_anoncreds():
+                    return (400, "Bad request - agent wallet cannot support anoncreds format")
+
             # POST operation is to create a new cred def
-            if command.anoncreds:
+            if self.use_anoncreds(command):
+                if not "credential_definition" in data:
+                    new_data = {
+                        "credential_definition": {
+                            "schemaId": data.get("schema_id"),
+                            "issuerId": data.get("issuer_id"),
+                            "tag": data.get("tag"),
+                        }
+                    }
+                    data = new_data
                 schema_id = data['credential_definition'].get("schemaId")
                 tag = data['credential_definition'].get("tag")
                 cred_defs_get_endpoint = '/anoncreds/credential-definitions'
@@ -741,6 +777,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 schema_id = data.get("schema_id")
                 cred_defs_get_endpoint = '/credential-definitions/created'
                 cred_defs_post_endpoint = '/credential-definitions'
+                # not needed for "legacy" indy cred defs
+                if "issuer_id" in data:
+                    del data["issuer_id"]
 
             agent_operation = "/credential-definitions"
             log_msg(agent_operation, json.dumps(command.data, indent=4))
@@ -1211,6 +1250,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         record_id = command.record_id
         data = command.data
 
+        log_msg(">>> got issue_cred message:", operation, topic, json.dumps(data, indent=4))
+
         if (
             self.auto_respond_credential_proposal
             and operation == "send-offer"
@@ -1334,6 +1375,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         topic = command.topic
         record_id = command.record_id
         data = command.data
+
+        log_msg(f">>> in handle_proof_v2_POST(): {operation} {topic} {record_id} {data}")
 
         if (
             self.auto_respond_presentation_proposal
@@ -1504,7 +1547,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "schema":
             schema_id = record_id
-            if command.anoncreds:
+            if self.use_anoncreds(command):
                 agent_operation = f"/anoncreds/schema/{schema_id}"
             else:
                 agent_operation = f"/schemas/{schema_id}"
@@ -1517,7 +1560,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             schema = resp_json["schema"]
 
             # If anoncreds, add the id to the schema to use existing framework
-            if command.anoncreds:
+            if self.use_anoncreds(command):
                 schema["id"] = resp_json["schema_id"]
 
             resp_text = json.dumps(schema)
@@ -1526,7 +1569,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         elif command.topic == "credential-definition":
             cred_def_id = record_id
 
-            if command.anoncreds:
+            if self.use_anoncreds(command):
                 agent_operation = f"/anoncreds/credential-definition/{cred_def_id}"
             else:
                 agent_operation = f"/credential-definitions/{cred_def_id}"
@@ -1539,7 +1582,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             credential_definition = resp_json["credential_definition"]
 
             # If anoncreds, add the id to the credential definition to use existing framework
-            if command.anoncreds:
+            if self.use_anoncreds(command):
                 credential_definition["id"] = resp_json["credential_definition_id"]
 
             resp_text = json.dumps(credential_definition)
