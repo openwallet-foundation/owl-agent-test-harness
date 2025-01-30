@@ -103,6 +103,7 @@ def setup_scenario_context(context: Context, scenario: Scenario):
     context.holder_name = None
 
     # issuer
+    context.issuer_did = None
     context.issuer_url = None
     context.issuer_name = None
 
