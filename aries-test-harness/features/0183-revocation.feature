@@ -41,7 +41,8 @@ Feature: RFC 0183 Aries agent credential revocation and revocation notification
          | issuer | credential_data   | request_for_proof              | presentation                  |
          | Acme   | Data_DL_MaxValues | proof_request_DL_revoc_address | presentation_DL_revoc_address |
 
-   @T001.2-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @MobileTest @RFC0441 @Indy
+   # note that the "indy" format should fail with an "anoncreds" wallet
+   @T001.2-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_Revoc @MobileTest @RFC0441
    Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn't care if it was revoked
       Given "2" agents
          | name  | role     |
