@@ -25,7 +25,6 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     @RFC0160 @Anoncreds
     Examples:
       | credential_type | credential_data   |
-      | indy            | Data_DL_MaxValues |
       | anoncreds       | Data_DL_MaxValues |
 
     @DIDExchangeConnection
@@ -36,7 +35,6 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
     @DIDExchangeConnection @Anoncreds
     Examples:
       | credential_type | credential_data   |
-      | indy            | Data_DL_MaxValues |
       | anoncreds       | Data_DL_MaxValues |
 
   @T001.1-RFC0453 @RFC0593 @critical @AcceptanceTest @DIDExchangeConnection @CredFormat_JSON-LD @Schema_DriversLicense_v2

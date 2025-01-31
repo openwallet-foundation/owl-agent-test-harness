@@ -27,29 +27,29 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
          | name | role   |
          | Acme | issuer |
          | Bob  | holder |
-      Given "Acme" is ready to issue a "indy" credential
-      When "Acme" creates an "indy" credential offer with <credential_data>
+      Given "Acme" is ready to issue a "<credential_format>" credential
+      When "Acme" creates an "<credential_format>" credential offer with <credential_data>
       And "Acme" sends a connectionless out of band invitation to "Bob" with "credential-offer"
       And "Bob" receives the invitation
-      And "Bob" requests the "indy" credential
-      And "Acme" issues the "indy" credential
-      And "Bob" acknowledges the "indy" credential issue
-      Then "Bob" has the "indy" credential issued
+      And "Bob" requests the "<credential_format>" credential
+      And "Acme" issues the "<credential_format>" credential
+      And "Bob" acknowledges the "<credential_format>" credential issue
+      Then "Bob" has the "<credential_format>" credential issued
 
       @CredFormat_Indy @RFC0592
       Examples:
-         | credential_data   |
-         | Data_DL_MaxValues |
+         | credential_format | credential_data   |
+         | indy              | Data_DL_MaxValues |
 
       @CredFormat_Anoncreds @RFC0592 @Anoncreds
       Examples:
-         | credential_data   |
-         | Data_DL_MaxValues |
+         | credential_format | credential_data   |
+         | anoncreds         | Data_DL_MaxValues |
 
       @CredFormat_JSON-LD @RFC0593 @ProofType_Ed25519Signature2018 @DidMethod_key
       Examples:
-         | credential_data   |
-         | Data_DL_MaxValues |
+         | credential_format | credential_data   |
+         | json-ld           | Data_DL_MaxValues |
 
    @T003-RFC0434 @RFC0037 @critical @AcceptanceTest
    Scenario: Present a v1 indy proof using connectionless out of band invitation
