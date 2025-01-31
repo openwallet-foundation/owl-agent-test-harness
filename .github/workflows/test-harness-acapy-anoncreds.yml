@@ -48,7 +48,7 @@ jobs:
         if: ${{ steps.run_test_harness.conclusion == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy 
+          REPORT_PROJECT: acapy-anoncreds
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
           BACKCHANNEL_EXTRA_acapy_main: "{\"wallet-type\":\"askar-anoncreds\"}"
