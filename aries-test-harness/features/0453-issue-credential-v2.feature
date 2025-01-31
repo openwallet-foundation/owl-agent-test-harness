@@ -22,9 +22,11 @@ Feature: RFC 0453 Aries Agent Issue Credential v2
       | credential_type | credential_data   |
       | indy            | Data_DL_MaxValues |
 
+    # note that the "indy" format should fail with an "anoncreds" wallet
     @RFC0160 @Anoncreds
     Examples:
       | credential_type | credential_data   |
+      | indy            | Data_DL_MaxValues |
       | anoncreds       | Data_DL_MaxValues |
 
     @DIDExchangeConnection @CredFormat_Indy
