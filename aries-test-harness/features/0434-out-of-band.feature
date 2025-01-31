@@ -6,12 +6,12 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
 
 
    @T001-RFC0434 @RFC0036 @critical @AcceptanceTest
-   Scenario: Issue a v1 indy credential using connectionless out of band invitation
+   Scenario Outline: Issue a v1 indy credential using connectionless out of band invitation
       Given we have "2" agents
          | name | role   |
          | Acme | issuer |
          | Bob  | holder |
-      Given "Acme" is ready to issue a "indy" credential
+      Given "Acme" is ready to issue a "<credential_format>" credential
       When "Acme" creates a credential offer
       And "Acme" sends a connectionless out of band invitation to "Bob" with "credential-offer"
       And "Bob" receives the invitation
@@ -20,6 +20,10 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
       And "Bob" acknowledges the credential issue
       Then "Bob" has the credential issued
 
+      @CredFormat_Indy
+      Examples:
+         | credential_format |
+         | indy              |
 
    @T002-RFC0434 @RFC0453 @critical @AcceptanceTest @Schema_DriversLicense_v2 
    Scenario Outline: Issue a v2 credential using connectionless out of band invitation
@@ -51,7 +55,7 @@ Feature: RFC 0434 Intiating exchange using the Out of Band protocol
          | credential_format | credential_data   |
          | json-ld           | Data_DL_MaxValues |
 
-   @T003-RFC0434 @RFC0037 @critical @AcceptanceTest
+   @T003-RFC0434 @RFC0037 @critical @AcceptanceTest @Indy
    Scenario: Present a v1 indy proof using connectionless out of band invitation
       Given we have "2" agents
          | name  | role     |
