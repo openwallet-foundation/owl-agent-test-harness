@@ -241,6 +241,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "--open-mediation",
             "--enable-undelivered-queue",
             "--preserve-exchange-records", # For AATH purposes, exchange records must be retained -- not typical in production
+            "--plugin",
+            "connections",
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
@@ -765,6 +767,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                             "schemaId": data.get("schema_id"),
                             "issuerId": data.get("issuer_id"),
                             "tag": data.get("tag"),
+                            "options": {
+                                "support_revocation": data.get("support_revocation"),
+                            },
                         }
                     }
                     data = new_data
