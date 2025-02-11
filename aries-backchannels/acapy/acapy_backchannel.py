@@ -291,8 +291,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # if the env var is set for tails server then use that.
             result.append(("--emit-new-didcomm-mime-type"))
 
-        result.append(("--universal-resolver"))
-
         # result.append(("--plugin", "redis_events.v1_0.redis_queue.events"))
         result.append(("--plugin-config", "/data-mount/plugin-config.yml"))
         
@@ -1811,7 +1809,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     def _process(
         self, args: List[str], env: Dict[str, str], loop: asyncio.AbstractEventLoop
     ):
-        proc = subprocess.Popen(args, env=env, encoding="utf-8", preexec_fn=os.setsid)
+        proc = subprocess.run(args, env=env, encoding="utf-8")
         stdout = loop.run_in_executor(
             None,
             output_reader,
