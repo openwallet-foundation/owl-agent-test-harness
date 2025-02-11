@@ -1809,7 +1809,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
     def _process(
         self, args: List[str], env: Dict[str, str], loop: asyncio.AbstractEventLoop
     ):
-        proc = subprocess.run(args, env=env, encoding="utf-8")
+        proc = subprocess.Popen(args, env=env, encoding="utf-8", preexec_fn=os.setsid)
         stdout = loop.run_in_executor(
             None,
             output_reader,
