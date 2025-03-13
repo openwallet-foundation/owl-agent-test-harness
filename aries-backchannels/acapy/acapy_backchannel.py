@@ -18,7 +18,7 @@ from aiohttp import (ClientError, ClientRequest, ClientSession, ClientTimeout,
                      web)
 from python.agent_backchannel import (RUN_MODE, START_TIMEOUT,
                                       AgentBackchannel, AgentPorts,
-                                      BackchannelCommand, default_genesis_txns)
+                                      BackchannelCommand, default_genesis_txns, get_ledger_url)
 from python.storage import (get_resource, pop_resource, pop_resource_latest,
                             push_resource)
 from python.utils import flatten, log_msg, output_reader, prompt_loop
@@ -267,8 +267,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         if self.genesis_data:
             result.append(("--genesis-transactions", self.genesis_data))
-        if self.seed:
-            result.append(("--seed", self.seed))
         # deprecated - should be removed
         if self.storage_type:
             result.append(("--storage-type", self.storage_type))
@@ -415,15 +413,16 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             )
 
     async def handle_connections(self, message: Mapping[str, Any]):
+        message_protocol = message.get("connection_protocol")
         if "request_id" in message:
             # This is a did-exchange message based on a Public DID non-invitation
             request_id = message["request_id"]
             push_resource(request_id, "didexchange-msg", message)
-        elif message["connection_protocol"] == "didexchange/1.0" or message["connection_protocol"] == "didexchange/1.1":
+        elif message_protocol == "didexchange/1.0" or message_protocol == "didexchange/1.1":
             # This is an did-exchange message based on a Non-Public DID invitation
             invitation_id = message["invitation_msg_id"]
             push_resource(invitation_id, "didexchange-msg", message)
-        elif message["connection_protocol"] == "connections/1.0":
+        elif message_protocol == "connections/1.0":
             connection_id = message["connection_id"]
             push_resource(connection_id, "connection-msg", message)
         else:
@@ -1523,6 +1522,43 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         elif command.topic == "did":
             agent_operation = "/wallet/did/public"
+            
+            # Check agent already has public did
+            (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            resp_json = json.loads(resp_text)
+            if resp_json["result"] is not None:
+                resp_text = json.dumps(resp_json["result"])
+                return (resp_status, resp_text)
+            
+            # Create a new local did sov
+            (resp_status, resp_text) = await self.admin_POST(
+                "/wallet/did/create",
+                {},
+            )
+            
+            if resp_status == 200:
+                resp_json = json.loads(resp_text)
+                did = resp_json["result"]["did"]
+                verkey = resp_json["result"]["verkey"]
+                
+            log_msg(f"Got DID: {resp_json["result"]["did"]}")
+            
+            # Register the DID as an endorser
+            ledger_url = get_ledger_url()
+            data = {"did": did, "verkey": verkey, "role": "ENDORSER"}
+            async with self.client_session.post(
+                ledger_url + "/register", json=data
+            ) as resp:
+                if resp.status != 200:
+                    raise Exception(f"Error registering DID, response code {resp.status}")
+            
+            # Set as public did
+            (resp_status, resp_text) = await self.admin_POST(
+                agent_operation,
+                {},
+                params={"did": did},
+            )
+            self.did = did
 
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
             if resp_status != 200:
@@ -2422,10 +2458,6 @@ async def main(start_port: int, show_timing: bool = False, interactive: bool = T
                     #print the content of the opened text file
                     agent_config_text_file = agent_config_file.read()
                     print(agent_config_text_file)
-                    if "read-only-ledger" not in agent_config_text_file:
-                        await agent.register_did()
-            else:
-                await agent.register_did()
 
         await agent.start_process()
         agent.activate()

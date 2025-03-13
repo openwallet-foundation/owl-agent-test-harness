@@ -3,8 +3,8 @@ import logging
 import os
 import random
 import traceback
-import debugpy
 from dataclasses import dataclass
+from secrets import token_hex
 from typing import Any, Optional, Tuple
 
 from aiohttp import ClientSession, web
@@ -106,7 +106,7 @@ class AgentBackchannel:
         self.params = params
         self.extra_args = extra_args
         rand_name = str(random.randint(100_000, 999_999))
-        self.seed = ("my_seed_000000000000000000000000" + rand_name)[-32:]
+        self.seed = token_hex(16)
 
         # Set the backchannel on each request so it can be used by the route methods
         @web.middleware

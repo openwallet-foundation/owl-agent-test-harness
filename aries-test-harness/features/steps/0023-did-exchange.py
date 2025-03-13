@@ -185,6 +185,12 @@ def step_impl(context, responder: str):
 @when('"{responder}" sends an explicit invitation with a public DID to "{requester}"')
 def step_impl(context, responder: str, requester: str):
     responder_url = context.config.userdata.get(responder)
+    
+    # Create or get public did
+    (resp_status, resp_text) = agent_backchannel_GET(
+        responder_url + "/agent/command/", "did"
+    )
+    assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 
     data = {"use_public_did": True}
 
