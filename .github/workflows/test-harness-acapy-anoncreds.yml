@@ -1,4 +1,21 @@
 name: test-harness-acapy-anoncreds
+# RUNSET_NAME: "ACA-PY to ACA-Py Anoncreds"
+# Scope: AIP 2.0
+# Exceptions: None
+# 
+# Summary
+#
+# This runset uses the current main branch of ACA-Py for all of the agents. The runset runs all of the tests in the suite
+# that are expected to pass given the current state of ACA-Py support for AIP 1 and 2. This runset specifically targets anoncreds 
+# support in ACA-Py.
+#
+# Current
+# 
+# All of the tests being executed in this runset are passing.
+# 
+# *Status Note Updated: 2025.03.13*
+#
+# End
 on:
   workflow_dispatch:
 defaults:
