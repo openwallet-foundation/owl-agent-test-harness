@@ -1,21 +1,4 @@
-name: test-harness-acapy-acapy
-# RUNSET_NAME: "ACA-PY to ACA-Py"
-# Scope: AIP 1.0
-# Exceptions: None
-# SKIP
-# 
-# Summary
-#
-# This runset uses the current main branch of ACA-Py for all of the agents. The runset runs all of the tests in the suite
-# that are expected to pass given the current state of ACA-Py support for AIP 1 and 2.
-#
-# Current
-# 
-# All of the tests being executed in this runset are passing.
-# 
-# *Status Note Updated: 2021.03.18*
-#
-# End
+name: test-harness-acapy-anoncreds
 on:
   workflow_dispatch:
 defaults:
@@ -44,6 +27,8 @@ jobs:
           TEST_AGENTS: "-d acapy-main"
           TEST_SCOPE: "-t @AcceptanceTest -t ~@wip -t ~@T004-RFC0211 -t ~@DidMethod_orb -t ~@Transport_NoHttpOutbound -t ~@Indy -t ~@CredFormat_Indy"
           REPORT_PROJECT: acapy
+        env:
+          BACKCHANNEL_EXTRA_acapy_main: "{\"wallet-type\":\"askar-anoncreds\"}"
       - name: run-send-gen-test-results-secure
         if: ${{ steps.run_test_harness.conclusion == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
@@ -51,4 +36,3 @@ jobs:
           REPORT_PROJECT: acapy-anoncreds
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
-          BACKCHANNEL_EXTRA_acapy_main: "{\"wallet-type\":\"askar-anoncreds\"}"

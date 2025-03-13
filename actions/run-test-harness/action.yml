@@ -35,10 +35,10 @@ inputs:
     required: true
     default: "https://allure.vonx.io/api"
   ADMIN_USER:
-    description: "Username of the Allure Adminstrator"
+    description: "Username of the Allure Administrator"
     required: true
   ADMIN_PW:
-    description: "Password of the Allure Adminstrator"
+    description: "Password of the Allure Administrator"
     required: true
 runs:
   using: "composite"
