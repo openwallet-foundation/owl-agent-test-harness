@@ -8,13 +8,10 @@ def setup_schemas_for_issuance(context, credential_data):
     # Prepare schemas for usage
     for schema in context.schema_dict:
         try:
-            print(">>> schema:", schema)
             credential_data_json_file = open(
                 "features/data/cred_data_" + schema.lower() + ".json"
             )
             credential_data_json = json.load(credential_data_json_file)
-            print(">>> credential_data_json_file:", credential_data_json_file)
-            print(">>> credential_data_json:", credential_data_json)
             context.credential_data_dict[schema] = credential_data_json[
                 credential_data
             ]["attributes"]

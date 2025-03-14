@@ -134,8 +134,6 @@ def step_impl(context, issuer, cred_format):
     # if context does not have the credential thread id then the proposal was not the starting point for the protocol.
     else:
         cred_data = context.credential_data
-        print(">>> cred_data:", cred_data)
-        print(">>> filters:", context.filters)
 
         # We only want to send data for the cred format being used
         assert (

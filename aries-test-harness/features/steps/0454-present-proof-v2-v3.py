@@ -54,23 +54,6 @@ def step_impl(context, prover, issuer, credential_data):
     # assign the credential data to the context for use in the credential offer or proposal.
     if credential_data != None:
         setup_schemas_for_issuance(context, credential_data)
-        #for schema in context.schema_dict:
-        #    try:
-        #        credential_data_json_file = open(
-        #            "features/data/cred_data_" + schema.lower() + ".json"
-        #        )
-        #        credential_data_json = json.load(credential_data_json_file)
-        #        context.credential_data_dict[schema] = credential_data_json[
-        #            credential_data
-        #        ]["attributes"]
-
-        #    except FileNotFoundError:
-        #        print(
-        #            FileNotFoundError
-        #            + ": features/data/cred_data_"
-        #            + schema.lower()
-        #            + ".json"
-        #        )
 
     # Check if a connection between the players has already been established in this test.
     should_create_connection = (
