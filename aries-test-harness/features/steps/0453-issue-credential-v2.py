@@ -2,41 +2,16 @@ import json
 from time import sleep
 
 from agent_backchannel_client import agent_backchannel_GET, agent_backchannel_POST
-from agent_test_utils import format_cred_proposal_by_aip_version, get_schema_name
+from agent_test_utils import (
+    setup_schemas_for_issuance,
+    format_cred_proposal_by_aip_version,
+    get_schema_name)
 from behave import given, then, when
 
 CRED_FORMAT_INDY = "indy"
 CRED_FORMAT_JSON_LD = "json-ld"
 CRED_FORMAT_ANONCREDS = "anoncreds"
 
-
-def setup_schemas_for_issuance(context, credential_data):
-    # Prepare schemas for usage
-    for schema in context.schema_dict:
-        try:
-            credential_data_json_file = open(
-                "features/data/cred_data_" + schema.lower() + ".json"
-            )
-            credential_data_json = json.load(credential_data_json_file)
-            context.credential_data_dict[schema] = credential_data_json[
-                credential_data
-            ]["attributes"]
-
-            context.credential_data = context.credential_data_dict[schema]
-            context.schema = context.schema_dict[schema]
-        except FileNotFoundError:
-            print(
-                FileNotFoundError
-                + ": features/data/cred_data_"
-                + schema.lower()
-                + ".json"
-            )
-
-        if "AIP20" in context.tags or "DIDComm-V2" in context.tags:
-            context.filters_dict[schema] = credential_data_json[credential_data][
-                "filters"
-            ]
-            context.filters = context.filters_dict[schema]
 
 @given('"{issuer}" is ready to issue a "{cred_format}" credential')
 def step_impl(context, issuer: str, cred_format: str = CRED_FORMAT_INDY):
@@ -159,6 +134,8 @@ def step_impl(context, issuer, cred_format):
     # if context does not have the credential thread id then the proposal was not the starting point for the protocol.
     else:
         cred_data = context.credential_data
+        print(">>> cred_data:", cred_data)
+        print(">>> filters:", context.filters)
 
         # We only want to send data for the cred format being used
         assert (
