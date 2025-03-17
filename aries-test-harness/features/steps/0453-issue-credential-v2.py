@@ -271,6 +271,7 @@ def step_impl(context, holder, cred_format):
         )
         assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
         resp_json = json.loads(resp_text)
+        print(">>> resp_json:", resp_json)
         context.cred_rev_id = resp_json["revocation_id"]
         context.rev_reg_id = resp_json["revoc_reg_id"]
 

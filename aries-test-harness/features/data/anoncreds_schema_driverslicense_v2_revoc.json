@@ -1,0 +1,16 @@
+{
+   "schema":{
+      "schema": {
+         "name":"Schema_DriversLicense_v2_Revoc",
+         "version":"1.0.1",
+         "attrNames":[
+            "address",
+            "DL_number",
+            "expiry",
+            "age"
+         ]
+      },
+      "options":{}
+   },
+   "cred_def_support_revocation":true
+}
