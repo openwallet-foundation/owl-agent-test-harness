@@ -1,12 +1,12 @@
-name: test-harness-acapy-credo-anoncreds
-# RUNSET_NAME: "ACA-PY to Credo Anoncreds"
-# Scope: Anoncreds
+name: test-harness-acapy-anoncreds-credo
+# RUNSET_NAME: "ACA-PY/AnonCreds to Credo"
+# Scope: AnonCreds
 #
 # Summary
 #
 # This runset uses the current main branch of ACA-Py for all of the agents except Bob (holder),
 # which uses the master branch of Credo TS. The runset covers a small number of credential
-# issue and revocation scenarios for Anoncreds credentials.
+# issue and revocation scenarios for AnonCreds credentials.
 #
 # Current
 #
@@ -43,13 +43,13 @@ jobs:
           BUILD_AGENTS: "-a acapy-main -a credo"
           TEST_AGENTS: "-d acapy-main -b credo"
           TEST_SCOPE: "-t @AcceptanceTest -t @AIP10,@RFC0441,@RFC0211,@T001-RFC0453,@T001-RFC0454b -t ~@wip -t ~@DIDExchangeConnection -t ~@T004-RFC0211 -t ~@QualifiedDIDs -t ~@T001-RFC0183 -t @Anoncreds"
-          REPORT_PROJECT: acapy-b-credo-anoncreds
+          REPORT_PROJECT: acapy-anoncreds-credo
         env:
           BACKCHANNEL_EXTRA_acapy_main: "{\"wallet-type\":\"askar-anoncreds\"}"
       - name: run-send-gen-test-results-secure
         if: ${{ steps.run_test_harness.conclusion == 'success' }}
         uses: ./test-harness/actions/run-send-gen-test-results-secure
         with:
-          REPORT_PROJECT: acapy-b-credo-anoncreds
+          REPORT_PROJECT: acapy-anoncreds-credo
           ADMIN_USER: ${{ secrets.AllureAdminUser }}
           ADMIN_PW: ${{ secrets.AllureAdminPW }}
