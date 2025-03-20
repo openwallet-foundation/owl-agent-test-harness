@@ -1885,12 +1885,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             return (resp_status, resp_text)
 
         elif topic == "revocation-registry" and record_id:
-            print(f">>> pop attempt with: {record_id} revocation-registry-msg")
             revocation_msg = pop_resource(record_id, "revocation-registry-msg")
             i = 0
             while revocation_msg is None and i < MAX_TIMEOUT:
                 await asyncio.sleep(1)
-                print(f">>> pop attempt with: {record_id} revocation-registry-msg")
                 revocation_msg = pop_resource(record_id, "revocation-registry-msg")
                 i = i + 1
 
