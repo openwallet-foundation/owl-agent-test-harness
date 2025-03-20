@@ -31,11 +31,13 @@ from agent_test_utils import create_non_revoke_interval
 def step_impl(context, issuer: str):
 
     issuer_url = context.config.userdata.get(issuer)
+    cred_format = context.rev_cred_format
 
     credential_revocation = {
         "cred_rev_id": context.cred_rev_id,
         "rev_registry_id": context.rev_reg_id,
         "publish_immediately": True,
+        "anoncreds": cred_format == "anoncreds",
     }
 
     # always do this regardless
@@ -55,10 +57,14 @@ def step_impl(context, issuer: str):
     # Check the Holder wallet for the credential
     # Should be a 200 since the revoke doesn't remove the cred from the holders wallet.
     # What else to check?
+    if cred_format == "anoncreds":
+        credential_id = context.credential_id_dict[context.schema["schema"]["name"]][-1]
+    else:
+        credential_id = context.credential_id_dict[context.schema["schema_name"]][-1]
     (resp_status, resp_text) = agent_backchannel_GET(
         context.config.userdata.get(context.holder_name) + "/agent/command/",
         "credential",
-        id=context.credential_id_dict[context.schema["schema_name"]][-1],
+        id=credential_id,
     )
     assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
 

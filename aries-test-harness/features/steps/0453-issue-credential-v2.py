@@ -241,6 +241,7 @@ def step_impl(context, issuer, cred_format):
 @when('"{holder}" acknowledges the "{cred_format}" credential issue')
 def step_impl(context, holder, cred_format):
     holder_url = context.config.userdata.get(holder)
+    issuer_url = context.config.userdata.get(context.issuer_name)
 
     sleep(1)
     (resp_status, resp_text) = agent_backchannel_POST(
@@ -265,15 +266,24 @@ def step_impl(context, holder, cred_format):
     # From that JSON save off the credential revocation identifier, and the revocation registry identifier.
     if context.support_revocation:
         (resp_status, resp_text) = agent_backchannel_GET(
-            context.config.userdata.get(context.issuer_name) + "/agent/response/",
+            issuer_url + "/agent/response/",
             "revocation-registry",
             id=context.cred_thread_id,
         )
         assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
         resp_json = json.loads(resp_text)
-        print(">>> resp_json:", resp_json)
+        if not "revocation_id" in resp_json:
+            # revocation info not available for issuer, check holder ...
+            (resp_status, resp_text) = agent_backchannel_GET(
+                holder_url + "/agent/response/",
+                "revocation-registry",
+                id=context.cred_thread_id,
+            )
+            assert resp_status == 200, f"resp_status {resp_status} is not 200; {resp_text}"
+            resp_json = json.loads(resp_text)
         context.cred_rev_id = resp_json["revocation_id"]
         context.rev_reg_id = resp_json["revoc_reg_id"]
+        context.rev_cred_format = cred_format
 
 def find_credential_id(data):
     if isinstance(data, dict):
