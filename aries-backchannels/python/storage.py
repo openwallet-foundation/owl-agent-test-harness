@@ -4,13 +4,51 @@ import threading
 storage = {}
 storage_lock = threading.Lock()
 
+# data_id is the thread_id (at least as used by aca-py)
+# the exchange_id is specific to the protocol (e.g. cred or proof exchange)
+data_to_exch_id = {}
+exch_to_data_id = {}
 
-def store_resource(data_id, data_type, data):
+
+def data_exch_mapping_name(data_type, exch_id_name):
+    return data_type + "." + exch_id_name
+
+
+def add_data_exch_mapping(data_id, data_type, data, exch_id_name):
+    if exch_id_name and exch_id_name in data:
+        exch_id = data[exch_id_name]
+    else:
+        return
+    mapping_name = data_exch_mapping_name(data_type, exch_id_name)
+    if not mapping_name in data_to_exch_id:
+        data_to_exch_id[mapping_name] = {}
+    data_to_exch_id[mapping_name][data_id] = exch_id
+    if not mapping_name in exch_to_data_id:
+        exch_to_data_id[mapping_name] = {}
+    exch_to_data_id[mapping_name][exch_id] = data_id
+
+
+def get_data_id_from_exch_id(data_type, exch_id_name, exch_id):
+    mapping_name = data_exch_mapping_name(data_type, exch_id_name)
+    if mapping_name in exch_to_data_id:
+        return exch_to_data_id[mapping_name][exch_id]
+    return None
+
+
+def get_exch_id_from_data_id(data_type, exch_id_name, data_id):
+    mapping_name = data_exch_mapping_name(data_type, exch_id_name)
+    if mapping_name in data_to_exch_id:
+        return data_to_exch_id[mapping_name][data_id]
+    return None
+
+
+def store_resource(data_id, data_type, data, exch_id_name=None):
     storage_lock.acquire()
     try:
         if data_id not in storage:
             storage[data_id] = {}
         storage[data_id][data_type] = data
+        add_data_exch_mapping(data_id, data_type, data, exch_id_name)
         return data
     finally:
         storage_lock.release()
@@ -65,7 +103,7 @@ def delete_resource(data_id, data_type):
         storage_lock.release()
 
 
-def push_resource(data_id, data_type, data):
+def push_resource(data_id, data_type, data, exch_id_name=None):
     storage_lock.acquire()
     try:
         if data_id not in storage:
@@ -73,6 +111,7 @@ def push_resource(data_id, data_type, data):
         if data_type not in storage[data_id]:
             storage[data_id][data_type] = []
         storage[data_id][data_type].append(data)
+        add_data_exch_mapping(data_id, data_type, data, exch_id_name)
         return data
     finally:
         storage_lock.release()

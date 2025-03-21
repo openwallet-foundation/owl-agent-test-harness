@@ -20,7 +20,7 @@ from python.agent_backchannel import (RUN_MODE, START_TIMEOUT,
                                       AgentBackchannel, AgentPorts,
                                       BackchannelCommand, default_genesis_txns, get_ledger_url)
 from python.storage import (get_resource, pop_resource, pop_resource_latest,
-                            push_resource)
+                            push_resource, get_data_id_from_exch_id)
 from python.utils import flatten, log_msg, output_reader, prompt_loop
 from typing_extensions import Literal
 
@@ -438,7 +438,6 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
         thread_id = message["thread_id"]
 
-        # thread_id = indy::{rev_reg_id}::{cred_rev_id}
         push_resource(thread_id, "revocation-notification-msg", message)
 
     async def handle_issue_credential(self, message: Mapping[str, Any]):
@@ -447,9 +446,9 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
             return
-        push_resource(thread_id, "credential-msg", message)
+        push_resource(thread_id, "credential-msg", message, exch_id_name="credential_exchange_id")
         if "revocation_id" in message:  # also push as a revocation message
-            push_resource(thread_id, "revocation-registry-msg", message)
+            push_resource(thread_id, "revocation-registry-msg", message, exch_id_name="credential_exchange_id")
             log_msg("Issue Credential Webhook message contains revocation info")
 
     async def handle_issue_credential_v2_0(self, message: Mapping[str, Any]):
@@ -458,10 +457,32 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
             return
-        push_resource(thread_id, "credential-msg", message)
+        push_resource(thread_id, "credential-msg", message, exch_id_name="cred_ex_id")
         if "revocation_id" in message:  # also push as a revocation message
-            push_resource(thread_id, "revocation-registry-msg", message)
+            push_resource(thread_id, "revocation-registry-msg", message, exch_id_name="cred_ex_id")
             log_msg("Issue Credential Webhook message contains revocation info")
+
+    async def handle_issue_credential_v2_0_anoncreds(self, message: Mapping[str, Any]):
+        log_msg("Received Issue Credential v2 Anoncreds Webhook message: " + json.dumps(message, indent=4))
+        thread_id = get_data_id_from_exch_id("credential-msg", "cred_ex_id", message["cred_ex_id"])
+        log_msg(f"Thread ID: {thread_id}")
+        # fetch the credential to get the revocation info
+        if "cred_id_stored" in message:
+            record_id = message["cred_id_stored"]
+        else:
+            return
+        agent_operation = f"/credential/{record_id}"
+        (resp_status, resp_text) = await self.admin_GET(agent_operation)
+        log_msg(f"Anoncreds Credential: {resp_status} {resp_text}")
+        if resp_status == 200:
+            resp_json = json.loads(resp_text)
+            if "cred_rev_id" in resp_json:
+                message["revocation_id"] = resp_json["cred_rev_id"]
+            if "rev_reg_id" in resp_json:
+                message["revoc_reg_id"] = resp_json["rev_reg_id"]
+        if "revocation_id" in message:  # push as a revocation message
+            push_resource(thread_id, "revocation-registry-msg", message)
+            log_msg(f"Issue Anoncreds Credential Webhook message contains revocation info: {thread_id} {message}")
 
     async def handle_present_proof_v2_0(self, message: Mapping[str, Any]):
         log_msg("Received a Present Proof v2 Webhook message: " + json.dumps(message, indent=4))
@@ -469,7 +490,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
             return
-        push_resource(thread_id, "presentation-msg", message)
+        push_resource(thread_id, "presentation-msg", message, exch_id_name="presentation_exchange_id")
 
     async def handle_present_proof(self, message: Mapping[str, Any]):
         log_msg("Received a Present Proof Webhook message: " + json.dumps(message, indent=4))
@@ -477,7 +498,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
         if "state" in message and message["state"] == "deleted":
             # ignore "deleted" state
             return
-        push_resource(thread_id, "presentation-msg", message)
+        push_resource(thread_id, "presentation-msg", message, exch_id_name="pres_ex_id")
 
     async def handle_revocation_registry(self, message: Mapping[str, Any]):
         # No thread id in the webhook for revocation registry messages
@@ -2349,6 +2370,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             if operation == "revoke":
                 if comparibleVersion > 54:
                     agent_operation = f"/revocation/{operation}"
+                    if data["anoncreds"]:
+                        agent_operation = "/anoncreds" + agent_operation
                     if "cred_ex_id" in data:
                         admin_data = {
                             "cred_ex_id": data["cred_ex_id"],
@@ -2388,6 +2411,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         data = None
             elif operation == "credential-record":
                 agent_operation = f"/revocation/{operation}"
+                if command.anoncreds:
+                    agent_operation = "/anoncreds" + agent_operation
                 if "cred_ex_id" in data:
                     cred_ex_id = data["cred_ex_id"]
                     agent_operation = f"{agent_operation}?cred_ex_id={cred_ex_id}"

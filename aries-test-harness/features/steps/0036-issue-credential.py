@@ -20,6 +20,15 @@ SCHEMA_TEMPLATE = {
     "attributes": ["attr_1", "attr_2", "attr_3"],
 }
 
+SCHEMA_TEMPLATE_ANONCREDS = {
+    "schema": {
+        "name": "test_schema.",
+        "version": "1.0.0",
+        "attrNames": ["attr_1", "attr_2", "attr_3"],
+    },
+    "options":{}
+}
+
 CRED_DEF_TEMPLATE = {
     "support_revocation": False,
     "schema_id": "",
@@ -59,8 +68,12 @@ def step_impl(context, issuer):
 
     # check for a schema already loaded in the context. If it is not, load the template
     if not context.schema:
-        context.schema = SCHEMA_TEMPLATE.copy()
-        context.schema["schema_name"] = context.schema["schema_name"] + issuer
+        if context.anoncreds:
+            context.schema = SCHEMA_TEMPLATE_ANONCREDS.copy()
+            context.schema["schema_name"] = get_schema_name(context) + issuer
+        else:
+            context.schema = SCHEMA_TEMPLATE.copy()
+            context.schema["schema_name"] = get_schema_name(context) + issuer
 
     context.issuer_did = issuer_did["did"]
     context.issuer_did_dict[get_schema_name(context)] = issuer_did["did"]

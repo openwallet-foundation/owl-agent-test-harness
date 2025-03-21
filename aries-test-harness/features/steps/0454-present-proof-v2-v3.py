@@ -3,10 +3,12 @@ from behave import *
 import json
 from agent_backchannel_client import agent_backchannel_POST, expected_agent_state
 from agent_test_utils import (
+    setup_schemas_for_issuance,
     get_relative_timestamp_to_epoch,
     amend_presentation_definition_with_runtime_data,
 )
 from distutils.util import strtobool
+
 
 def prepare_proof_request(context: Any, request_for_proof: str) -> Dict[str, Any]:
     try:
@@ -51,23 +53,7 @@ def prepare_proof_request(context: Any, request_for_proof: str) -> Dict[str, Any
 def step_impl(context, prover, issuer, credential_data):
     # assign the credential data to the context for use in the credential offer or proposal.
     if credential_data != None:
-        for schema in context.schema_dict:
-            try:
-                credential_data_json_file = open(
-                    "features/data/cred_data_" + schema.lower() + ".json"
-                )
-                credential_data_json = json.load(credential_data_json_file)
-                context.credential_data_dict[schema] = credential_data_json[
-                    credential_data
-                ]["attributes"]
-
-            except FileNotFoundError:
-                print(
-                    FileNotFoundError
-                    + ": features/data/cred_data_"
-                    + schema.lower()
-                    + ".json"
-                )
+        setup_schemas_for_issuance(context, credential_data)
 
     # Check if a connection between the players has already been established in this test.
     should_create_connection = (

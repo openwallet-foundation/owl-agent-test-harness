@@ -1,6 +1,36 @@
 import datetime
+import json
 import time
 from typing import Optional
+
+
+def setup_schemas_for_issuance(context, credential_data):
+    # Prepare schemas for usage
+    for schema in context.schema_dict:
+        try:
+            credential_data_json_file = open(
+                "features/data/cred_data_" + schema.lower() + ".json"
+            )
+            credential_data_json = json.load(credential_data_json_file)
+            context.credential_data_dict[schema] = credential_data_json[
+                credential_data
+            ]["attributes"]
+
+            context.credential_data = context.credential_data_dict[schema]
+            context.schema = context.schema_dict[schema]
+        except FileNotFoundError:
+            print(
+                FileNotFoundError
+                + ": features/data/cred_data_"
+                + schema.lower()
+                + ".json"
+            )
+
+        if "AIP20" in context.tags or "DIDComm-V2" in context.tags:
+            context.filters_dict[schema] = credential_data_json[credential_data][
+                "filters"
+            ]
+            context.filters = context.filters_dict[schema]
 
 
 def create_non_revoke_interval(timeframe):
