@@ -31,11 +31,8 @@ from agent_test_utils import create_non_revoke_interval
 def step_impl(context, issuer: str):
 
     issuer_url = context.config.userdata.get(issuer)
-    # assume "indy" format unless explicitely specified
-    try:
-        cred_format = context.rev_cred_format
-    except:
-        cred_format = "indy"
+    # assume "indy" format unless explicitly specified
+    cred_format = context.rev_cred_format if hasattr(context, "rev_cred_format") else "indy"
 
     credential_revocation = {
         "cred_rev_id": context.cred_rev_id,
