@@ -1,7 +1,7 @@
 openapi: 3.0.0
 servers:
   - description: Agent Backchannel
-    url: http://localhost:{port}
+    url: http://{hostname}:{port}
     variables:
       port:
         description: >
@@ -16,6 +16,15 @@ servers:
           - "9040"
           - "9050"
         default: "9020"
+      hostname:
+        description: >
+          The host running the API implementation
+            * localhost
+            * host.docker.internal
+        enum:
+            - "localhost"
+            - "host.docker.internal"
+        default: "localhost"
 info:
   description: |
     This page documents the backchannel API the test harness uses to communicate with agents under tests.

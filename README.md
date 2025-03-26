@@ -35,6 +35,7 @@ We'd love to have help in building out a full Aries interoperability lab.
 - [Using AATH Agents as Services](#using-aath-agents-as-services)
   - [Use Cases](#use-cases)
     - [Debugging within AATH](#debugging-within-aath)
+    - [Accessing Backchannels via Swagger](#accessing-backchannels-via-swagger)
     - [Aries Mobile Test Harness](#aries-mobile-test-harness)
 - [Extra Backchannel-Specific Parameters](#extra-backchannel-specific-parameters)
 - [Custom Configurations for Agents](#custom-configurations-for-agents)
@@ -159,6 +160,26 @@ When running test code in a debugger, you may not always want or need all the ag
 ```bash
 ./manage start -a acapy-main -b acapy-main
 ```
+
+#### Accessing Backchannels via Swagger
+
+You can run a Swagger UI to expose your backchannel's API, for manual testing or maybe just to take a look at the API to understand it better.
+
+If you start up all the agents:
+
+```bash
+./manage start -d acapy-main
+```
+
+... then you can start up a Swagger UI as follows (run this from the same directory):
+
+```bash
+docker pull swaggerapi/swagger-ui
+docker run -p 8081:8080 -e SWAGGER_JSON=/mnt/openapi-spec.yml -v ${PWD}/docs/assets:/mnt swaggerapi/swagger-ui
+```
+
+Now open your browser with `http://localhost:8081` - you can pick which of the 4 agents you want to connect to.
+
 
 #### Aries Mobile Test Harness
 
