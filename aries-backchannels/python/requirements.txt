@@ -8,3 +8,4 @@ aiohttp>=3.8.1
 ConfigArgParse
 typing_extensions
 base58
+aiohttp_cors

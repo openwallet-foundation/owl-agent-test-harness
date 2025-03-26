@@ -11,6 +11,8 @@ from aiohttp import ClientSession, web
 from aiohttp.typedefs import Handler
 from typing_extensions import Literal, TypedDict
 
+import aiohttp_cors
+
 from .utils import log_msg
 
 LOGGER = logging.getLogger(__name__)
@@ -212,6 +214,18 @@ class AgentBackchannel:
                 web.get("/agent/response/{topic}/{id}", self._get_response_backchannel),
             ]
         )
+
+        # add CORS support so we can run a swagger UI in a separate docker container
+        cors = aiohttp_cors.setup(self.app, defaults={
+           "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*"
+            )
+        })
+
+        for route in list(self.app.router.routes()):
+            cors.add(route)
 
         runner = web.AppRunner(self.app)
         await runner.setup()
