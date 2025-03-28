@@ -142,6 +142,8 @@ usage () {
         (comparison is the only supported option)
       Use the -n option to start ngrok endpoints for each agent
         (this is *required* when testing with a Mobile agent)
+      Use the -nohup option to leave the agents running after the tests complete
+        (you can use this to inspect the agent state once tests have completed)
 
     Examples:
     $0 run -a acapy -b aries-vcx -f aries-vcx -m acapy  - Run all the tests using the specified agents per role
@@ -1315,6 +1317,8 @@ if [[ "${COMMAND}" == "run" || "${COMMAND}" == "start" || "${COMMAND}" == "test"
   MALLORY="none"
   TAGS=""
   BEHAVE_INI=aries-test-harness/behave.ini
+  SHUTDOWN_AGENTS="true"
+
 
 # --- Parse options manually ---
 while [[ $# -gt 0 ]]; do
@@ -1353,6 +1357,10 @@ while [[ $# -gt 0 ]]; do
       export FABER="$2"
       export MALLORY="$2"
       shift 2
+      ;;
+    -nohup)
+      export SHUTDOWN_AGENTS="false"
+      shift
       ;;
     -t)
       export TAGS="${TAGS} --tags=$2"
@@ -1493,7 +1501,9 @@ case "${COMMAND}" in
     ;;
 
   run)
-      trap 'stopHarness auto' EXIT
+      if [[ "${SHUTDOWN_AGENTS}" = "true" ]]; then
+        trap 'stopHarness auto' EXIT
+      fi
 
       startHarness
       if [ $? -eq 1 ]; then
