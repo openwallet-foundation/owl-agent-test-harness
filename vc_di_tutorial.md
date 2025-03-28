@@ -10,7 +10,7 @@ For issuing, we use the RFC 0809 VC-DI Attachments (https://identity.foundation/
 For presenting, we use the RFC 0510 DIF Presentation Exchange Attachments (https://identity.foundation/aries-rfcs/latest/aip2/0510-dif-pres-exch-attach/).
 
 
-## Support within Aca-Py Demo Integration Tests
+## Support within Aca-Py Demo and Integration Tests
 
 You can run the Aca-Py demo (alice/faber) to see VC_DI credentials in action.
 
@@ -28,7 +28,7 @@ AGENT_PORT_OVERRIDE=8010 ./run_demo run faber --wallet-type askar-anoncreds --re
 
 You can also access the agents' swagger pages at http://localhost:8011 and http://localhost:8031 (based on the above ports) and try out the endpoints yourself.  Check out the code within the alice/faber demo to see exactly what endpoints and payload formats are used.
 
-There are some VC_DI-enabled integration tests, try running:
+Aca-Py has some VC_DI-enabled integration tests, you can try running:
 
 ```bash
 AGENT_PORT_OVERRIDE=9010 ./run_bdd -t @cred_type_vc_di
@@ -63,14 +63,14 @@ If you run the tests with the `-nohup` option then the test harness will leave a
 ./manage run -d acapy-main -nohup -t ... etc ...
 ```
 
-You can use this feature (in combination with the Swagger UI) to inspect the agent or backchannel state once tests are completed (to help diagnose a failed test for example), and then shut everything down with `./manage stop`.
+You can use this feature (in combination with the Swagger UI) to inspect the agent or backchannel state once the tests have completed (to help diagnose a failed test for example), and then shut everything down with `./manage stop`.
 
 
 ## OATH Test Case(s) to Update with VC_DI Support
 
 We'll just use existing tests cases, but we'll add support for the VC_DI exchange format.
 
-Let's add VC_DI to a couple of existing anoncreds-format tests - there is a small subset that have been specifically tested with aca-py with a credo holder:
+Let's add VC_DI to a couple of existing AnonCreds-format tests - there is a small subset that have been specifically tested with Aca-Py (and with a credo holder):
 
 ```bash
 BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar-anoncreds\"}" ./manage run -d acapy-main -t @AcceptanceTest -t @AIP10,@RFC0441,@RFC0211,@T001-RFC0453,@T001-RFC0454b -t ~@wip -t ~@DIDExchangeConnection -t ~@T004-RFC0211 -t ~@QualifiedDIDs -t ~@T001-RFC0183 -t @Anoncreds
@@ -108,7 +108,7 @@ def step_impl(context, issuer):
 	...
 ```
 
-- review the existing tests and steps, and make sure to utilize existing steps and scenarios when appropriate
+- for our updates, we're leveraging existing steps and just adding VC_DI support
 - note that the test scenarios can be configured via parameters or tags - for example `"<credential_type>"` vs `@CredFormat_Anoncreds` are both used (in different tests) to specify AnonCreds credential format:
 
 ```
@@ -126,7 +126,7 @@ vs:
 ```
 
 - the test data (for creating schemas, credentials and presentations) is in the `features/data` directory
-- there are direct references in the Python code (in both the test harness and backchannels) to the Credential Format.
+- there are direct references in the Python code (in both the test harness and backchannels) to the credential format.
 
 
 ### Code Support for AnonCreds Credential Format - Overview
@@ -194,10 +194,10 @@ This is the existing test with AnonCreds support - `@T001-RFC0453` (features/045
       | anoncreds       | Data_DL_MaxValues |
 ```
 
-We can add another "example" to use the VC_DI format (note the new `@VC_DI` tag, we will need to add this to the python code):
+We can add another "example" to use the VC_DI format:
 
 ```
-    @RFC0160 @VC_DI
+    @RFC0160 @Anoncreds
     Examples:
       | credential_type | credential_data   |
       | vc_di           | Data_DL_MaxValues |
@@ -205,7 +205,7 @@ We can add another "example" to use the VC_DI format (note the new `@VC_DI` tag,
 
 #### Test Data
 
-The data files for the anoncreds credential type (indicated by the `@Schema_DriversLicense_v2` tag):
+The data files for the AnonCreds credential type (as indicated by the `@Schema_DriversLicense_v2` tag) are:
 
 ```
 ./features/data/anoncreds_schema_driverslicense_v2.json
@@ -214,9 +214,9 @@ The data files for the anoncreds credential type (indicated by the `@Schema_Driv
 
 There are different schema formats for `Indy` and `AnonCreds` credential formats.  VC_DI will use the same format as `AnonCreds` so we can just re-use those same data files.
 
-There are "anoncreds" versions of the `cred_data_*.json` files - the difference is that the "anoncreds" version contains the "anoncreds" filter (and we will use this to add the "vc_di" filter as well), and the "non-anoncreds" version contains filters for "indy" and "json-ld".  The file name has to correspond to the schema file name, hence the need for two `cred_def_*.json` files.
+There are "AnonCreds" versions of the `cred_data_*.json` files - the difference is that the "AnonCreds" version contains the "anoncreds" filter (and we will use this to add the "vc_di" filter as well), and the "non-AnonCreds" version contains filters for "indy" and "json-ld".  The file name has to correspond to the schema file name, hence the need for two `cred_def_*.json` files.
 
-We will add filters as follows - remember we can run the aca-py alice/faber demo with the `--events` flag to help figure this out.
+We will add a filter as follows - remember we can run the aca-py alice/faber demo with the `--events` flag to help figure this out.
 
 For `cred_data_anoncreds_schema_driverslicense_v2.json` we just need to add a `"vc_di"` filter:
 
@@ -230,6 +230,8 @@ For `cred_data_anoncreds_schema_driverslicense_v2.json` we just need to add a `"
          }
       }
 ```
+
+Pretty straightforward!
 
 #### Test Code
 
