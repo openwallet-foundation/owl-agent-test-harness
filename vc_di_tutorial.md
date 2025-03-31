@@ -205,6 +205,8 @@ We can add another "example" to use the VC_DI format:
 
 Note the use of the `@Anoncreds` tag - this indicates that the agent wallet (Aca-Py specifically) must support AnonCreds.  This is a bit confusing, since we're now adding a new credential format (VC_DI) which is also going to get a new tag later on.  But for now just go with it ...
 
+We also add a new tag here - `@CredFormat_VC_DI` - the test doesn't actually rely on this tag, but we can use it for filtering when we run the tests.
+
 #### Test Data
 
 The data files for the AnonCreds credential type (as indicated by the `@Schema_DriversLicense_v2` tag) are:
@@ -265,6 +267,8 @@ In the Aca-Py backchannel:
         pass
 ```
 
+(That's enough for now - we'll need to fill this in when we add revocation support.  See `handle_issue_credential_v2_0_anoncreds()` for example.)
+
 (The backchannel has a lot of references to "anoncreds" in the context of checking if we need to be running on an `askar-anoncreds` wallet - we can just leave all this code alone, since `vc_di` behaves just like `anoncreds` in this context.)
 
 In `aries-test-harness/agent_test_utils.py` there are references to `AnonCreds`:
@@ -313,6 +317,19 @@ CRED_FORMAT_VC_DI = "vc_di"
 ```
 
 In `environment.py` the "anoncreds" references are all related to the wallet type, which will have the same behaviour for our new credential format.
+
+#### Running the Tests
+
+Re-build your docker images and run the tests:
+
+```bash
+docker rmi -f aries-test-harness acapy-main-agent-backchannel
+./manage build -a acapy-main
+BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar-anoncreds\"}" ./manage run -d acapy-main -t  @CredFormat_VC_DI
+```
+
+Everything "should" pass :-)
+
 
 ### Test Scenario to Present a VC_DI Presentation
 
@@ -494,8 +511,22 @@ And in the test harness code (`features/steps/0454-present-proof-v2-v3.py`) "vc_
     ...
 ```
 
+#### Running the Tests
+
+Re-build your docker images and run the tests:
+
+```bash
+docker rmi -f aries-test-harness acapy-main-agent-backchannel
+./manage build -a acapy-main
+BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar-anoncreds\"}" ./manage run -d acapy-main -t  @CredFormat_VC_DI
+```
+
+(This will run both of our new tests.)  Everything "should" pass :-)
+
 
 ### Test Scenario to Present a VC_DI Presentation with Revocation Support
+
+*Note that this section is incomplete, it's an exercise for the student :-)*
 
 This test just adds revocation to the above credential and presentation:
 
