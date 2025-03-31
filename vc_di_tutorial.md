@@ -76,7 +76,7 @@ Let's add VC_DI to a couple of existing AnonCreds-format tests - there is a smal
 BACKCHANNEL_EXTRA_acapy_main="{\"wallet-type\":\"askar-anoncreds\"}" ./manage run -d acapy-main -t @AcceptanceTest -t @AIP10,@RFC0441,@RFC0211,@T001-RFC0453,@T001-RFC0454b -t ~@wip -t ~@DIDExchangeConnection -t ~@T004-RFC0211 -t ~@QualifiedDIDs -t ~@T001-RFC0183 -t @Anoncreds
 ```
 
-(It's a big set of tags to run only 4 tests, but these are the filters used by the credo runsets.  You can also add `-a credo` to run with credo as the holder (note that these tests currently fail with credo).)
+(It's a big set of tags to run only 4 tests, but these are the filters used by the credo runsets.  You can also add `-b credo` to run with credo as the holder (note that these tests currently fail with credo).)
 
 You should be able to run these tests and have them all pass (using Aca-Py for all agents).  This also tells us the exact tests we need to update.
 
