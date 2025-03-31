@@ -105,7 +105,7 @@ Feature: RFC 0453 Aries Agent Issue Credential v2 # features/0453-issue-credenti
 ```
 @given('"{issuer}" has a public did')
 def step_impl(context, issuer):
-	...
+    ...
 ```
 
 - for our updates, we're leveraging existing steps and just adding VC_DI support
@@ -197,11 +197,13 @@ This is the existing test with AnonCreds support - `@T001-RFC0453` (features/045
 We can add another "example" to use the VC_DI format:
 
 ```
-    @RFC0160 @Anoncreds
+    @RFC0160 @Anoncreds @CredFormat_VC_DI
     Examples:
       | credential_type | credential_data   |
       | vc_di           | Data_DL_MaxValues |
 ```
+
+Note the use of the `@Anoncreds` tag - this indicates that the agent wallet (Aca-Py specifically) must support AnonCreds.  This is a bit confusing, since we're now adding a new credential format (VC_DI) which is also going to get a new tag later on.  But for now just go with it ...
 
 #### Test Data
 
@@ -239,12 +241,59 @@ From the code overview above, we need to look at the following to support issuin
 
 In the Aca-Py backchannel:
 
-- update the credential issue process to treat `"vc_di"` like `"anoncreds"`
+- add the credential format to the mapping:
+
+```
+    self.credFormatFilterTranslationDict = {
+        "indy": "indy",
+        "json-ld": "ld_proof",
+        "anoncreds": "anoncreds",
+        "vc_di": "vc_di",
+    }
+```
+
+- update the credential issue process to treat `"vc_di"` like `"anoncreds"`, for the most part we just need to do this:
+
+```
+    if cred_format == "indy" or cred_format == "anoncreds" or cred_format == "vc_di":
+```
+
 - add a webhook handler for VC_DI format (`handle_issue_credential_v2_0_vc_di()`)
+
+```
+    async def handle_issue_credential_v2_0_vc_di(self, message: Mapping[str, Any]):
+        pass
+```
+
+(The backchannel has a lot of references to "anoncreds" in the context of checking if we need to be running on an `askar-anoncreds` wallet - we can just leave all this code alone, since `vc_di` behaves just like `anoncreds` in this context.)
 
 In `aries-test-harness/agent_test_utils.py` there are references to `AnonCreds`:
 
 - in `amend_filters_with_runtime_data()` need to add an `if "vc_di" in filters:` block to handle all the `replace_me` parameters
+
+```
+    if "vc_di" in filters:
+        if (
+            "schema_issuer_did" in filters["vc_di"]
+            and filters["vc_di"]["schema_issuer_did"] == "replace_me"
+        ):
+            filters["vc_di"]["schema_issuer_did"] = context.issuer_did_dict[schema_name]
+        if (
+            "issuer_did" in filters["vc_di"]
+            and filters["vc_di"]["issuer_did"] == "replace_me"
+        ):
+            filters["vc_di"]["issuer_did"] = context.issuer_did_dict[schema_name]
+        if (
+            "cred_def_id" in filters["vc_di"]
+            and filters["vc_di"]["cred_def_id"] == "replace_me"
+        ):
+            filters["vc_di"]["cred_def_id"] = context.issuer_credential_definition_dict[schema_name]["id"]
+        if (
+            "schema_id" in filters["vc_di"]
+            and filters["vc_di"]["schema_id"] == "replace_me"
+        ):
+            filters["vc_di"]["schema_id"] = context.issuer_schema_dict[schema_name]["id"]
+```
 
 And the following test harness code has references to `AnonCreds` and needs review:
 
@@ -253,6 +302,17 @@ And the following test harness code has references to `AnonCreds` and needs revi
 ./aries-test-harness/features/environment.py:454:        if context and "Anoncreds" in context.tags:
 ```
 
+In `0453-issue-credential-v2.py` we need to add a parameter for the new credential format, and update the format checks:
+
+```
+CRED_FORMAT_VC_DI = "vc_di"
+
+...
+
+    if cred_format == CRED_FORMAT_INDY or cred_format == CRED_FORMAT_ANONCREDS or cred_format == CRED_FORMAT_VC_DI:
+```
+
+In `environment.py` the "anoncreds" references are all related to the wallet type, which will have the same behaviour for our new credential format.
 
 ### Test Scenario to Present a VC_DI Presentation
 
@@ -283,7 +343,7 @@ For this test we just need to add suport for VC_DI presentations (it used the sa
 We can add (note there are 2 tags - `@CredFormat_VC_DI` and `@Anoncreds` - the latter indicates the wallet type, which must be `AnonCreds`):
 
 ```
-      @AIP20 @CredFormat_VC_DI @RFC0592 @Schema_DriversLicense_v2 @Anoncreds
+      @AIP20 @RFC0592 @Schema_DriversLicense_v2 @Anoncreds @CredFormat_VC_DI
       Examples:
          | issuer | credential_data   | request_for_proof               | presentation                   |
          | Acme   | Data_DL_MaxValues | proof_request_DL_address_v2     | presentation_DL_address_v2     |
@@ -298,57 +358,90 @@ The data files for the anoncreds cred type are:
 ./features/data/presentation_DL_address_v2.json
 ```
 
-The proof request (and presentation) will be a bit more complicated - they need to be in "dif" format, so we need to translate what's happening with the "anoncreds" version.  Luckliy we can look at the aca-py alice/faber demo for some clues.
+The proof request (and presentation) will be a bit more complicated - they need to be in "dif" format, so we need to translate what's happening with the "anoncreds" version.  The data for existing "dif" type presentation requests is in:
+
+```
+./features/data/proof_request_DL_address_v2_dif_pe.json
+./features/data/presentation_DL_address_v2_dif_pe.json
+```
+
+Also we are lucky we can look at the aca-py alice/faber demo for some clues.
 
 For the VC_DI presentation request, we will create `features/data/proof_request_DL_address_v2_vc_di.json`:
 
 ```
-"presentation_request": {
-    "dif": {
-        "options": {
+{
+    "presentation_request":
+    {
+        "options":
+        {
             "challenge": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
-            "domain": "4jt78h47fh47",
+            "domain": "4jt78h47fh47"
         },
-        "presentation_definition": {
+        "presentation_definition":
+        {
             "id": "5591656f-5b5d-40f8-ab5c-9041c8e3a6a0",
             "name": "Address Verification",
             "purpose": "We need to verify your address",
-            "input_descriptors": [
+            "format":
+            {
+                "di_vc":
                 {
-                    "id": "drivers_license_input_1",
-                    "name": "American Driver's License",
-                    "schema": [
-                        {
-                            "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
-                        }
+                    "proof_type":
+                    [
+                        "DataIntegrityProof"
                     ],
-                    "constraints": {
-                        "statuses": {
-                            "active": {"directive": "disallowed"}
-                        },
-                        "limit_disclosure": "required",
-                        "fields": [
-                            {
-                                "path": ["$.issuer"],
-                                "filter": {
-                                    "type": "string",
-                                    "const": "replace_me"
-                                },
-                            },
-                            {"path": ["$.credentialSubject.address"]}
-                        ]
-                    }
-                }
-            ],
-            "format": {
-                "di_vc": {
-                    "proof_type": ["DataIntegrityProof"],
-                    "cryptosuite": [
+                    "cryptosuite":
+                    [
                         "anoncreds-2023",
                         "eddsa-rdfc-2022"
                     ]
                 }
-            }
+            },
+            "input_descriptors":
+            [
+                {
+                    "id": "drivers_license_input_1",
+                    "name": "American Drivers License",
+                    "schema":
+                    [
+                        {
+                            "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                        }
+                    ],
+                    "constraints":
+                    {
+                        "statuses":
+                        {
+                            "active":
+                            {
+                                "directive": "disallowed"
+                            }
+                        },
+                        "limit_disclosure": "required",
+                        "fields":
+                        [
+                            {
+                                "path":
+                                [
+                                    "$.issuer"
+                                ],
+                                "filter":
+                                {
+                                    "type": "string",
+                                    "const": "replace_me"
+                                }
+                            },
+                            {
+                                "path":
+                                [
+                                    "$.credentialSubject.address"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
         }
     }
 }
@@ -361,8 +454,8 @@ For the VC_DI presentation request, we will create `features/data/proof_request_
    "presentation": {
      "record_ids": {
        "drivers_license_input_1": ["Schema_DriversLicense_v2"]
+     }
    }
- }
 }
 ```
 
@@ -374,14 +467,31 @@ No changes required to the Aca-Py backchannel.
 
 In `aries-test-harness/agent_test_utils.py`:
 
-- in `amend_filters_with_runtime_data()` the `if "json-ld" in filters:` block needs to handle any vc_di-specific parameters
-
-And the following test harness code has references to `AnonCreds` and needs review:
+- in `amend_presentation_definition_with_runtime_data()` the `if "json-ld" in filters:` block needs to handle any vc_di-specific parameters:
 
 ```
-./aries-test-harness/features/steps/0454-present-proof-v2-v3.py:30:        if context.current_cred_format == "indy" or context.current_cred_format == "anoncreds":
-./aries-test-harness/features/steps/0454-present-proof-v2-v3.py:69:        context.current_cred_format = "anoncreds"
-./aries-test-harness/features/steps/0454-present-proof-v2-v3.py:269:        if context.current_cred_format == "indy" or context.current_cred_format == "anoncreds":
+    # note the format_type here is "di_vc"
+    vc_di_vp_proof_type = format.get("di_vc")
+    if vc_di_vp_proof_type:
+        # Only vc_di with a single proof type replaced is supported ATM
+        vc_di_vp_proof_type = format.get("vc_di", {}).get("proof_type", [])
+        # TODO for JSON-LD credentials the proof type can be specified in a tag, for example "ProofType_Ed25519Signature2018"
+        # (for now, for vc_di, we'll just take whatever is in the test data file)
+        # However for VC_DI we need to insert the issuer DID as a credential filter
+        schema_name = get_schema_name(context)
+        for descriptor in pd["input_descriptors"]:
+            constraint_fields = descriptor["constraints"]["fields"]
+            for field in constraint_fields:
+                if "$.issuer" in field["path"] and field["filter"]["const"] == "replace_me":
+                    field["filter"]["const"] = context.issuer_did_dict[schema_name]
+```
+
+And in the test harness code (`features/steps/0454-present-proof-v2-v3.py`) "vc_di" presentations need to be handled like "json-ld":
+
+```
+    ...
+    elif context.current_cred_format == "json-ld" or context.current_cred_format == "vc_di":
+    ...
 ```
 
 
