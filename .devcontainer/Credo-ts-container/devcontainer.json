@@ -14,7 +14,7 @@
 	"workspaceMount": "source=${localWorkspaceFolder}/aries-backchannels/credo-ts,target=/aries-backchannels/credo-ts,type=bind",
 
 	"workspaceFolder": "/aries-backchannels/credo-ts",
-	
+
 	"mounts": [
 		{ "source": "${localWorkspaceFolder}/aries-backchannels/data", "target": "/aries-backchannels/data", "type": "bind" }
 	],
@@ -46,8 +46,8 @@
 		npm install && \
 		apt-get update -y && \
 		apt-get install -y software-properties-common apt-transport-https curl build-essential && \
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && \
-		add-apt-repository -y \"deb https://repo.sovrin.org/sdk/deb bionic stable\" && \
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9692C00E657DDE61  && \
+		add-apt-repository -y \"deb https://hyperledger.jfrog.io/artifactory/indy bionic stable\" && \
 		apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3B4FE6ACC0B21F32 && \
 		add-apt-repository -y \"deb http://security.ubuntu.com/ubuntu bionic-security main\" && \
 		apt-get install -y --allow-unauthenticated libindy",
