@@ -5,7 +5,7 @@ WORKDIR /aries-backchannels
 
 RUN apt-get update \
    && apt-get install -y git gnupg2 software-properties-common curl \
-   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 \
+   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9692C00E657DDE61  \
    && apt-get update \
    && apt-get install -y software-properties-common \
    && apt-get update

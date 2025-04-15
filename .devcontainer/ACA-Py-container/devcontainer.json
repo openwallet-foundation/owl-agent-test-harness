@@ -20,7 +20,7 @@
 	],
 
 	"workspaceFolder": "/aries-backchannels/acapy",
-	
+
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"docker-from-docker": "latest"
@@ -39,8 +39,8 @@
 
 	"updateContentCommand": "apt-get update && \
 		apt-get install -y git gnupg2 software-properties-common curl && \
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88 && \
-		add-apt-repository 'deb https://repo.sovrin.org/sdk/deb bionic stable' && \
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9692C00E657DDE61  && \
+		add-apt-repository 'deb https://hyperledger.jfrog.io/artifactory/indy bionic stable' && \
 		apt-get update && \
 		apt-get install -y libindy libnullpay",
 
