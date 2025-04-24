@@ -1,0 +1,1675 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+      <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.31">
+    
+    
+      
+        <title>Tutorial - Adding Data Integrity (VC_DI) Support to OATH - OWL Agent Test Harness (OATH) Interop Information</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.3cba04c6.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tutorial-adding-data-integrity-vc_di-support-to-oath" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="OWL Agent Test Harness (OATH) Interop Information" class="md-header__button md-logo" aria-label="OWL Agent Test Harness (OATH) Interop Information" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/Hyperledger_Aries_Logo_White.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OWL Agent Test Harness (OATH) Interop Information
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tutorial - Adding Data Integrity (VC_DI) Support to OATH
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/openwallet-foundation/owl-agent-test-harness" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    openwallet-foundation/owl-agent-test-harness
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  Interoperability Information
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../acapy/" class="md-tabs__link">
+          
+  
+  Latest Results by Agent
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../" class="md-tabs__link">
+          
+  
+  OATH Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../CONTRIBUTING/" class="md-tabs__link">
+          
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="OWL Agent Test Harness (OATH) Interop Information" class="md-nav__button md-logo" aria-label="OWL Agent Test Harness (OATH) Interop Information" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/Hyperledger_Aries_Logo_White.png" alt="logo">
+
+    </a>
+    OWL Agent Test Harness (OATH) Interop Information
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/openwallet-foundation/owl-agent-test-harness" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    openwallet-foundation/owl-agent-test-harness
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Interoperability Information
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Interoperability Information
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Summary of Latest Results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aries-interop-intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction to Interoperability
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TEST-COVERAGE/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OWL Agent Test Harness Coverage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Latest Results by Agent
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Latest Results by Agent
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../acapy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cloud Agent Python
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../credo/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Credo-TS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aries-vcx/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Aries VCX
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    OATH Documentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            OATH Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OWL Agent Test Harness
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TEST_DEV_GUIDE/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Test Development Guidelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aries-backchannels/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backchannels
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../AATH_DEV_CONTAINERS/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Working with Dev Containers in OATH
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RunningLocally/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running OATH Locally
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Debugging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debugging Backchannels
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../AATH_DEV_CONTAINERS/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Working with Dev Containers in OATH
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ACCESS-CONNECTION-IDS/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing Connection IDs in Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONNECTION-REUSE/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Taking Advantage of Connection Reuse in OATH
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURE-CRED-TYPES/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuring Tests with Credential Types and Proofs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../REMOTE_AGENT_TESTING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Remote Agent Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MOBILE_AGENT_TESTING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Mobile Agent Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RETRY-FAILED-SCENARIOS/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retry Failed Test Scenarios
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TEST_REPORTING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OWL Agent Test Harness Advanced Test Reporting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODE_OF_CONDUCT/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code of Conduct
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MAINTAINERS/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Maintainers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LICENSE/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    License
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#background-and-relevant-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Background and Relevant Documents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support-within-aca-py-demo-and-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support within Aca-Py Demo and Integration Tests
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#introduction-to-the-oath-test-harness-and-backchannels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction to the OATH Test Harness and Backchannels
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oath-test-cases-to-update-with-vc_di-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      OATH Test Case(s) to Update with VC_DI Support
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OATH Test Case(s) to Update with VC_DI Support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updating-the-gherkin-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Updating the Gherkin Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-support-for-anoncreds-credential-format-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Support for AnonCreds Credential Format - Overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-scenario-to-issue-a-vc_di-credential" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Scenario to Issue a VC_DI Credential
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-scenario-to-present-a-vc_di-presentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Scenario to Present a VC_DI Presentation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-scenario-to-present-a-vc_di-presentation-with-revocation-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Scenario to Present a VC_DI Presentation with Revocation Support
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-the-new-test-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running the New Test Scenarios
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-to-runsets-of-existing-test-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add to Runsets of Existing Test Scenarios
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="tutorial-adding-data-integrity-vc_di-support-to-oath">Tutorial - Adding Data Integrity (VC_DI) Support to OATH<a class="headerlink" href="#tutorial-adding-data-integrity-vc_di-support-to-oath" title="Permanent link">&para;</a></h1>
+<h2 id="background-and-relevant-documents">Background and Relevant Documents<a class="headerlink" href="#background-and-relevant-documents" title="Permanent link">&para;</a></h2>
+<p>VC_DI support within Aca-Py is detailed here: <a href="https://aca-py.org/latest/design/AnoncredsW3CCompatibility/">https://aca-py.org/latest/design/AnoncredsW3CCompatibility/</a>.</p>
+<p>For issuing, we use the RFC 0809 VC-DI Attachments (<a href="https://identity.foundation/aries-rfcs/latest/features/0809-w3c-data-integrity-credential-attachment/">https://identity.foundation/aries-rfcs/latest/features/0809-w3c-data-integrity-credential-attachment/</a>).</p>
+<p>For presenting, we use the RFC 0510 DIF Presentation Exchange Attachments (<a href="https://identity.foundation/aries-rfcs/latest/aip2/0510-dif-pres-exch-attach/">https://identity.foundation/aries-rfcs/latest/aip2/0510-dif-pres-exch-attach/</a>).</p>
+<h2 id="support-within-aca-py-demo-and-integration-tests">Support within Aca-Py Demo and Integration Tests<a class="headerlink" href="#support-within-aca-py-demo-and-integration-tests" title="Permanent link">&para;</a></h2>
+<p>You can run the Aca-Py demo (alice/faber) to see VC_DI credentials in action.</p>
+<p>Run the following in two separate shells:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">AGENT_PORT_OVERRIDE</span><span class="o">=</span><span class="m">8010</span><span class="w"> </span>./run_demo<span class="w"> </span>run<span class="w"> </span>faber<span class="w"> </span>--wallet-type<span class="w"> </span>askar-anoncreds<span class="w"> </span>--revocation<span class="w"> </span>--cred-type<span class="w"> </span>vc_di
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./run_demo<span class="w"> </span>run<span class="w"> </span>alice<span class="w"> </span>--wallet-type<span class="w"> </span>askar-anoncreds
+</code></pre></div>
+<p>(If you tack on the <code>--events</code> parameter you can see the message formats that are being being exchanged.)</p>
+<p>You can also access the agents' swagger pages at <a href="http://localhost:8011">http://localhost:8011</a> and <a href="http://localhost:8031">http://localhost:8031</a> (based on the above ports) and try out the endpoints yourself.  Check out the code within the alice/faber demo to see exactly what endpoints and payload formats are used.</p>
+<p>Aca-Py has some VC_DI-enabled integration tests, you can try running:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">AGENT_PORT_OVERRIDE</span><span class="o">=</span><span class="m">9010</span><span class="w"> </span>./run_bdd<span class="w"> </span>-t<span class="w"> </span>@cred_type_vc_di
+</code></pre></div>
+<h2 id="introduction-to-the-oath-test-harness-and-backchannels">Introduction to the OATH Test Harness and Backchannels<a class="headerlink" href="#introduction-to-the-oath-test-harness-and-backchannels" title="Permanent link">&para;</a></h2>
+<p>If you're not familiar with the test harness approach and design please review the architecture and developer docs within this repo.  You should be able to build the docker images and run some tests before you attempt to make any changes to the code or tests.</p>
+<p>You can view the swagger UI for the backchannels as follows.</p>
+<p>First start the agents (without running the test scenarios):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./manage start -d acapy-main
+</code></pre></div>
+<p>Download and run a Swagger UI image:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker pull swaggerapi/swagger-ui
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>docker run -p 8081:8080 -e SWAGGER_JSON=/mnt/openapi-spec.yml -v ${PWD}/docs/assets:/mnt swaggerapi/swagger-ui
+</code></pre></div>
+<p>Now open your browser with <code>http://localhost:8081</code> - you can pick which of the 4 agents you want to connect to.</p>
+<p>You can shut down the agents (and other services) using <code>./manage stop</code>.</p>
+<p>If you run the tests with the <code>-nohup</code> option then the test harness will leave all the docker containers running once the tests complete:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>./manage<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>acapy-main<span class="w"> </span>-nohup<span class="w"> </span>-t<span class="w"> </span>...<span class="w"> </span>etc<span class="w"> </span>...
+</code></pre></div>
+<p>You can use this feature (in combination with the Swagger UI) to inspect the agent or backchannel state once the tests have completed (to help diagnose a failed test for example), and then shut everything down with <code>./manage stop</code>.</p>
+<h2 id="oath-test-cases-to-update-with-vc_di-support">OATH Test Case(s) to Update with VC_DI Support<a class="headerlink" href="#oath-test-cases-to-update-with-vc_di-support" title="Permanent link">&para;</a></h2>
+<p>We'll just use existing tests cases, but we'll add support for the VC_DI exchange format.</p>
+<p>Let's add VC_DI to a couple of existing AnonCreds-format tests - there is a small subset that have been specifically tested with Aca-Py (and with a credo holder):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">BACKCHANNEL_EXTRA_acapy_main</span><span class="o">=</span><span class="s2">&quot;{\&quot;wallet-type\&quot;:\&quot;askar-anoncreds\&quot;}&quot;</span><span class="w"> </span>./manage<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>acapy-main<span class="w"> </span>-t<span class="w"> </span>@AcceptanceTest<span class="w"> </span>-t<span class="w"> </span>@AIP10,@RFC0441,@RFC0211,@T001-RFC0453,@T001-RFC0454b<span class="w"> </span>-t<span class="w"> </span>~@wip<span class="w"> </span>-t<span class="w"> </span>~@DIDExchangeConnection<span class="w"> </span>-t<span class="w"> </span>~@T004-RFC0211<span class="w"> </span>-t<span class="w"> </span>~@QualifiedDIDs<span class="w"> </span>-t<span class="w"> </span>~@T001-RFC0183<span class="w"> </span>-t<span class="w"> </span>@Anoncreds
+</code></pre></div>
+<p>(It's a big set of tags to run only 4 tests, but these are the filters used by the credo runsets.  You can also add <code>-b credo</code> to run with credo as the holder (note that these tests currently fail with credo).)</p>
+<p>You should be able to run these tests and have them all pass (using Aca-Py for all agents).  This also tells us the exact tests we need to update.</p>
+<h3 id="updating-the-gherkin-tests">Updating the Gherkin Tests<a class="headerlink" href="#updating-the-gherkin-tests" title="Permanent link">&para;</a></h3>
+<p>Take a look through the underlying code for the tests which are executed in the above runset:</p>
+<ul>
+<li>The test features are identified in the test logs, for example:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>@RFC0453 @AIP20
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Feature: RFC 0453 Aries Agent Issue Credential v2 # features/0453-issue-credential-v2.feature:2
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @Schema_DriversLicense_v2 @RFC0160 @Anoncreds
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  Scenario Outline: Issue a Indy credential with the Holder beginning with a proposal -- @2.1   # features/0453-issue-credential-v2.feature:28
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    Given &quot;2&quot; agents                                                                            # features/steps/0160-connection.py:22 0.001s
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>      | name | role   |
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>      | Acme | issuer |
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>      | Bob  | holder |
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    Given &quot;Acme&quot; has a public did                                                               # features/steps/0036-issue-credential.py:57 0.021s
+</code></pre></div>
+<ul>
+<li>the steps within the <code>.feature</code> file are implemented in Python code located in the <code>features/steps</code> directory (also indicated in the test logs), for example:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>@given(&#39;&quot;{issuer}&quot; has a public did&#39;)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>def step_impl(context, issuer):
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    ...
+</code></pre></div>
+<ul>
+<li>for our updates, we're leveraging existing steps and just adding VC_DI support</li>
+<li>note that the test scenarios can be configured via parameters or tags - for example <code>"&lt;credential_type&gt;"</code> vs <code>@CredFormat_Anoncreds</code> are both used (in different tests) to specify AnonCreds credential format:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>    @RFC0160 @Anoncreds
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    Examples:
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>      | credential_type | credential_data   |
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>      | anoncreds       | Data_DL_MaxValues |
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>vs:
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>      @CredFormat_Anoncreds @RFC0592 @Schema_DriversLicense_v2 @CredProposalStart @Anoncreds
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>      Examples:
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>         | issuer | credential_data   | request_for_proof               | presentation                   |
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>         | Acme   | Data_DL_MaxValues | proof_request_DL_address_v2     | presentation_DL_address_v2     |
+</code></pre></div>
+<ul>
+<li>the test data (for creating schemas, credentials and presentations) is in the <code>features/data</code> directory</li>
+<li>there are direct references in the Python code (in both the test harness and backchannels) to the credential format.</li>
+</ul>
+<h3 id="code-support-for-anoncreds-credential-format-overview">Code Support for AnonCreds Credential Format - Overview<a class="headerlink" href="#code-support-for-anoncreds-credential-format-overview" title="Permanent link">&para;</a></h3>
+<p>If you've reviewed the backchannel documentation and/or taken a look at the swagger UI as described above, you will know that the backchannel endpoints of interest are:</p>
+<p><code>/agent/command/issue-credential-v2/...</code> and <code>/agent/command/proof-v2/...</code></p>
+<p>These translate to aca-py endpoints (for example look at <code>http://localhost:9022</code>):</p>
+<p><code>/issue-credential-2.0/...</code> and <code>/present-proof-2.0/...</code></p>
+<p>These are the same endpoints used for "AnonCreds" format credentials, and the magic is in the data payloads, so theoretically we shouldn't have to do any changes to the aca-py backchannel code.  </p>
+<p>HOWEVER a quick search reveals that there is specific logic around <code>credential_format</code> checks for <code>"indy"</code>, <code>"anoncreds"</code> or <code>"json-ld"</code>.</p>
+<p>(For the <code>"vc_di"</code> credential format, the credential issue process is like <code>"anoncreds"</code>, and the presentation is like <code>"json-ld"</code>.)</p>
+<p>We also need to add a webhook handler for VC_DI format (<code>handle_issue_credential_v2_0_vc_di()</code>).</p>
+<p>In <code>aries-test-harness/agent_test_utils.py</code> there are references to <code>AnonCreds</code>:</p>
+<ul>
+<li>in <code>amend_filters_with_runtime_data()</code> need to add an <code>if "vc_di" in filters:</code> block to handle all the <code>replace_me</code> parameters</li>
+<li>in <code>amend_filters_with_runtime_data()</code> the <code>if "json-ld" in filters:</code> block needs to handle any vc_di-specific parameters</li>
+</ul>
+<p>And the following test harness code has references to <code>AnonCreds</code> and needs review:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>./aries-test-harness/features/steps/0454-present-proof-v2-v3.py:30:        if context.current_cred_format == &quot;indy&quot; or context.current_cred_format == &quot;anoncreds&quot;:
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>./aries-test-harness/features/steps/0454-present-proof-v2-v3.py:69:        context.current_cred_format = &quot;anoncreds&quot;
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>./aries-test-harness/features/steps/0454-present-proof-v2-v3.py:269:        if context.current_cred_format == &quot;indy&quot; or context.current_cred_format == &quot;anoncreds&quot;:
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>./aries-test-harness/features/steps/0453-issue-credential-v2.py:13:CRED_FORMAT_ANONCREDS = &quot;anoncreds&quot;
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>./aries-test-harness/features/steps/0011-0183-revocation.py:41:        &quot;anoncreds&quot;: cred_format == &quot;anoncreds&quot;,
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>./aries-test-harness/features/steps/0011-0183-revocation.py:61:    if cred_format == &quot;anoncreds&quot;:
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>./aries-test-harness/features/environment.py:454:        if context and &quot;Anoncreds&quot; in context.tags:
+</code></pre></div>
+<p>We'll look at the specific Python updates that are required as we update each test scenario.</p>
+<h3 id="test-scenario-to-issue-a-vc_di-credential">Test Scenario to Issue a VC_DI Credential<a class="headerlink" href="#test-scenario-to-issue-a-vc_di-credential" title="Permanent link">&para;</a></h3>
+<p>This is the existing test with AnonCreds support - <code>@T001-RFC0453</code> (features/0453-issue-credential-v2.feature:28):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>  @T001-RFC0453 @RFC0592 @critical @AcceptanceTest @Schema_DriversLicense_v2
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  Scenario Outline: Issue a Indy credential with the Holder beginning with a proposal
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    Given &quot;2&quot; agents
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>      | name | role   |
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>      | Acme | issuer |
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>      | Bob  | holder |
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    Given &quot;Acme&quot; has a public did
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    And &quot;Acme&quot; is ready to issue a credential
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    And &quot;Acme&quot; and &quot;Bob&quot; have an existing connection
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    When &quot;Bob&quot; proposes a &quot;&lt;credential_type&gt;&quot; credential to &quot;Acme&quot; with &lt;credential_data&gt;
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    And &quot;Acme&quot; offers the &quot;&lt;credential_type&gt;&quot; credential
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    And &quot;Bob&quot; requests the &quot;&lt;credential_type&gt;&quot; credential
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    And &quot;Acme&quot; issues the &quot;&lt;credential_type&gt;&quot; credential
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>    And &quot;Bob&quot; acknowledges the &quot;&lt;credential_type&gt;&quot; credential issue
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>    Then &quot;Bob&quot; has the &quot;&lt;credential_type&gt;&quot; credential issued
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>    @RFC0160 @Anoncreds
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>    Examples:
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>      | credential_type | credential_data   |
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>      | anoncreds       | Data_DL_MaxValues |
+</code></pre></div>
+<p>We can add another "example" to use the VC_DI format:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>    @RFC0160 @Anoncreds @CredFormat_VC_DI
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    Examples:
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>      | credential_type | credential_data   |
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>      | vc_di           | Data_DL_MaxValues |
+</code></pre></div>
+<p>Note the use of the <code>@Anoncreds</code> tag - this indicates that the agent wallet (Aca-Py specifically) must support AnonCreds.  This is a bit confusing, since we're now adding a new credential format (VC_DI) which is also going to get a new tag later on.  But for now just go with it ...</p>
+<p>We also add a new tag here - <code>@CredFormat_VC_DI</code> - the test doesn't actually rely on this tag, but we can use it for filtering when we run the tests.</p>
+<h4 id="test-data">Test Data<a class="headerlink" href="#test-data" title="Permanent link">&para;</a></h4>
+<p>The data files for the AnonCreds credential type (as indicated by the <code>@Schema_DriversLicense_v2</code> tag) are:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./features/data/anoncreds_schema_driverslicense_v2.json
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>./features/data/cred_data_anoncreds_schema_driverslicense_v2.json
+</code></pre></div>
+<p>There are different schema formats for <code>Indy</code> and <code>AnonCreds</code> credential formats.  VC_DI will use the same format as <code>AnonCreds</code> so we can just re-use those same data files.</p>
+<p>There are "AnonCreds" versions of the <code>cred_data_*.json</code> files - the difference is that the "AnonCreds" version contains the "anoncreds" filter (and we will use this to add the "vc_di" filter as well), and the "non-AnonCreds" version contains filters for "indy" and "json-ld".  The file name has to correspond to the schema file name, hence the need for two <code>cred_def_*.json</code> files.</p>
+<p>We will add a filter as follows - remember we can run the aca-py alice/faber demo with the <code>--events</code> flag to help figure this out.</p>
+<p>For <code>cred_data_anoncreds_schema_driverslicense_v2.json</code> we just need to add a <code>"vc_di"</code> filter:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>      &quot;filters&quot;: {
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>         &quot;anoncreds&quot;: {
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>            &quot;cred_def_id&quot;: &quot;replace_me&quot;
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>         },
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>         &quot;vc_di&quot;: {
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>            &quot;cred_def_id&quot;: &quot;replace_me&quot;
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>         }
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>      }
+</code></pre></div>
+<p>Pretty straightforward!</p>
+<h4 id="test-code">Test Code<a class="headerlink" href="#test-code" title="Permanent link">&para;</a></h4>
+<p>From the code overview above, we need to look at the following to support issuing VC_DI credentials.</p>
+<p>In the Aca-Py backchannel:</p>
+<ul>
+<li>add the credential format to the mapping:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>    self.credFormatFilterTranslationDict = {
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>        &quot;indy&quot;: &quot;indy&quot;,
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>        &quot;json-ld&quot;: &quot;ld_proof&quot;,
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>        &quot;anoncreds&quot;: &quot;anoncreds&quot;,
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>        &quot;vc_di&quot;: &quot;vc_di&quot;,
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    }
+</code></pre></div>
+<ul>
+<li>update the credential issue process to treat <code>"vc_di"</code> like <code>"anoncreds"</code>, for the most part we just need to do this:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>    if cred_format == &quot;indy&quot; or cred_format == &quot;anoncreds&quot; or cred_format == &quot;vc_di&quot;:
+</code></pre></div>
+<ul>
+<li>add a webhook handler for VC_DI format (<code>handle_issue_credential_v2_0_vc_di()</code>)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>    async def handle_issue_credential_v2_0_vc_di(self, message: Mapping[str, Any]):
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>        pass
+</code></pre></div>
+<p>(That's enough for now - we'll need to fill this in when we add revocation support.  See <code>handle_issue_credential_v2_0_anoncreds()</code> for example.)</p>
+<p>(The backchannel has a lot of references to "anoncreds" in the context of checking if we need to be running on an <code>askar-anoncreds</code> wallet - we can just leave all this code alone, since <code>vc_di</code> behaves just like <code>anoncreds</code> in this context.)</p>
+<p>In <code>aries-test-harness/agent_test_utils.py</code> there are references to <code>AnonCreds</code>:</p>
+<ul>
+<li>in <code>amend_filters_with_runtime_data()</code> need to add an <code>if "vc_di" in filters:</code> block to handle all the <code>replace_me</code> parameters</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>    if &quot;vc_di&quot; in filters:
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>        if (
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>            &quot;schema_issuer_did&quot; in filters[&quot;vc_di&quot;]
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>            and filters[&quot;vc_di&quot;][&quot;schema_issuer_did&quot;] == &quot;replace_me&quot;
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>        ):
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>            filters[&quot;vc_di&quot;][&quot;schema_issuer_did&quot;] = context.issuer_did_dict[schema_name]
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>        if (
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>            &quot;issuer_did&quot; in filters[&quot;vc_di&quot;]
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>            and filters[&quot;vc_di&quot;][&quot;issuer_did&quot;] == &quot;replace_me&quot;
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>        ):
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>            filters[&quot;vc_di&quot;][&quot;issuer_did&quot;] = context.issuer_did_dict[schema_name]
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>        if (
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>            &quot;cred_def_id&quot; in filters[&quot;vc_di&quot;]
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>            and filters[&quot;vc_di&quot;][&quot;cred_def_id&quot;] == &quot;replace_me&quot;
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>        ):
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>            filters[&quot;vc_di&quot;][&quot;cred_def_id&quot;] = context.issuer_credential_definition_dict[schema_name][&quot;id&quot;]
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>        if (
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>            &quot;schema_id&quot; in filters[&quot;vc_di&quot;]
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>            and filters[&quot;vc_di&quot;][&quot;schema_id&quot;] == &quot;replace_me&quot;
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a>        ):
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a>            filters[&quot;vc_di&quot;][&quot;schema_id&quot;] = context.issuer_schema_dict[schema_name][&quot;id&quot;]
+</code></pre></div>
+<p>And the following test harness code has references to <code>AnonCreds</code> and needs review:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>./aries-test-harness/features/steps/0453-issue-credential-v2.py:13:CRED_FORMAT_ANONCREDS = &quot;anoncreds&quot;
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>./aries-test-harness/features/environment.py:454:        if context and &quot;Anoncreds&quot; in context.tags:
+</code></pre></div>
+<p>In <code>0453-issue-credential-v2.py</code> we need to add a parameter for the new credential format, and update the format checks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>CRED_FORMAT_VC_DI = &quot;vc_di&quot;
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>...
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    if cred_format == CRED_FORMAT_INDY or cred_format == CRED_FORMAT_ANONCREDS or cred_format == CRED_FORMAT_VC_DI:
+</code></pre></div>
+<p>In <code>environment.py</code> the "anoncreds" references are all related to the wallet type, which will have the same behaviour for our new credential format.</p>
+<h4 id="running-the-tests">Running the Tests<a class="headerlink" href="#running-the-tests" title="Permanent link">&para;</a></h4>
+<p>Re-build your docker images and run the tests:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>docker<span class="w"> </span>rmi<span class="w"> </span>-f<span class="w"> </span>aries-test-harness<span class="w"> </span>acapy-main-agent-backchannel
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>./manage<span class="w"> </span>build<span class="w"> </span>-a<span class="w"> </span>acapy-main
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nv">BACKCHANNEL_EXTRA_acapy_main</span><span class="o">=</span><span class="s2">&quot;{\&quot;wallet-type\&quot;:\&quot;askar-anoncreds\&quot;}&quot;</span><span class="w"> </span>./manage<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>acapy-main<span class="w"> </span>-t<span class="w">  </span>@CredFormat_VC_DI
+</code></pre></div>
+<p>Everything "should" pass :-)</p>
+<h3 id="test-scenario-to-present-a-vc_di-presentation">Test Scenario to Present a VC_DI Presentation<a class="headerlink" href="#test-scenario-to-present-a-vc_di-presentation" title="Permanent link">&para;</a></h3>
+<p>For this test we just need to add suport for VC_DI presentations (it used the same credential that we just implemented above).</p>
+<p><code>@T001-RFC0454b</code> (features/0454-present-proof-v2.feature:77)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>   @T001-RFC0454b @critical @AcceptanceTest
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>   Scenario Outline: Present Proof of specific types and proof is acknowledged with a Drivers License credential type with a DID Exchange Connection
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>      Given &quot;2&quot; agents
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>         | name  | role     |
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>         | Faber | verifier |
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>         | Bob   | prover   |
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>      And &quot;Faber&quot; and &quot;Bob&quot; have an existing connection
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>      And &quot;Bob&quot; has an issued credential with formats from &lt;issuer&gt; with &lt;credential_data&gt;
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>      When &quot;Faber&quot; sends a &lt;request_for_proof&gt; presentation with formats to &quot;Bob&quot;
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>      And &quot;Bob&quot; makes the &lt;presentation&gt; of the proof with formats
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>      And &quot;Faber&quot; acknowledges the proof with formats
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>      Then &quot;Bob&quot; has the proof with formats verified
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>      @AIP20 @CredFormat_Anoncreds @RFC0592 @Schema_DriversLicense_v2 @Anoncreds
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>      Examples:
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>         | issuer | credential_data   | request_for_proof               | presentation                   |
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>         | Acme   | Data_DL_MaxValues | proof_request_DL_address_v2     | presentation_DL_address_v2     |
+</code></pre></div>
+<p>We can add (note there are 2 tags - <code>@CredFormat_VC_DI</code> and <code>@Anoncreds</code> - the latter indicates the wallet type, which must be <code>AnonCreds</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>      @AIP20 @RFC0592 @Schema_DriversLicense_v2 @Anoncreds @CredFormat_VC_DI
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>      Examples:
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>         | issuer | credential_data   | request_for_proof               | presentation                   |
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>         | Acme   | Data_DL_MaxValues | proof_request_DL_address_v2     | presentation_DL_address_v2     |
+</code></pre></div>
+<h4 id="test-data_1">Test Data<a class="headerlink" href="#test-data_1" title="Permanent link">&para;</a></h4>
+<p>The data files for the anoncreds cred type are:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>./features/data/proof_request_DL_address_v2.json
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>./features/data/presentation_DL_address_v2.json
+</code></pre></div>
+<p>The proof request (and presentation) will be a bit more complicated - they need to be in "dif" format, so we need to translate what's happening with the "anoncreds" version.  The data for existing "dif" type presentation requests is in:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>./features/data/proof_request_DL_address_v2_dif_pe.json
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>./features/data/presentation_DL_address_v2_dif_pe.json
+</code></pre></div>
+<p>Also we are lucky we can look at the aca-py alice/faber demo for some clues.</p>
+<p>For the VC_DI presentation request, we will create <code>features/data/proof_request_DL_address_v2_vc_di.json</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>{
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    &quot;presentation_request&quot;:
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    {
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>        &quot;options&quot;:
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>        {
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>            &quot;challenge&quot;: &quot;3fa85f64-5717-4562-b3fc-2c963f66afa7&quot;,
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>            &quot;domain&quot;: &quot;4jt78h47fh47&quot;
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>        },
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>        &quot;presentation_definition&quot;:
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>        {
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>            &quot;id&quot;: &quot;5591656f-5b5d-40f8-ab5c-9041c8e3a6a0&quot;,
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>            &quot;name&quot;: &quot;Address Verification&quot;,
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>            &quot;purpose&quot;: &quot;We need to verify your address&quot;,
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>            &quot;format&quot;:
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>            {
+<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>                &quot;di_vc&quot;:
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>                {
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>                    &quot;proof_type&quot;:
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>                    [
+<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>                        &quot;DataIntegrityProof&quot;
+<a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a>                    ],
+<a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>                    &quot;cryptosuite&quot;:
+<a id="__codelineno-26-23" name="__codelineno-26-23" href="#__codelineno-26-23"></a>                    [
+<a id="__codelineno-26-24" name="__codelineno-26-24" href="#__codelineno-26-24"></a>                        &quot;anoncreds-2023&quot;,
+<a id="__codelineno-26-25" name="__codelineno-26-25" href="#__codelineno-26-25"></a>                        &quot;eddsa-rdfc-2022&quot;
+<a id="__codelineno-26-26" name="__codelineno-26-26" href="#__codelineno-26-26"></a>                    ]
+<a id="__codelineno-26-27" name="__codelineno-26-27" href="#__codelineno-26-27"></a>                }
+<a id="__codelineno-26-28" name="__codelineno-26-28" href="#__codelineno-26-28"></a>            },
+<a id="__codelineno-26-29" name="__codelineno-26-29" href="#__codelineno-26-29"></a>            &quot;input_descriptors&quot;:
+<a id="__codelineno-26-30" name="__codelineno-26-30" href="#__codelineno-26-30"></a>            [
+<a id="__codelineno-26-31" name="__codelineno-26-31" href="#__codelineno-26-31"></a>                {
+<a id="__codelineno-26-32" name="__codelineno-26-32" href="#__codelineno-26-32"></a>                    &quot;id&quot;: &quot;drivers_license_input_1&quot;,
+<a id="__codelineno-26-33" name="__codelineno-26-33" href="#__codelineno-26-33"></a>                    &quot;name&quot;: &quot;American Drivers License&quot;,
+<a id="__codelineno-26-34" name="__codelineno-26-34" href="#__codelineno-26-34"></a>                    &quot;schema&quot;:
+<a id="__codelineno-26-35" name="__codelineno-26-35" href="#__codelineno-26-35"></a>                    [
+<a id="__codelineno-26-36" name="__codelineno-26-36" href="#__codelineno-26-36"></a>                        {
+<a id="__codelineno-26-37" name="__codelineno-26-37" href="#__codelineno-26-37"></a>                            &quot;uri&quot;: &quot;https://www.w3.org/2018/credentials#VerifiableCredential&quot;
+<a id="__codelineno-26-38" name="__codelineno-26-38" href="#__codelineno-26-38"></a>                        }
+<a id="__codelineno-26-39" name="__codelineno-26-39" href="#__codelineno-26-39"></a>                    ],
+<a id="__codelineno-26-40" name="__codelineno-26-40" href="#__codelineno-26-40"></a>                    &quot;constraints&quot;:
+<a id="__codelineno-26-41" name="__codelineno-26-41" href="#__codelineno-26-41"></a>                    {
+<a id="__codelineno-26-42" name="__codelineno-26-42" href="#__codelineno-26-42"></a>                        &quot;statuses&quot;:
+<a id="__codelineno-26-43" name="__codelineno-26-43" href="#__codelineno-26-43"></a>                        {
+<a id="__codelineno-26-44" name="__codelineno-26-44" href="#__codelineno-26-44"></a>                            &quot;active&quot;:
+<a id="__codelineno-26-45" name="__codelineno-26-45" href="#__codelineno-26-45"></a>                            {
+<a id="__codelineno-26-46" name="__codelineno-26-46" href="#__codelineno-26-46"></a>                                &quot;directive&quot;: &quot;disallowed&quot;
+<a id="__codelineno-26-47" name="__codelineno-26-47" href="#__codelineno-26-47"></a>                            }
+<a id="__codelineno-26-48" name="__codelineno-26-48" href="#__codelineno-26-48"></a>                        },
+<a id="__codelineno-26-49" name="__codelineno-26-49" href="#__codelineno-26-49"></a>                        &quot;limit_disclosure&quot;: &quot;required&quot;,
+<a id="__codelineno-26-50" name="__codelineno-26-50" href="#__codelineno-26-50"></a>                        &quot;fields&quot;:
+<a id="__codelineno-26-51" name="__codelineno-26-51" href="#__codelineno-26-51"></a>                        [
+<a id="__codelineno-26-52" name="__codelineno-26-52" href="#__codelineno-26-52"></a>                            {
+<a id="__codelineno-26-53" name="__codelineno-26-53" href="#__codelineno-26-53"></a>                                &quot;path&quot;:
+<a id="__codelineno-26-54" name="__codelineno-26-54" href="#__codelineno-26-54"></a>                                [
+<a id="__codelineno-26-55" name="__codelineno-26-55" href="#__codelineno-26-55"></a>                                    &quot;$.issuer&quot;
+<a id="__codelineno-26-56" name="__codelineno-26-56" href="#__codelineno-26-56"></a>                                ],
+<a id="__codelineno-26-57" name="__codelineno-26-57" href="#__codelineno-26-57"></a>                                &quot;filter&quot;:
+<a id="__codelineno-26-58" name="__codelineno-26-58" href="#__codelineno-26-58"></a>                                {
+<a id="__codelineno-26-59" name="__codelineno-26-59" href="#__codelineno-26-59"></a>                                    &quot;type&quot;: &quot;string&quot;,
+<a id="__codelineno-26-60" name="__codelineno-26-60" href="#__codelineno-26-60"></a>                                    &quot;const&quot;: &quot;replace_me&quot;
+<a id="__codelineno-26-61" name="__codelineno-26-61" href="#__codelineno-26-61"></a>                                }
+<a id="__codelineno-26-62" name="__codelineno-26-62" href="#__codelineno-26-62"></a>                            },
+<a id="__codelineno-26-63" name="__codelineno-26-63" href="#__codelineno-26-63"></a>                            {
+<a id="__codelineno-26-64" name="__codelineno-26-64" href="#__codelineno-26-64"></a>                                &quot;path&quot;:
+<a id="__codelineno-26-65" name="__codelineno-26-65" href="#__codelineno-26-65"></a>                                [
+<a id="__codelineno-26-66" name="__codelineno-26-66" href="#__codelineno-26-66"></a>                                    &quot;$.credentialSubject.address&quot;
+<a id="__codelineno-26-67" name="__codelineno-26-67" href="#__codelineno-26-67"></a>                                ]
+<a id="__codelineno-26-68" name="__codelineno-26-68" href="#__codelineno-26-68"></a>                            }
+<a id="__codelineno-26-69" name="__codelineno-26-69" href="#__codelineno-26-69"></a>                        ]
+<a id="__codelineno-26-70" name="__codelineno-26-70" href="#__codelineno-26-70"></a>                    }
+<a id="__codelineno-26-71" name="__codelineno-26-71" href="#__codelineno-26-71"></a>                }
+<a id="__codelineno-26-72" name="__codelineno-26-72" href="#__codelineno-26-72"></a>            ]
+<a id="__codelineno-26-73" name="__codelineno-26-73" href="#__codelineno-26-73"></a>        }
+<a id="__codelineno-26-74" name="__codelineno-26-74" href="#__codelineno-26-74"></a>    }
+<a id="__codelineno-26-75" name="__codelineno-26-75" href="#__codelineno-26-75"></a>}
+</code></pre></div>
+<p>... and for the presentation - <code>features/data/presentation_DL_address_v2_vc_di.json</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>{
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>   &quot;presentation&quot;: {
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>     &quot;record_ids&quot;: {
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>       &quot;drivers_license_input_1&quot;: [&quot;Schema_DriversLicense_v2&quot;]
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>     }
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>   }
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>}
+</code></pre></div>
+<h4 id="test-code_1">Test Code<a class="headerlink" href="#test-code_1" title="Permanent link">&para;</a></h4>
+<p>From the code overview above, we need to look at the following to support VC_DI presentations.</p>
+<p>No changes required to the Aca-Py backchannel.</p>
+<p>In <code>aries-test-harness/agent_test_utils.py</code>:</p>
+<ul>
+<li>in <code>amend_presentation_definition_with_runtime_data()</code> the <code>if "json-ld" in filters:</code> block needs to handle any vc_di-specific parameters:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>    # note the format_type here is &quot;di_vc&quot;
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    vc_di_vp_proof_type = format.get(&quot;di_vc&quot;)
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>    if vc_di_vp_proof_type:
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>        # Only vc_di with a single proof type replaced is supported ATM
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>        vc_di_vp_proof_type = format.get(&quot;vc_di&quot;, {}).get(&quot;proof_type&quot;, [])
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>        # TODO for JSON-LD credentials the proof type can be specified in a tag, for example &quot;ProofType_Ed25519Signature2018&quot;
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>        # (for now, for vc_di, we&#39;ll just take whatever is in the test data file)
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>        # However for VC_DI we need to insert the issuer DID as a credential filter
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>        schema_name = get_schema_name(context)
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>        for descriptor in pd[&quot;input_descriptors&quot;]:
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>            constraint_fields = descriptor[&quot;constraints&quot;][&quot;fields&quot;]
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>            for field in constraint_fields:
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a>                if &quot;$.issuer&quot; in field[&quot;path&quot;] and field[&quot;filter&quot;][&quot;const&quot;] == &quot;replace_me&quot;:
+<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a>                    field[&quot;filter&quot;][&quot;const&quot;] = context.issuer_did_dict[schema_name]
+</code></pre></div>
+<p>And in the test harness code (<code>features/steps/0454-present-proof-v2-v3.py</code>) "vc_di" presentations need to be handled like "json-ld":</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>    ...
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    elif context.current_cred_format == &quot;json-ld&quot; or context.current_cred_format == &quot;vc_di&quot;:
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>    ...
+</code></pre></div>
+<h4 id="running-the-tests_1">Running the Tests<a class="headerlink" href="#running-the-tests_1" title="Permanent link">&para;</a></h4>
+<p>Re-build your docker images and run the tests:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>docker<span class="w"> </span>rmi<span class="w"> </span>-f<span class="w"> </span>aries-test-harness<span class="w"> </span>acapy-main-agent-backchannel
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>./manage<span class="w"> </span>build<span class="w"> </span>-a<span class="w"> </span>acapy-main
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="nv">BACKCHANNEL_EXTRA_acapy_main</span><span class="o">=</span><span class="s2">&quot;{\&quot;wallet-type\&quot;:\&quot;askar-anoncreds\&quot;}&quot;</span><span class="w"> </span>./manage<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>acapy-main<span class="w"> </span>-t<span class="w">  </span>@CredFormat_VC_DI
+</code></pre></div>
+<p>(This will run both of our new tests.)  Everything "should" pass :-)</p>
+<h3 id="test-scenario-to-present-a-vc_di-presentation-with-revocation-support">Test Scenario to Present a VC_DI Presentation with Revocation Support<a class="headerlink" href="#test-scenario-to-present-a-vc_di-presentation-with-revocation-support" title="Permanent link">&para;</a></h3>
+<p><em>Note that this section is incomplete, it's an exercise for the student :-)</em></p>
+<p>This test just adds revocation to the above credential and presentation:</p>
+<p><code>@T001.2a-HIPE0011</code> (features/0183-revocation-anoncreds.feature:24)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>   Background: create a schema and credential definition in order to issue a credential
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>      Given &quot;Acme&quot; has a public did
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>      And &quot;Acme&quot; is ready to issue a credential
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>   @T001.2a-HIPE0011 @normal @AcceptanceTest @Schema_DriversLicense_v2_Revoc @MobileTest @RFC0441
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>   Scenario Outline: Credential revoked by Issuer and Holder attempts to prove with a prover that doesn&#39;t care if it was revoked
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>      Given &quot;2&quot; agents
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>         | name  | role     |
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>         | Bob   | prover   |
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a>         | Faber | verifier |
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>      And &quot;Faber&quot; and &quot;Bob&quot; have an existing connection
+<a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a>      And &quot;Bob&quot; has an issued credential with formats from &lt;issuer&gt; with &lt;credential_data&gt;
+<a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a>      When &lt;issuer&gt; revokes the credential
+<a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a>      When &quot;Faber&quot; sends a &lt;request_for_proof&gt; presentation with formats to &quot;Bob&quot;
+<a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a>      And &quot;Bob&quot; makes the &lt;presentation&gt; of the proof with formats
+<a id="__codelineno-31-16" name="__codelineno-31-16" href="#__codelineno-31-16"></a>      And &quot;Faber&quot; acknowledges the proof with formats
+<a id="__codelineno-31-17" name="__codelineno-31-17" href="#__codelineno-31-17"></a>      Then &quot;Bob&quot; has the proof with formats verified
+<a id="__codelineno-31-18" name="__codelineno-31-18" href="#__codelineno-31-18"></a>
+<a id="__codelineno-31-19" name="__codelineno-31-19" href="#__codelineno-31-19"></a>      Examples:
+<a id="__codelineno-31-20" name="__codelineno-31-20" href="#__codelineno-31-20"></a>         | issuer | credential_data   | request_for_proof                 | presentation                     |
+<a id="__codelineno-31-21" name="__codelineno-31-21" href="#__codelineno-31-21"></a>         | Acme   | Data_DL_MaxValues | proof_request_DL_v2_revoc_address | presentation_DL_v2_revoc_address |
+</code></pre></div>
+<ul>
+<li>and we add (and update) (note we have to move the anoncreds-specific tags to the anoncreds-specific example):</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>      Examples: @CredFormat_Anoncreds @Anoncreds
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>         | issuer | credential_data   | request_for_proof                 | presentation                     |
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>         | Acme   | Data_DL_MaxValues | proof_request_DL_v2_revoc_address | presentation_DL_v2_revoc_address |
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>      Examples: @CredFormat_VC_DI @VC_DI
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>         | issuer | credential_data   | request_for_proof                 | presentation                     |
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>         | Acme   | Data_DL_MaxValues | proof_request_DL_v2_revoc_address | presentation_DL_v2_revoc_address |
+</code></pre></div>
+<h4 id="test-data_2">Test Data<a class="headerlink" href="#test-data_2" title="Permanent link">&para;</a></h4>
+<p>The data file updates are similar to the above, but we use separate files for the revocation-supported version:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>./features/data/anoncreds_schema_driverslicense_v2_revoc.json
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>./features/data/cred_data_anoncreds_schema_driverslicense_v2_revoc.json
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>./features/data/proof_request_DL_revoc_address.json
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>./features/data/presentation_DL_v2_revoc_address.json
+</code></pre></div>
+<p>File content TBD.</p>
+<h4 id="test-code_2">Test Code<a class="headerlink" href="#test-code_2" title="Permanent link">&para;</a></h4>
+<p>From the code overview above, we need to look at the following to ensure revocation is supported in VC_DI presentations.</p>
+<p>No changes required to the Aca-Py backchannel.</p>
+<p>The following test harness code has references to <code>AnonCreds</code> and needs review:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>./aries-test-harness/features/steps/0011-0183-revocation.py:41:        &quot;anoncreds&quot;: cred_format == &quot;anoncreds&quot;,
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>./aries-test-harness/features/steps/0011-0183-revocation.py:61:    if cred_format == &quot;anoncreds&quot;:
+</code></pre></div>
+<p>Code changes TBD.</p>
+<h3 id="running-the-new-test-scenarios">Running the New Test Scenarios<a class="headerlink" href="#running-the-new-test-scenarios" title="Permanent link">&para;</a></h3>
+<p>TBD</p>
+<h3 id="add-to-runsets-of-existing-test-scenarios">Add to Runsets of Existing Test Scenarios<a class="headerlink" href="#add-to-runsets-of-existing-test-scenarios" title="Permanent link">&para;</a></h3>
+<p>Since these tests require the agents (or at least Aca-Py) to run with an AnonCreds wallet, the tests should be added to the existing AnonCreds scenarios:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>.github/workflows/test-harness-acapy-anoncreds.yml
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>.github/workflows/test-harness-acapy-credo-anoncreds.yml
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.footer", "navigation.instant", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "toc.follow"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      
+    
+  </body>
+</html>
