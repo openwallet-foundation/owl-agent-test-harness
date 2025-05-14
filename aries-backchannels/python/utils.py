@@ -5,9 +5,10 @@ import uuid
 
 from timeit import default_timer
 
+import asyncio
 import prompt_toolkit
 from prompt_toolkit.application import run_in_terminal
-from prompt_toolkit.eventloop.defaults import use_asyncio_event_loop
+from prompt_toolkit.shortcuts import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
 
 import pygments
@@ -16,9 +17,9 @@ from pygments.lexer import Lexer
 from pygments.lexers.data import JsonLdLexer
 from prompt_toolkit.formatted_text import FormattedText, PygmentsTokens
 
-
 COLORIZE = bool(os.getenv("COLORIZE", True))
-
+MAIN_LOOP = asyncio.get_event_loop()
+session = PromptSession()
 
 class PrefixFilter(Filter):
     def __init__(self, **options):
@@ -108,6 +109,8 @@ def print_ext(
         msg = (prefix_str, *msg)
     print(*msg, **kwargs)
 
+def _run_in_main(func):
+    MAIN_LOOP.call_soon_threadsafe(run_in_terminal, func)
 
 def output_reader(handle, callback, *args, **kwargs):
     if handle is None:
@@ -116,15 +119,15 @@ def output_reader(handle, callback, *args, **kwargs):
     for line in iter(handle.readline, b""):
         if not line and line != "":
             break
-        run_in_terminal(functools.partial(callback, line, *args))
+        _run_in_main(functools.partial(callback, line, *args))
 
 
 def log_msg(*msg, color="fg:ansimagenta", **kwargs):
-    run_in_terminal(lambda: print_ext(*msg, color=color, **kwargs))
+    _run_in_main(lambda: print_ext(*msg, color=color, **kwargs))
 
 
 def log_json(data, **kwargs):
-    run_in_terminal(lambda: print_json(data, **kwargs))
+    _run_in_main(lambda: print_json(data, **kwargs))
 
 
 def log_status(status: str, **kwargs):
@@ -151,7 +154,7 @@ async def prompt(*args, **kwargs):
     with patch_stdout():
         try:
             while True:
-                tmp = await prompt_toolkit.prompt(*args, async_=True, **kwargs)
+                tmp = await PromptSession().prompt_async(*args, **kwargs)
                 if tmp:
                     break
             return tmp
