@@ -6,21 +6,31 @@ import os
 import signal
 import subprocess
 import sys
-import yaml
+from time import gmtime, strftime
 from timeit import default_timer
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
-from time import gmtime, strftime
 
+import yaml
 from acapy.routes.agent_routes import routes as agent_routes
 from acapy.routes.mediation_routes import get_mediation_record_by_connection_id
 from acapy.routes.mediation_routes import routes as mediation_routes
-from aiohttp import (ClientError, ClientRequest, ClientSession, ClientTimeout,
-                     web)
-from python.agent_backchannel import (RUN_MODE, START_TIMEOUT,
-                                      AgentBackchannel, AgentPorts,
-                                      BackchannelCommand, default_genesis_txns, get_ledger_url)
-from python.storage import (get_resource, pop_resource, pop_resource_latest,
-                            push_resource, get_data_id_from_exch_id)
+from aiohttp import ClientError, ClientRequest, ClientSession, ClientTimeout, web
+from python.agent_backchannel import (
+    RUN_MODE,
+    START_TIMEOUT,
+    AgentBackchannel,
+    AgentPorts,
+    BackchannelCommand,
+    default_genesis_txns,
+    get_ledger_url,
+)
+from python.storage import (
+    get_data_id_from_exch_id,
+    get_resource,
+    pop_resource,
+    pop_resource_latest,
+    push_resource,
+)
 from python.utils import flatten, log_msg, output_reader, prompt_loop
 from typing_extensions import Literal
 
@@ -243,6 +253,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "--preserve-exchange-records", # For AATH purposes, exchange records must be retained -- not typical in production
             "--plugin",
             "connections",
+            "--plugin",
+            "issue_credential",
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
@@ -730,7 +742,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             # POST operation is to create a new schema
             if self.use_anoncreds(command):
                 # make sure our "data" is in the correct format
-                if not "schema" in data:
+                if "schema" not in data:
                     new_data = {
                         "schema": {
                             "issuerId": data.get("issuer_id"),
@@ -781,7 +793,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
 
             # POST operation is to create a new cred def
             if self.use_anoncreds(command):
-                if not "credential_definition" in data:
+                if "credential_definition" not in data:
                     new_data = {
                         "credential_definition": {
                             "schemaId": data.get("schema_id"),
