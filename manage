@@ -1113,8 +1113,8 @@ runTests() {
   MALLORY_OPTIONS=$(buildAgentOptions "Mallory")
 
   if [[ "${REPORT}" = "allure" && "${COMMAND}" != "dry-run" ]]; then
-      echo "Executing tests with Allure Reports."
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini -v "$(pwd)/.logs:/aries-test-harness/logs" -v "$(pwd)/aries-test-harness/allure/allure-results:/aries-test-harness/allure/allure-results/" $DOCKER_ENV aries-test-harness -k ${runArgs} -f allure_behave.formatter:AllureFormatter -o ./allure/allure-results -f progress ${ACME_OPTIONS} ${BOB_OPTIONS} ${FABER_OPTIONS} ${MALLORY_OPTIONS}
+      echo "Executing tests with Allure Reports."
   elif [[ "${COMMAND}" = "dry-run" ]]; then
       ${terminalEmu} docker run ${INTERACTIVE} --rm --network="host" -v ${BEHAVE_INI_TMP}:/aries-test-harness/behave.ini $DOCKER_ENV aries-test-harness -k ${runArgs} ${ACME_OPTIONS} ${BOB_OPTIONS} ${FABER_OPTIONS} ${MALLORY_OPTIONS} |\
         grep "Feature:\|Scenario Outline\|\@" | sed "/n(u/d"
