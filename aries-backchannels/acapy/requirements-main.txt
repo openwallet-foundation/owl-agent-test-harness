@@ -1,1 +1,1 @@
-acapy-agent[indy, bbs, askar]@git+https://github.com/jamshale/acapy@remove-issue-credential-v1
+acapy-agent[indy, bbs, askar]@git+https://github.com/openwallet-foundation/acapy@main
