@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bullseye
+FROM python:3.13-slim-bullseye
 
 RUN apt-get update \
    && apt-get install -y git gnupg2 software-properties-common curl \
@@ -16,7 +16,8 @@ RUN chmod +x ./jq
 COPY python/requirements.txt python/
 COPY acapy/requirements-main.txt acapy/
 RUN pip install -r python/requirements.txt -r acapy/requirements-main.txt
-RUN pip install git+https://github.com/openwallet-foundation/acapy-plugins@main#subdirectory=connections
+RUN pip install git+https://github.com/jamshale/acapy-plugins@python3.13-upgrade#subdirectory=connections
+RUN pip install git+https://github.com/jamshale/acapy-plugins@python3.13-upgrade#subdirectory=issue_credential
 
 # Copy the necessary files from the AATH Backchannel sub-folders
 COPY python python
