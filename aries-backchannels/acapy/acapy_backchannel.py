@@ -14,23 +14,14 @@ import yaml
 from acapy.routes.agent_routes import routes as agent_routes
 from acapy.routes.mediation_routes import get_mediation_record_by_connection_id
 from acapy.routes.mediation_routes import routes as mediation_routes
-from aiohttp import ClientError, ClientRequest, ClientSession, ClientTimeout, web
-from python.agent_backchannel import (
-    RUN_MODE,
-    START_TIMEOUT,
-    AgentBackchannel,
-    AgentPorts,
-    BackchannelCommand,
-    default_genesis_txns,
-    get_ledger_url,
-)
-from python.storage import (
-    get_data_id_from_exch_id,
-    get_resource,
-    pop_resource,
-    pop_resource_latest,
-    push_resource,
-)
+from aiohttp import (ClientError, ClientRequest, ClientSession, ClientTimeout,
+                     web)
+from python.agent_backchannel import (RUN_MODE, START_TIMEOUT,
+                                      AgentBackchannel, AgentPorts,
+                                      BackchannelCommand, default_genesis_txns,
+                                      get_ledger_url)
+from python.storage import (get_data_id_from_exch_id, get_resource,
+                            pop_resource, pop_resource_latest, push_resource)
 from python.utils import flatten, log_msg, output_reader, prompt_loop
 from typing_extensions import Literal
 
@@ -255,6 +246,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "connections",
             "--plugin",
             "issue_credential",
+            "--plugin",
+            "present_proof",
         ]
 
         # Backchannel needs to handle operations that may be called in the protocol by the tests
