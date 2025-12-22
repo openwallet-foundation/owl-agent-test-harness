@@ -16,7 +16,7 @@ RUN chmod +x ./jq
 COPY python/requirements.txt python/
 COPY acapy/requirements-main.txt acapy/
 RUN pip install -r python/requirements.txt -r acapy/requirements-main.txt
-RUN pip install git+https://github.com/openwallet-foundation/acapy-plugins@main#subdirectory=connections 
+RUN pip install git+https://github.com/openwallet-foundation/acapy-plugins@main#subdirectory=connections
 RUN pip install \
    git+https://github.com/openwallet-foundation/acapy-plugins@main#subdirectory=issue_credential \
    git+https://github.com/openwallet-foundation/acapy-plugins@main#subdirectory=present_proof \
