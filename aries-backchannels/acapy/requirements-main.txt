@@ -1,1 +1,1 @@
-acapy-agent[indy, bbs, askar]@git+https://github.com/jamshale/acapy@python-3.13
+acapy-agent[indy, bbs, askar]@git+https://github.com/openwallet-foundation/acapy@main

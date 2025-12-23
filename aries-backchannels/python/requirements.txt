@@ -1,6 +1,5 @@
 prompt_toolkit~=3.0.51
 pygments
-git+https://github.com/webpy/webpy.git#egg=web.py
 python3-indy
 pyyaml
 debugpy
