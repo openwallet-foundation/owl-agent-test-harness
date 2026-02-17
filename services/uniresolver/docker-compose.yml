@@ -3,7 +3,7 @@ version: '2'
 services:
   driver-did-sov.local:
     container_name: driver-did-sov.local
-    image: universalresolver/driver-did-sov:0.6.0-eea2f48
+    image: universalresolver/driver-did-sov:0.15.0-9e56cd9
     environment:
       - "uniresolver_driver_did_sov_poolConfigs=_;./local-pool/config.txt"
       - "uniresolver_driver_did_sov_poolVersions=_;2"
@@ -16,7 +16,7 @@ services:
 
   uni-resolver-web.local:
     container_name: uni-resolver-web.local
-    image: universalresolver/uni-resolver-web:0.8.0-93c2f32
+    image: universalresolver/uni-resolver-web:1.1.0-86d4765
     ports:
       - "8080:8080"
     expose:
