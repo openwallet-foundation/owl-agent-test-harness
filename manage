@@ -576,7 +576,7 @@ startAgent() {
   local DATA_VOLUME_PATH="$(find $BACKCHANNEL_DIR -wholename */${AGENT_NAME}.data)"
   local DATA_VOLUME_ARG=
   # optional data volume folder
-  if [[ -n DATA_VOLUME_PATH  ]]; then
+  if [[ -n $DATA_VOLUME_PATH  ]]; then
     DATA_VOLUME_ARG="-v $(pwd)/$DATA_VOLUME_PATH:/data-mount:z"
   fi
 
@@ -730,6 +730,10 @@ startServices() {
 
   if ! waitForUniresolver; then
     echoRed "\nUniversal Resolver is not running.\n"
+    echo "uni-resolver-web container status:"
+    docker ps -a --filter "name=uni-resolver-web.local" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+    echo "uni-resolver-web container logs:"
+    docker logs uni-resolver-web.local 2>&1 | tail -50 || true
     exit 1
   fi
 
@@ -878,7 +882,7 @@ startHarness(){
 
   # Check if agents were successfully started.
   if [[ "$ACME" != "none" ]]; then
-    if [[ IS_ACME_REMOTE -eq 0 ]]; then
+    if [[ $IS_ACME_REMOTE -eq 0 ]]; then
       waitForAgent Acme http://localhost 9020
     else
       waitForAgent Acme ${ACME_ENDPOINT}
@@ -889,7 +893,7 @@ startHarness(){
     fi
   fi
   if [[ "$BOB" != "none" ]]; then
-    if [[ IS_BOB_REMOTE -eq 0 ]]; then
+    if [[ $IS_BOB_REMOTE -eq 0 ]]; then
       waitForAgent Bob http://localhost 9030
     else
       waitForAgent Bob ${BOB_ENDPOINT}
@@ -900,7 +904,7 @@ startHarness(){
     fi
   fi
   if [[ "$FABER" != "none" ]]; then
-    if [[ IS_FABER_REMOTE -eq 0 ]]; then
+    if [[ $IS_FABER_REMOTE -eq 0 ]]; then
       waitForAgent Faber http://localhost 9040
     else
       waitForAgent Faber ${FABER_ENDPOINT}
@@ -911,7 +915,7 @@ startHarness(){
     fi
   fi
   if [[ "$MALLORY" != "none" ]]; then
-    if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
+    if [[ $IS_MALLORY_REMOTE -eq 0 ]]; then
       waitForAgent Mallory http://localhost 9050
     else
       waitForAgent Mallory ${MALLORY_ENDPOINT}
@@ -950,23 +954,23 @@ checkAndSetRemote() {
 
 deleteAgents() {
     # Check if agent is remote and delete it
-    if [[ IS_ACME_REMOTE -eq 0 ]]; then
+    if [[ $IS_ACME_REMOTE -eq 0 ]]; then
       deleteAgent acme_agent
     fi
-    if [[ IS_BOB_REMOTE -eq 0 ]]; then
+    if [[ $IS_BOB_REMOTE -eq 0 ]]; then
       deleteAgent bob_agent
     fi
-    if [[ IS_FABER_REMOTE -eq 0 ]]; then
+    if [[ $IS_FABER_REMOTE -eq 0 ]]; then
       deleteAgent faber_agent
     fi
-    if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
+    if [[ $IS_MALLORY_REMOTE -eq 0 ]]; then
       deleteAgent mallory_agent
     fi
 }
 
 deleteAgent() {
     agent=$1
-    docker rm -f $agent || 1
+    docker rm -f $agent 2>/dev/null || true
 }
 
 dumpAgentLogs() {
@@ -1128,28 +1132,28 @@ runTests() {
   if [[ ${COMMAND} != "dry-run" ]]; then
     echo ""
     echo "Exporting Agent logs."
-    if [[ IS_ACME_REMOTE -eq 0 ]]; then
-      docker logs acme_agent > .logs/acme_agent.log
+    if [[ $IS_ACME_REMOTE -eq 0 ]]; then
+      docker logs acme_agent > .logs/acme_agent.log 2>&1 || true
       if [[ "${USE_NGROK}" = "true" ]]; then
-        docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log
+        docker logs acme_agent-ngrok > .logs/acme_agent-ngrok.log 2>&1 || true
       fi
     fi
-    if [[ IS_BOB_REMOTE -eq 0 ]]; then
-      docker logs bob_agent > .logs/bob_agent.log
+    if [[ $IS_BOB_REMOTE -eq 0 ]]; then
+      docker logs bob_agent > .logs/bob_agent.log 2>&1 || true
       if [[ "${USE_NGROK}" = "true" ]]; then
-        docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log
+        docker logs bob_agent-ngrok > .logs/bob_agent-ngrok.log 2>&1 || true
       fi
     fi
-    if [[ IS_FABER_REMOTE -eq 0 ]]; then
-      docker logs faber_agent > .logs/faber_agent.log
+    if [[ $IS_FABER_REMOTE -eq 0 ]]; then
+      docker logs faber_agent > .logs/faber_agent.log 2>&1 || true
       if [[ "${USE_NGROK}" = "true" ]]; then
-        docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log
+        docker logs faber_agent-ngrok > .logs/faber_agent-ngrok.log 2>&1 || true
       fi
     fi
-    if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
-      docker logs mallory_agent > .logs/mallory_agent.log
+    if [[ $IS_MALLORY_REMOTE -eq 0 ]]; then
+      docker logs mallory_agent > .logs/mallory_agent.log 2>&1 || true
       if [[ "${USE_NGROK}" = "true" ]]; then
-        docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log
+        docker logs mallory_agent-ngrok > .logs/mallory_agent-ngrok.log 2>&1 || true
       fi
     fi
   fi
@@ -1178,28 +1182,26 @@ stopHarness(){
   echo "Cleanup:"
   echo "  - Shutting down all test harness managed agents ..."
   # Check if each agent is remote and only stop and remove the container if it is not remote
-  if [[ IS_ACME_REMOTE -eq 0 ]]; then
-    docker stop acme_agent > /dev/null
-    docker rm -v acme_agent > /dev/null
+  if [[ $IS_ACME_REMOTE -eq 0 ]]; then
+    docker stop acme_agent > /dev/null || true
+    docker rm -v acme_agent > /dev/null || true
     stopIfExists acme_agent-ngrok
   fi
-  if [[ IS_BOB_REMOTE -eq 0 ]]; then
-    docker stop bob_agent > /dev/null
-    docker rm -v bob_agent > /dev/null
+  if [[ $IS_BOB_REMOTE -eq 0 ]]; then
+    docker stop bob_agent > /dev/null || true
+    docker rm -v bob_agent > /dev/null || true
     stopIfExists bob_agent-ngrok
   fi
-  if [[ IS_FABER_REMOTE -eq 0 ]]; then
-    docker stop faber_agent > /dev/null
-    docker rm -v faber_agent > /dev/null
+  if [[ $IS_FABER_REMOTE -eq 0 ]]; then
+    docker stop faber_agent > /dev/null || true
+    docker rm -v faber_agent > /dev/null || true
     stopIfExists faber_agent-ngrok
   fi
-  if [[ IS_MALLORY_REMOTE -eq 0 ]]; then
-    docker stop mallory_agent > /dev/null
-    docker rm -v mallory_agent > /dev/null
+  if [[ $IS_MALLORY_REMOTE -eq 0 ]]; then
+    docker stop mallory_agent > /dev/null || true
+    docker rm -v mallory_agent > /dev/null || true
     stopIfExists mallory_agent-ngrok
   fi
-  # docker stop acme_agent bob_agent faber_agent mallory_agent > /dev/null
-  # docker rm -v acme_agent bob_agent faber_agent mallory_agent > /dev/null
 
   printf "Done\n"
 
