@@ -31,6 +31,9 @@ LOGGER = logging.getLogger(__name__)
 
 MAX_TIMEOUT = 5
 
+# seconds to wait for the agent to exit after SIGTERM
+STOP_TIMEOUT = float(os.getenv("STOP_TIMEOUT", "0.5"))
+
 AGENT_NAME = os.getenv("AGENT_NAME", "Agent")
 
 # AIP level is 10 or 20
@@ -2079,7 +2082,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
             self.proc.terminate()
             try:
-                self.proc.wait(timeout=0.5)
+                self.proc.wait(timeout=STOP_TIMEOUT)
                 self.log(f"Exited with return code {self.proc.returncode}")
             except subprocess.TimeoutExpired:
                 msg = "Process did not terminate in time"

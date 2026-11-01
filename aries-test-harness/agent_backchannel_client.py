@@ -4,7 +4,10 @@ import os.path
 from time import sleep
 import urllib.parse
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
+
+# total seconds for one backchannel request; unset keeps aiohttp's default
+BACKCHANNEL_TIMEOUT = os.getenv("BACKCHANNEL_TIMEOUT")
 
 ######################################################################
 # coroutine utilities
@@ -42,7 +45,8 @@ async def make_agent_backchannel_request(
     method, path, data=None, text=False, params=None
 ) -> (int, str):
     params = {k: v for (k, v) in (params or {}).items() if v is not None}
-    client_session: ClientSession = ClientSession()
+    timeout = ClientTimeout(total=float(BACKCHANNEL_TIMEOUT)) if BACKCHANNEL_TIMEOUT else None
+    client_session: ClientSession = ClientSession(timeout=timeout)
     async with client_session.request(method, path, json=data, params=params) as resp:
         resp_status = resp.status
         resp_text = await resp.text()

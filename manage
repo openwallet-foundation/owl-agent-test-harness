@@ -13,9 +13,10 @@ export DOCKERHOST=$(getDockerHost)
 
 SCRIPT_HOME="$( cd "$( dirname "$0" )" && pwd )"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-aath}"
-export AGENT_TIMEOUT=60
-export LEDGER_TIMEOUT=60
 # these can be overridden via env vars
+export AGENT_TIMEOUT="${AGENT_TIMEOUT:-60}"
+export LEDGER_TIMEOUT="${LEDGER_TIMEOUT:-60}"
+export UNIRESOLVER_PORT="${UNIRESOLVER_PORT:-8080}"
 export LEDGER_URL_CONFIG="${LEDGER_URL_CONFIG}"
 export TAILS_SERVER_URL_CONFIG="${TAILS_SERVER_URL_CONFIG}"
 export REDIS_CLUSTER_URL_CONFIG="${REDIS_CLUSTER_URL_CONFIG}"
@@ -289,7 +290,7 @@ setDockerEnv() {
   fi
 
   # variables that have the same variable name as what is being set for the container
-  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "CONTAINER_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE" "START_TIMEOUT")
+  declare -a GENERAL_VARIABLES=("DOCKERHOST" "NGROK_NAME" "CONTAINER_NAME" "AIP_CONFIG" "AGENT_CONFIG_FILE" "GENESIS_URL" "GENESIS_FILE" "START_TIMEOUT" "STOP_TIMEOUT" "BACKCHANNEL_TIMEOUT")
   for var in "${GENERAL_VARIABLES[@]}"; do
     if [[ -n "${!var}" ]]; then
       DOCKER_ENV+=" -e ${var}=${!var}"
@@ -433,7 +434,7 @@ waitForTailsServer(){
 pingUniresolver(){
 
   # ping uniresolver server
-  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null http://localhost:8080/actuator/health)
+  local rtnCd=$(curl -s --write-out '%{http_code}' --output /dev/null "http://localhost:${UNIRESOLVER_PORT}/actuator/health")
   if (( ${rtnCd} == 200 )); then
     return 0
   else
