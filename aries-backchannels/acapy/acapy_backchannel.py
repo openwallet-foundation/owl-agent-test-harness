@@ -1338,6 +1338,20 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                         resp_json = json.loads(resp_text)
                         did = resp_json["result"]["did"]
 
+                # A did:sov has to be public, so get one the way the did lookup does
+                if not did and did_method == "sov":
+                    (resp_status, resp_text) = await self.make_agent_GET_request(
+                        BackchannelCommand(
+                            topic="did",
+                            method="GET",
+                            operation=None,
+                            record_id=None,
+                            data=None,
+                        )
+                    )
+                    if resp_status == 200:
+                        did = json.loads(resp_text)["did"]
+
                 if did:
                     # prepend did:method to did if not already
                     # ACA-Py doesn't include did:sov prefix for sov dids
