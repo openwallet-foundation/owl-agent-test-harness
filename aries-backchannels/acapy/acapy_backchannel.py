@@ -667,11 +667,10 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                     agent_operation, data=post_data
                 )
 
-                # extract invitation from the agent's response
-                invitation_resp = json.loads(resp_text)
-                resp_text = json.dumps(invitation_resp)
-
                 if resp_status == 200:
+                    # extract invitation from the agent's response
+                    invitation_resp = json.loads(resp_text)
+                    resp_text = json.dumps(invitation_resp)
                     resp_text = self.agent_state_translation(command.topic, resp_text)
                 return (resp_status, resp_text)
 
@@ -1551,6 +1550,8 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             
             # Check agent already has public did
             (resp_status, resp_text) = await self.admin_GET(agent_operation)
+            if resp_status != 200:
+                return (resp_status, resp_text)
             resp_json = json.loads(resp_text)
             if resp_json["result"] is not None:
                 resp_text = json.dumps(resp_json["result"])
@@ -1562,11 +1563,12 @@ class AcaPyAgentBackchannel(AgentBackchannel):
                 {},
             )
             
-            if resp_status == 200:
-                resp_json = json.loads(resp_text)
-                did = resp_json["result"]["did"]
-                verkey = resp_json["result"]["verkey"]
-                
+            if resp_status != 200:
+                return (resp_status, resp_text)
+            resp_json = json.loads(resp_text)
+            did = resp_json["result"]["did"]
+            verkey = resp_json["result"]["verkey"]
+
             log_msg(f"Got DID: {resp_json["result"]["did"]}")
             
             # Register the DID as an endorser
