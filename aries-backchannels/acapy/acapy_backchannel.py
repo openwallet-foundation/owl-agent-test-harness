@@ -160,6 +160,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "reject_sent": "reject-sent",
             "verified": "done",
             "presentation_acked": "done",
+            "abandoned": "abandoned",
         }
 
         # Aca-py : RFC
@@ -168,7 +169,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "invitation": "invitation-sent",
             "request": "request-received",
             "response": "response-sent",
-            "?": "abandoned",
+            "error": "abandoned",
             "active": "completed",
             "completed": "completed",
         }
@@ -179,7 +180,7 @@ class AcaPyAgentBackchannel(AgentBackchannel):
             "invitation": "invitation-received",
             "request": "request-sent",
             "response": "response-received",
-            "?": "abandoned",
+            "error": "abandoned",
             "active": "completed",
         }
 
