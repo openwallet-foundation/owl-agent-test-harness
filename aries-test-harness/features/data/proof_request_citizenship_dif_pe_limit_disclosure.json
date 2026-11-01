@@ -8,7 +8,7 @@
       "id": "ac7d56e7-181d-4a44-bbcd-27ce86a728d3",
       "format": {
         "ldp_vp": {
-          "proof_type": ["replace_me"]
+          "proof_type": ["replace_me", "BbsBlsSignatureProof2020"]
         }
       },
       "input_descriptors": [
