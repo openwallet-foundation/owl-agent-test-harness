@@ -13,7 +13,6 @@
             "https://w3id.org/citizenship/v1"
           ],
           "type": ["VerifiableCredential", "PermanentResident"],
-          "id": "https://credential.example.com/residents/1234567890",
           "issuer": "replace_me",
           "issuanceDate": "2020-01-01T12:00:00Z",
           "credentialSubject": {
